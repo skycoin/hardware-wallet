@@ -50,3 +50,7 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+*.o
+*.d
+test_skycoin_crypto
+*.pyc
