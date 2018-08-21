@@ -1,5 +1,7 @@
 # Skycoin hardware wallet
 
+[![Build Status](https://travis-ci.com/skycoin/hardware-wallet.svg?branch=master)](https://travis-ci.com/skycoin/hardware-wallet)
+
 This folder provides a firmware implementing skycoin features, and tools to test it.
 
 The firmware itself is under [tiny-firmware](https://github.com/skycoin/hardware-wallet/tree/master/tiny-firmware) folder.
