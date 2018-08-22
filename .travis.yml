@@ -12,7 +12,6 @@ matrix:
       -PROTOBUF_VERSION=3.4.0
     before_script:
       - sudo apt-get update 
-      - cd hardware-wallet
       #install libcheck
       - wget https://github.com/libcheck/check/releases/download/0.12.0/check-0.12.0.tar.gz
       - tar xvf check-0.12.0.tar.gz
