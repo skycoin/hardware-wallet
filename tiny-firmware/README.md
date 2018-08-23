@@ -94,7 +94,7 @@ To flash the device on a microcontroller of STM32f2xx family the command is:
 
 If you sourced the make_firmware.sh file as recommended. You can use the alias st-trezor to burn the device.
 
-    st-trezor
+    st-skycoin
 
 ## 4. Firmware signature
 
@@ -130,7 +130,7 @@ The first time we need to prepare the script for firmware signature:
 
 This script will generate and copy libskycoin-crypto.so and libtrezor-crypto.so in bootloader repertory.
 
-These libraries are required to perform signature and signature checking from [firmware_sign.py](https://github.com/skycoin/services/blob/master/hardware-wallet/tiny-firmware/bootloader/firmware_sign.py) script.
+These libraries are required to perform signature and signature checking from [firmware_sign.py](https://github.com/skycoin/hardware-wallet/blob/master/tiny-firmware/bootloader/firmware_sign.py) script.
 
 Note: you also need to be able to generate skycoin key pairs. You can for instance use the [skycoin-cli](https://github.com/skycoin/skycoin).
 
@@ -138,9 +138,9 @@ Note: you also need to be able to generate skycoin key pairs. You can for instan
 
 The system stores five public keys and expects three signatures issued from one of these public keys.
 
-The public keys are hardwritten in the bootloader's source code in file [signatures.c](https://github.com/skycoin/services/blob/master/hardware-wallet/tiny-firmware/bootloader/signatures.c)
+The public keys are hardwritten in the bootloader's source code in file [signatures.c](https://github.com/skycoin/hardware-wallet/blob/master/tiny-firmware/bootloader/signatures.c)
 
-The signatures are also present in [firmware_sign.py](https://github.com/skycoin/services/blob/master/hardware-wallet/tiny-firmware/bootloader/firmware_sign.py) script, in the "pubkeys" array.
+The signatures are also present in [firmware_sign.py](https://github.com/skycoin/hardware-wallet/blob/master/tiny-firmware/bootloader/firmware_sign.py) script, in the "pubkeys" array.
 
 #### Get the firmware
 
@@ -176,9 +176,9 @@ Then you can re-flash the firmware for instance with st-skycoin alias.
 
 ### Use golang code examples
 
-Check [here](https://github.com/skycoin/services/tree/master/hardware-wallet/go-api-for-hardware-wallet) for golang code example communicating with the device.
+Check [here](https://github.com/skycoin/hardware-wallet-go/) for golang code example communicating with the device.
 
-Feel free to hack [main.go](https://github.com/skycoin/services/blob/master/hardware-wallet/go-api-for-hardware-wallet/main.go) file.
+Feel free to hack [main.go](https://github.com/skycoin/hardware-wallet-go/blob/master/main.go) file.
 
 You can also try the trezorctl [python based command line](https://github.com/trezor/python-trezor).
 
@@ -188,9 +188,9 @@ The communication between PC and firmware is a master/slave model where the firm
 It reacts to messages but cannot initiate a communication.
 The messages are defined using google protobuf code generation tools. The same file messages.proto can be copy pasted elswhere to generate the same structures in other coding languages.
 
-The folder [go-api-for-hardware-wallet](https://github.com/skycoin/services/tree/master/hardware-wallet/go-api-for-hardware-wallet) provides examples to communicate with the device using golang.
+The [repository](https://github.com/skycoin/hardware-wallet-go/) provides examples to communicate with the device using golang.
 
-The firmware has two components: the [bootloader](https://github.com/skycoin/services/tree/master/hardware-wallet/tiny-firmware/bootloader) and the [firmware](https://github.com/skycoin/services/tree/master/hardware-wallet/tiny-firmware/firmware).
+The firmware has two components: the [bootloader](https://github.com/skycoin/hardware-wallet/tree/master/tiny-firmware/bootloader) and the [firmware](https://github.com/skycoin/hardware-wallet/tree/master/tiny-firmware/firmware).
 The bootloader main role is to check firmware's signature in order to warn user in case the detected firmware is not the official firmware distributed by skycoin.
 
 Here is a quick presentation of most important files of the firmware:
