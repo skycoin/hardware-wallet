@@ -1,0 +1,12 @@
+*.o
+*.a
+*.d
+*.bin
+*.elf
+*.hex
+*.list
+*.srec
+*.log
+skycoin_crypto.py
+skycoin_crypto.pyc
+__pycache__/
