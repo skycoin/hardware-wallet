@@ -7,8 +7,8 @@ ELFFILE=build/skycoin-emulator64-$TAG
 
 docker build -f Dockerfile.emulator -t $IMAGE .
 docker run -t -v $(pwd)/build:/build:z $IMAGE /bin/sh -c "\
-	git clone https://github.com/skycoin/services.git && \
-	cd services/hardware-wallet/tiny-firmware && \
+	git clone https://github.com/skycoin/hardware-wallet.git && \
+	cd hardware-wallet/tiny-firmware && \
 	git checkout $TAG && \
 	export EMULATOR=1
 	export HEADLESS=0
