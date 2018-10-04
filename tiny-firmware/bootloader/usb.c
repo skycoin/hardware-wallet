@@ -374,11 +374,11 @@ static void hid_rx_callback(usbd_device *dev, uint8_t ep)
 				flash_wait_for_last_operation();
 				flash_lock();
 				flash_state = STATE_END;
-				layoutDialog(&bmp_icon_ok, NULL, NULL, NULL, "Device", "successfully wiped.", NULL, "You may now", "unplug your TREZOR.", NULL);
+				layoutDialog(&bmp_icon_ok, NULL, NULL, NULL, "Device", "successfully wiped.", NULL, "You may now", "unplug your Skycoin wallet.", NULL);
 				send_msg_success(dev);
 			} else {
 				flash_state = STATE_END;
-				layoutDialog(&bmp_icon_warning, NULL, NULL, NULL, "Device wipe", "aborted.", NULL, "You may now", "unplug your TREZOR.", NULL);
+				layoutDialog(&bmp_icon_warning, NULL, NULL, NULL, "Device wipe", "aborted.", NULL, "You may now", "unplug your Skycoin wallet.", NULL);
 				send_msg_failure(dev);
 			}
 			return;
@@ -511,7 +511,7 @@ static void hid_rx_callback(usbd_device *dev, uint8_t ep)
 					|| memcmp(hash, "\x2d\x86\x4c\x0b\x78\x9a\x43\x21\x4e\xee\x85\x24\xd3\x18\x20\x75\x12\x5e\x5c\xa2\xcd\x52\x7f\x35\x82\xec\x87\xff\xd9\x40\x76\xbc", 32) != 0) {
 					send_msg_failure(dev);
 					flash_state = STATE_END;
-					layoutDialog(&bmp_icon_error, NULL, NULL, NULL, "Error installing ", "firmware.", NULL, "Unplug your TREZOR", "and try again.", NULL);
+					layoutDialog(&bmp_icon_error, NULL, NULL, NULL, "Error installing ", "firmware.", NULL, "Unplug your Skycoin wallet", "and try again.", NULL);
 					return;
 				}
 
@@ -521,7 +521,7 @@ static void hid_rx_callback(usbd_device *dev, uint8_t ep)
 			}
 			send_msg_failure(dev);
 			flash_state = STATE_END;
-			layoutDialog(&bmp_icon_warning, NULL, NULL, NULL, "Firmware installation", "aborted.", NULL, "You may now", "unplug your TREZOR.", NULL);
+			layoutDialog(&bmp_icon_warning, NULL, NULL, NULL, "Firmware installation", "aborted.", NULL, "You may now", "unplug your Skycoin wallet.", NULL);
 			return;
 		}
 		return;
@@ -532,7 +532,7 @@ static void hid_rx_callback(usbd_device *dev, uint8_t ep)
 			if (buf[9] != 0x0a) { // invalid contents
 				send_msg_failure(dev);
 				flash_state = STATE_END;
-				layoutDialog(&bmp_icon_error, NULL, NULL, NULL, "Error installing ", "firmware.", NULL, "Unplug your TREZOR", "and try again.", NULL);
+				layoutDialog(&bmp_icon_error, NULL, NULL, NULL, "Error installing ", "firmware.", NULL, "Unplug your Skycoin wallet", "and try again.", NULL);
 				return;
 			}
 			// read payload length
@@ -541,14 +541,14 @@ static void hid_rx_callback(usbd_device *dev, uint8_t ep)
 			if (flash_len > FLASH_TOTAL_SIZE + FLASH_META_DESC_LEN - (FLASH_APP_START - FLASH_ORIGIN)) { // firmware is too big
 				send_msg_failure(dev);
 				flash_state = STATE_END;
-				layoutDialog(&bmp_icon_error, NULL, NULL, NULL, "Firmware is too big.", NULL, "Get official firmware", "from trezor.io/start", NULL, NULL);
+				layoutDialog(&bmp_icon_error, NULL, NULL, NULL, "Firmware is too big.", NULL, "Get official firmware", "github.com/skycoin/hardware-wallet", NULL, NULL);
 				return;
 			}
 			// check firmware magic
 			if (memcmp(p, FIRMWARE_MAGIC, 4) != 0) {
 				send_msg_failure(dev);
 				flash_state = STATE_END;
-				layoutDialog(&bmp_icon_error, NULL, NULL, NULL, "Wrong firmware header.", NULL, "Get official firmware", "from trezor.io/start", NULL, NULL);
+				layoutDialog(&bmp_icon_error, NULL, NULL, NULL, "Wrong firmware header.", NULL, "Get official firmware", "github.com/skycoin/hardware-wallet", NULL, NULL);
 				return;
 			}
 			flash_state = STATE_FLASHING;
@@ -577,7 +577,7 @@ static void hid_rx_callback(usbd_device *dev, uint8_t ep)
 		if (buf[0] != '?') {	// invalid contents
 			send_msg_failure(dev);
 			flash_state = STATE_END;
-			layoutDialog(&bmp_icon_error, NULL, NULL, NULL, "Error installing ", "firmware.", NULL, "Unplug your TREZOR", "and try again.", NULL);
+			layoutDialog(&bmp_icon_error, NULL, NULL, NULL, "Error installing ", "firmware.", NULL, "Unplug your Skycoin wallet", "and try again.", NULL);
 			return;
 		}
 		const uint8_t *p = buf + 1;
@@ -656,7 +656,7 @@ static void hid_rx_callback(usbd_device *dev, uint8_t ep)
 
 		flash_state = STATE_END;
 		if (hash_check_ok) {
-			layoutDialog(&bmp_icon_ok, NULL, NULL, NULL, "New firmware", "successfully installed.", NULL, "You may now", "unplug your TREZOR.", NULL);
+			layoutDialog(&bmp_icon_ok, NULL, NULL, NULL, "New firmware", "successfully installed.", NULL, "You may now", "unplug your Skycoin wallet.", NULL);
 			send_msg_success(dev);
 		} else {
 			layoutDialog(&bmp_icon_warning, NULL, NULL, NULL, "Firmware installation", "aborted.", NULL, "You need to repeat", "the procedure with", "the correct firmware.");
