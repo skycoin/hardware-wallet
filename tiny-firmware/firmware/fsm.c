@@ -219,8 +219,6 @@ void fsm_msgSkycoinCheckMessageSignature(SkycoinCheckMessageSignature* msg)
     uint8_t pubkey[33] = {0};
     uint8_t digest[32] = {0};
 
-	CHECK_PIN
-
     RESP_INIT(Success);
     compute_sha256sum((const uint8_t *)msg->message, digest, strlen(msg->message));
     size_sign = sizeof(sign);
