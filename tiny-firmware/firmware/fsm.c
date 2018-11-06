@@ -318,6 +318,11 @@ void fsm_msgSkycoinAddress(SkycoinAddress* msg)
 		return;
 	}
 
+	if (storage_hasMnemonic() == false) {
+		fsm_sendFailure(FailureType_Failure_AddressGeneration, "Mnemonic not set");
+		return;
+	}
+
 	if (fsm_getKeyPairAtIndex(msg->address_n, pubkey, seckey, resp, start_index) != 0) 
 	{
 		fsm_sendFailure(FailureType_Failure_AddressGeneration, "Key pair generation failed");
