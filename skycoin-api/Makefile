@@ -49,8 +49,11 @@ libskycoin-crypto.so: skycoin_crypto.o $(OBJS)
 libskycoin-crypto.a: skycoin_crypto.o $(OBJS)
 	$(AR) rcs libskycoin-crypto.a skycoin_crypto.o $(OBJS)
 
+test_skycoin_crypto.o: test_skycoin_crypto.c
+	$(CC) $(CFLAGS) $(TESTINC) -o $@ -c $<
+
 test_skycoin_crypto: test_skycoin_crypto.o libskycoin-crypto.so
-	$(CC) test_skycoin_crypto.o $(TESTINC) $(OBJS) -L. -lskycoin-crypto $(LIBS) $(TESTLIBS) -o test_skycoin_crypto
+	$(CC) test_skycoin_crypto.o $(OBJS) -L. -lskycoin-crypto $(LIBS) $(TESTLIBS) -o test_skycoin_crypto
 
 
 
