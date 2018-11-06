@@ -414,6 +414,33 @@ void fsm_msgWipeDevice(WipeDevice *msg)
 	layoutHome();
 }
 
+void fsm_msgGenerateMnemonic(GenerateMnemonic* msg) {
+	(void)(msg);
+	layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("I take the risk"), NULL, _("Generating mnemonic"), _("will erase existing one."), _("Continue only if you"), _("know what you are"), _("doing!"), NULL);
+	if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) {
+		fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
+		layoutHome();
+		return;
+	}
+	const char* mnemonic = mnemonic_generate(128);
+	if (mnemonic == 0) {
+		fsm_sendFailure(FailureType_Failure_ProcessError, _("Device could not generate a Mnemonic"));
+		layoutHome();
+		return;
+	}
+	if (!mnemonic_check(mnemonic)) {
+		fsm_sendFailure(FailureType_Failure_DataError, _("Mnemonic with wrong checksum provided"));
+		layoutHome();
+		return;
+	}
+	RESP_INIT(Success);
+	storage_setMnemonic(mnemonic);
+	storage_update();
+	fsm_sendSuccess(_("Mnemonic successfully configured"));
+	storage_setNeedsBackup(true);
+	layoutHome();
+}
+
 void fsm_msgSetMnemonic(SetMnemonic* msg)
 {
 	RESP_INIT(Success);
