@@ -18,7 +18,7 @@ if [ "$EMULATOR" == "0" ]; then
 
     cp bootloader/bootloader.bin bootloader/combine/bl.bin
     cp skycoin.bin bootloader/combine/fw.bin
-    pushd bootloader/combine/ && ./prepare.py
+    pushd bootloader/combine/ && /usr/bin/python ./prepare.py
     popd;
 
     #st-flash erase
