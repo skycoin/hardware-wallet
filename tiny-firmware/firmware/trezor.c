@@ -133,7 +133,7 @@ int main(void)
 	storage_wipe();
 #endif
 
-	oledDrawBitmap(40, 0, &bmp_logo64);
+	oledDrawBitmap(0, 0, &bmp_skycoin_logo64);
 	oledRefresh();
 
 	storage_init();
