@@ -76,6 +76,11 @@ If you get SDL errors you might want to install these:
 
     sudo apt-get install libsdl2-dev libsdl2-image-dev
 
+If you can't install sdl packages using 'apt install' on an ubuntu based linux distribution (had the problem on linux mint) you can download them from these urls:
+
+* https://packages.ubuntu.com/bionic-updates/libsdl2-dev
+* https://packages.ubuntu.com/bionic/libsdl2-2.0-0
+
 Works also with docker if you run the script:
 
     ./build-emulator.sh
