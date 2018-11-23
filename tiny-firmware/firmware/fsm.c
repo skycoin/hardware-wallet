@@ -19,6 +19,7 @@
 
 #include <libopencm3/stm32/flash.h>
 
+#include <stdio.h>
 #include "trezor.h"
 #include "fsm.h"
 #include "messages.h"
@@ -173,6 +174,13 @@ void fsm_msgInitialize(Initialize *msg)
 	}
 	layoutHome();
 	fsm_msgGetFeatures(0);
+}
+
+void fsm_msgGetVersion(GetVersion *msg) {
+	(void)msg;
+	char str[50];
+	sprintf(str, "Firmware Version %d.%d.%d", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH);
+	fsm_sendSuccess(str);
 }
 
 void fsm_msgGetFeatures(GetFeatures *msg)
