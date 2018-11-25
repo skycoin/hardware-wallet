@@ -448,9 +448,9 @@ void fsm_msgGenerateMnemonic(GenerateMnemonic* msg) {
 	}
 	RESP_INIT(Success);
 	storage_setMnemonic(mnemonic);
+	storage_setNeedsBackup(true);
 	storage_update();
 	fsm_sendSuccess(_("Mnemonic successfully configured"));
-	storage_setNeedsBackup(true);
 	layoutHome();
 }
 
@@ -469,9 +469,9 @@ void fsm_msgSetMnemonic(SetMnemonic* msg)
 		return;
 	}
 	storage_setMnemonic(msg->mnemonic);
+	storage_setNeedsBackup(true);
 	storage_update();
 	fsm_sendSuccess(_(msg->mnemonic));
-	storage_setNeedsBackup(true);
 	layoutHome();
 }
 
