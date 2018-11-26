@@ -104,7 +104,7 @@ void __attribute__((noreturn)) load_app(int signed_firmware)
 bool firmware_present(void)
 {
 #ifndef APPVER
-	if (memcmp((const void *)FLASH_META_MAGIC, "TRZR", 4)) { // magic does not match
+	if (memcmp((const void *)FLASH_META_MAGIC, "SKY1", 4)) { // magic does not match
 		return false;
 	}
 	if (*((const uint32_t *)FLASH_META_CODELEN) < 4096) { // firmware reports smaller size than 4kB
@@ -120,7 +120,7 @@ bool firmware_present(void)
 void bootloader_loop(void)
 {
 	oledClear();
-	oledDrawBitmap(0, 0, &bmp_skycoin_logo64);
+	oledDrawBitmap(0, 0, &bmp_logo64);
 	if (firmware_present()) {
 		oledDrawString(52, 0, "SKYCOIN", FONT_STANDARD);
 		static char serial[25];
