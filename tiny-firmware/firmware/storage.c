@@ -138,7 +138,8 @@ bool storage_from_flash(void)
 	storage_clear_update();
 	if (memcmp(FLASH_PTR(FLASH_STORAGE_START), &storage_magic, sizeof(storage_magic)) != 0) {
 		// wrong magic
-		return false;
+		storage_wipe();
+		return storage_from_flash();
 	}
 
 	const uint32_t version = storageRom->version;
