@@ -543,7 +543,7 @@ void fsm_msgBackupDevice(BackupDevice *msg)
 	CHECK_PIN_UNCACHED
 
 	(void)msg;
-	reset_backup(true);
+	reset_backup(false);
 }
 
 void fsm_msgRecoveryDevice(RecoveryDevice *msg)

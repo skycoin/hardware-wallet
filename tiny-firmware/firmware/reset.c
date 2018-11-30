@@ -113,7 +113,6 @@ void reset_backup(bool separated)
 	}
 
 	storage_setUnfinishedBackup(true);
-	storage_setNeedsBackup(false);
 
 	if (separated) {
 		storage_update();
@@ -149,6 +148,7 @@ void reset_backup(bool separated)
 	}
 
 	storage_setUnfinishedBackup(false);
+	storage_setNeedsBackup(false);
 
 	if (separated) {
 		fsm_sendSuccess(_("Seed successfully backed up"));
