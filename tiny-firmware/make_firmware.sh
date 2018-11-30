@@ -13,8 +13,8 @@ fi
 
 if [ "$EMULATOR" == "0" ]; then
     make -C vendor/libopencm3/
-    make -C bootloader/ align
-    make sign
+    REVERSE_BUTTONS=1 make -C bootloader/ align
+    REVERSE_BUTTONS=1 make sign
 
     cp bootloader/bootloader.bin bootloader/combine/bl.bin
     cp skycoin.bin bootloader/combine/fw.bin
