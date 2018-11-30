@@ -287,6 +287,11 @@ void fsm_msgSkycoinSignMessage(SkycoinSignMessage* msg)
 	char sign58[90] = {0};
 	int res = 0;
 	
+	if (storage_hasMnemonic() == false) {
+		fsm_sendFailure(FailureType_Failure_AddressGeneration, "Mnemonic not set");
+		return;
+	}
+	
 	CHECK_PIN_UNCACHED
 
 	RESP_INIT(ResponseSkycoinSignMessage);
