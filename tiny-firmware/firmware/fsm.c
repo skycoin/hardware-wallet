@@ -543,7 +543,27 @@ void fsm_msgBackupDevice(BackupDevice *msg)
 	CHECK_PIN_UNCACHED
 
 	(void)msg;
-	reset_backup(false);
+	if (!storage_needsBackup()) {
+		fsm_sendFailure(FailureType_Failure_UnexpectedMessage, _("Seed already backed up"));
+		return;
+	}
+	reset_backup(true);
+
+	layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you confirm you"), _("backed up your seed."), _("This will never be"), _("possible again."), NULL, NULL);
+	if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) {
+		fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
+		layoutHome();
+		return;
+	}
+	if (storage_unfinishedBackup()) {
+		fsm_sendFailure(FailureType_Failure_ActionCancelled, _("Backup operation did not finish properly."));
+		layoutHome();
+		return;
+	}
+	storage_setNeedsBackup(false);
+	storage_update();
+	fsm_sendSuccess(_("Device backed up!"));
+	layoutHome();
 }
 
 void fsm_msgRecoveryDevice(RecoveryDevice *msg)

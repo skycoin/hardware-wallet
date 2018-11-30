@@ -148,11 +148,8 @@ void reset_backup(bool separated)
 	}
 
 	storage_setUnfinishedBackup(false);
-	storage_setNeedsBackup(false);
 
-	if (separated) {
-		fsm_sendSuccess(_("Seed successfully backed up"));
-	} else {
+	if (!separated) {
 		storage_update();
 		fsm_sendSuccess(_("Device successfully initialized"));
 	}
