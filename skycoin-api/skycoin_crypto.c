@@ -32,7 +32,7 @@ void tohex(char * str, const uint8_t* buffer, int bufferLength)
 void writebuf_fromhexstr(const char *str, uint8_t* buf)
 {
     size_t len = strlen(str) / 2;
-    if (len > 512) len = 512;
+    if (len > 32) len = 32;
     for (size_t i = 0; i < len; i++) {
         uint8_t c = 0;
         if (str[i * 2] >= '0' && str[i*2] <= '9') c += (str[i * 2] - '0') << 4;

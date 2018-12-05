@@ -228,7 +228,11 @@ void fsm_msgSkycoinCheckMessageSignature(SkycoinCheckMessageSignature* msg)
     uint8_t digest[32] = {0};
 
     RESP_INIT(Success);
-    compute_sha256sum((const uint8_t *)msg->message, digest, strlen(msg->message));
+	if (is_digest(msg->message) == false) {
+    	compute_sha256sum((const uint8_t *)msg->message, digest, strlen(msg->message));
+	} else {
+		writebuf_fromhexstr(msg->message, digest);
+	}
     size_sign = sizeof(sign);
     b58tobin(sign, &size_sign, msg->signature);
     recover_pubkey_from_signed_message((char*)digest, sign, pubkey);
