@@ -194,10 +194,6 @@ void fsm_msgGetFeatures(GetFeatures *msg)
 	resp->has_device_id = true;      strlcpy(resp->device_id, storage_uuid_str, sizeof(resp->device_id));
 	resp->has_pin_protection = true; resp->pin_protection = storage_hasPin();
 	resp->has_passphrase_protection = true; resp->passphrase_protection = storage_hasPassphraseProtection();
-#ifdef SCM_REVISION
-	int len = sizeof(SCM_REVISION) - 1;
-	resp->has_revision = true; memcpy(resp->revision.bytes, SCM_REVISION, len); resp->revision.size = len;
-#endif
 	resp->has_bootloader_hash = true; resp->bootloader_hash.size = memory_bootloader_hash(resp->bootloader_hash.bytes);
 	if (storage_getLanguage()) {
 		resp->has_language = true;
@@ -209,11 +205,9 @@ void fsm_msgGetFeatures(GetFeatures *msg)
 	}
 	
 	resp->has_initialized = true; resp->initialized = storage_isInitialized();
-	resp->has_imported = true; resp->imported = storage_isImported();
 	resp->has_pin_cached = true; resp->pin_cached = session_isPinCached();
 	resp->has_passphrase_cached = true; resp->passphrase_cached = session_isPassphraseCached();
 	resp->has_needs_backup = true; resp->needs_backup = storage_needsBackup();
-	resp->has_flags = true; resp->flags = storage_getFlags();
 	resp->has_model = true; strlcpy(resp->model, "1", sizeof(resp->model));
 
 	msg_write(MessageType_MessageType_Features, resp);
