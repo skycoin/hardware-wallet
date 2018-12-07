@@ -33,10 +33,10 @@
 #define ENDPOINT_ADDRESS_OUT        (0x01)
 
 #define USB_STRINGS \
-	X(MANUFACTURER, "SatoshiLabs") \
-	X(PRODUCT, "TREZOR") \
+	X(MANUFACTURER, "SkycoinFoundation") \
+	X(PRODUCT, "SKYCOIN") \
 	X(SERIAL_NUMBER, storage_uuid_str) \
-	X(INTERFACE_MAIN,  "TREZOR Interface") 
+	X(INTERFACE_MAIN,  "SKYCOIN Interface") 
 
 #define X(name, value) USB_STRING_##name,
 enum {
@@ -59,7 +59,7 @@ static const struct usb_device_descriptor dev_descr = {
 	.bDeviceSubClass = 0,
 	.bDeviceProtocol = 0,
 	.bMaxPacketSize0 = 64,
-	.idVendor = 0x534c,
+	.idVendor = 0x313A,
 	.idProduct = 0x0001,
 	.bcdDevice = 0x0100,
 	.iManufacturer = USB_STRING_MANUFACTURER,

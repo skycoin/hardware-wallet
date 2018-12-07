@@ -53,7 +53,7 @@ static const struct usb_device_descriptor dev_descr = {
 	.bDeviceSubClass = 0,
 	.bDeviceProtocol = 0,
 	.bMaxPacketSize0 = 64,
-	.idVendor = 0x534c,
+	.idVendor = 0x313A,
 	.idProduct = 0x0001,
 	.bcdDevice = 0x0100,
 	.iManufacturer = 1,
@@ -150,8 +150,8 @@ static const struct usb_config_descriptor config = {
 };
 
 static const char *usb_strings[] = {
-	"SatoshiLabs",
-	"TREZOR",
+	"SkycoinFoundation",
+	"SKYCOIN",
 	"", // empty serial
 };
 
