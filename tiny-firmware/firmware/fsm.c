@@ -435,12 +435,6 @@ void fsm_msgGenerateMnemonic(GenerateMnemonic* msg) {
 	CHECK_NOT_INITIALIZED
 	
 	(void)(msg);
-	layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("I take the risk"), NULL, _("Generating seed"), _("will erase existing one."), _("Continue only if you"), _("know what you are"), _("doing!"), NULL);
-	if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) {
-		fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
-		layoutHome();
-		return;
-	}
 	const char* mnemonic = mnemonic_generate(128);
 	if (mnemonic == 0) {
 		fsm_sendFailure(FailureType_Failure_ProcessError, _("Device could not generate a Mnemonic"));
