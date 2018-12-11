@@ -431,8 +431,11 @@ void fsm_msgWipeDevice(WipeDevice *msg)
 }
 
 void fsm_msgGenerateMnemonic(GenerateMnemonic* msg) {
+
+	CHECK_NOT_INITIALIZED
+	
 	(void)(msg);
-	layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("I take the risk"), NULL, _("Generating mnemonic"), _("will erase existing one."), _("Continue only if you"), _("know what you are"), _("doing!"), NULL);
+	layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("I take the risk"), NULL, _("Generating seed"), _("will erase existing one."), _("Continue only if you"), _("know what you are"), _("doing!"), NULL);
 	if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) {
 		fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
 		layoutHome();
@@ -459,8 +462,10 @@ void fsm_msgGenerateMnemonic(GenerateMnemonic* msg) {
 
 void fsm_msgSetMnemonic(SetMnemonic* msg)
 {
+	CHECK_NOT_INITIALIZED
+
 	RESP_INIT(Success);
-	layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("I take the risk"), NULL, _("Writing mnemonic"), _("is not recommended."), _("Continue only if you"), _("know what you are"), _("doing!"), NULL);
+	layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("I take the risk"), NULL, _("Writing seed"), _("is not recommended."), _("Continue only if you"), _("know what you are"), _("doing!"), NULL);
 	if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) {
 		fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
 		layoutHome();
