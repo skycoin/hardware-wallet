@@ -21,6 +21,7 @@
 #include <stdint.h>
 
 #include <libopencm3/stm32/flash.h>
+#include <stdio.h> //sprintf
 
 #include "messages.pb.h"
 
@@ -37,6 +38,7 @@
 #include "usb.h"
 #include "gettext.h"
 #include "memzero.h"
+#include "protect.h"
 #include "supervise.h"
 
 /* magic constant to check validity of storage block */
@@ -99,7 +101,7 @@ static uint32_t storage_u2f_offset;
 
 static bool sessionSeedCached;
 
-static uint8_t CONFIDENTIAL sessionSeed[64];
+static char CONFIDENTIAL sessionSeed[256];
 
 static bool sessionPinCached;
 
@@ -497,6 +499,17 @@ bool storage_hasNode(void)
 bool storage_hasMnemonic(void)
 {
 	return storageRom->has_mnemonic;
+}
+
+const char* storage_getFullSeed(void) {
+	if (!storage_hasPassphraseProtection()) {
+		return storage_getMnemonic();
+	}
+	if (sessionPassphraseCached || protectPassphrase()) {
+		sprintf(sessionSeed, "%s %s", storage_getMnemonic(), sessionPassphrase);
+		return sessionSeed;
+	}
+	return storage_getMnemonic();
 }
 
 const char *storage_getMnemonic(void)

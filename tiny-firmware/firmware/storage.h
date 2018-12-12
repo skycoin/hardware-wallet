@@ -139,6 +139,8 @@ void storage_setUnfinishedBackup(bool unfinished_backup);
 
 void storage_wipe(void);
 
+const char* storage_getFullSeed(void);
+
 extern char storage_uuid_str[25];
 
 #endif
