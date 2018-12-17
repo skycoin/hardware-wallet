@@ -110,6 +110,7 @@ message Features {
  * @next Success
  */
  message GenerateMnemonic {
+ 	optional bool passphrase_protection = 1;
 }
 
 /**

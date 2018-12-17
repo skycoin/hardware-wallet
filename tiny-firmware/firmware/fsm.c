@@ -434,7 +434,6 @@ void fsm_msgGenerateMnemonic(GenerateMnemonic* msg) {
 
 	CHECK_NOT_INITIALIZED
 	
-	(void)(msg);
 	const char* mnemonic = mnemonic_generate(128);
 	if (mnemonic == 0) {
 		fsm_sendFailure(FailureType_Failure_ProcessError, _("Device could not generate a Mnemonic"));
@@ -449,6 +448,7 @@ void fsm_msgGenerateMnemonic(GenerateMnemonic* msg) {
 	RESP_INIT(Success);
 	storage_setMnemonic(mnemonic);
 	storage_setNeedsBackup(true);
+	storage_setPassphraseProtection(msg->has_passphrase_protection && msg->passphrase_protection);
 	storage_update();
 	fsm_sendSuccess(_("Mnemonic successfully configured"));
 	layoutHome();
