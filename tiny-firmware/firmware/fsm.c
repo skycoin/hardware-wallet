@@ -339,6 +339,15 @@ void fsm_msgSkycoinAddress(SkycoinAddress* msg)
 		fsm_sendFailure(FailureType_Failure_AddressGeneration, "Key pair generation failed");
 		return;
 	}
+	if (msg->address_n == 1 && msg->has_confirm_address && msg->confirm_address) {
+		char * addr = resp->addresses[0];
+		layoutAddress(addr);
+		if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) {
+			fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
+			layoutHome();
+			return;
+		}
+	}
 	msg_write(MessageType_MessageType_ResponseSkycoinAddress, resp);
 	layoutHome();
 }

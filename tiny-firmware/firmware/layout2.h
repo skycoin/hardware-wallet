@@ -42,6 +42,7 @@ void layoutScreensaver(void);
 void layoutHome(void);
 void layoutSignMessage(const uint8_t *msg, uint32_t len);
 void layoutVerifyAddress(const char *address);
+void layoutAddress(const char *address);
 void layoutVerifyMessage(const uint8_t *msg, uint32_t len);
 void layoutCipherKeyValue(bool encrypt, const char *key);
 void layoutEncryptMessage(const uint8_t *msg, uint32_t len, bool signing);
