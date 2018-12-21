@@ -31,6 +31,7 @@ enum MessageType {
 	MessageType_PinMatrixRequest = 18 [(wire_out) = true];
 	MessageType_PinMatrixAck = 19 [(wire_in) = true, (wire_tiny) = true];
 	MessageType_Cancel = 20 [(wire_in) = true];
+    MessageType_ApplySettings = 25 [(wire_in) = true];
 	MessageType_ButtonRequest = 26 [(wire_out) = true];
 	MessageType_ButtonAck = 27 [(wire_in) = true, (wire_tiny) = true];
 	MessageType_BackupDevice = 34 [(wire_in) = true];
@@ -102,6 +103,19 @@ message Features {
 	optional string fw_vendor = 25;			// reported firmware vendor if in bootloader mode
 	optional bytes fw_vendor_keys = 26;		// reported firmware vendor keys (their hash)
 	optional bool unfinished_backup = 27;		// report unfinished backup (equals to Storage.unfinished_backup)
+}
+
+/**
+ * Request: change language and/or label of the device
+ * @start
+ * @next Success
+ * @next Failure
+ */
+message ApplySettings {
+    optional string language = 1;
+    optional string label = 2;
+    optional bool use_passphrase = 3;
+    optional bytes homescreen = 4;
 }
 
 

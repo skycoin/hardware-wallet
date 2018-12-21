@@ -176,6 +176,63 @@ void fsm_msgInitialize(Initialize *msg)
 	fsm_msgGetFeatures(0);
 }
 
+void fsm_msgApplySettings(ApplySettings *msg)
+{
+	CHECK_PARAM(msg->has_label || msg->has_language || msg->has_use_passphrase || msg->has_homescreen,
+				_("No setting provided"));
+
+	CHECK_PIN
+
+	if (msg->has_label && strlen(msg->label)) {
+		layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"), _("change name to"), msg->label, "?", NULL, NULL);
+		if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) {
+			fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
+			layoutHome();
+			return;
+		}
+	}
+	if (msg->has_language && strlen(msg->label)) {
+		layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"), _("change language to"), msg->language, "?", NULL, NULL);
+		if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) {
+			fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
+			layoutHome();
+			return;
+		}
+	}
+	if (msg->has_use_passphrase) {
+		layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"), msg->use_passphrase ? _("enable passphrase") : _("disable passphrase"), _("protection?"), NULL, NULL, NULL);
+		if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) {
+			fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
+			layoutHome();
+			return;
+		}
+	}
+	if (msg->has_homescreen) {
+		layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"), _("change the home"), _("screen?"), NULL, NULL, NULL);
+		if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) {
+			fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
+			layoutHome();
+			return;
+		}
+	}
+
+	if (msg->has_label) {
+		storage_setLabel(msg->label);
+	}
+	if (msg->has_language) {
+		storage_setLanguage(msg->language);
+	}
+	if (msg->has_use_passphrase) {
+		storage_setPassphraseProtection(msg->use_passphrase);
+	}
+	if (msg->has_homescreen) {
+		storage_setHomescreen(msg->homescreen.bytes, msg->homescreen.size);
+	}
+	storage_update();
+	fsm_sendSuccess(_("Settings applied"));
+	layoutHome();
+}
+
 void fsm_msgGetVersion(GetVersion *msg) {
 	(void)msg;
 	char str[50];
