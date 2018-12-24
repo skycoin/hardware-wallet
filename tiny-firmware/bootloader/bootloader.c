@@ -159,7 +159,7 @@ int main(void)
 	if (firmware_present() && unpressed) {
 
 		oledClear();
-		oledDrawBitmap(0, 0, &bmp_skycoin_logo64);
+		oledDrawBitmap(0, 0, &bmp_logo64);
 		oledRefresh();
 
 		uint8_t hash[32];
