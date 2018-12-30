@@ -29,6 +29,12 @@ sudo apt-get install protobuf-compiler python-protobuf golang-goprotobuf-dev
 
 We need to tell your kernel to use the [hidraw module](https://www.kernel.org/doc/Documentation/hid/hidraw.txt) to communicate with the hardware device. If you don't your kernel will treat the device as a mouse or a keyboard.
 
+#### Automatically
+
+Run `sudo ./prepare-sky-hw.sh`.
+
+#### Manually
+
 Create a file named 99-dev-kit.rules in your /etc/udev/rules.d/ folder and write this content in that file (*super user priviledges are required for this step*).
 
     ## 0483:df11 STMicroelectronics STM Device in DFU Mode
