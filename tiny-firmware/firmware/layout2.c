@@ -96,6 +96,13 @@ void layoutRawMessage(char* msg)
 	oledRefresh();
 }
 
+void layoutChineseRawMessage(char* msg)
+{
+	oledClear();
+	oledDrawBitmapStringCenter(OLED_HEIGHT/2, msg);
+	oledRefresh();
+}
+
 void layoutHome(void)
 {
 	if (layoutLast == layoutHome || layoutLast == layoutScreensaver) {

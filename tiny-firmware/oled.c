@@ -24,6 +24,7 @@
 
 #include "oled.h"
 #include "util.h"
+#include "chinese_bitmap.h"
 
 #define OLED_SETCONTRAST		0x81
 #define OLED_DISPLAYALLON_RESUME	0xA4
@@ -298,6 +299,30 @@ int oledStringWidth(const char *text, int font) {
 	return l;
 }
 
+uint32_t oledGetUTF8(const uint8_t *text) {
+	return (*(uint8_t*)(&text[0]) << 16) + (*(uint8_t*)(&text[1]) << 8) + (*(uint8_t*)(&text[2]));
+}
+
+void oledDrawBitmapText(int x, int y, const char* text)
+{
+	if (!text) return;
+	int l = 0;
+	for (uint8_t j = 0; j < strlen(text); j += 3) {
+		uint32_t c = oledGetUTF8((const uint8_t*)&text[j]);
+		for (uint8_t i = 0; i < CNBITMAPLEN; ++i) {
+			if (chinese_bitmap[i].index == c) {
+					BITMAP b;
+					b.width = 16;
+					b.height = 16;
+					b.data = chinese_bitmap[i].data;
+					oledDrawBitmap(x + l, y, &b);
+					l += b.width + 1;
+					break;
+			}
+		}
+	}
+}
+
 void oledDrawString(int x, int y, const char* text, int font)
 {
 	if (!text) return;
@@ -310,6 +335,12 @@ void oledDrawString(int x, int y, const char* text, int font)
 			l += size * (fontCharWidth(font & 0x7f, c) + 1);
 		}
 	}
+}
+
+void oledDrawBitmapStringCenter(int y, const char* text)
+{
+	int x = ( OLED_WIDTH - strlen(text) / 3 * 16 ) / 2;
+	oledDrawBitmapText(x, y, text);
 }
 
 void oledDrawStringCenter(int y, const char* text, int font)

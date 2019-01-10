@@ -55,5 +55,7 @@ void oledHLine(int y);
 void oledFrame(int x1, int y1, int x2, int y2);
 void oledSwipeLeft(void);
 void oledSwipeRight(void);
+void oledDrawBitmapText(int x, int y, const char* text);
+void oledDrawBitmapStringCenter(int y, const char* text);
 
 #endif

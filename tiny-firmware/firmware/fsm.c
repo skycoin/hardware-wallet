@@ -237,6 +237,7 @@ void fsm_msgGetVersion(GetVersion *msg) {
 	(void)msg;
 	char str[50];
 	sprintf(str, "Firmware Version %d.%d.%d", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH);
+	layoutChineseRawMessage("你好世界");
 	fsm_sendSuccess(str);
 }
 

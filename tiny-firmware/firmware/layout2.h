@@ -38,6 +38,7 @@ void layoutDialogSwipe(const BITMAP *icon, const char *btnNo, const char *btnYes
 void layoutProgressSwipe(const char *desc, int permil);
 
 void layoutRawMessage(char* msg);
+void layoutChineseRawMessage(char* msg);
 void layoutScreensaver(void);
 void layoutHome(void);
 void layoutSignMessage(const uint8_t *msg, uint32_t len);

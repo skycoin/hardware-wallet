@@ -21,6 +21,7 @@ OBJS += util.o
 OBJS += memory.o
 OBJS += gen/bitmaps.o
 OBJS += gen/fonts.o
+OBJS += chinese-bitmaps/chinese_bitmap.o
 #end libtrezor.a
 
 ifneq ($(EMULATOR),1)
@@ -37,6 +38,7 @@ CFLAGS += -DDEBUG_LINK=$(DEBUG_LINK)
 CFLAGS += -DDEBUG_LOG=$(DEBUG_LOG)
 
 INC+=-Ifirmware
+INC+=-Ichinese-bitmaps
 CFLAGS += -I. $(INC)
 
 OBJS += $(TOP_DIR)vendor/nanopb/pb_common.o
