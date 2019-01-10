@@ -1,6 +1,6 @@
 # Skycoin electronic wallet firmware
 
-This firmware had been copied and modified from [trezor-mcu](https://github.com/trezor/trezor-mcu). Please refer to the [README.md file](https://github.com/trezor/trezor-mcu/blob/master/README.md) on that repository for extra details about bootloader and firmware compilation.
+This firmware had been copied and modified from [trezor-mcu](https://github.com/trezor/trezor-mcu) under the GNU LGPL. Please refer to the [README.md file](https://github.com/trezor/trezor-mcu/blob/master/README.md) on that repository for extra details about bootloader and firmware compilation.
 
 This code aims at tranforming the cipher library from [this repository](https://github.com/skycoin/skycoin/tree/develop/src/cipher) into firmware for the STM32 hardware.
 
