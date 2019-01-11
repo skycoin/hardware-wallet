@@ -11,6 +11,7 @@ clean:
 	rm -f tiny-firmware/bootloader/combine/bl.bin
 	rm -f tiny-firmware/bootloader/combine/fw.bin
 	rm -f tiny-firmware/bootloader/combine/combined.bin
+	rm -f tiny-firmware/bootloader/libskycoin-crypto.so
 
 build-deps:
 	make -C tiny-firmware/vendor/nanopb/generator/proto/
