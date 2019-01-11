@@ -1,4 +1,5 @@
 NAME  = bootloader
+BOOTLOADER = 1
 
 #libtrezor.a
 OBJS += ../startup.o
@@ -44,6 +45,8 @@ else
 CFLAGS += -DSIGNATURE_PROTECT=0
 endif
 
+CFLAGS += -DBOOTLOADER
+
 ifeq ($(SIGNATURE_DEBUG),1)
 CFLAGS += -DSIGNATURE_DEBUG=1
 else
@@ -55,7 +58,6 @@ LDSCRIPT = bootloader-memory.ld
 LDLIBS   += -lopencm3_stm32f2
 
 include ../Makefile.include
-
 
 align: $(NAME).bin
 	./firmware_align.py $(NAME).bin

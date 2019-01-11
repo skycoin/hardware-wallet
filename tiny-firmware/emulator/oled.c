@@ -113,7 +113,7 @@ void emulatorPoll(void) {
 
 	if (SDL_PollEvent(&event)) {
 		if (event.type == SDL_QUIT) {
-			exit(1);
+			exit(0);
 		}
 	}
 }

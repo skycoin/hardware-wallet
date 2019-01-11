@@ -41,8 +41,8 @@ matrix:
       - make
       - ./test_skycoin_crypto
       - make clean
-      - cd ../tiny-firmware
-      - export EMULATOR=1 ; ./make_firmware.sh
-      - export EMULATOR=0 ; make clean
-      - cd bootloader && ./prepare_signature.sh ; cd ..
-      - ./make_firmware.sh
+      - cd ../
+      - make emulator
+      - make clean
+      - make full-firmware
+      - md5sum tiny-firmware/bootloader/combine/*.bin

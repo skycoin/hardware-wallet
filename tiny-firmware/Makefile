@@ -18,8 +18,10 @@ OBJS += layout.o
 OBJS += oled.o
 OBJS += rng.o
 OBJS += util.o
+ifneq ($(BOOTLOADER),1)
 OBJS += memory.o
 OBJS += gen/bitmaps.o
+endif
 OBJS += gen/fonts.o
 #end libtrezor.a
 
@@ -89,6 +91,8 @@ ifeq ($(REVERSE_SCREEN),1)
 CFLAGS   += -DREVERSE_SCREEN=1
 endif
 
+CFLAGS   += -frandom-seed=123
+
 ifeq ($(EMULATOR),1)
 CFLAGS   += -DEMULATOR=1
 
@@ -108,8 +112,11 @@ LDLIBS   += -lSDL2
 endif
 endif
 
+ifneq ($(EMULATOR),1)
 NAME  = skycoin
-
+else
+NAME = skycoin-emulator
+endif
 
 ifneq ($(EMULATOR),1)
 .PHONY: proto libopencm3

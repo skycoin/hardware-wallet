@@ -107,7 +107,9 @@ extern uint8_t *emulator_flash_base;
 #define FLASH_CODE_SECTOR_FIRST	4
 #define FLASH_CODE_SECTOR_LAST	7
 
+#ifdef BOOTLOADER
 void memory_protect(void);
+#endif
 void memory_write_unlock(void);
 int memory_bootloader_hash(uint8_t *hash);
 
