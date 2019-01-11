@@ -34,7 +34,6 @@ tiny-firmware/bootloader/libskycoin-crypto.so:
 	make -C skycoin-api clean
 
 sign: tiny-firmware/bootloader/libskycoin-crypto.so firmware
-	cd tiny-firmware/bootloader/
 	tiny-firmware/bootloader/firmware_sign.py -s -f tiny-firmware/skycoin.bin
 
 full-firmware: bootloader firmware 

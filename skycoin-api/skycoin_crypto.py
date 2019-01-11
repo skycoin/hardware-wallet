@@ -1,9 +1,12 @@
 from ctypes import cdll, c_char_p, c_uint32, c_size_t, byref, addressof, create_string_buffer
 import binascii
+import os
+
+dir_path = os.path.dirname(os.path.realpath(__file__))
 
 class SkycoinCrypto(object):
     def __init__(self):
-        self.lib = cdll.LoadLibrary('./libskycoin-crypto.so')
+        self.lib = cdll.LoadLibrary(dir_path + '/libskycoin-crypto.so')
 
     def EcdsaSkycoinSign(self, digest, seckey, seed=1):
         signature = create_string_buffer(65)
