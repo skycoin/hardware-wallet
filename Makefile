@@ -12,11 +12,12 @@ clean:
 	rm -f tiny-firmware/bootloader/combine/fw.bin
 	rm -f tiny-firmware/bootloader/combine/combined.bin
 
-firmware-deps:
-	make -C tiny-firmware/vendor/libopencm3/
+build-deps:
 	make -C tiny-firmware/vendor/nanopb/generator/proto/
 	make -C tiny-firmware/protob/
 
+firmware-deps: build-deps
+	make -C tiny-firmware/vendor/libopencm3/
 
 bootloader: firmware-deps
 	SIGNATURE_PROTECT=1 REVERSE_BUTTONS=1 make -C tiny-firmware/bootloader/ align
@@ -32,7 +33,7 @@ full-firmware: firmware bootloader
 	cp tiny-firmware/skycoin.bin tiny-firmware/bootloader/combine/fw.bin
 	cd tiny-firmware/bootloader/combine/ ; /usr/bin/python prepare.py 
 
-emulator:
+emulator: build-deps
 	EMULATOR=1 make -C tiny-firmware/emulator/
 	EMULATOR=1 make -C tiny-firmware/
 	mv tiny-firmware/skycoin-emulator.elf emulator
