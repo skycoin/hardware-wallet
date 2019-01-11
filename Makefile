@@ -25,7 +25,12 @@ bootloader: firmware-deps
 firmware: firmware-deps
 	REVERSE_BUTTONS=1 make -C tiny-firmware/ sign
 
-sign: firmware
+prepare-sign:
+	make -C skycoin-api libskycoin-crypto.so
+	cp skycoin-api/libskycoin-crypto.so tiny-firmware/bootloader/
+	make -C skycoin-api clean
+
+sign: prepare-sign firmware
 	python tiny-firmware/bootloader/firmware_sign.py -s -f tiny-firmware/skycoin.bin
 
 full-firmware: firmware bootloader
