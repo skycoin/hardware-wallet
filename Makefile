@@ -37,7 +37,7 @@ sign: tiny-firmware/bootloader/libskycoin-crypto.so firmware
 	cd tiny-firmware/bootloader/
 	tiny-firmware/bootloader/firmware_sign.py -s -f tiny-firmware/skycoin.bin
 
-full-firmware: firmware bootloader
+full-firmware: bootloader firmware 
 	cp tiny-firmware/bootloader/bootloader.bin tiny-firmware/bootloader/combine/bl.bin
 	cp tiny-firmware/skycoin.bin tiny-firmware/bootloader/combine/fw.bin
 	cd tiny-firmware/bootloader/combine/ ; /usr/bin/python prepare.py 
