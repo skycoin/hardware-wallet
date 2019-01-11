@@ -12,7 +12,7 @@ clean:
 	rm -f tiny-firmware/bootloader/combine/fw.bin
 	rm -f tiny-firmware/bootloader/combine/combined.bin
 	rm -f tiny-firmware/bootloader/libskycoin-crypto.so
-	rm -f bootloader-memory-protected.bin  bootloader-no-memory-protect.bin  full-firmware-no-mem-protect.bin
+	rm -f bootloader-memory-protected.bin  bootloader-no-memory-protect.bin  full-firmware-no-mem-protect.bin full-firmware-memory-protected.bin
 
 build-deps:
 	make -C tiny-firmware/vendor/nanopb/generator/proto/
