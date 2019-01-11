@@ -19,7 +19,7 @@ firmware-deps:
 
 
 bootloader: firmware-deps
-	REVERSE_BUTTONS=1 make -C tiny-firmware/bootloader/ align
+	SIGNATURE_PROTECT=1 REVERSE_BUTTONS=1 make -C tiny-firmware/bootloader/ align
 
 firmware: firmware-deps
 	REVERSE_BUTTONS=1 make -C tiny-firmware/ sign

@@ -17,6 +17,10 @@ There is also a [javascript API](https://github.com/skycoin/hardware-wallet-js/)
 
 Follow up [the wiki](https://github.com/skycoin/hardware-wallet/wiki/Hardware-wallet-project-advancement) to keep track of project advancement.
 
+## Install tools
+
+Follow the instructions written on [tiny-firware/README.md](https://github.com/skycoin/hardware-wallet/blob/master/tiny-firmware/README.md)
+
 ## Build instructions:
 
 ### Build and run emulator
