@@ -91,6 +91,8 @@ ifeq ($(REVERSE_SCREEN),1)
 CFLAGS   += -DREVERSE_SCREEN=1
 endif
 
+CFLAGS   += -frandom-seed=123
+
 ifeq ($(EMULATOR),1)
 CFLAGS   += -DEMULATOR=1
 
