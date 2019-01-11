@@ -24,6 +24,7 @@ bootloader: firmware-deps
 	rm -f tiny-firmware/memory.o tiny-firmware/gen/bitmaps.o # Force rebuild of these two files
 	SIGNATURE_PROTECT=1 REVERSE_BUTTONS=1 make -C tiny-firmware/bootloader/ align
 
+
 firmware: firmware-deps
 	rm -f tiny-firmware/memory.o tiny-firmware/gen/bitmaps.o # Force rebuild of these two files
 	REVERSE_BUTTONS=1 make -C tiny-firmware/ sign
@@ -34,7 +35,10 @@ tiny-firmware/bootloader/libskycoin-crypto.so:
 	cp skycoin-api/libskycoin-crypto.so tiny-firmware/bootloader/
 	make -C skycoin-api clean
 
-sign: tiny-firmware/bootloader/libskycoin-crypto.so firmware
+tiny-firmware/skycoin.bin:
+	make firmware
+
+sign: tiny-firmware/bootloader/libskycoin-crypto.so tiny-firmware/skycoin.bin
 	tiny-firmware/bootloader/firmware_sign.py -s -f tiny-firmware/skycoin.bin
 
 full-firmware: bootloader firmware 
