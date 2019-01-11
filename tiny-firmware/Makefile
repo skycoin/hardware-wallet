@@ -108,8 +108,11 @@ LDLIBS   += -lSDL2
 endif
 endif
 
+ifneq ($(EMULATOR),1)
 NAME  = skycoin
-
+else
+NAME = skycoin-emulator
+endif
 
 ifneq ($(EMULATOR),1)
 .PHONY: proto libopencm3
