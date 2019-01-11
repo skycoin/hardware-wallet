@@ -45,3 +45,4 @@ matrix:
       - make emulator
       - make clean
       - make full-firmware
+      - md5sum tiny-firmware/bootloader/combine/*.bin
