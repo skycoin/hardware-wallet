@@ -20,9 +20,11 @@ firmware-deps: build-deps
 	make -C tiny-firmware/vendor/libopencm3/
 
 bootloader: firmware-deps
+	rm -f tiny-firmware/memory.o tiny-firmware/gen/bitmaps.o # Force rebuild of these two files
 	SIGNATURE_PROTECT=1 REVERSE_BUTTONS=1 make -C tiny-firmware/bootloader/ align
 
 firmware: firmware-deps
+	rm -f tiny-firmware/memory.o tiny-firmware/gen/bitmaps.o # Force rebuild of these two files
 	REVERSE_BUTTONS=1 make -C tiny-firmware/ sign
 
 tiny-firmware/bootloader/libskycoin-crypto.so:

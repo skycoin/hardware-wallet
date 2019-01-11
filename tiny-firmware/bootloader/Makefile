@@ -1,4 +1,5 @@
 NAME  = bootloader
+BOOTLOADER = 1
 
 #libtrezor.a
 OBJS += ../startup.o
@@ -57,7 +58,6 @@ LDSCRIPT = bootloader-memory.ld
 LDLIBS   += -lopencm3_stm32f2
 
 include ../Makefile.include
-
 
 align: $(NAME).bin
 	./firmware_align.py $(NAME).bin

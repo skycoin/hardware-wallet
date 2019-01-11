@@ -25,6 +25,7 @@
 #define FLASH_OPTION_BYTES_1 (*(const uint64_t *)0x1FFFC000)
 #define FLASH_OPTION_BYTES_2 (*(const uint64_t *)0x1FFFC008)
 
+#ifdef BOOTLOADER
 void memory_protect(void)
 {
 #if MEMORY_PROTECT
@@ -48,6 +49,7 @@ void memory_protect(void)
 	flash_lock_option_bytes();
 #endif
 }
+#endif
 
 int memory_bootloader_hash(uint8_t *hash)
 {

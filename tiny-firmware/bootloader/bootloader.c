@@ -34,6 +34,7 @@
 #include "serialno.h"
 #include "rng.h"
 
+
 void layoutFirmwareHash(const uint8_t *hash)
 {
 	char str[4][17];

@@ -18,8 +18,10 @@ OBJS += layout.o
 OBJS += oled.o
 OBJS += rng.o
 OBJS += util.o
+ifneq ($(BOOTLOADER),1)
 OBJS += memory.o
 OBJS += gen/bitmaps.o
+endif
 OBJS += gen/fonts.o
 #end libtrezor.a
 
