@@ -35,6 +35,16 @@ make run-emulator
 make bootloader # Your firmware is tiny-firmware/bootloader/bootloader.bin
 ```
 
+### Build a bootloader with memory protection enabled
+
+Careful if you flash and run that bootloader on the device it will activate a memory protection that will close access to flash memory.
+
+You won't be able to flash your device with an st-link again.
+
+```
+make bootloader-mem-protect
+```
+
 ### Build a firmware
 
 ```
@@ -50,5 +60,15 @@ make sign # Your firmware is tiny-firmware/skycoin.bin
 ### Combine bootloader and firmware
 
 ```
-make full-firmware # this will create a tiny-firmware/bootloader/combine/combined.bin file
+make full-firmware # this will create a full-firmware-no-mem-protect.bin file
+```
+
+### Combine a memory protected bootloader and firmware
+
+Careful if you flash and run that bootloader on the device it will activate a memory protection that will close access to flash memory.
+
+You won't be able to flash your device with an st-link again.
+
+```
+make full-firmware-mem-protect
 ```
