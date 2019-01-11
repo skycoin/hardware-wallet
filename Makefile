@@ -53,7 +53,7 @@ full-firmware-mem-protect:
 	cp bootloader-memory-protected.bin tiny-firmware/bootloader/combine/bl.bin
 	cp tiny-firmware/skycoin.bin tiny-firmware/bootloader/combine/fw.bin
 	cd tiny-firmware/bootloader/combine/ ; /usr/bin/python prepare.py 
-	mv tiny-firmware/bootloader/combine/combined.bin full-firmware-no-mem-protect.bin
+	mv tiny-firmware/bootloader/combine/combined.bin full-firmware-memory-protected.bin
 
 full-firmware:
 	make bootloader

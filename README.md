@@ -32,7 +32,7 @@ make run-emulator
 ### Build a bootloader
 
 ```
-make bootloader # Your firmware is tiny-firmware/bootloader/bootloader.bin
+make bootloader # Your firmware is bootloader-no-memory-protect.bin
 ```
 
 ### Build a bootloader with memory protection enabled
@@ -42,7 +42,7 @@ Careful if you flash and run that bootloader on the device it will activate a me
 You won't be able to flash your device with an st-link again.
 
 ```
-make bootloader-mem-protect
+make bootloader-mem-protect # Your firmware is bootloader-memory-protected.bin
 ```
 
 ### Build a firmware
@@ -70,5 +70,5 @@ Careful if you flash and run that bootloader on the device it will activate a me
 You won't be able to flash your device with an st-link again.
 
 ```
-make full-firmware-mem-protect
+make full-firmware-mem-protect # this will create a full-firmware-memory-protected.bin file 
 ```
