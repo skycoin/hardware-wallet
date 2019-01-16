@@ -25,19 +25,31 @@ sudo apt-get install arm-none-eabi-gcc
 On Mac OS, after [installing homebrew](https://docs.brew.sh/Installation) it is recommended to install the toolchain like this
 
 ```sh
-brew tap simelo/homebrew-px4
+brew tap simelo/homebrew-skycoin
 brew update
 brew install gcc-arm-none-eabi-63
 ```
 
 ### Install ST-LINK
 
-Follow the steps [here](https://github.com/texane/stlink/blob/master/doc/compiling.md).
+[ST-LINK](https://github.com/texane/stlink) tool is needed to send JTAG commands to the Skycoin hardware wallet.
+Binaries are available for [installing ST-LINK using native package managers](https://github.com/texane/stlink#installation).
+If this option is not available for the platform of your preference then install from sources
+by following the steps [here](https://github.com/texane/stlink/blob/master/doc/compiling.md).
 
 ### Install google protobuf
 
+On GNU/Linux
+
 ```
 sudo apt-get install protobuf-compiler python-protobuf golang-goprotobuf-dev
+```
+
+On Mac OS
+
+```
+brew install protobuf --with-python
+go get -u github.com/golang/protobuf/{proto,protoc-gen-go}
 ```
 
 ### Configure your usb module
