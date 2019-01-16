@@ -31,9 +31,39 @@ bootloader-mem-protect: firmware-deps
 	MEMORY_PROTECT=1 SIGNATURE_PROTECT=1 REVERSE_BUTTONS=1 make -C tiny-firmware/bootloader/ align
 	mv tiny-firmware/bootloader/bootloader.bin bootloader-memory-protected.bin
 
+bootloader-clean:
+	make -C tiny-firmware/bootloader/ clean
+
+bootloader-release:
+	if [ -z $$( echo $(bootloader_version) | grep -P "^\d+\.\d+\.\d+$$" ) ]; then echo "Wrong firmware version format"; exit 1; fi
+	FIRMWARE_MAJOR=$$(echo $(bootloader_version) | awk -F '.' '{ print $$1 }'); \
+	FIRMWARE_MINOR=$$(echo $(bootloader_version) | awk -F '.' '{ print $$2 }'); \
+	FIRMWARE_PATCH=$$(echo $(bootloader_version) | awk -F '.' '{ print $$3 }'); \
+	VERSION_MAJOR=$$FIRMWARE_MAJOR VERSION_MINOR=$$FIRMWARE_MINOR VERSION_PATCH=$$FIRMWARE_PATCH make -C . bootloader ; \
+	mv bootloader-no-memory-protect.bin bootloader-$$FIRMWARE_MAJOR.$$FIRMWARE_MINOR.$$FIRMWARE_PATCH-no-memory-protect.bin
+
+bootloader-release-mem-protect:
+	if [ -z $$( echo $(bootloader_version) | grep -P "^\d+\.\d+\.\d+$$" ) ]; then echo "Wrong firmware version format"; exit 1; fi
+	FIRMWARE_MAJOR=$$(echo $(bootloader_version) | awk -F '.' '{ print $$1 }'); \
+	FIRMWARE_MINOR=$$(echo $(bootloader_version) | awk -F '.' '{ print $$2 }'); \
+	FIRMWARE_PATCH=$$(echo $(bootloader_version) | awk -F '.' '{ print $$3 }'); \
+	VERSION_MAJOR=$$FIRMWARE_MAJOR VERSION_MINOR=$$FIRMWARE_MINOR VERSION_PATCH=$$FIRMWARE_PATCH make -C . bootloader-mem-protect ; \
+	mv bootloader-memory-protected.bin bootloader-$$FIRMWARE_MAJOR.$$FIRMWARE_MINOR.$$FIRMWARE_PATCH-mem-protect.bin
+
 firmware: firmware-deps
 	rm -f tiny-firmware/memory.o tiny-firmware/gen/bitmaps.o # Force rebuild of these two files
 	REVERSE_BUTTONS=1 make -C tiny-firmware/ sign
+
+firmware-clean:
+	make -C tiny-firmware/ clean
+
+firmware-release:
+	if [ -z $$( echo $(firmware_version) | grep -P "^\d+\.\d+\.\d+$$" ) ]; then echo "Wrong firmware version format"; exit 1; fi
+	FIRMWARE_MAJOR=$$(echo $(firmware_version) | awk -F '.' '{ print $$1 }'); \
+	FIRMWARE_MINOR=$$(echo $(firmware_version) | awk -F '.' '{ print $$2 }'); \
+	FIRMWARE_PATCH=$$(echo $(firmware_version) | awk -F '.' '{ print $$3 }'); \
+	VERSION_MAJOR=$$FIRMWARE_MAJOR VERSION_MINOR=$$FIRMWARE_MINOR VERSION_PATCH=$$FIRMWARE_PATCH make -C . firmware ; \
+	mv tiny-firmware/skycoin.bin skycoin-$$FIRMWARE_MAJOR.$$FIRMWARE_MINOR.$$FIRMWARE_PATCH.bin
 
 tiny-firmware/bootloader/libskycoin-crypto.so:
 	make -C skycoin-api clean
@@ -73,7 +103,3 @@ run-emulator: emulator
 
 st-skycoin:
 	cd tiny-firmware/bootloader/combine/; st-flash write combined.bin 0x08000000
-
-release: $(firmware_version) $(bootloader_version)
-	echo "Firmware version: $(firmware_version)"
-	echo "Bootloader version: $(bootloader_version)"
