@@ -1,7 +1,14 @@
-APPVER = 1.0.0
-
 #libtrezor.a
 ifneq ($(EMULATOR),1)
+APPVER=$(shell ./firmware_version.sh)
+ifeq ($(APPVER),)
+APPVER="unknow"
+endif
+ifeq ($(APPVER),"unknow")
+$(warning firmware version $(APPVER)...)
+else
+$(info firmware version $(APPVER)...)
+endif
 CFLAGS += -DAPPVER=$(APPVER)
 OBJS += startup.o
 OBJS += timer.o
