@@ -73,3 +73,7 @@ run-emulator: emulator
 
 st-skycoin:
 	cd tiny-firmware/bootloader/combine/; st-flash write combined.bin 0x08000000
+
+release: $(firmware_version) $(bootloader_version)
+	echo "Firmware version: $(firmware_version)"
+	echo "Bootloader version: $(bootloader_version)"
