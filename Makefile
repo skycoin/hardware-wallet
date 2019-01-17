@@ -87,6 +87,29 @@ combined-release:
 	FIRMWARE_PATCH=$$(echo $(firmware_version) | awk -F '.' '{ print $$3 }'); \
 	mv tiny-firmware/bootloader/combine/combined.bin bootloader-$$BOOTLOADER_MAJOR.$$BOOTLOADER_MINOR.$$BOOTLOADER_PATCH-firmware-$$FIRMWARE_MAJOR.$$FIRMWARE_MINOR.$$FIRMWARE_PATCH-no-memory-protect.bin
 
+combined-release-mem-protect:
+	if [ -z $$( echo $(bootloader_version) | egrep "^[0-9]+\.[0-9]+\.[0-9]+$$" ) ]; then echo "Wrong firmware version format"; exit 1; fi ; \
+	BOOTLOADER_MAJOR=$$(echo $(bootloader_version) | awk -F '.' '{ print $$1 }'); \
+	BOOTLOADER_MINOR=$$(echo $(bootloader_version) | awk -F '.' '{ print $$2 }'); \
+	BOOTLOADER_PATCH=$$(echo $(bootloader_version) | awk -F '.' '{ print $$3 }'); \
+	make bootloader-release-mem-protect bootloader_version=$$BOOTLOADER_MAJOR.$$BOOTLOADER_MINOR.$$BOOTLOADER_PATCH ; \
+	cp bootloader-$$BOOTLOADER_MAJOR.$$BOOTLOADER_MINOR.$$BOOTLOADER_PATCH-mem-protect.bin tiny-firmware/bootloader/combine/bl.bin
+	if [ -z $$( echo $(firmware_version) | egrep "^[0-9]+\.[0-9]+\.[0-9]+$$" ) ]; then echo "Wrong firmware version format"; exit 1; fi ; \
+	FIRMWARE_MAJOR=$$(echo $(firmware_version) | awk -F '.' '{ print $$1 }'); \
+	FIRMWARE_MINOR=$$(echo $(firmware_version) | awk -F '.' '{ print $$2 }'); \
+	FIRMWARE_PATCH=$$(echo $(firmware_version) | awk -F '.' '{ print $$3 }'); \
+	make firmware-release firmware_version=$$FIRMWARE_MAJOR.$$FIRMWARE_MINOR.$$FIRMWARE_PATCH; \
+	cp skycoin-$$FIRMWARE_MAJOR.$$FIRMWARE_MINOR.$$FIRMWARE_PATCH.bin tiny-firmware/bootloader/combine/fw.bin
+	cd tiny-firmware/bootloader/combine/ ; /usr/bin/python prepare.py
+	BOOTLOADER_MAJOR=$$(echo $(bootloader_version) | awk -F '.' '{ print $$1 }'); \
+	BOOTLOADER_MINOR=$$(echo $(bootloader_version) | awk -F '.' '{ print $$2 }'); \
+	BOOTLOADER_PATCH=$$(echo $(bootloader_version) | awk -F '.' '{ print $$3 }'); \
+	FIRMWARE_MAJOR=$$(echo $(firmware_version) | awk -F '.' '{ print $$1 }'); \
+	FIRMWARE_MINOR=$$(echo $(firmware_version) | awk -F '.' '{ print $$2 }'); \
+	FIRMWARE_PATCH=$$(echo $(firmware_version) | awk -F '.' '{ print $$3 }'); \
+	mv tiny-firmware/bootloader/combine/combined.bin bootloader-$$BOOTLOADER_MAJOR.$$BOOTLOADER_MINOR.$$BOOTLOADER_PATCH-firmware-$$FIRMWARE_MAJOR.$$FIRMWARE_MINOR.$$FIRMWARE_PATCH-mem-protect.bin
+
+
 tiny-firmware/bootloader/libskycoin-crypto.so:
 	make -C skycoin-api clean
 	make -C skycoin-api libskycoin-crypto.so
