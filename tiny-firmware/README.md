@@ -25,9 +25,7 @@ sudo apt-get install arm-none-eabi-gcc
 On Mac OS, after [installing homebrew](https://docs.brew.sh/Installation) it is recommended to install the toolchain like this
 
 ```sh
-brew tap simelo/homebrew-px4
-brew update
-brew install gcc-arm-none-eabi-63
+brew cask install gcc-arm-embedded
 ```
 
 ### Install ST-LINK
