@@ -39,7 +39,7 @@ by following the steps [here](https://github.com/texane/stlink/blob/master/doc/c
 
 ### Install google protobuf
 
-On GNU/Linux
+On Debian and Ubuntu GNU/Linux
 
 ```
 sudo apt-get install protobuf-compiler python-protobuf golang-goprotobuf-dev
@@ -51,6 +51,12 @@ On Mac OS
 brew install protobuf --with-python
 go get -u github.com/golang/protobuf/{proto,protoc-gen-go}
 ```
+
+If no binaries are available for your platform then
+
+- [Install Protobuf C++ runtime and protoc](https://github.com/protocolbuffers/protobuf/tree/master/src) from sources.
+- [Install Protobuf Python runtime](https://github.com/protocolbuffers/protobuf/tree/master/python#installation) from sources.
+- [Install Protobuf Go runtime](https://github.com/golang/protobuf#installation) from sources.
 
 ### Configure your usb module
 
