@@ -34,6 +34,12 @@ brew install gcc-arm-none-eabi-63
 
 [ST-LINK](https://github.com/texane/stlink) tool is needed to send JTAG commands to the Skycoin hardware wallet.
 Binaries are available for [installing ST-LINK using native package managers](https://github.com/texane/stlink#installation).
+For instance, on Mac OS X the following command will install `stlink` and its dependencies.
+
+```
+brew install stlink
+```
+
 If this option is not available for the platform of your preference then install from sources
 by following the steps [here](https://github.com/texane/stlink/blob/master/doc/compiling.md).
 
