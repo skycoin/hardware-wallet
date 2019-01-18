@@ -19,7 +19,7 @@ On GNU/Linux it is possible to download the official compressed tarball, extract
 Some distributions offer binary installation packages . For instance, on Ubuntu>=14.04
 
 ```sh
-sudo apt-get install arm-none-eabi-gcc
+sudo apt-get install gcc-arm-none-eabi
 ```
 
 On Mac OS, after [installing homebrew](https://docs.brew.sh/Installation) it is recommended to install the toolchain like this
