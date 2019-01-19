@@ -54,3 +54,8 @@ dkms.conf
 *.d
 test_skycoin_crypto
 *.pyc
+
+# Temporary files
+*.swp
+*.swo
+*.orig
