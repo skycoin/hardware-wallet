@@ -6,14 +6,27 @@ This code aims at tranforming the cipher library from [this repository](https://
 
 ## 1. Prepare environment
 
-### Download GNU ARM Embedded Toolchain
+### Download and install GNU ARM Embedded Toolchain
 
+On GNU/Linux it is possible to download the official compressed tarball, extract it , and add it to system `PATH` as follows
+
+```sh
     wget https://developer.arm.com/-/media/Files/downloads/gnu-rm/6-2017q2/gcc-arm-none-eabi-6-2017-q2-update-linux.tar.bz2
-
-### Extract crosscompiler and add it to your path
-
     tar xjf gcc-arm-none-eabi-6-2017-q2-update-linux.tar.bz2
     export PATH="$PWD/gcc-arm-none-eabi-6-2017-q2-update/bin:$PATH"
+```
+
+Some distributions offer binary installation packages . For instance, on Ubuntu>=14.04
+
+```sh
+sudo apt-get install arm-none-eabi-gcc
+```
+
+On Mac OS, after [installing homebrew](https://docs.brew.sh/Installation) it is recommended to install the toolchain like this
+
+```sh
+brew cask install gcc-arm-embedded
+```
 
 ### Install ST-LINK
 
