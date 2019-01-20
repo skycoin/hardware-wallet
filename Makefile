@@ -27,12 +27,12 @@ build-deps: ## Build common dependencies (protob, nenopb)
 firmware-deps: build-deps ## Build firmware dependencies
 	make -C tiny-firmware/vendor/libopencm3/
 
-bootloader: firmware-deps ## Build bootloader
+bootloader: firmware-deps ## Build bootloader (RDP level 0)
 	rm -f tiny-firmware/memory.o tiny-firmware/gen/bitmaps.o # Force rebuild of these two files
 	SIGNATURE_PROTECT=1 REVERSE_BUTTONS=1 make -C tiny-firmware/bootloader/ align
 	mv tiny-firmware/bootloader/bootloader.bin bootloader-no-memory-protect.bin
 
-bootloader-mem-protect: firmware-deps ## Build bootloader  
+bootloader-mem-protect: firmware-deps ## Build bootloader (RDP level 2)
 	rm -f tiny-firmware/memory.o tiny-firmware/gen/bitmaps.o # Force rebuild of these two files
 	MEMORY_PROTECT=1 SIGNATURE_PROTECT=1 REVERSE_BUTTONS=1 make -C tiny-firmware/bootloader/ align
 	mv tiny-firmware/bootloader/bootloader.bin bootloader-memory-protected.bin
@@ -54,16 +54,16 @@ tiny-firmware/skycoin.bin: firmware-deps
 sign: tiny-firmware/bootloader/libskycoin-crypto.so tiny-firmware/skycoin.bin ## Sign wallet firmware
 	tiny-firmware/bootloader/firmware_sign.py -s -f tiny-firmware/skycoin.bin
 
-full-firmware-mem-protect: bootloader-mem-protect firmware ## Build full firmware (no mem protect)
+full-firmware-mem-protect: bootloader-mem-protect firmware ## Build full firmware (RDP level 2)
 	cp bootloader-memory-protected.bin tiny-firmware/bootloader/combine/bl.bin
 	cp tiny-firmware/skycoin.bin tiny-firmware/bootloader/combine/fw.bin
-	cd tiny-firmware/bootloader/combine/ ; /usr/bin/python prepare.py 
+	cd tiny-firmware/bootloader/combine/ ; /usr/bin/python prepare.py
 	mv tiny-firmware/bootloader/combine/combined.bin full-firmware-memory-protected.bin
 
-full-firmware: bootloader firmware ## Build full firmware (no mem protect)
+full-firmware: bootloader firmware ## Build full firmware (RDP level 0)
 	cp bootloader-no-memory-protect.bin tiny-firmware/bootloader/combine/bl.bin
 	cp tiny-firmware/skycoin.bin tiny-firmware/bootloader/combine/fw.bin
-	cd tiny-firmware/bootloader/combine/ ; /usr/bin/python prepare.py 
+	cd tiny-firmware/bootloader/combine/ ; /usr/bin/python prepare.py
 	mv tiny-firmware/bootloader/combine/combined.bin full-firmware-no-mem-protect.bin
 
 emulator: build-deps ## Build emulator
