@@ -30,8 +30,10 @@ CFLAGS   += $(OPTFLAGS) \
             -Wformat-security \
             -Werror
 
-TESTINC=-I$(CHECK_PATH)/src
-TESTINC+=-I$(CHECK_PATH)
+ifneq ($(CHECK_PATH),)
+	TESTINC=-isystem $(CHECK_PATH)/src
+	TESTINC+=-isystem $(CHECK_PATH)
+endif
 INC=-I$(TOOLS_DIR)
 CFLAGS += -I$(MKFILE_DIR) $(INC)
 
@@ -46,7 +48,7 @@ OBJS   = $(SRCS:.c=.o)
 	$(CC) $(CFLAGS) -o $@ -c $<
 
 LIBS = -L/usr/local/lib/ -lm -lrt
-TESTLIBS = -L$(CHECK_PATH)/src -lcheck 
+TESTLIBS = -L$(CHECK_PATH)/src -lcheck
 
 all: test_skycoin_crypto
 
