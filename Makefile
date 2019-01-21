@@ -4,8 +4,15 @@
 .PHONY: firmware sign full-firmware-mem-protect full-firmware
 .PHONY: emulator run-emulator st-flash
 
-install-linters: ## Install code quality chacking tools
+UNAME_S = $(shell uname -s)
+
+install-linters-Darwin:
+	brew install yamllint
+
+install-linters-Linux:
 	pip install --user yamllint
+
+install-linters: install-linters-$(UNAME_S) ## Install code quality chacking tools
 
 lint: ## Check code quality
 	yamllint -d relaxed .travis.yml

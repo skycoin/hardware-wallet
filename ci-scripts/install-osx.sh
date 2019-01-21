@@ -2,8 +2,9 @@
 
 brew tap skycoin/homebrew-skycoin
 
-# Install libcheck check C testing framework
-brew install check \
+brew install \
+  # Install libcheck check C testing framework
+  check \
   # Install build tools
   # TODO: Install tools in Debian's build-essentials ?
   curl unzip git python gcc-arm-none-eabi \
