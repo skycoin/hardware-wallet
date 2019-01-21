@@ -7,7 +7,7 @@ brew install check
 
 # Install build tools
 # TODO: Install tools in Debian's build-essentials ?
-brew install  curl unzip git python gcc-arm-none-eabi \
+brew install md5sha1sum curl unzip git python gcc-arm-none-eabi \
 
 # Install SDL
 brew install  sdl2_image sdl2 mesa mesalib-glw
