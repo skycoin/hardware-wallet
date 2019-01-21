@@ -15,7 +15,7 @@ before_script:
   # install linters
   - make install-linters
   # Define env vars for Linux builds
-  - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then export CHECK_PATH=$PWD; fi
+  - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then export CHECK_PATH=$(abspath check-0.12.0); fi
   - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${CHECK_PATH}/src" ; fi
   - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then export PATH="$PATH:$PWD/protoc/bin" ; fi
   # Install OS-specific test and build dependencies
