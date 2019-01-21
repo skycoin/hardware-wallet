@@ -11,6 +11,8 @@ matrix:
     - os: osx
       env:
         - PROTOBUF_VERSION=3.6.1
+        # Include paths for brew packages e.g. SDL2
+        - CFLAGS="-I/usr/local/include -L/usr/local/lib"
 before_script:
   # install linters
   - make install-linters
