@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -x
+
 sudo apt-get update
 
 # Install libcheck check C testing framework
