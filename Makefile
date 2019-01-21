@@ -12,7 +12,7 @@ install-linters-Darwin:
 install-linters-Linux:
 	pip install --user yamllint
 
-install-linters: install-linters-$(UNAME_S) ## Install code quality chacking tools
+install-linters: install-linters-$(UNAME_S) ## Install code quality checking tools
 
 lint: ## Check code quality
 	yamllint -d relaxed .travis.yml

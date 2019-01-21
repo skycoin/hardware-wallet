@@ -3,6 +3,9 @@
 
 CC       ?= gcc
 
+MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
+MKFILE_DIR  := $(notdir $(patsubst %/,%,$(dir $(mkfile_path))))
+
 OPTFLAGS ?= -O3 -g -fPIC
 
 CFLAGS   += $(OPTFLAGS) \
@@ -28,8 +31,8 @@ CFLAGS   += $(OPTFLAGS) \
 
 TESTINC=-I$(CHECK_PATH)/src
 TESTINC+=-I$(CHECK_PATH)
-INC=-Itools/
-CFLAGS += -I. $(INC)
+INC=-I$(MKFILE_DIR)/tools/
+CFLAGS += -I$(MKFILE_DIR) $(INC)
 
 SRCS += skycoin_crypto.c
 SRCS += skycoin_check_signature.c
