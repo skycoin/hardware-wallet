@@ -3,7 +3,7 @@
 
 CC       ?= gcc
 
-MKFILE_PATH := $(shell abspath $(lastword $(MAKEFILE_LIST)))
+MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 MKFILE_DIR  := $(notdir $(patsubst %/,%,$(dir $(MKFILE_PATH))))
 TOOLS_DIR		:= $(MKFILE_DIR)/tools
 
