@@ -3,8 +3,9 @@
 
 CC       ?= gcc
 
-MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
+MKFILE_PATH := $(shell abspath $(lastword $(MAKEFILE_LIST)))
 MKFILE_DIR  := $(notdir $(patsubst %/,%,$(dir $(MKFILE_PATH))))
+TOOLS_DIR		:= $(MKFILE_DIR)/tools
 
 OPTFLAGS ?= -O3 -g -fPIC
 
@@ -31,13 +32,13 @@ CFLAGS   += $(OPTFLAGS) \
 
 TESTINC=-I$(CHECK_PATH)/src
 TESTINC+=-I$(CHECK_PATH)
-INC=-I$(MKFILE_DIR)/tools/
+INC=-I$(TOOLS_DIR)
 CFLAGS += -I$(MKFILE_DIR) $(INC)
 
 SRCS += skycoin_crypto.c
 SRCS += skycoin_check_signature.c
 SRCS += skycoin_check_signature_tools.c
-SRCS += $(shell ls tools/*.c)
+SRCS += $(shell ls $(TOOLS_DIR)/*.c)
 
 OBJS   = $(SRCS:.c=.o)
 
@@ -65,11 +66,11 @@ test: test_skycoin_crypto ## Run test suite for Skycoin cipher library for firmw
 	./test_skycoin_crypto
 
 clean: ## Delete all temporary files
-	rm -f *.o test_skycoin_crypto
-	rm -f *.so
-	rm -f tools/*.o
-	rm -f trezor-tools/*.o
-	rm -f *.a
+	rm -f $(MKFILE_DIR)/*.o test_skycoin_crypto
+	rm -f $(MKFILE_DIR)/*.so
+	rm -f $(TOOLS_DIR)/*.o
+	rm -f $(MKFILE_DIR)/trezor-tools/*.o
+	rm -f $(MKFILE_DIR)/*.a
 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
