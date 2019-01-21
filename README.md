@@ -72,3 +72,12 @@ You won't be able to flash your device with an st-link again.
 ```
 make full-firmware-mem-protect # this will create a full-firmware-memory-protected.bin file 
 ```
+
+### Create a release
+
+The following instruction creates a full firmware with:
+* firmware version: 1.1.0
+* bootloader version 1.2.0
+```bash
+make combined-release-mem-protect firmware_version=1.1.0 bootloader_version=1.2.0
+```
