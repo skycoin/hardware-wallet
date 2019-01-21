@@ -4,7 +4,7 @@
 CC       ?= gcc
 
 MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
-MKFILE_DIR  := $(notdir $(patsubst %/,%,$(dir $(mkfile_path))))
+MKFILE_DIR  := $(notdir $(patsubst %/,%,$(dir $(MKFILE_PATH))))
 
 OPTFLAGS ?= -O3 -g -fPIC
 
