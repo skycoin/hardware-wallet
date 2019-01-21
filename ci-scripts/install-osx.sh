@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 
 brew tap skycoin/homebrew-skycoin
 
