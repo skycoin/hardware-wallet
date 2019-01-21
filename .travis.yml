@@ -17,7 +17,7 @@ before_script:
   # Define env vars for Linux builds
   - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then export CHECK_PATH="$(pwd)/check-0.12.0"; fi
   - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${CHECK_PATH}/src" ; fi
-  - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then export PATH="$PATH:$PWD/protoc/bin" ; fi
+  - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then export PATH="$PATH:$(pwd)/protoc/bin" ; echo "PATH=$PATH" fi
   # Install OS-specific test and build dependencies
   - eval "./ci-scripts/install-${TRAVIS_OS_NAME}.sh"
   # Upgrade protobuf python
