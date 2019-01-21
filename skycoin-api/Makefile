@@ -3,7 +3,8 @@
 
 CC       ?= gcc
 
-MKFILE_DIR  := $(PWD)
+MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
+MKFILE_DIR  := $(dir $(MKFILE_PATH))
 TOOLS_DIR		:= $(MKFILE_DIR)/tools
 
 OPTFLAGS ?= -O3 -g -fPIC
