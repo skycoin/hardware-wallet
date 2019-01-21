@@ -9,12 +9,12 @@ brew install check
 
 # Install build tools
 # TODO: Install tools in Debian's build-essentials ?
-brew install md5sha1sum curl unzip git python gcc-arm-none-eabi
+brew install md5sha1sum curl unzip python gcc-arm-none-eabi
 
 # Install SDL
 brew install  sdl2_image sdl2 mesa mesalib-glw
 
 # Install protobuf
-brew install protobuf --with-python
+brew install protobuf
 brew install protobuf-c
 
