@@ -10,6 +10,7 @@ autoreconf --install
 ./configure
 make
 cp src/.libs/*.so* src
+cd -
 
 # Install build tools
 sudo apt-get install -y build-essential curl unzip git python3 python3-pip python-protobuf gcc-arm-none-eabi
