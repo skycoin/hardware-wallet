@@ -12,7 +12,7 @@ matrix:
       env:
         - PROTOBUF_VERSION=3.6.1
         # Include paths for brew packages e.g. SDL2
-        - CFLAGS="-I/usr/local/Cellar/sdl2/*/include/SDL2 -L/usr/local/Cellar/sdl2/*/lib"
+        - CFLAGS="-I/usr/local/Cellar/sdl2/*/include/SDL2"
 before_script:
   # install linters
   - make install-linters
