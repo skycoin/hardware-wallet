@@ -1,3 +1,6 @@
+.DEFAULT_GOAL := help
+.PHONY: test clean
+
 CC       ?= gcc
 
 OPTFLAGS ?= -O3 -g -fPIC
@@ -55,11 +58,16 @@ test_skycoin_crypto.o: test_skycoin_crypto.c
 test_skycoin_crypto: test_skycoin_crypto.o libskycoin-crypto.so
 	$(CC) test_skycoin_crypto.o $(OBJS) -L. -lskycoin-crypto $(LIBS) $(TESTLIBS) -o test_skycoin_crypto
 
+test: test_skycoin_crypto ## Run test suite for Skycoin cipher library for firmware
+	./test_skycoin_crypto
 
-
-clean:
+clean: ## Delete all temporary files
 	rm -f *.o test_skycoin_crypto
 	rm -f *.so
 	rm -f tools/*.o
 	rm -f trezor-tools/*.o
 	rm -f *.a
+
+help:
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
+

@@ -19,18 +19,15 @@ before_script:
   - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${CHECK_PATH}/src" ; fi
   - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then export PATH="$PATH:$PWD/protoc/bin" ; fi
   # Install OS-specific test and build dependencies
-  - eval "./ci-scripts/.install-${TRAVIS_OS_NAME}.sh"
+  - eval "./ci-scripts/install-${TRAVIS_OS_NAME}.sh"
   # Upgrade protobuf python
   - pip3 install --user --upgrade protobuf
   - pip3 install --user "protobuf==${PROTOBUF_VERSION}" ecdsa
   - pip install --user --upgrade protobuf
 script:
   - make lint
-  - cd skycoin-api
-  - make
-  - ./test_skycoin_crypto
-  - make clean
-  - cd ../
+  - make -C skycoin-api test
+  - make -C skycoin-api clean
   - make emulator
   - make clean
   - make full-firmware
