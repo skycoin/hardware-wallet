@@ -33,14 +33,14 @@ CFLAGS   += $(OPTFLAGS) \
 
 ifneq ($(CHECK_PATH),)
 ifeq ($(UNAME_S), Linux)
-	TESTINC=-isystem $(CHECK_PATH)/src
+	TESTINC+=-isystem $(CHECK_PATH)/src
 	TESTINC+=-isystem $(CHECK_PATH)
 endif
 ifeq ($(UNAME_S), Darwin)
-	TESTINC=-isystem $(CHECK_PATH)/include
+	TESTINC+=-isystem $(CHECK_PATH)/include
 endif
 endif
-INC=-I$(TOOLS_DIR)
+INC += -I$(TOOLS_DIR)
 CFLAGS += -I$(MKFILE_DIR) $(INC)
 
 SRCS += skycoin_crypto.c
@@ -54,12 +54,16 @@ OBJS   = $(SRCS:.c=.o)
 	$(CC) $(CFLAGS) -o $@ -c $<
 
 ifeq ($(UNAME_S), Linux)
-	LIBS=-L/usr/local/lib/ -lm -lrt
-	TESTLIBS=-L$(CHECK_PATH)/src -lcheck
+	LIBS+=-L/usr/local/lib/
+	LIBS+=-lm
+	LIBS+=-lrt
+	TESTLIBS+=-L$(CHECK_PATH)/src
+	TESTLIBS+=-lcheck
 endif
 ifeq ($(UNAME_S), Darwin)
-	LIBS=
-	TESTLIBS=-L$(CHECK_PATH)/lib -lcheck
+	LIBS+=
+	TESTLIBS+=-L$(CHECK_PATH)/lib
+	TESTLIBS+=-lcheck
 endif
 
 
