@@ -32,8 +32,13 @@ CFLAGS   += $(OPTFLAGS) \
             -Werror
 
 ifneq ($(CHECK_PATH),)
+ifeq ($(UNAME_S), Linux)
 	TESTINC=-isystem $(CHECK_PATH)/src
 	TESTINC+=-isystem $(CHECK_PATH)
+endif
+ifeq ($(UNAME_S), Darwin)
+	TESTINC=-isystem $(CHECK_PATH)/include
+endif
 endif
 INC=-I$(TOOLS_DIR)
 CFLAGS += -I$(MKFILE_DIR) $(INC)
@@ -50,11 +55,13 @@ OBJS   = $(SRCS:.c=.o)
 
 ifeq ($(UNAME_S), Linux)
 	LIBS = -L/usr/local/lib/ -lm -lrt
-else
-	LIBS = -L/usr/local/lib/ -lm
+	TESTLIBS = -L$(CHECK_PATH)/src -lcheck
+endif
+ifeq ($(UNAME_S), Darwin)
+	LIBS =
+	TESTLIBS = -L$(CHECK_PATH)/lib -lcheck
 endif
 
-TESTLIBS = -L$(CHECK_PATH)/src -lcheck
 
 all: test_skycoin_crypto
 
