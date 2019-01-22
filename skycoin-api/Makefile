@@ -54,12 +54,12 @@ OBJS   = $(SRCS:.c=.o)
 	$(CC) $(CFLAGS) -o $@ -c $<
 
 ifeq ($(UNAME_S), Linux)
-	LIBS = -L/usr/local/lib/ -lm -lrt
-	TESTLIBS = -L$(CHECK_PATH)/src -lcheck
+	LIBS=-L/usr/local/lib/ -lm -lrt
+	TESTLIBS=-L$(CHECK_PATH)/src -lcheck
 endif
 ifeq ($(UNAME_S), Darwin)
-	LIBS =
-	TESTLIBS = -L$(CHECK_PATH)/lib -lcheck
+	LIBS=
+	TESTLIBS=-L$(CHECK_PATH)/lib -lcheck
 endif
 
 
