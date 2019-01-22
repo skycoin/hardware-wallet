@@ -17,7 +17,9 @@ DBGFLAGS ?= -g3 -ggdb3
 CPUFLAGS ?=
 FPUFLAGS ?=
 UNAME_S := $(shell uname -s)
-ifneq ($(UNAME_S),Darwin)
+ifeq ($(UNAME_S),Darwin)
+	CFLAGS += -DCONFIDENTIAL=
+else
 	CFLAGS += -DCONFIDENTIAL='__attribute__((section("confidential")))'
 endif
 
