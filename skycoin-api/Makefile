@@ -53,17 +53,18 @@ OBJS   = $(SRCS:.c=.o)
 %.o: %.c %.h
 	$(CC) $(CFLAGS) -o $@ -c $<
 
+LIBS_DARWIN += 
+TESTLIBS_DARWIN += -L$(CHECK_PATH)/lib -lcheck
+LIBS_LINUX += -L/usr/local/lib/ -lm -lrt
+TESTLIBS_LINUX += -L$(CHECK_PATH)/src -lcheck
+
 ifeq ($(UNAME_S), Linux)
-	LIBS+=-L/usr/local/lib/
-	LIBS+=-lm
-	LIBS+=-lrt
-	TESTLIBS+=-L$(CHECK_PATH)/src
-	TESTLIBS+=-lcheck
+	LIBS=$(LIBS_LINUX)
+	TESTLIBS=$(TESTLIBS_LINUX)
 endif
 ifeq ($(UNAME_S), Darwin)
-	LIBS+=
-	TESTLIBS+=-L$(CHECK_PATH)/lib
-	TESTLIBS+=-lcheck
+	LIBS=$(LIBS_DARWIN)
+	TESTLIBS=$(TESTLIBS_DARWIN)
 endif
 
 
