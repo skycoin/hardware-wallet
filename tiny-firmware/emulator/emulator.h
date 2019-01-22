@@ -22,7 +22,9 @@
 
 #if EMULATOR
 
+#ifdef __linux__
 #include "strl.h"
+#endif  // __linux__
 
 #include <stddef.h>
 
