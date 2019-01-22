@@ -4,7 +4,7 @@
 .PHONY: firmware sign full-firmware-mem-protect full-firmware
 .PHONY: emulator run-emulator st-flash
 
-UNAME_S = $(shell uname -s)
+UNAME_S ?= $(shell uname -s)
 
 install-linters-Darwin:
 	brew install yamllint

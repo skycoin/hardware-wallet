@@ -1,11 +1,12 @@
 .DEFAULT_GOAL := help
 .PHONY: test clean
 
-CC       ?= gcc
-
+UNAME_S     ?= $(shell uname -s)
 MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 MKFILE_DIR  := $(dir $(MKFILE_PATH))
 TOOLS_DIR		:= $(MKFILE_DIR)/tools
+
+CC       ?= gcc
 
 OPTFLAGS ?= -O3 -g -fPIC
 
@@ -47,7 +48,12 @@ OBJS   = $(SRCS:.c=.o)
 %.o: %.c %.h
 	$(CC) $(CFLAGS) -o $@ -c $<
 
-LIBS = -L/usr/local/lib/ -lm -lrt
+ifeq ($(UNAME_S), Linux)
+	LIBS = -L/usr/local/lib/ -lm -lrt
+else
+	LIBS = -L/usr/local/lib/ -lm
+endif
+
 TESTLIBS = -L$(CHECK_PATH)/src -lcheck
 
 all: test_skycoin_crypto
