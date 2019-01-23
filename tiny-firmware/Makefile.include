@@ -1,5 +1,6 @@
 TOP_DIR       := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 TOOLCHAIN_DIR ?= $(TOP_DIR)vendor/libopencm3
+UNAME_S ?= $(shell uname -s)
 
 ifeq ($(EMULATOR),1)
 
@@ -7,7 +8,9 @@ PYTHON ?= python
 
 CC       ?= gcc
 LD       := $(CC)
+ifneq ($(UNAME_S),Darwin)
 OBJCOPY  := objcopy
+endif
 OBJDUMP  := objdump
 AR       := ar
 AS       := as
@@ -16,7 +19,6 @@ OPTFLAGS ?= -O3
 DBGFLAGS ?= -g3 -ggdb3
 CPUFLAGS ?=
 FPUFLAGS ?=
-UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Darwin)
 	CFLAGS += -DCONFIDENTIAL=
 else
@@ -126,11 +128,17 @@ endif
 
 CFLAGS += -DDEBUG_RNG=0
 
+
+ifeq ($(EMULATOR),1)
+$(NAME): $(OBJS) $(LDSCRIPT) $(LIBDEPS)
+	$(LD) -o $(NAME) $(OBJS) $(LDLIBS) $(LDFLAGS)
+else
 $(NAME).bin: $(NAME).elf
 	$(OBJCOPY) -Obinary $(NAME).elf $(NAME).bin
 
 $(NAME).elf: $(OBJS) $(LDSCRIPT) $(LIBDEPS)
 	$(LD) -o $(NAME).elf $(OBJS) $(LDLIBS) $(LDFLAGS)
+endif
 
 %.o: %.c Makefile
 	$(CC) $(CFLAGS) -MMD -MP -o $@ -c $<
