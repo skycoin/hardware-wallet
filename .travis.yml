@@ -20,7 +20,7 @@ before_script:
     export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${CHECK_PATH}/src" ;
     fi
   - if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
-    export CHECK_PATH="$(brew --prefix check)"
+    export CHECK_PATH="$(brew --prefix check)" ;
     export DYLD_LIBRARY_PATH="${DYLD_LIBRARY_PATH}:${CHECK_PATH}/lib" ;
     fi
   - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then export PATH="$PATH:$(pwd)/protoc/bin" ; echo "PATH=$PATH"; fi
