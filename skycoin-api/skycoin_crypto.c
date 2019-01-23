@@ -242,3 +242,73 @@ int ecdsa_skycoin_sign(const uint32_t nonce_value, const uint8_t *priv_key, cons
 
 	return -1;
 }
+
+void transaction_initZeroTransaction(Transaction* self) {
+    self->nbIn = 0;
+    self->nbOut = 0;
+}
+
+void transaction_addInput(Transaction* self, uint8_t* address) {
+    memcpy(&self->inAddress[self->nbIn], address, 32);
+    self->nbIn++;
+};
+
+void transaction_addOutput(Transaction* self,  uint32_t coin, uint32_t hour, char* address) {
+    strcpy(self->outAddress[self->nbOut].address, address);
+    self->outAddress[self->nbOut].coin = coin;
+    self->outAddress[self->nbOut].hour = hour;
+    self->nbOut++;
+}
+
+void transaction_innerHash(Transaction* self, uint8_t* digest) {
+
+    uint8_t ctx[sizeof(Transaction)];
+    memset(ctx, 0, sizeof(Transaction));
+    uint64_t bitcount = 0;
+    // serialized in
+    printf("Buffer length: %ld\n", bitcount);
+    memcpy(&ctx[bitcount], &self->nbIn, sizeof(uint32_t));
+    bitcount += sizeof(uint32_t);
+    printf("Buffer length: %ld\n", bitcount);
+    for (uint8_t i = 0; i < self->nbIn; ++i) {
+        memcpy(&ctx[bitcount], (uint8_t*)&self->inAddress[i], 32);
+        bitcount += 32;
+        printf("Buffer length: %ld\n", bitcount);
+    }
+
+    // serialized out
+    uint8_t zero = 0;
+    memcpy(&ctx, &self->nbOut, sizeof(uint32_t));
+    bitcount += sizeof(uint32_t);
+    printf("Buffer length: %ld\n", bitcount);
+    for (uint8_t i = 0; i < self->nbOut; ++i) {
+        memcpy(&ctx[bitcount], &zero, 1);
+        bitcount += 1;
+        printf("Buffer length: %ld\n", bitcount);
+        size_t len = 36;
+        uint8_t b58string[36];
+        char b58HexString[36];
+        b58tobin(b58string, &len, self->outAddress[i].address);
+        tohex(b58HexString, b58string, 36);
+        printf("b58 len : %ld, %s ..  %s\n", len, b58HexString, self->outAddress[i].address);
+        memcpy(&ctx[bitcount], b58string + (36 - len), 20);
+        bitcount += 20;
+        printf("Buffer length: %ld\n", bitcount);
+        memcpy(&ctx[bitcount], (uint8_t*)&self->outAddress[i].coin, sizeof(uint32_t));
+        bitcount += sizeof(uint32_t);
+        printf("Buffer length: %ld\n", bitcount);
+        memcpy(&ctx[bitcount], (uint8_t*)&self->outAddress[i].hour, sizeof(uint32_t));
+        bitcount += sizeof(uint32_t);
+        printf("Buffer length: %ld\n", bitcount);
+    }
+
+    for (uint64_t i = 0; i < bitcount; ++i) {
+        printf("%x", ctx[i]);
+    }
+    printf("\n");
+
+    SHA256_CTX sha256ctx;
+    sha256_Init(&sha256ctx);
+    sha256_Update(&sha256ctx, ctx, bitcount);
+    sha256_Final(&sha256ctx, digest);
+}

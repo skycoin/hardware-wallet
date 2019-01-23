@@ -411,6 +411,46 @@ START_TEST(test_checkdigest)
 }
 END_TEST
 
+
+START_TEST(test_addtransactioninput)
+{
+    // init transaction
+    uint8_t addressIn[32];
+    Transaction transaction;
+    transaction_initZeroTransaction(&transaction);
+    ck_assert_int_eq(transaction.nbIn, 0);
+    ck_assert_int_eq(transaction.nbOut, 0);
+    // add input
+    memcpy(addressIn, fromhex("99a1a50ffa21ab48ee7c31d01e7e14451f9834f5294468bd17e87c5018900b81"), 32);
+    transaction_addInput(&transaction, addressIn);
+    ck_assert_int_eq(transaction.nbIn, 1);
+    ck_assert_int_eq(transaction.nbOut, 0);
+    ck_assert_mem_eq(&transaction.inAddress[0], fromhex("99a1a50ffa21ab48ee7c31d01e7e14451f9834f5294468bd17e87c5018900b81"), 32);
+    // add output
+    transaction_addOutput(&transaction, 125000000, 4, "d1hMF1XCCvFXVa2u7NbuWo9dmfNbdpoFLJ");
+    ck_assert_int_eq(transaction.nbIn, 1);
+    ck_assert_int_eq(transaction.nbOut, 1);
+    ck_assert_int_eq(transaction.outAddress[0].coin, 125000000);
+    ck_assert_int_eq(transaction.outAddress[0].hour, 4);
+    ck_assert_str_eq(transaction.outAddress[0].address, "d1hMF1XCCvFXVa2u7NbuWo9dmfNbdpoFLJ");
+    // add one more output
+    transaction_addOutput(&transaction, 2000000, 3, "2kVVoMkH7aTVXsiGwZEALpkHZ6sUyumL8hH");
+    ck_assert_int_eq(transaction.nbIn, 1);
+    ck_assert_int_eq(transaction.nbOut, 2);
+    ck_assert_int_eq(transaction.outAddress[0].coin, 125000000);
+    ck_assert_int_eq(transaction.outAddress[0].hour, 4);
+    ck_assert_str_eq(transaction.outAddress[0].address, "d1hMF1XCCvFXVa2u7NbuWo9dmfNbdpoFLJ");
+    ck_assert_int_eq(transaction.outAddress[1].coin, 2000000);
+    ck_assert_int_eq(transaction.outAddress[1].hour, 3);
+    ck_assert_str_eq(transaction.outAddress[1].address, "2kVVoMkH7aTVXsiGwZEALpkHZ6sUyumL8hH");
+
+    // compute inner hash
+    uint8_t digest[32];
+    transaction_innerHash(&transaction, digest);
+    ck_assert_mem_eq(digest, fromhex("0dcbbaf454e158cc87330900080315b9f288b5ceb2d1047299fabc4c407c1a18"), 32);
+}
+END_TEST
+
 // define test suite and cases
 Suite *test_suite(void)
 {
@@ -431,6 +471,7 @@ Suite *test_suite(void)
     tcase_add_test(tc, test_base58_decode);
     tcase_add_test(tc, test_signature);
     tcase_add_test(tc, test_checkdigest);
+    tcase_add_test(tc, test_addtransactioninput);
     suite_add_tcase(s, tc);
 
     return s;
