@@ -24,6 +24,9 @@ SkycoinCheckMessageSignature.address			max_size:36
 SkycoinCheckMessageSignature.message			max_size:256
 SkycoinCheckMessageSignature.signature			max_size:90
 SkycoinSignMessage.message			            max_size:256
+TransactionSign.transactionIn					max_size:8
+TransactionSign.transactionOut					max_size:8
+
 
 Success.message				max_size:256
 

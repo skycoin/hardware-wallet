@@ -53,6 +53,7 @@ enum MessageType {
 	MessageType_ResponseSkycoinSignMessage = 118 [(wire_out) = true];
 	MessageType_GenerateMnemonic = 119 [(wire_in) = true];
 	MessageType_GetVersion = 120 [(wire_in) = true];
+	MessageType_TransactionSign = 122 [(wire_in) = true];
 }
 
 ////////////////////
@@ -448,4 +449,17 @@ message FirmwareRequest {
  message FirmwareUpload {
     optional bytes payload = 1; // offset of requested firmware chunk
     optional bytes hash = 2; // length of requested firmware chunk
+}
+
+/**
+ * Request: Ask device to sign transactions one by one
+ * @next ResponseSkycoinSignMessage
+ * @next Success
+ * @next Failure
+ */
+message TransactionSign {
+	required uint32 nbIn = 1;
+	repeated SkycoinTransactionInput transactionIn = 2;
+	required uint32 nbOut = 3;
+	repeated SkycoinTransactionOutput transactionOut = 4;
 }

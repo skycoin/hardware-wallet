@@ -332,6 +332,11 @@ int fsm_getKeyPairAtIndex(uint32_t nbAddress, uint8_t* pubkey, uint8_t* seckey, 
     return 0;
 }
 
+void fsm_msgTransactionSign(TransactionSign* msg) {
+	(void)(msg);
+	fsm_sendSuccess(_("Transaction signed"));
+}
+
 void fsm_msgSkycoinSignMessage(SkycoinSignMessage* msg)
 {
     uint8_t pubkey[33] = {0};
