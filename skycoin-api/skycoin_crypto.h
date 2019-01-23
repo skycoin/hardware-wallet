@@ -22,6 +22,7 @@ void transaction_initZeroTransaction(Transaction* self);
 void transaction_addInput(Transaction* self, uint8_t* address);
 void transaction_addOutput(Transaction* self,  uint32_t coin, uint32_t hour, char* address);
 void transaction_innerHash(Transaction* self, uint8_t* digest);
+void transaction_msgToSign(Transaction* self, uint8_t index, uint8_t* signature);
 
 void ecdh(const uint8_t* secret_key, const uint8_t* remote_public_key, uint8_t* ecdh_key /*should be size SHA256_DIGEST_LENGTH*/);
 void ecdh_shared_secret(const uint8_t* secret_key, const uint8_t* remote_public_key, uint8_t* shared_secret /*should be size SHA256_DIGEST_LENGTH*/);

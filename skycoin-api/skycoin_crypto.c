@@ -305,3 +305,20 @@ void transaction_innerHash(Transaction* self, uint8_t* digest) {
     sha256_Update(&sha256ctx, ctx, bitcount);
     sha256_Final(&sha256ctx, digest);
 }
+
+void transaction_msgToSign(Transaction* self, uint8_t index, uint8_t* msg_digest) {
+    if (index >= self->nbIn) {
+        return;
+    }
+    // concat innerHash and transaction hash
+    uint8_t shaInput[64];
+    uint8_t innerHash[32];
+    transaction_innerHash(self, innerHash);
+    memcpy(shaInput, innerHash, 32);
+    memcpy(&shaInput[32], (uint8_t*)&self->inAddress[index], 32);
+    // compute hash
+    SHA256_CTX sha256ctx;
+    sha256_Init(&sha256ctx);
+    sha256_Update(&sha256ctx, shaInput, 64);
+    sha256_Final(&sha256ctx, msg_digest);
+}

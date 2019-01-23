@@ -448,6 +448,8 @@ START_TEST(test_addtransactioninput)
     uint8_t digest[32];
     transaction_innerHash(&transaction, digest);
     ck_assert_mem_eq(digest, fromhex("0dcbbaf454e158cc87330900080315b9f288b5ceb2d1047299fabc4c407c1a18"), 32);
+
+    transaction_msgToSign(&transaction, 0, digest);
 }
 END_TEST
 
