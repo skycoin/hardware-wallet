@@ -36,3 +36,6 @@ IdentityType.user			max_size:64
 IdentityType.host			max_size:64
 IdentityType.port			max_size:6
 IdentityType.path			max_size:256
+
+SkycoinTransactionInput.hashIn					max_size:33
+SkycoinTransactionOutput.address 				max_size:36

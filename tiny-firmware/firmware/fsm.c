@@ -333,8 +333,13 @@ int fsm_getKeyPairAtIndex(uint32_t nbAddress, uint8_t* pubkey, uint8_t* seckey, 
 }
 
 void fsm_msgTransactionSign(TransactionSign* msg) {
-	(void)(msg);
-	fsm_sendSuccess(_("Transaction signed"));
+	char str[250];
+	sprintf(str, "%s: %d. nbOut: %d\nInput: addressIn: %s, index: %d\
+	\nOutput: coin: %d, hour: %d address: %s", 
+		_("Transaction signed nbIn"), 
+		msg->nbIn, msg->nbOut, msg->transactionIn[0].hashIn, msg->transactionIn[0].index,
+		msg->transactionOut[0].coin, msg->transactionOut[0].hour, msg->transactionOut[0].address);
+	fsm_sendSuccess(str);
 }
 
 void fsm_msgSkycoinSignMessage(SkycoinSignMessage* msg)
