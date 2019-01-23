@@ -333,12 +333,29 @@ int fsm_getKeyPairAtIndex(uint32_t nbAddress, uint8_t* pubkey, uint8_t* seckey, 
 }
 
 void fsm_msgTransactionSign(TransactionSign* msg) {
-	char str[250];
-	sprintf(str, "%s: %d. nbOut: %d\nInput: addressIn: %s, index: %d\
-	\nOutput: coin: %d, hour: %d address: %s", 
+	char str[256];
+	if (msg->nbIn > 8) {
+		fsm_sendFailure(FailureType_Failure_InvalidSignature, _("Cannot have more than 8 inputs"));
+		return;
+	}
+	if (msg->nbOut > 8) {
+		fsm_sendFailure(FailureType_Failure_InvalidSignature, _("Cannot have more than 8 outputs"));
+		return;
+	}
+	sprintf(str, "%s: %d. nbOut: %d\n", 
 		_("Transaction signed nbIn"), 
-		msg->nbIn, msg->nbOut, msg->transactionIn[0].hashIn, msg->transactionIn[0].index,
-		msg->transactionOut[0].coin, msg->transactionOut[0].hour, msg->transactionOut[0].address);
+		msg->nbIn, msg->nbOut);
+
+	for (uint32_t i = 0; i < msg->nbIn && strlen(str) < 128; ++i) {
+		sprintf(str, "%s Input: addressIn: %s, index: %d\n",
+			str,
+			msg->transactionIn[i].hashIn, msg->transactionIn[i].index);
+	}
+	for (uint32_t i = 0; i < msg->nbOut && strlen(str) < 128; ++i) {
+		sprintf(str, "%s Output: coin: %d, hour: %d address: %s\n",
+			str, 
+			msg->transactionOut[i].coin, msg->transactionOut[i].hour, msg->transactionOut[i].address);
+	}
 	fsm_sendSuccess(str);
 }
 
