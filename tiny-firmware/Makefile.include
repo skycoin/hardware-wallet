@@ -1,5 +1,6 @@
 TOP_DIR       := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 TOOLCHAIN_DIR ?= $(TOP_DIR)vendor/libopencm3
+UNAME_S ?= $(shell uname -s)
 
 ifeq ($(EMULATOR),1)
 
@@ -7,7 +8,13 @@ PYTHON ?= python
 
 CC       ?= gcc
 LD       := $(CC)
+ifeq ($(UNAME_S),Darwin)
+OBJCOPY  := ../../hardware-wallet/build-objconv/objconv
+else
 OBJCOPY  := objcopy
+endif
+pwd ?= $(shell pwd)
+$(warning pwd dddddddddddddddddddddddddddddd $(pwd))
 OBJDUMP  := objdump
 AR       := ar
 AS       := as
@@ -16,7 +23,6 @@ OPTFLAGS ?= -O3
 DBGFLAGS ?= -g3 -ggdb3
 CPUFLAGS ?=
 FPUFLAGS ?=
-UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Darwin)
 	CFLAGS += -DCONFIDENTIAL=
 else
