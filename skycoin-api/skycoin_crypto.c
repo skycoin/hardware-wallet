@@ -260,6 +260,13 @@ void transaction_addOutput(Transaction* self,  uint32_t coin, uint32_t hour, cha
     self->nbOut++;
 }
 
+#define print_buffer \
+    for (uint64_t j = 0; j < bitcount; ++j) { \
+        printf("%02x", ctx[j]); \
+    } \
+    printf("\n"); \
+
+
 void transaction_innerHash(Transaction* self, uint8_t* digest) {
 
     uint8_t ctx[sizeof(Transaction)];
@@ -267,45 +274,54 @@ void transaction_innerHash(Transaction* self, uint8_t* digest) {
     uint64_t bitcount = 0;
     // serialized in
     printf("Buffer length: %ld\n", bitcount);
-    memcpy(&ctx[bitcount], &self->nbIn, sizeof(uint32_t));
+    uint8_t nbIn = self->nbIn;
+    memcpy(&ctx[bitcount], &nbIn, 1);
     bitcount += sizeof(uint32_t);
+    print_buffer;
     printf("Buffer length: %ld\n", bitcount);
     for (uint8_t i = 0; i < self->nbIn; ++i) {
         memcpy(&ctx[bitcount], (uint8_t*)&self->inAddress[i], 32);
         bitcount += 32;
         printf("Buffer length: %ld\n", bitcount);
     }
+    print_buffer;
 
     // serialized out
+    uint32_t zero32 = 0;
     uint8_t zero = 0;
-    memcpy(&ctx, &self->nbOut, sizeof(uint32_t));
+    uint8_t nbOut = self->nbOut;
+    memcpy(&ctx[bitcount], &nbOut, 1);
     bitcount += sizeof(uint32_t);
     printf("Buffer length: %ld\n", bitcount);
+    print_buffer;
     for (uint8_t i = 0; i < self->nbOut; ++i) {
         memcpy(&ctx[bitcount], &zero, 1);
         bitcount += 1;
         printf("Buffer length: %ld\n", bitcount);
+        print_buffer;
         size_t len = 36;
         uint8_t b58string[36];
         char b58HexString[36];
         b58tobin(b58string, &len, self->outAddress[i].address);
-        tohex(b58HexString, b58string, 36);
-        printf("b58 len : %ld, %s ..  %s\n", len, b58HexString, self->outAddress[i].address);
-        memcpy(&ctx[bitcount], b58string + (36 - len), 20);
+        tohex(b58HexString, &b58string[36 - len], 20);
+        printf("Base58 translation len : %ld, %s ..  %s offset: %ld\n", len, b58HexString, self->outAddress[i].address, 36 - len);
+        memcpy(&ctx[bitcount], &b58string[36 - len], 20);
         bitcount += 20;
         printf("Buffer length: %ld\n", bitcount);
+        print_buffer;
         memcpy(&ctx[bitcount], (uint8_t*)&self->outAddress[i].coin, sizeof(uint32_t));
         bitcount += sizeof(uint32_t);
-        printf("Buffer length: %ld\n", bitcount);
-        memcpy(&ctx[bitcount], (uint8_t*)&self->outAddress[i].hour, sizeof(uint32_t));
+        memcpy(&ctx[bitcount], &zero32, sizeof(uint32_t));
         bitcount += sizeof(uint32_t);
         printf("Buffer length: %ld\n", bitcount);
+        print_buffer;
+        memcpy(&ctx[bitcount], (uint8_t*)&self->outAddress[i].hour, sizeof(uint32_t));
+        bitcount += sizeof(uint32_t);
+        memcpy(&ctx[bitcount], &zero32, sizeof(uint32_t));
+        bitcount += sizeof(uint32_t);
+        printf("Buffer length: %ld\n", bitcount);
+        print_buffer;
     }
-
-    for (uint64_t i = 0; i < bitcount; ++i) {
-        printf("%x", ctx[i]);
-    }
-    printf("\n");
 
     SHA256_CTX sha256ctx;
     sha256_Init(&sha256ctx);
