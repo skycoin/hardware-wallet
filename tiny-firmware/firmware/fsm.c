@@ -333,7 +333,6 @@ int fsm_getKeyPairAtIndex(uint32_t nbAddress, uint8_t* pubkey, uint8_t* seckey, 
 }
 
 void fsm_msgTransactionSign(TransactionSign* msg) {
-	char str[256];
 	if (msg->nbIn > 8) {
 		fsm_sendFailure(FailureType_Failure_InvalidSignature, _("Cannot have more than 8 inputs"));
 		return;
@@ -342,21 +341,53 @@ void fsm_msgTransactionSign(TransactionSign* msg) {
 		fsm_sendFailure(FailureType_Failure_InvalidSignature, _("Cannot have more than 8 outputs"));
 		return;
 	}
-	sprintf(str, "%s: %d. nbOut: %d\n", 
+#ifdef EMULATOR
+	printf("%s: %d. nbOut: %d\n", 
 		_("Transaction signed nbIn"), 
 		msg->nbIn, msg->nbOut);
 
-	for (uint32_t i = 0; i < msg->nbIn && strlen(str) < 128; ++i) {
-		sprintf(str, "%s Input: addressIn: %s, index: %d\n",
-			str,
+	for (uint32_t i = 0; i < msg->nbIn; ++i) {
+		printf("Input: addressIn: %s, index: %d\n",
 			msg->transactionIn[i].hashIn, msg->transactionIn[i].index);
 	}
-	for (uint32_t i = 0; i < msg->nbOut && strlen(str) < 128; ++i) {
-		sprintf(str, "%s Output: coin: %d, hour: %d address: %s\n",
-			str, 
+	for (uint32_t i = 0; i < msg->nbOut; ++i) {
+		printf("Output: coin: %d, hour: %d address: %s\n",
 			msg->transactionOut[i].coin, msg->transactionOut[i].hour, msg->transactionOut[i].address);
 	}
-	fsm_sendSuccess(str);
+#endif
+	Transaction transaction;
+	transaction_initZeroTransaction(&transaction);
+	for (uint32_t i = 0; i < msg->nbIn; ++i) {
+		uint8_t hashIn[32];
+		writebuf_fromhexstr(msg->transactionIn[i].hashIn, hashIn);
+		transaction_addInput(&transaction, hashIn);
+	}
+	for (uint32_t i = 0; i < msg->nbOut; ++i) {
+		transaction_addOutput(&transaction, msg->transactionOut[i].coin, msg->transactionOut[i].hour, msg->transactionOut[i].address);
+	}
+    uint8_t digest[32];
+    transaction_msgToSign(&transaction, 0, digest);
+	RESP_INIT(Success);
+	resp->has_message = true;
+	tohex(resp->message, digest, 32);
+	msg_write(MessageType_MessageType_Success, resp);
+#ifdef EMULATOR
+	printf("Digest Hex ");
+	for (int i = 0; i < 32; ++i) {
+		printf("%02x", digest[i]);
+	}
+	printf("\n");
+	printf("Digest %s\n", resp->message);
+	transaction_innerHash(&transaction, digest);
+	char str[64];
+	printf("Inner Hash Hex ");
+	for (int i = 0; i < 32; ++i) {
+		printf("%02x", digest[i]);
+	}
+	printf("\n");
+	tohex(str, digest, 32);
+	printf("InnerHash %s\n", str);
+#endif
 }
 
 void fsm_msgSkycoinSignMessage(SkycoinSignMessage* msg)
