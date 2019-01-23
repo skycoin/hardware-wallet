@@ -8,13 +8,9 @@ PYTHON ?= python
 
 CC       ?= gcc
 LD       := $(CC)
-ifeq ($(UNAME_S),Darwin)
-OBJCOPY  := ../../hardware-wallet/build-objconv/objconv
-else
+ifneq ($(UNAME_S),Darwin)
 OBJCOPY  := objcopy
 endif
-pwd ?= $(shell pwd)
-$(warning pwd dddddddddddddddddddddddddddddd $(pwd))
 OBJDUMP  := objdump
 AR       := ar
 AS       := as
@@ -132,11 +128,17 @@ endif
 
 CFLAGS += -DDEBUG_RNG=0
 
+
+ifeq ($(EMULATOR),1)
+$(NAME): $(OBJS) $(LDSCRIPT) $(LIBDEPS)
+	$(LD) -o $(NAME) $(OBJS) $(LDLIBS) $(LDFLAGS)
+else
 $(NAME).bin: $(NAME).elf
 	$(OBJCOPY) -Obinary $(NAME).elf $(NAME).bin
 
 $(NAME).elf: $(OBJS) $(LDSCRIPT) $(LIBDEPS)
 	$(LD) -o $(NAME).elf $(OBJS) $(LDLIBS) $(LDFLAGS)
+endif
 
 %.o: %.c Makefile
 	$(CC) $(CFLAGS) -MMD -MP -o $@ -c $<

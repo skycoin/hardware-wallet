@@ -35,6 +35,17 @@
 *.i*86
 *.x86_64
 *.hex
+bootloader-memory-protected.bin
+bootloader-no-memory-protect.bin
+emulator
+emulator.img
+full-firmware-memory-protected.bin
+full-firmware-no-mem-protect.bin
+tiny-firmware/bootloader/combine/bl.bin
+tiny-firmware/bootloader/combine/fw.bin
+tiny-firmware/emulator.img
+tiny-firmware/skycoin-emulator
+tiny-firmware/skycoin.bin
 
 # Debug files
 *.dSYM/

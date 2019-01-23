@@ -82,7 +82,7 @@ full-firmware: bootloader firmware ## Build full firmware (RDP level 0)
 emulator: build-deps ## Build emulator
 	EMULATOR=1 make -C tiny-firmware/emulator/
 	EMULATOR=1 make -C tiny-firmware/
-	mv tiny-firmware/skycoin-emulator.elf emulator
+	mv tiny-firmware/skycoin-emulator emulator
 
 run-emulator: emulator ## Run wallet emulator
 	./emulator
