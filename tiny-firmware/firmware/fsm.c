@@ -372,16 +372,20 @@ void fsm_msgTransactionSign(TransactionSign* msg) {
 		transaction_addOutput(&transaction, msg->transactionOut[i].coin, msg->transactionOut[i].hour, msg->transactionOut[i].address);
 	}
 
-    uint8_t digest[32];
-    transaction_msgToSign(&transaction, 0, digest);
-	RESP_INIT(Success);
-	resp->has_message = true;
-	tohex(resp->message, digest, 32);
-	msg_write(MessageType_MessageType_Success, resp);
+	for (uint32_t i = 0; i < msg->nbIn; ++i) {
+		RESP_INIT(SkycoinSignMessage);
+		resp->address_n = msg->transactionIn[i].index;
+    	transaction_msgToSign(&transaction, i, (uint8_t*)resp->message);
+#ifdef EMULATOR
+		char str[64];
+		tohex(str, (uint8_t*)resp->message, 32);
+		printf("Signing message:  %s\n", str);
+#endif
+    	fsm_msgSkycoinSignMessage(resp);
+	}
+	fsm_sendSuccess(_("Transaction Processed!"));
 #ifdef EMULATOR
 	char str[64];
-	tohex(str, digest, 32);
-	printf("Digest:  %s\n", str);
 	tohex(str, transaction.innerHash, 32);
 	printf("InnerHash %s\n", str);
 #endif
