@@ -369,6 +369,22 @@ void fsm_msgTransactionSign(TransactionSign* msg) {
 		transaction_addInput(&transaction, hashIn);
 	}
 	for (uint32_t i = 0; i < msg->nbOut; ++i) {
+		char strHour[21];
+		sprintf(strHour, "%s %d %s", _("send"), msg->transactionOut[i].hour, _("hour"));
+		char strCoin[21];
+		sprintf(strCoin, "%d %s", msg->transactionOut[i].coin, _("coin"));
+		layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Next"), NULL, _("Do you really want to"), strHour, strCoin, _("to address"), _("..."), NULL);
+		if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) {
+			fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
+			layoutHome();
+			return;
+		}
+		layoutAddress(msg->transactionOut[i].address);		
+		if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) {
+			fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
+			layoutHome();
+			return;
+		}
 		transaction_addOutput(&transaction, msg->transactionOut[i].coin, msg->transactionOut[i].hour, msg->transactionOut[i].address);
 	}
 
