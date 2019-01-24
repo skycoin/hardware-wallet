@@ -332,6 +332,22 @@ int fsm_getKeyPairAtIndex(uint32_t nbAddress, uint8_t* pubkey, uint8_t* seckey, 
     return 0;
 }
 
+int msgSignTransactionMessage(uint8_t* message_digest, uint32_t index, char* signed_message) {
+    uint8_t pubkey[33] = {0};
+    uint8_t seckey[32] = {0};
+    size_t size_sign;
+    uint8_t signature[65];
+	int res = 0;
+    fsm_getKeyPairAtIndex(1, pubkey, seckey, NULL, index);
+    res = ecdsa_skycoin_sign(rand(), seckey, message_digest, signature);
+	size_sign = 90;
+    b58enc(signed_message, &size_sign, signature, sizeof(signature));
+#ifdef EMULATOR
+    printf("Size_sign: %ld, sign58: %s\n", size_sign, signed_message);
+#endif
+    return res;
+}
+
 void fsm_msgTransactionSign(TransactionSign* msg) {
 
 	if (storage_hasMnemonic() == false) {
@@ -388,23 +404,33 @@ void fsm_msgTransactionSign(TransactionSign* msg) {
 		transaction_addOutput(&transaction, msg->transactionOut[i].coin, msg->transactionOut[i].hour, msg->transactionOut[i].address);
 	}
 
+	CHECK_PIN_UNCACHED
+	RESP_INIT(ResponseTransactionSign);
 	for (uint32_t i = 0; i < msg->nbIn; ++i) {
-		RESP_INIT(SkycoinSignMessage);
-		resp->address_n = msg->transactionIn[i].index;
-    	transaction_msgToSign(&transaction, i, (uint8_t*)resp->message);
+		uint8_t digest[32];
+    	transaction_msgToSign(&transaction, i, digest);
+    	if (msgSignTransactionMessage(digest, msg->transactionIn[i].index, resp->signatures[i]) != 0) {
+			fsm_sendFailure(FailureType_Failure_InvalidSignature, NULL);
+    		return;
+    	}
+		resp->signatures_count++;
 #ifdef EMULATOR
 		char str[64];
-		tohex(str, (uint8_t*)resp->message, 32);
+		tohex(str, (uint8_t*)digest, 32);
 		printf("Signing message:  %s\n", str);
+		printf("Signed message:  %s\n", resp->signatures[i]);
+		printf("Nb signatures: %u\n", resp->signatures_count);
 #endif
-    	fsm_msgSkycoinSignMessage(resp);
 	}
-	fsm_sendSuccess(_("Transaction Processed!"));
 #ifdef EMULATOR
 	char str[64];
 	tohex(str, transaction.innerHash, 32);
 	printf("InnerHash %s\n", str);
+	printf("Signed message:  %s\n", resp->signatures[0]);
+	printf("Nb signatures: %u\n", resp->signatures_count);
 #endif
+    msg_write(MessageType_MessageType_ResponseTransactionSign, resp);
+	layoutHome();
 }
 
 void fsm_msgSkycoinSignMessage(SkycoinSignMessage* msg)

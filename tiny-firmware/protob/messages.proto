@@ -54,6 +54,7 @@ enum MessageType {
 	MessageType_GenerateMnemonic = 119 [(wire_in) = true];
 	MessageType_GetVersion = 120 [(wire_in) = true];
 	MessageType_TransactionSign = 122 [(wire_in) = true];
+	MessageType_ResponseTransactionSign = 123 [(wire_out) = true];
 }
 
 ////////////////////
@@ -163,6 +164,14 @@ message SkycoinAddress {
  */
  message ResponseSkycoinAddress {
 	repeated string addresses = 1; // generated addresses in base58 format
+}
+
+/**
+ * Response: Return the signatures necessary for the transaction
+ * @prev TransactionSign
+ */
+ message ResponseTransactionSign {
+	repeated string signatures = 1; // generated signatures in base58 format
 }
 
 /**

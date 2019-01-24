@@ -26,6 +26,7 @@ SkycoinCheckMessageSignature.signature			max_size:90
 SkycoinSignMessage.message			            max_size:256
 TransactionSign.transactionIn					max_count:8
 TransactionSign.transactionOut					max_count:8
+ResponseTransactionSign.signatures				max_size:90, max_count:8
 
 
 Success.message				max_size:256
