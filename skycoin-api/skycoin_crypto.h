@@ -15,13 +15,14 @@ typedef struct Transaction{
     uint8_t nbOut;
     uint8_t inAddress[8][32];
     TransactionOutput outAddress[8];
-    // actually no need to actually create a structure for serializedTransactionInput, we can add them to a sha256sum context on the fly
+    int has_innerHash;
+    uint8_t innerHash[32];
 }Transaction;
 
 void transaction_initZeroTransaction(Transaction* self);
 void transaction_addInput(Transaction* self, uint8_t* address);
 void transaction_addOutput(Transaction* self,  uint32_t coin, uint32_t hour, char* address);
-void transaction_innerHash(Transaction* self, uint8_t* digest);
+void transaction_innerHash(Transaction* self);
 void transaction_msgToSign(Transaction* self, uint8_t index, uint8_t* signature);
 
 void ecdh(const uint8_t* secret_key, const uint8_t* remote_public_key, uint8_t* ecdh_key /*should be size SHA256_DIGEST_LENGTH*/);

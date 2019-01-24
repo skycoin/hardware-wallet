@@ -246,6 +246,7 @@ int ecdsa_skycoin_sign(const uint32_t nonce_value, const uint8_t *priv_key, cons
 void transaction_initZeroTransaction(Transaction* self) {
     self->nbIn = 0;
     self->nbOut = 0;
+    self->has_innerHash = 0;
 }
 
 void transaction_addInput(Transaction* self, uint8_t* address) {
@@ -260,7 +261,7 @@ void transaction_addOutput(Transaction* self,  uint32_t coin, uint32_t hour, cha
     self->nbOut++;
 }
 
-void transaction_innerHash(Transaction* self, uint8_t* digest) {
+void transaction_innerHash(Transaction* self) {
 
     uint8_t ctx[sizeof(Transaction)];
     memset(ctx, 0, sizeof(Transaction));
@@ -303,7 +304,8 @@ void transaction_innerHash(Transaction* self, uint8_t* digest) {
     SHA256_CTX sha256ctx;
     sha256_Init(&sha256ctx);
     sha256_Update(&sha256ctx, ctx, bitcount);
-    sha256_Final(&sha256ctx, digest);
+    sha256_Final(&sha256ctx, self->innerHash);
+    self->has_innerHash = 1;
 }
 
 void transaction_msgToSign(Transaction* self, uint8_t index, uint8_t* msg_digest) {
@@ -312,9 +314,10 @@ void transaction_msgToSign(Transaction* self, uint8_t index, uint8_t* msg_digest
     }
     // concat innerHash and transaction hash
     uint8_t shaInput[64];
-    uint8_t innerHash[32];
-    transaction_innerHash(self, innerHash);
-    memcpy(shaInput, innerHash, 32);
+    if (!self->has_innerHash) {
+        transaction_innerHash(self);
+    }
+    memcpy(shaInput, self->innerHash, 32);
     memcpy(&shaInput[32], (uint8_t*)&self->inAddress[index], 32);
     // compute hash
     SHA256_CTX sha256ctx;

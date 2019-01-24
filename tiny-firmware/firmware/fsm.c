@@ -333,6 +333,12 @@ int fsm_getKeyPairAtIndex(uint32_t nbAddress, uint8_t* pubkey, uint8_t* seckey, 
 }
 
 void fsm_msgTransactionSign(TransactionSign* msg) {
+
+	if (storage_hasMnemonic() == false) {
+		fsm_sendFailure(FailureType_Failure_AddressGeneration, "Mnemonic not set");
+		return;
+	}
+
 	if (msg->nbIn > 8) {
 		fsm_sendFailure(FailureType_Failure_InvalidSignature, _("Cannot have more than 8 inputs"));
 		return;
@@ -365,6 +371,7 @@ void fsm_msgTransactionSign(TransactionSign* msg) {
 	for (uint32_t i = 0; i < msg->nbOut; ++i) {
 		transaction_addOutput(&transaction, msg->transactionOut[i].coin, msg->transactionOut[i].hour, msg->transactionOut[i].address);
 	}
+
     uint8_t digest[32];
     transaction_msgToSign(&transaction, 0, digest);
 	RESP_INIT(Success);
@@ -372,20 +379,10 @@ void fsm_msgTransactionSign(TransactionSign* msg) {
 	tohex(resp->message, digest, 32);
 	msg_write(MessageType_MessageType_Success, resp);
 #ifdef EMULATOR
-	printf("Digest Hex ");
-	for (int i = 0; i < 32; ++i) {
-		printf("%02x", digest[i]);
-	}
-	printf("\n");
-	printf("Digest %s\n", resp->message);
-	transaction_innerHash(&transaction, digest);
 	char str[64];
-	printf("Inner Hash Hex ");
-	for (int i = 0; i < 32; ++i) {
-		printf("%02x", digest[i]);
-	}
-	printf("\n");
 	tohex(str, digest, 32);
+	printf("Digest:  %s\n", str);
+	tohex(str, transaction.innerHash, 32);
 	printf("InnerHash %s\n", str);
 #endif
 }
