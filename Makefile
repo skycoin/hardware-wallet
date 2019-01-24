@@ -33,7 +33,7 @@ bootloader-mem-protect: firmware-deps
 
 firmware: firmware-deps
 	rm -f tiny-firmware/memory.o tiny-firmware/gen/bitmaps.o # Force rebuild of these two files
-	REVERSE_BUTTONS=1 make -C tiny-firmware/ sign
+	EMULATOR=0 REVERSE_BUTTONS=1 make -C tiny-firmware/ sign
 
 tiny-firmware/bootloader/libskycoin-crypto.so:
 	make -C skycoin-api clean

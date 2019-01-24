@@ -342,7 +342,7 @@ int msgSignTransactionMessage(uint8_t* message_digest, uint32_t index, char* sig
     res = ecdsa_skycoin_sign(rand(), seckey, message_digest, signature);
 	size_sign = 90;
     b58enc(signed_message, &size_sign, signature, sizeof(signature));
-#ifdef EMULATOR
+#if EMULATOR
     printf("Size_sign: %ld, sign58: %s\n", size_sign, signed_message);
 #endif
     return res;
@@ -363,7 +363,7 @@ void fsm_msgTransactionSign(TransactionSign* msg) {
 		fsm_sendFailure(FailureType_Failure_InvalidSignature, _("Cannot have more than 8 outputs"));
 		return;
 	}
-#ifdef EMULATOR
+#if EMULATOR
 	printf("%s: %d. nbOut: %d\n", 
 		_("Transaction signed nbIn"), 
 		msg->nbIn, msg->nbOut);
@@ -386,9 +386,14 @@ void fsm_msgTransactionSign(TransactionSign* msg) {
 	}
 	for (uint32_t i = 0; i < msg->nbOut; ++i) {
 		char strHour[21];
-		sprintf(strHour, "%s %d %s", _("send"), msg->transactionOut[i].hour, _("hour"));
 		char strCoin[21];
-		sprintf(strCoin, "%d %s", msg->transactionOut[i].coin, _("coin"));
+#if EMULATOR
+		sprintf(strHour, "%s %u %s", _("send"), msg->transactionOut[i].hour, _("hour"));
+		sprintf(strCoin, "%u %s", msg->transactionOut[i].coin, _("coin"));
+#else
+		sprintf(strHour, "%s %lu %s", _("send"), msg->transactionOut[i].hour, _("hour"));
+		sprintf(strCoin, "%lu %s", msg->transactionOut[i].coin, _("coin"));
+#endif
 		layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Next"), NULL, _("Do you really want to"), strHour, strCoin, _("to address"), _("..."), NULL);
 		if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) {
 			fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
@@ -414,20 +419,20 @@ void fsm_msgTransactionSign(TransactionSign* msg) {
     		return;
     	}
 		resp->signatures_count++;
-#ifdef EMULATOR
+#if EMULATOR
 		char str[64];
 		tohex(str, (uint8_t*)digest, 32);
 		printf("Signing message:  %s\n", str);
 		printf("Signed message:  %s\n", resp->signatures[i]);
-		printf("Nb signatures: %u\n", resp->signatures_count);
+		printf("Nb signatures: %d\n", resp->signatures_count);
 #endif
 	}
-#ifdef EMULATOR
+#if EMULATOR
 	char str[64];
 	tohex(str, transaction.innerHash, 32);
 	printf("InnerHash %s\n", str);
 	printf("Signed message:  %s\n", resp->signatures[0]);
-	printf("Nb signatures: %u\n", resp->signatures_count);
+	printf("Nb signatures: %d\n", resp->signatures_count);
 #endif
     msg_write(MessageType_MessageType_ResponseTransactionSign, resp);
 	layoutHome();
