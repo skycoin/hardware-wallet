@@ -388,11 +388,11 @@ void fsm_msgTransactionSign(TransactionSign* msg) {
 		char strHour[21];
 		char strCoin[21];
 #if EMULATOR
-		sprintf(strHour, "%s %u %s", _("send"), msg->transactionOut[i].hour, _("hour"));
-		sprintf(strCoin, "%u %s", msg->transactionOut[i].coin, _("coin"));
+		sprintf(strHour, "%s %u %s", _("send"), msg->transactionOut[i].hour, _("hours"));
+		sprintf(strCoin, "%u %s", msg->transactionOut[i].coin / 1000000, _("coins"));
 #else
-		sprintf(strHour, "%s %lu %s", _("send"), msg->transactionOut[i].hour, _("hour"));
-		sprintf(strCoin, "%lu %s", msg->transactionOut[i].coin, _("coin"));
+		sprintf(strHour, "%s %lu %s", _("send"), msg->transactionOut[i].hour, _("hours"));
+		sprintf(strCoin, "%lu %s", msg->transactionOut[i].coin / 1000000, _("coins"));
 #endif
 		layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Next"), NULL, _("Do you really want to"), strHour, strCoin, _("to address"), _("..."), NULL);
 		if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) {
