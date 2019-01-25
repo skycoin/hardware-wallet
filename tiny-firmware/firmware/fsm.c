@@ -414,7 +414,7 @@ void fsm_msgTransactionSign(TransactionSign* msg) {
 	for (uint32_t i = 0; i < msg->nbIn; ++i) {
 		uint8_t digest[32];
     	transaction_msgToSign(&transaction, i, digest);
-    	if (msgSignTransactionMessage(digest, msg->transactionIn[i].index, resp->signatures[i]) != 0) {
+    	if (msgSignTransactionMessage(digest, msg->transactionIn[i].index, resp->signatures[resp->signatures_count]) != 0) {
 			fsm_sendFailure(FailureType_Failure_InvalidSignature, NULL);
     		return;
     	}
