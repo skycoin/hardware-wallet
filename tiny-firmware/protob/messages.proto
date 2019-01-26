@@ -172,6 +172,7 @@ message SkycoinAddress {
  */
  message ResponseTransactionSign {
 	repeated string signatures = 1; // generated signatures in base58 format
+	required bool padding = 2;
 }
 
 /**
