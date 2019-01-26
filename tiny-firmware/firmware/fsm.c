@@ -373,8 +373,9 @@ void fsm_msgTransactionSign(TransactionSign* msg) {
 			msg->transactionIn[i].hashIn, msg->transactionIn[i].index);
 	}
 	for (uint32_t i = 0; i < msg->nbOut; ++i) {
-		printf("Output: coin: %d, hour: %d address: %s\n",
-			msg->transactionOut[i].coin, msg->transactionOut[i].hour, msg->transactionOut[i].address);
+		printf("Output: coin: %d, hour: %d address: %s address_index: %d\n",
+			msg->transactionOut[i].coin, msg->transactionOut[i].hour, 
+			msg->transactionOut[i].address, msg->transactionOut[i].address_index);
 	}
 #endif
 	Transaction transaction;
@@ -394,17 +395,35 @@ void fsm_msgTransactionSign(TransactionSign* msg) {
 		sprintf(strHour, "%s %lu %s", _("send"), msg->transactionOut[i].hour, _("hours"));
 		sprintf(strCoin, "%lu %s", msg->transactionOut[i].coin / 1000000, _("coins"));
 #endif
-		layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Next"), NULL, _("Do you really want to"), strHour, strCoin, _("to address"), _("..."), NULL);
-		if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) {
-			fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
-			layoutHome();
-			return;
-		}
-		layoutAddress(msg->transactionOut[i].address);		
-		if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) {
-			fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
-			layoutHome();
-			return;
+		if (msg->transactionOut[i].has_address_index) {
+			uint8_t pubkey[33] = {0};
+    		uint8_t seckey[32] = {0};
+			size_t size_address = 36;
+			char address[36] = {0};
+    		fsm_getKeyPairAtIndex(1, pubkey, seckey, NULL, msg->transactionOut[i].address_index);
+			generate_base58_address_from_pubkey(pubkey, address, &size_address);
+		    if (strcmp(msg->transactionOut[i].address, address) != 0)
+		    {
+		        fsm_sendFailure(FailureType_Failure_AddressGeneration, _("Wrong return address"));
+		        #if EMULATOR
+		        printf("Internal address: %s, message address: %s\n", address, msg->transactionOut[i].address);
+		        printf("Comparaison size %ld\n", size_address);
+		        #endif
+		        return;
+		    }
+		} else {
+			layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Next"), NULL, _("Do you really want to"), strHour, strCoin, _("to address"), _("..."), NULL);
+			if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) {
+				fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
+				layoutHome();
+				return;
+			}
+			layoutAddress(msg->transactionOut[i].address);		
+			if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) {
+				fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
+				layoutHome();
+				return;
+			}
 		}
 		transaction_addOutput(&transaction, msg->transactionOut[i].coin, msg->transactionOut[i].hour, msg->transactionOut[i].address);
 	}

@@ -303,4 +303,5 @@ message SkycoinTransactionOutput {
 	required string address = 1;
 	required uint32 coin = 2;
 	required uint32 hour = 3;
+	optional uint32 address_index = 4;
 }
