@@ -334,40 +334,32 @@ int fsm_getKeyPairAtIndex(uint32_t nbAddress, uint8_t* pubkey, uint8_t* seckey, 
 
 void fsm_msgSkycoinSignMessage(SkycoinSignMessage* msg)
 {
-    uint8_t pubkey[33] = {0};
-    uint8_t seckey[32] = {0};
-	uint8_t digest[32] = {0};
-    size_t size_sign;
-    uint8_t signature[65];
-	char sign58[90] = {0};
-	int res = 0;
-	
 	if (storage_hasMnemonic() == false) {
 		fsm_sendFailure(FailureType_Failure_AddressGeneration, "Mnemonic not set");
 		return;
 	}
-	
 	CHECK_PIN_UNCACHED
-
 	RESP_INIT(ResponseSkycoinSignMessage);
-    fsm_getKeyPairAtIndex(1, pubkey, seckey, NULL, msg->address_n);
+	uint8_t pubkey[33] = {0};
+	uint8_t seckey[32] = {0};
+	fsm_getKeyPairAtIndex(1, pubkey, seckey, NULL, msg->address_n);
+	uint8_t digest[32] = {0};
 	if (is_digest(msg->message) == false) {
-    	compute_sha256sum((const uint8_t *)msg->message, digest, strlen(msg->message));
+		compute_sha256sum((const uint8_t *)msg->message, digest, strlen(msg->message));
 	} else {
 		writebuf_fromhexstr(msg->message, digest);
 	}
-    res = ecdsa_skycoin_sign(rand(), seckey, digest, signature);
-	if (res == 0)
-	{
+	uint8_t signature[65];
+	int res = ecdsa_skycoin_sign(rand(), seckey, digest, signature);
+	if (res == 0) {
 		layoutRawMessage("Signature success");
-	}
-	else
-	{
+	} else {
 		layoutRawMessage("Signature failed");
 	}
-	size_sign = sizeof(sign58);
-    b58enc(sign58, &size_sign, signature, sizeof(signature));
-	memcpy(resp->signed_message, sign58, size_sign);
+	const size_t hex_len = 2 * sizeof(signature);
+  char signature_in_hex[hex_len];
+	tohex(signature_in_hex, signature, sizeof(signature));
+	memcpy(resp->signed_message, signature_in_hex, hex_len);
 	msg_write(MessageType_MessageType_ResponseSkycoinSignMessage, resp);
 	layoutHome();
 }
