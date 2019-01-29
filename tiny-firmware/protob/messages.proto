@@ -397,7 +397,6 @@ message RecoveryDevice {
 	optional bool enforce_wordlist = 6;			// enforce BIP-39 wordlist during the process
 	// 7 reserved for unused recovery method
 	optional uint32 type = 8;				// supported recovery type (see RecoveryType)
-	optional bool dry_run = 10;				// perform dry-run recovery workflow (for safe mnemonic validation)
 }
 
 /**
