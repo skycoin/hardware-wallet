@@ -28,9 +28,6 @@ if [ ! -d "objconv" ]; then
   unzip source.zip -d src
   clang++ -o objconv -O2 src/*.cpp --prefix="$PREFIX"
 fi
-ls -l
-echo "aaaaaaaaaaaaa"
-pwd
 # brew tap hawkw/homebrew-grub
 # brew install objconv
 
