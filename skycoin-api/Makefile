@@ -4,7 +4,7 @@
 UNAME_S     ?= $(shell uname -s)
 MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 MKFILE_DIR  := $(dir $(MKFILE_PATH))
-TOOLS_DIR		:= $(MKFILE_DIR)/tools
+TOOLS_DIR   := $(MKFILE_DIR)/tools
 
 CC       ?= gcc
 
