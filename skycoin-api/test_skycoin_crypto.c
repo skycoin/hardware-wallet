@@ -1,15 +1,15 @@
-#include "skycoin_crypto.h"
-#include "skycoin_check_signature.h"
-
 #include <stdio.h>
 #include <string.h>
 
-#include "check.h"
-#include "sha2.h" //SHA256_DIGEST_LENGTH
-#include "base58.h"
-#include "ecdsa.h"
-#include "secp256k1.h"
+#include <check.h>
+
+#include "tools/sha2.h" //SHA256_DIGEST_LENGTH
+#include "tools/base58.h"
+#include "tools/ecdsa.h"
+#include "tools/secp256k1.h"
 #include "check_digest.h"
+#include "skycoin_crypto.h"
+#include "skycoin_check_signature.h"
 
 #define FROMHEX_MAXLEN 512
 
