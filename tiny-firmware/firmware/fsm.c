@@ -357,7 +357,7 @@ void fsm_msgSkycoinSignMessage(SkycoinSignMessage* msg)
 		layoutRawMessage("Signature failed");
 	}
 	const size_t hex_len = 2 * sizeof(signature);
-  char signature_in_hex[hex_len];
+	char signature_in_hex[hex_len];
 	tohex(signature_in_hex, signature, sizeof(signature));
 	memcpy(resp->signed_message, signature_in_hex, hex_len);
 	msg_write(MessageType_MessageType_ResponseSkycoinSignMessage, resp);
