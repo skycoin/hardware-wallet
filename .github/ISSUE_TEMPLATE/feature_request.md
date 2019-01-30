@@ -7,6 +7,10 @@ assignees: ''
 
 ---
 
+**Feature description**
+
+Describe the feature
+
 **Is your feature request related to a problem? Please describe.**
 A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
 
@@ -20,4 +24,9 @@ A clear and concise description of any alternative solutions or features you've 
 Add any other context about the problem here.
 
 **Possible implementation**
-Preliminary ideas to get this done
+Preliminary ideas to get this done.
+If you have all details in mind then provide a checklist
+
+- [ ] Start with ...
+- [ ] When done do ...
+- [ ] Finally ...

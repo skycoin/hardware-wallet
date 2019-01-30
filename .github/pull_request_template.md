@@ -1,7 +1,7 @@
 ---
 name: Pull request
-about: Suggest an idea for this project
-title: 'fixes #NUMBER - PR title'
+about: Contribute with code to this project
+title: ''
 labels: ''
 assignees: ''
 
@@ -14,3 +14,4 @@ Changes:
 -
 
 Does this change need to mentioned in CHANGELOG.md?
+yes | no

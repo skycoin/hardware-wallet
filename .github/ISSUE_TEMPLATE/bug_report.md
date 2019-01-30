@@ -1,7 +1,7 @@
 ---
 name: Bug report
 about: Create a report to help us improve
-title: '[bug] - Bug title'
+title: ''
 labels: 'bug'
 assignees: ''
 
@@ -10,23 +10,26 @@ assignees: ''
 **Describe the bug**
 A clear and concise description of the problem and bug effects.
 
+**Environment information:**
+
+- OS: e.g. Linux, Windows, Mac OS X
+- Platform: the equivalent of `uname -smr` or `uname -smrv` e.g. Darwin 17.4.0 x86_64
+- Firmware Version: e.g. 0.5.18
+
 **Steps to Reproduce**
 Steps to reproduce the behavior:
+
 1. Go to '...'
 2. Run '....'
 3. Write data to '....'
 4. See error
 
-**Expected behavior**
-A clear and concise description of what you expected to happen.
-
-**Screenshots**
+**Actual behavior**
+Explain the failure modes and effects, everything indicating the existence of the bug.
 If applicable, add screenshots to help explain your problem.
 
-**Environment information:**
- - OS: e.g. Linux, Windows, Mac OS X
- - Platform:  one of `armel`, `armhf`, `arm64`, `amd64`, `i386` ... see [Debian ports](https://www.debian.org/ports/)
- - Firmware Version e.g. 0.5.18
+**Expected behavior**
+A clear and concise description of what you expected to happen.
 
 **Additional context**
 Add any other context about the problem here.
