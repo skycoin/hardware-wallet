@@ -653,8 +653,7 @@ void fsm_msgRecoveryDevice(RecoveryDevice *msg)
 		msg->has_passphrase_protection && msg->passphrase_protection,
 		msg->has_pin_protection && msg->pin_protection,
 		msg->has_language ? msg->language : 0,
-		msg->has_label ? msg->label : 0,
-		msg->has_enforce_wordlist && msg->enforce_wordlist
+		msg->has_label ? msg->label : 0
 	);
 }
 

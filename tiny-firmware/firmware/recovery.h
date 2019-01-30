@@ -24,8 +24,8 @@
 #include <stdbool.h>
 
 void recovery_init(uint32_t _word_count, bool passphrase_protection,
-				   bool pin_protection, const char *language, const char *label,
-				   bool _enforce_wordlist);
+				   bool pin_protection, const char *language,
+				   const char *label);
 void recovery_word(const char *word);
 void recovery_abort(void);
 const char *recovery_get_fake_word(void);

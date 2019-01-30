@@ -45,10 +45,6 @@ static uint32_t word_count;
  */
 static int awaiting_word = 0;
 
-/* True if we should check that seed corresponds to bip39.
- */
-static bool enforce_wordlist;
-
 /* For scrambled recovery Trezor may ask for faked words if
  * seed is short.  This contains the fake word.
  */
@@ -156,14 +152,10 @@ static void recovery_done(void) {
 		strlcat(new_mnemonic, " ", sizeof(new_mnemonic));
 		strlcat(new_mnemonic, words[i], sizeof(new_mnemonic));
 	}
-	if (!enforce_wordlist || mnemonic_check(new_mnemonic)) {
+	if (mnemonic_check(new_mnemonic)) {
 		// New mnemonic is valid, update mnemonic on storage.
 		storage_setMnemonic(new_mnemonic);
 		memzero(new_mnemonic, sizeof(new_mnemonic));
-		if (!enforce_wordlist) {
-			// not enforcing => mark storage as imported
-			storage_setImported(true);
-		}
 		storage_update();
 		fsm_sendSuccess(_("Device recovered"));
 	} else {
@@ -414,14 +406,12 @@ void next_word(void) {
 }
 
 void recovery_init(uint32_t _word_count, bool passphrase_protection,
-				   bool pin_protection, const char *language, const char *label,
-				   bool _enforce_wordlist)
+				   bool pin_protection, const char *language, const char *label)
 {
 	if (_word_count != 12 && _word_count != 18 && _word_count != 24) {
 		return;
 	}
 	word_count = _word_count;
-	enforce_wordlist = _enforce_wordlist;
 	if (pin_protection && !protectChangePin()) {
 		fsm_sendFailure(FailureType_Failure_PinMismatch, NULL);
 		layoutHome();
@@ -453,22 +443,20 @@ static void recovery_scrambledword(const char *word)
 			return;
 		}
 	} else { // real word
-		if (enforce_wordlist) { // check if word is valid
-			const char * const *wl = mnemonic_wordlist();
-			bool found = false;
-			while (*wl) {
-				if (strcmp(word, *wl) == 0) {
-					found = true;
-					break;
-				}
-				wl++;
+		const char * const *wl = mnemonic_wordlist();
+		bool found = false;
+		while (*wl) {
+			if (strcmp(word, *wl) == 0) {
+				found = true;
+				break;
 			}
-			if (!found) {
-				session_clear(true);
-				fsm_sendFailure(FailureType_Failure_DataError, _("Word not found in a wordlist"));
-				layoutHome();
-				return;
-			}
+			wl++;
+		}
+		if (!found) {
+			session_clear(true);
+			fsm_sendFailure(FailureType_Failure_DataError, _("Word not found in a wordlist"));
+			layoutHome();
+			return;
 		}
 		strlcpy(words[word_pos - 1], word, sizeof(words[word_pos - 1]));
 	}
