@@ -415,7 +415,7 @@ void next_word(void) {
 
 void recovery_init(uint32_t _word_count, bool passphrase_protection,
 				   bool pin_protection, const char *language, const char *label,
-				   bool _enforce_wordlist, uint32_t type)
+				   bool _enforce_wordlist)
 {
 	if (_word_count != 12 && _word_count != 18 && _word_count != 24) {
 		return;
@@ -431,23 +431,16 @@ void recovery_init(uint32_t _word_count, bool passphrase_protection,
 	storage_setLanguage(language);
 	storage_setLabel(label);
 	storage_update();
-	if ((type & RecoveryDeviceType_RecoveryDeviceType_Matrix) != 0) {
-		awaiting_word = 2;
-		word_index = 0;
-		word_pincode = 0;
-		next_matrix();
-	} else {
-		for (uint32_t i = 0; i < word_count; i++) {
-			word_order[i] = i + 1;
-		}
-		for (uint32_t i = word_count; i < 24; i++) {
-			word_order[i] = 0;
-		}
-		random_permute(word_order, 24);
-		awaiting_word = 1;
-		word_index = 0;
-		next_word();
+	for (uint32_t i = 0; i < word_count; i++) {
+		word_order[i] = i + 1;
 	}
+	for (uint32_t i = word_count; i < 24; i++) {
+		word_order[i] = 0;
+	}
+	random_permute(word_order, 24);
+	awaiting_word = 1;
+	word_index = 0;
+	next_word();
 }
 
 static void recovery_scrambledword(const char *word)
