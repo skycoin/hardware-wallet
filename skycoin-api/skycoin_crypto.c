@@ -255,9 +255,12 @@ void transaction_addInput(Transaction* self, uint8_t* address) {
 };
 
 void transaction_addOutput(Transaction* self,  uint32_t coin, uint32_t hour, char* address) {
-    strcpy(self->outAddress[self->nbOut].address, address);
     self->outAddress[self->nbOut].coin = coin;
     self->outAddress[self->nbOut].hour = hour;
+    size_t len = 36;
+    uint8_t b58string[36];
+    b58tobin(b58string, &len, address);
+    memcpy(self->outAddress[self->nbOut].address, &b58string[36 - len], len);
     self->nbOut++;
 }
 
@@ -269,36 +272,31 @@ void transaction_innerHash(Transaction* self) {
     // serialized in
     uint8_t nbIn = self->nbIn;
     memcpy(&ctx[bitcount], &nbIn, 1);
-    bitcount += sizeof(uint32_t);
+    memset(&ctx[bitcount + 1], 0, 3);
+    bitcount += 4;
     for (uint8_t i = 0; i < self->nbIn; ++i) {
         memcpy(&ctx[bitcount], (uint8_t*)&self->inAddress[i], 32);
         bitcount += 32;
     }
 
     // serialized out
-    uint32_t zero32 = 0;
-    uint8_t zero = 0;
     uint8_t nbOut = self->nbOut;
     memcpy(&ctx[bitcount], &nbOut, 1);
-    bitcount += sizeof(uint32_t);
+    memset(&ctx[bitcount + 1], 0, 3);
+    bitcount += 4;
     for (uint8_t i = 0; i < self->nbOut; ++i) {
-        memcpy(&ctx[bitcount], &zero, 1);
+        ctx[bitcount] = 0;
         bitcount += 1;
-        size_t len = 36;
-        uint8_t b58string[36];
-        char b58HexString[36];
-        b58tobin(b58string, &len, self->outAddress[i].address);
-        tohex(b58HexString, &b58string[36 - len], 20);
-        memcpy(&ctx[bitcount], &b58string[36 - len], 20);
+        memcpy(&ctx[bitcount], &self->outAddress[i].address, 20);
         bitcount += 20;
-        memcpy(&ctx[bitcount], (uint8_t*)&self->outAddress[i].coin, sizeof(uint32_t));
-        bitcount += sizeof(uint32_t);
-        memcpy(&ctx[bitcount], &zero32, sizeof(uint32_t));
-        bitcount += sizeof(uint32_t);
-        memcpy(&ctx[bitcount], (uint8_t*)&self->outAddress[i].hour, sizeof(uint32_t));
-        bitcount += sizeof(uint32_t);
-        memcpy(&ctx[bitcount], &zero32, sizeof(uint32_t));
-        bitcount += sizeof(uint32_t);
+        memcpy(&ctx[bitcount], (uint8_t*)&self->outAddress[i].coin, 4);
+        bitcount += 4;
+        memset(&ctx[bitcount], 0, 4);
+        bitcount += 4;
+        memcpy(&ctx[bitcount], (uint8_t*)&self->outAddress[i].hour, 4);
+        bitcount += 4;
+        memset(&ctx[bitcount], 0, 4);
+        bitcount += 4;
     }
 
     SHA256_CTX sha256ctx;

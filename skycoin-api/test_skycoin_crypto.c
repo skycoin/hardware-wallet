@@ -433,17 +433,17 @@ START_TEST(test_addtransactioninput)
     ck_assert_int_eq(transaction.nbOut, 1);
     ck_assert_int_eq(transaction.outAddress[0].coin, 125000000);
     ck_assert_int_eq(transaction.outAddress[0].hour, 4);
-    ck_assert_str_eq(transaction.outAddress[0].address, "d1hMF1XCCvFXVa2u7NbuWo9dmfNbdpoFLJ");
+    ck_assert_mem_eq(transaction.outAddress[0].address, fromhex("597f682bf9d6302fc070eb0cee7c1c6a27653f21"), 20);
     // add one more output
     transaction_addOutput(&transaction, 2000000, 3, "2kVVoMkH7aTVXsiGwZEALpkHZ6sUyumL8hH");
     ck_assert_int_eq(transaction.nbIn, 1);
     ck_assert_int_eq(transaction.nbOut, 2);
     ck_assert_int_eq(transaction.outAddress[0].coin, 125000000);
     ck_assert_int_eq(transaction.outAddress[0].hour, 4);
-    ck_assert_str_eq(transaction.outAddress[0].address, "d1hMF1XCCvFXVa2u7NbuWo9dmfNbdpoFLJ");
+    ck_assert_mem_eq(transaction.outAddress[0].address, fromhex("597f682bf9d6302fc070eb0cee7c1c6a27653f21"), 20);
     ck_assert_int_eq(transaction.outAddress[1].coin, 2000000);
     ck_assert_int_eq(transaction.outAddress[1].hour, 3);
-    ck_assert_str_eq(transaction.outAddress[1].address, "2kVVoMkH7aTVXsiGwZEALpkHZ6sUyumL8hH");
+    ck_assert_mem_eq(transaction.outAddress[1].address, fromhex("fc3a66b52bb478be3a62bf8a698a64fa2ffbdedc"), 20);
 
     // compute inner hash
     transaction_innerHash(&transaction);
@@ -468,7 +468,7 @@ START_TEST(test_addtransactioninput)
     ck_assert_int_eq(transaction.nbOut, 1);
     ck_assert_int_eq(transaction.outAddress[0].coin, 100000);
     ck_assert_int_eq(transaction.outAddress[0].hour, 2);
-    ck_assert_str_eq(transaction.outAddress[0].address, "K9TzLrgqz7uXn3QJHGxmzdRByAzH33J2ot");
+    ck_assert_mem_eq(transaction.outAddress[0].address, fromhex("2d18bf01abe4e295f907101316f980c0cb25de4b002a7fb54b"), 20);
 
     // compute inner hash
     transaction_innerHash(&transaction);
@@ -503,7 +503,7 @@ START_TEST(test_addtransactioninput)
     ck_assert_int_eq(transaction.nbOut, 1);
     ck_assert_int_eq(transaction.outAddress[0].coin, 20800000);
     ck_assert_int_eq(transaction.outAddress[0].hour, 255);
-    ck_assert_str_eq(transaction.outAddress[0].address, "K9TzLrgqz7uXn3QJHGxmzdRByAzH33J2ot");
+    ck_assert_mem_eq(transaction.outAddress[0].address, fromhex("2d18bf01abe4e295f907101316f980c0cb25de4b002a7fb54b"), 20);
 
     // compute inner hash
     transaction_innerHash(&transaction);
@@ -548,14 +548,14 @@ START_TEST(test_addtransactioninput)
     ck_assert_int_eq(transaction.nbOut, 1);
     ck_assert_int_eq(transaction.outAddress[0].coin, 111000000);
     ck_assert_int_eq(transaction.outAddress[0].hour, 6464556);
-    ck_assert_str_eq(transaction.outAddress[0].address, "K9TzLrgqz7uXn3QJHGxmzdRByAzH33J2ot");
+    ck_assert_mem_eq(transaction.outAddress[0].address, fromhex("2d18bf01abe4e295f907101316f980c0cb25de4b002a7fb54b"), 20);
     // add output
     transaction_addOutput(&transaction, 1900000, 1, "2iNNt6fm9LszSWe51693BeyNUKX34pPaLx8");
     ck_assert_int_eq(transaction.nbIn, 3);
     ck_assert_int_eq(transaction.nbOut, 2);
     ck_assert_int_eq(transaction.outAddress[1].coin, 1900000);
     ck_assert_int_eq(transaction.outAddress[1].hour, 1);
-    ck_assert_str_eq(transaction.outAddress[1].address, "2iNNt6fm9LszSWe51693BeyNUKX34pPaLx8");
+    ck_assert_mem_eq(transaction.outAddress[1].address, fromhex("f6f3e048062dff0ccc237d7de1345a6dcabaded200458dead1"), 20);
 
     // compute inner hash
     transaction_innerHash(&transaction);
@@ -594,7 +594,7 @@ START_TEST(test_addtransactioninput)
     ck_assert_int_eq(transaction.nbOut, 1);
     ck_assert_int_eq(transaction.outAddress[0].coin, 23100000);
     ck_assert_int_eq(transaction.outAddress[0].hour, 0);
-    ck_assert_str_eq(transaction.outAddress[0].address, "22S8njPeKUNJBijQjNCzaasXVyf22rWv7gF");
+    ck_assert_mem_eq(transaction.outAddress[0].address, fromhex("93b472a9a187bb70cfdc78151c7cc5c7ab5cba580094398734"), 20);
 
     // compute inner hash
     transaction_innerHash(&transaction);
@@ -624,7 +624,7 @@ START_TEST(test_addtransactioninput)
     ck_assert_int_eq(transaction.nbOut, 1);
     ck_assert_int_eq(transaction.outAddress[0].coin, 1000000);
     ck_assert_int_eq(transaction.outAddress[0].hour, 0);
-    ck_assert_str_eq(transaction.outAddress[0].address, "2iNNt6fm9LszSWe51693BeyNUKX34pPaLx8");
+    ck_assert_mem_eq(transaction.outAddress[0].address, fromhex("f6f3e048062dff0ccc237d7de1345a6dcabaded200458dead1"), 20);
 
     // compute inner hash
     transaction_innerHash(&transaction);
@@ -654,21 +654,21 @@ START_TEST(test_addtransactioninput)
     ck_assert_int_eq(transaction.nbOut, 1);
     ck_assert_int_eq(transaction.outAddress[0].coin, 10000000);
     ck_assert_int_eq(transaction.outAddress[0].hour, 1);
-    ck_assert_str_eq(transaction.outAddress[0].address, "K9TzLrgqz7uXn3QJHGxmzdRByAzH33J2ot");
+    ck_assert_mem_eq(transaction.outAddress[0].address, fromhex("2d18bf01abe4e295f907101316f980c0cb25de4b002a7fb54b"), 20);
     // add output
     transaction_addOutput(&transaction, 5500000, 0, "VNz8LR9JTSoz5o7qPHm3QHj4EiJB6LV18L");
     ck_assert_int_eq(transaction.nbIn, 1);
     ck_assert_int_eq(transaction.nbOut, 2);
     ck_assert_int_eq(transaction.outAddress[1].coin, 5500000);
     ck_assert_int_eq(transaction.outAddress[1].hour, 0);
-    ck_assert_str_eq(transaction.outAddress[1].address, "VNz8LR9JTSoz5o7qPHm3QHj4EiJB6LV18L");
+    ck_assert_mem_eq(transaction.outAddress[1].address, fromhex("468734bf340ea7e21a407c5d7c4274cc11a8d9320002f76a59"), 20);
     // add output
     transaction_addOutput(&transaction, 4500000, 1, "22S8njPeKUNJBijQjNCzaasXVyf22rWv7gF");
     ck_assert_int_eq(transaction.nbIn, 1);
     ck_assert_int_eq(transaction.nbOut, 3);
     ck_assert_int_eq(transaction.outAddress[2].coin, 4500000);
     ck_assert_int_eq(transaction.outAddress[2].hour, 1);
-    ck_assert_str_eq(transaction.outAddress[2].address, "22S8njPeKUNJBijQjNCzaasXVyf22rWv7gF");
+    ck_assert_mem_eq(transaction.outAddress[2].address, fromhex("93b472a9a187bb70cfdc78151c7cc5c7ab5cba580094398734"), 20);
 
     // compute inner hash
     transaction_innerHash(&transaction);
@@ -710,7 +710,7 @@ START_TEST(test_addtransactioninput)
     ck_assert_int_eq(transaction.nbOut, 1);
     ck_assert_int_eq(transaction.outAddress[0].coin, 25000000);
     ck_assert_int_eq(transaction.outAddress[0].hour, 33);
-    ck_assert_str_eq(transaction.outAddress[0].address, "22S8njPeKUNJBijQjNCzaasXVyf22rWv7gF");
+    ck_assert_mem_eq(transaction.outAddress[0].address, fromhex("93b472a9a187bb70cfdc78151c7cc5c7ab5cba580094398734"), 20);
 
     // compute inner hash
     transaction_innerHash(&transaction);
@@ -742,7 +742,7 @@ START_TEST(test_addtransactioninput)
     ck_assert_int_eq(transaction.nbOut, 1);
     ck_assert_int_eq(transaction.outAddress[0].coin, 1000000);
     ck_assert_int_eq(transaction.outAddress[0].hour, 1000);
-    ck_assert_str_eq(transaction.outAddress[0].address, "3pXt9MSQJkwgPXLNePLQkjKq8tsRnFZGQA");
+    ck_assert_mem_eq(transaction.outAddress[0].address, fromhex("0701d3acaa76ec13a3ccda5fdcb58c2bc7fac4150098698f5b"), 20);
 
     // compute inner hash
     transaction_innerHash(&transaction);
@@ -771,14 +771,14 @@ START_TEST(test_addtransactioninput)
     ck_assert_int_eq(transaction.nbOut, 1);
     ck_assert_int_eq(transaction.outAddress[0].coin, 300000);
     ck_assert_int_eq(transaction.outAddress[0].hour, 500);
-    ck_assert_str_eq(transaction.outAddress[0].address, "3pXt9MSQJkwgPXLNePLQkjKq8tsRnFZGQA");
+    ck_assert_mem_eq(transaction.outAddress[0].address, fromhex("0701d3acaa76ec13a3ccda5fdcb58c2bc7fac4150098698f5b"), 20);
     // add output
     transaction_addOutput(&transaction, 700000, 500, "S6Dnv6gRTgsHCmZQxjN7cX5aRjJvDvqwp9");
     ck_assert_int_eq(transaction.nbIn, 1);
     ck_assert_int_eq(transaction.nbOut, 2);
     ck_assert_int_eq(transaction.outAddress[1].coin, 700000);
     ck_assert_int_eq(transaction.outAddress[1].hour, 500);
-    ck_assert_str_eq(transaction.outAddress[1].address, "S6Dnv6gRTgsHCmZQxjN7cX5aRjJvDvqwp9");
+    ck_assert_mem_eq(transaction.outAddress[1].address, fromhex("3e5aaa55d30d389a651e8fbd4d6b0c8fbee773750077f2ab56"), 20);
 
     // compute inner hash
     transaction_innerHash(&transaction);
@@ -806,7 +806,7 @@ START_TEST(test_addtransactioninput)
     ck_assert_int_eq(transaction.nbOut, 1);
     ck_assert_int_eq(transaction.outAddress[0].coin, 1000000);
     ck_assert_int_eq(transaction.outAddress[0].hour, 1000);
-    ck_assert_str_eq(transaction.outAddress[0].address, "S6Dnv6gRTgsHCmZQxjN7cX5aRjJvDvqwp9");
+    ck_assert_mem_eq(transaction.outAddress[0].address, fromhex("3e5aaa55d30d389a651e8fbd4d6b0c8fbee773750077f2ab56"), 20);
 
     // compute inner hash
     transaction_innerHash(&transaction);

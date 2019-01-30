@@ -7,7 +7,7 @@
 typedef struct TransactionOutput{
     uint32_t coin;
     uint32_t hour;
-    char address[36];
+    uint8_t address[20];
 }TransactionOutput;
 
 typedef struct Transaction{
