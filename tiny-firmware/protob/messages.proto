@@ -125,6 +125,7 @@ message ApplySettings {
  */
  message GenerateMnemonic {
  	optional bool passphrase_protection = 1;
+ 	optional uint32 word_count = 2; // number of words for seed
 }
 
 /**
