@@ -390,11 +390,11 @@ void fsm_msgTransactionSign(TransactionSign* msg) {
 		char strCoin[21];
 #if EMULATOR
 		sprintf(strHour, "%s %u %s", _("send"), msg->transactionOut[i].hour, _("hours"));
-		sprintf(strCoin, "%u %s", msg->transactionOut[i].coin / 1000000, _("coins"));
 #else
 		sprintf(strHour, "%s %lu %s", _("send"), msg->transactionOut[i].hour, _("hours"));
-		sprintf(strCoin, "%lu %s", msg->transactionOut[i].coin / 1000000, _("coins"));
 #endif
+		sprintf(strCoin, "%.2f%s", msg->transactionOut[i].coin / 1000000.00, _("coins"));
+
 		if (msg->transactionOut[i].has_address_index) {
 			uint8_t pubkey[33] = {0};
     		uint8_t seckey[32] = {0};
