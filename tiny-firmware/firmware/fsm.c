@@ -498,21 +498,9 @@ void fsm_msgWipeDevice(WipeDevice *msg)
 
 void fsm_msgGenerateMnemonic(GenerateMnemonic* msg) {
 	CHECK_NOT_INITIALIZED
-	uint32_t word_count = 12;
-	if (msg->has_word_count) {
-		word_count = msg->word_count;
-	}
-	int strength;
-	switch (word_count) {
-		case 12:
-		case 24:
-			strength = word_count * 4 / 3 * 8;
-			break;
-		default:
-			fsm_sendFailure(FailureType_Failure_ProcessError, _("Device could not generate a Mnemonic, please you should select a 12 or 24 as word count"));
-			layoutHome();
-			return;
-	}
+	CHECK_PARAM(!msg->has_word_count || msg->word_count == 12
+		|| msg->word_count == 24, _("Invalid word count"));
+	int strength = msg->word_count * 4 / 3 * 8;
 	const char* mnemonic = mnemonic_generate(strength);
 	if (mnemonic == 0) {
 		fsm_sendFailure(FailureType_Failure_ProcessError, _("Device could not generate a Mnemonic"));
