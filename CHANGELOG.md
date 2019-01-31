@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+- [\#33](https://github.com/skycoin/hardware-wallet/issues/33)
+
+  - In `GenerateMnemonic` message you can specify the `word_count` for the seed.
+
+  - In `RecoveryDevice` message you can specify the `word_count` for the seed.
+
 - Firmware and bootloader generation tested on linux and osx (travis-ci)
 
 ### Fixed
