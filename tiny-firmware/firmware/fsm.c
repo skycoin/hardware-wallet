@@ -388,12 +388,14 @@ void fsm_msgTransactionSign(TransactionSign* msg) {
 	for (uint32_t i = 0; i < msg->nbOut; ++i) {
 		char strHour[21];
 		char strCoin[21];
+		char* coinString = msg->transactionOut[i].coin == 1000000 ? _("coin") : _("coins");
+		char* hourString = (msg->transactionOut[i].hour == 1 || msg->transactionOut[i].hour == 0) ? _("hour") : _("hours");
+		sprintf(strCoin, "%s %.2f %s",  _("send"), msg->transactionOut[i].coin / 1000000.00, coinString);
 #if EMULATOR
-		sprintf(strHour, "%s %u %s", _("send"), msg->transactionOut[i].hour, _("hours"));
+		sprintf(strHour, "%u %s", msg->transactionOut[i].hour, hourString);
 #else
-		sprintf(strHour, "%s %lu %s", _("send"), msg->transactionOut[i].hour, _("hours"));
+		sprintf(strHour, "%lu %s", msg->transactionOut[i].hour, hourString);
 #endif
-		sprintf(strCoin, "%.2f%s", msg->transactionOut[i].coin / 1000000.00, _("coins"));
 
 		if (msg->transactionOut[i].has_address_index) {
 			uint8_t pubkey[33] = {0};
@@ -412,7 +414,7 @@ void fsm_msgTransactionSign(TransactionSign* msg) {
 		        return;
 		    }
 		} else {
-			layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Next"), NULL, _("Do you really want to"), strHour, strCoin, _("to address"), _("..."), NULL);
+			layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Next"), NULL, _("Do you really want to"), strCoin, strHour, _("to address"), _("..."), NULL);
 			if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) {
 				fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
 				layoutHome();
