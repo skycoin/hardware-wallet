@@ -499,7 +499,7 @@ void fsm_msgWipeDevice(WipeDevice *msg)
 void fsm_msgGenerateMnemonic(GenerateMnemonic* msg) {
 	CHECK_NOT_INITIALIZED
 	CHECK_PARAM(!msg->has_word_count || msg->word_count == 12
-		|| msg->word_count == 24, _("Invalid word count"));
+				|| msg->word_count == 24, _("Invalid word count"));
 	int strength = msg->word_count * 4 / 3 * 8;
 	const char* mnemonic = mnemonic_generate(strength);
 	if (mnemonic == 0) {
@@ -639,7 +639,7 @@ void fsm_msgRecoveryDevice(RecoveryDevice *msg)
 {
 	CHECK_NOT_INITIALIZED
 	CHECK_PARAM(!msg->has_word_count || msg->word_count == 12
-		|| msg->word_count == 24, _("Invalid word count"));
+				|| msg->word_count == 24, _("Invalid word count"));
 	layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL,
 					  _("Do you really want to"), _("recover the device?"),
 					  NULL, NULL, NULL, NULL);

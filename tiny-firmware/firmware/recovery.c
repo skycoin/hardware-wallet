@@ -460,7 +460,6 @@ static void recovery_scrambledword(const char *word)
 		}
 		strlcpy(words[word_pos - 1], word, sizeof(words[word_pos - 1]));
 	}
-
 	if (word_index + 1 == 24) { // last one
 		recovery_done();
 	} else {
