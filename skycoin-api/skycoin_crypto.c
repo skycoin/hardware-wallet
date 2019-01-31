@@ -317,6 +317,11 @@ void transaction_msgToSign(Transaction* self, uint8_t index, uint8_t* msg_digest
     }
     memcpy(shaInput, self->innerHash, 32);
     memcpy(&shaInput[32], (uint8_t*)&self->inAddress[index], 32);
+#if EMULATOR
+    char str[128];
+    tohex(str, shaInput, 64);
+    printf("InnerHash computation on %s\n", str);
+#endif
     // compute hash
     SHA256_CTX sha256ctx;
     sha256_Init(&sha256ctx);
