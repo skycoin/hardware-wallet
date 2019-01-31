@@ -139,7 +139,7 @@ int mnemonic_check(const char *mnemonic)
 	}
 	n++;
 	// check number of words
-	if (n != 12 && n != 18 && n != 24) {
+	if (n != 12 && n != 24) {
 		return 0;
 	}
 
@@ -184,11 +184,7 @@ int mnemonic_check(const char *mnemonic)
 	sha256_Raw(bits, n * 4 / 3, bits);
 	if (n == 12) {
 		return (bits[0] & 0xF0) == (bits[32] & 0xF0); // compare first 4 bits
-	} else
-	if (n == 18) {
-		return (bits[0] & 0xFC) == (bits[32] & 0xFC); // compare first 6 bits
-	} else
-	if (n == 24) {
+	} else if (n == 24) {
 		return bits[0] == bits[32]; // compare 8 bits
 	}
 	return 0;

@@ -408,7 +408,7 @@ void next_word(void) {
 void recovery_init(uint32_t _word_count, bool passphrase_protection,
 				   bool pin_protection, const char *language, const char *label)
 {
-	if (_word_count != 12 && _word_count != 18 && _word_count != 24) {
+	if (_word_count != 12 && _word_count != 24) {
 		return;
 	}
 	word_count = _word_count;
