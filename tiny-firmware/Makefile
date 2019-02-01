@@ -125,7 +125,7 @@ all: libopencm3 proto $(NAME).bin
 else
 .PHONY: proto
 
-all: proto $(NAME).bin
+all: proto $(NAME)
 endif
 
 
