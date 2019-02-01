@@ -66,6 +66,7 @@ OBJS += protob/types.pb.o
 
 #skycoin-crypto
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/skycoin_crypto.o
+OBJS += $(TOP_DIR)vendor/skycoin-crypto/check_digest.o
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/skycoin_check_signature_tools.o
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/skycoin_check_signature.o
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/base58.o
@@ -142,6 +143,8 @@ include Makefile.include
 
 clean::
 	rm -f $(OBJS)
+	rm -rf firmware/main.o
+	rm -rf firmware/test_fsm.o
 	rm -f *.a
 	rm -f *.bin
 	rm -f *.d
