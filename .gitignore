@@ -63,4 +63,5 @@ test_skycoin_crypto
 *.swp
 *.swo
 *.orig
+.DS_Store
 
