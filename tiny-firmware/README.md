@@ -1,29 +1,68 @@
 # Skycoin electronic wallet firmware
 
-This firmware had been copied and modified from [trezor-mcu](https://github.com/trezor/trezor-mcu). Please refer to the [README.md file](https://github.com/trezor/trezor-mcu/blob/master/README.md) on that repository for extra details about bootloader and firmware compilation.
+This firmware had been copied and modified from [trezor-mcu](https://github.com/trezor/trezor-mcu) under the GNU LGPL. Please refer to the [README.md file](https://github.com/trezor/trezor-mcu/blob/master/README.md) on that repository for extra details about bootloader and firmware compilation.
 
 This code aims at tranforming the cipher library from [this repository](https://github.com/skycoin/skycoin/tree/develop/src/cipher) into firmware for the STM32 hardware.
 
 ## 1. Prepare environment
 
-### Download GNU ARM Embedded Toolchain
+### Download and install GNU ARM Embedded Toolchain
 
+On GNU/Linux it is possible to download the official compressed tarball, extract it , and add it to system `PATH` as follows
+
+```sh
     wget https://developer.arm.com/-/media/Files/downloads/gnu-rm/6-2017q2/gcc-arm-none-eabi-6-2017-q2-update-linux.tar.bz2
-
-### Extract crosscompiler and add it to your path
-
     tar xjf gcc-arm-none-eabi-6-2017-q2-update-linux.tar.bz2
     export PATH="$PWD/gcc-arm-none-eabi-6-2017-q2-update/bin:$PATH"
+```
+
+Some distributions offer binary installation packages . For instance, on Ubuntu>=14.04
+
+```sh
+sudo apt-get install gcc-arm-none-eabi
+```
+
+On Mac OS, after [installing homebrew](https://docs.brew.sh/Installation) it is recommended to install the toolchain like this
+
+```sh
+brew tap skycoin/homebrew-skycoin
+brew update
+brew install gcc-arm-none-eabi-63
+```
 
 ### Install ST-LINK
 
-Follow the steps [here](https://github.com/texane/stlink/blob/master/doc/compiling.md).
+[ST-LINK](https://github.com/texane/stlink) tool is needed to send JTAG commands to the Skycoin hardware wallet.
+Binaries are available for [installing ST-LINK using native package managers](https://github.com/texane/stlink#installation).
+For instance, on Mac OS X the following command will install `stlink` and its dependencies.
+
+```
+brew install stlink
+```
+
+If this option is not available for the platform of your preference then install from sources
+by following the steps [here](https://github.com/texane/stlink/blob/master/doc/compiling.md).
 
 ### Install google protobuf
+
+On Debian and Ubuntu GNU/Linux
 
 ```
 sudo apt-get install protobuf-compiler python-protobuf golang-goprotobuf-dev
 ```
+
+On Mac OS
+
+```
+brew install protobuf --with-python
+go get -u github.com/golang/protobuf/{proto,protoc-gen-go}
+```
+
+If no binaries are available for your platform then
+
+- [Install Protobuf C++ runtime and protoc](https://github.com/protocolbuffers/protobuf/tree/master/src) from sources.
+- [Install Protobuf Python runtime](https://github.com/protocolbuffers/protobuf/tree/master/python#installation) from sources.
+- [Install Protobuf Go runtime](https://github.com/golang/protobuf#installation) from sources.
 
 ### Configure your usb module
 

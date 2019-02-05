@@ -1,49 +1,43 @@
+language: c
 matrix:
   include:
-  - language: c
-    os:
-    - linux
-    - osx
-    addons:
-      apt:
-        sources:
-        - ubuntu-toolchain-r-test
-    env: 
-      -PROTOBUF_VERSION=3.4.0
-    before_script:
-      - sudo apt-get update 
-      #install libcheck
-      - wget https://github.com/libcheck/check/releases/download/0.12.0/check-0.12.0.tar.gz
-      - tar xvf check-0.12.0.tar.gz
-      - cd check-0.12.0
-      - autoreconf --install
-      - ./configure
-      - make
-      - cp src/.libs/*.so* src
-      - export CHECK_PATH=$PWD
-      - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CHECK_PATH/src
-      - cd -
-      #install build tools
-      - sudo apt-get install -y build-essential curl unzip git python3 python3-pip python-protobuf gcc-arm-none-eabi
-      #install sdl
-      - sudo apt-get install -y libegl1-mesa-dev libgles2-mesa-dev libsdl2-dev libsdl2-image-dev
-      #install protobuf
-      - curl -LO "https://github.com/google/protobuf/releases/download/v${PROTOBUF_VERSION}/protoc-${PROTOBUF_VERSION}-linux-x86_64.zip"
-      - mkdir protoc
-      - yes | unzip "protoc-${PROTOBUF_VERSION}-linux-x86_64.zip" -d ./protoc
-      - find -name protoc
-      - export PATH=$PATH:$PWD/protoc/bin
-      - pip3 install --user --upgrade protobuf
-      - pip3 install --user "protobuf==${PROTOBUF_VERSION}" ecdsa
-      - pip install --user --upgrade protobuf
-    script:
-      - cd skycoin-api
-      - make
-      - ./test_skycoin_crypto
-      - make clean
-      - cd ../
-      - make emulator
-      - make clean
-      - make full-firmware
-      - md5sum tiny-firmware/bootloader/combine/*.bin
-      - md5sum full-firmware-no-mem-protect.bin
+    - os: linux
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+      env:
+        - PROTOBUF_VERSION=3.4.0
+    - os: osx
+      env:
+        - PROTOBUF_VERSION=3.6.1
+before_script:
+  # install linters
+  - make install-linters
+  # Define env vars for Linux builds
+  - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then
+    export CHECK_PATH="$(pwd)/check-0.12.0" ;
+    export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${CHECK_PATH}/src" ;
+    fi
+  - if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
+    export CHECK_PATH="$(brew --prefix check)" ;
+    export DYLD_LIBRARY_PATH="${DYLD_LIBRARY_PATH}:${CHECK_PATH}/lib" ;
+    fi
+  - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then export PATH="$PATH:$(pwd)/protoc/bin" ; echo "PATH=$PATH"; fi
+  # Install OS-specific test and build dependencies
+  - eval "./ci-scripts/install-${TRAVIS_OS_NAME}.sh"
+  # Include paths for brew packages e.g. SDL2
+  - if [[ "$TRAVIS_OS_NAME" == 'osx' ]]; then export CFLAGS="-I$(brew --prefix sdl2)/include/SDL2" ; fi
+  # Upgrade protobuf python
+  - pip3 install --user --upgrade protobuf
+  - pip3 install --user "protobuf==${PROTOBUF_VERSION}" ecdsa
+  - pip install --user --upgrade protobuf
+script:
+  - make lint
+  - make -C skycoin-api test
+  - make -C skycoin-api clean
+  - make emulator
+  - make clean
+  - make full-firmware
+  - md5sum tiny-firmware/bootloader/combine/*.bin
+  - md5sum full-firmware-no-mem-protect.bin
