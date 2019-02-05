@@ -78,6 +78,9 @@ make full-firmware-mem-protect # this will create a full-firmware-memory-protect
 The following instruction creates a full firmware with:
 * firmware version: 1.1.0
 * bootloader version 1.2.0
+
 ```bash
-make combined-release-mem-protect firmware_version=1.1.0 bootloader_version=1.2.0
+make combined-release-mem-protect VERSION_FIRMWARE=1.1.0 VERSION_BOOTLOADER=1.2.0
 ```
+
+Variables `VERSION_FIRMWARE` and `VERSION_BOOTLOADER` are optional and default to the contents of `tiny-firmware/VERSION` and `tiny-firmware/bootloader/VERSION` respectively.
