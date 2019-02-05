@@ -89,6 +89,7 @@ run-emulator: emulator ## Run wallet emulator
 
 test: build-deps
 	EMULATOR=1 make -C tiny-firmware/emulator/
+	EMULATOR=1 make -C skycoin-api/ test
 	EMULATOR=1 make -C tiny-firmware/ test
 
 st-flash: ## Deploy (flash) firmware on physical wallet

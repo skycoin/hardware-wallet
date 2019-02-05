@@ -149,8 +149,11 @@ ifeq ($(UNAME_S), Darwin)
 	TESTLIBS=$(TESTLIBS_DARWIN)
 endif
 
-test: proto lib$(NAME).a firmware/test_fsm.o
+test_$(NAME): proto lib$(NAME).a firmware/test_fsm.o
 	$(LD) -o test_$(NAME) firmware/test_fsm.o $(OBJS) $(LDLIBS) $(LDFLAGS) $(TESTLIBS)
+
+test: test_$(NAME)
+	./test_$(NAME)
 
 else
 $(NAME).bin: $(NAME).elf
