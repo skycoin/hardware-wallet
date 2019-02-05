@@ -37,6 +37,9 @@
 #define DEBUG_LOG 0
 #endif
 
+void check_lock_screen(void);
+void check_factory_test(void);
+
 /* Screen timeout */
 extern uint32_t system_millis_lock_start;
 
