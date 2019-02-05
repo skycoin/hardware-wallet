@@ -9,9 +9,12 @@
  *
  */
 
+<<<<<<< HEAD
 #include "skycoin_crypto.h"
 #include "skycoin_check_signature.h"
 
+=======
+>>>>>>> 5cbd2ff554ed9c05f0db424de9e596a1745b53a8
 #include <stdio.h>
 #include <string.h>
 
