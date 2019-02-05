@@ -1,7 +1,7 @@
 /*
  * This file is part of the Skycoin project, https://skycoin.net/ 
  *
- * Copyright (C) 2014 Pavol Rusnak <stick@satoshilabs.com>
+ * Copyright (C) 2017 Saleem Rashid <trezor@saleemrashid.com>
  * Copyright (C) 2018-2019 Skycoin Project
  *
  * This library is free software: you can redistribute it and/or modify
