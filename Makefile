@@ -3,6 +3,9 @@
 .PHONY: build-deps firmware-deps bootloader bootloader-mem-protect
 .PHONY: firmware sign full-firmware-mem-protect full-firmware
 .PHONY: emulator run-emulator st-flash
+.PHONY: bootloader-clean bootloader-release bootloader-release-mem-protect
+.PHONY: firmware-clean firmware-release
+.PHONY: combined-release combined-release-mem-protect
 
 UNAME_S ?= $(shell uname -s)
 
