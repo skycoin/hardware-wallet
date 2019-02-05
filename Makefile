@@ -87,7 +87,7 @@ emulator: build-deps ## Build emulator
 run-emulator: emulator ## Run wallet emulator
 	./emulator
 
-test: build-deps
+test: build-deps ## Run all project test suites.
 	EMULATOR=1 make -C tiny-firmware/emulator/
 	EMULATOR=1 make -C skycoin-api/ test
 	EMULATOR=1 make -C tiny-firmware/ test

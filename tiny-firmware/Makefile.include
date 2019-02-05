@@ -152,7 +152,7 @@ endif
 test_$(NAME): proto lib$(NAME).a firmware/test_fsm.o
 	$(LD) -o test_$(NAME) firmware/test_fsm.o $(OBJS) $(LDLIBS) $(LDFLAGS) $(TESTLIBS)
 
-test: test_$(NAME)
+test: test_$(NAME) ## Run test suite for tiny-firmware.
 	./test_$(NAME)
 
 else
