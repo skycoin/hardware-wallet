@@ -55,6 +55,7 @@ OBJS += firmware/layout2.o
 OBJS += firmware/storage.o
 OBJS += firmware/messages.o
 OBJS += firmware/fsm.o
+OBJS += firmware/fsm_impl.o
 OBJS += firmware/protect.o
 OBJS += firmware/pinmatrix.o
 OBJS += firmware/reset.o
