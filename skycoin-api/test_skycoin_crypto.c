@@ -1,15 +1,26 @@
-#include "skycoin_crypto.h"
-#include "skycoin_check_signature.h"
+/*
+ * This file is part of the Skycoin project, https://skycoin.net/ 
+ *
+ * Copyright (C) 2018-2019 Skycoin Project
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ */
 
 #include <stdio.h>
 #include <string.h>
 
-#include "check.h"
-#include "sha2.h" //SHA256_DIGEST_LENGTH
-#include "base58.h"
-#include "ecdsa.h"
-#include "secp256k1.h"
+#include <check.h>
+
+#include "tools/sha2.h" //SHA256_DIGEST_LENGTH
+#include "tools/base58.h"
+#include "tools/ecdsa.h"
+#include "tools/secp256k1.h"
 #include "check_digest.h"
+#include "skycoin_crypto.h"
+#include "skycoin_check_signature.h"
 
 #define FROMHEX_MAXLEN 512
 
