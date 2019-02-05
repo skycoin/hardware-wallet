@@ -138,12 +138,13 @@ $(NAME): $(OBJS) $(LDSCRIPT) $(LIBDEPS) firmware/main.o
 
 ifneq ($(CHECK_PATH),)
 ifeq ($(UNAME_S), Linux)
-	TESTINC+=-isystem $(CHECK_PATH)/src
-	TESTINC+=-isystem $(CHECK_PATH)
+TESTINC += -isystem $(CHECK_PATH)/src
+TESTINC += -isystem $(CHECK_PATH)
 endif
 ifeq ($(UNAME_S), Darwin)
-	TESTINC+=-isystem $(CHECK_PATH)/include
+TESTINC+=-isystem $(CHECK_PATH)/include
 endif
+CFLAGS += $(TESTINC)
 endif
 LIBS_DARWIN +=
 TESTLIBS_DARWIN += -L$(CHECK_PATH)/lib -lcheck
@@ -160,7 +161,7 @@ ifeq ($(UNAME_S), Darwin)
 endif
 
 test_$(NAME): proto lib$(NAME).a firmware/test_fsm.o
-	$(LD) -o test_$(NAME) firmware/test_fsm.o $(OBJS) $(LDLIBS) $(LDFLAGS) $(TESTLIBS) $(TESTINC)
+	$(LD) -o test_$(NAME) firmware/test_fsm.o $(OBJS) $(LDLIBS) $(LDFLAGS) $(TESTLIBS)
 
 test: test_$(NAME) ## Run test suite for tiny-firmware.
 	./test_$(NAME)
