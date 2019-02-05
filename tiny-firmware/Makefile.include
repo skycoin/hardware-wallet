@@ -136,6 +136,15 @@ ifeq ($(EMULATOR),1)
 $(NAME): $(OBJS) $(LDSCRIPT) $(LIBDEPS) firmware/main.o
 	$(LD) -o $(NAME) firmware/main.o $(OBJS) $(LDLIBS) $(LDFLAGS)
 
+ifneq ($(CHECK_PATH),)
+ifeq ($(UNAME_S), Linux)
+	TESTINC+=-isystem $(CHECK_PATH)/src
+	TESTINC+=-isystem $(CHECK_PATH)
+endif
+ifeq ($(UNAME_S), Darwin)
+	TESTINC+=-isystem $(CHECK_PATH)/include
+endif
+endif
 LIBS_DARWIN +=
 TESTLIBS_DARWIN += -L$(CHECK_PATH)/lib -lcheck
 LIBS_LINUX += -L/usr/local/lib/ -lm -lrt
@@ -151,7 +160,7 @@ ifeq ($(UNAME_S), Darwin)
 endif
 
 test_$(NAME): proto lib$(NAME).a firmware/test_fsm.o
-	$(LD) -o test_$(NAME) firmware/test_fsm.o $(OBJS) $(LDLIBS) $(LDFLAGS) $(TESTLIBS)
+	$(LD) -o test_$(NAME) firmware/test_fsm.o $(OBJS) $(LDLIBS) $(LDFLAGS) $(TESTLIBS) $(TESTINC)
 
 test: test_$(NAME) ## Run test suite for tiny-firmware.
 	./test_$(NAME)
