@@ -70,12 +70,12 @@ bootloader-clean:
 	make -C tiny-firmware/bootloader/ clean
 
 bootloader-release:
-	if [ -z "$(shell echo $(VERSION_BOOTLOADER) | egrep "^[0-9]+\.[0-9]+\.[0-9]+$$" ) ]; then echo "Wrong firmware version format"; exit 1; fi
+	if [ -z "$(shell echo $(VERSION_BOOTLOADER) | egrep '^[0-9]+\.[0-9]+\.[0-9]+$$' )" ]; then echo "Wrong firmware version format"; exit 1; fi
 	VERSION_MAJOR=$(VERSION_FIRMWARE_MAJOR) VERSION_MINOR=$(VERSION_FIRMWARE_MINOR) VERSION_PATCH=$(VERSION_FIRMWARE_PATCH) make -C . bootloader ; \
 	mv bootloader-no-memory-protect.bin bootloader-$(VERSION_FIRMWARE_MAJOR).$(VERSION_FIRMWARE_MINOR).$(VERSION_FIRMWARE_PATCH)-no-memory-protect.bin
 
 bootloader-release-mem-protect:
-	if [ -z $(shell echo $(VERSION_BOOTLOADER) | egrep "^[0-9]+\.[0-9]+\.[0-9]+$$" ) ]; then echo "Wrong firmware version format"; exit 1; fi
+	if [ -z "$(shell echo $(VERSION_BOOTLOADER) | egrep '^[0-9]+\.[0-9]+\.[0-9]+$$' )" ]; then echo "Wrong firmware version format"; exit 1; fi
 	VERSION_MAJOR=$(VERSION_BOOTLOADER_MAJOR) VERSION_MINOR=$(VERSION_BOOTLOADER_MINOR) VERSION_PATCH=$(VERSION_BOOTLOADER_PATCH) make -C . bootloader-mem-protect ; \
 	mv bootloader-memory-protected.bin bootloader-$(VERSION_BOOTLOADER_MAJOR).$(VERSION_BOOTLOADER_MINOR).$(VERSION_BOOTLOADER_PATCH)-mem-protect.bin
 
@@ -84,25 +84,25 @@ firmware-clean:
 	make -C tiny-firmware/ clean
 
 firmware-release:
-	if [ -z $(shell echo $(VERSION_FIRMWARE) | egrep "^[0-9]+\.[0-9]+\.[0-9]+$$" ) ]; then echo "Wrong firmware version format"; exit 1; fi
+	if [ -z "$(shell echo $(VERSION_FIRMWARE) | egrep '^[0-9]+\.[0-9]+\.[0-9]+$$' )" ]; then echo "Wrong firmware version format"; exit 1; fi
 	VERSION_MAJOR=$(VERSION_FIRMWARE_MAJOR) VERSION_MINOR=$(VERSION_FIRMWARE_MINOR) VERSION_PATCH=$(VERSION_FIRMWARE_PATCH) make -C . firmware ; \
 	mv tiny-firmware/skycoin.bin skycoin-$(VERSION_FIRMWARE_MAJOR).$(VERSION_FIRMWARE_MINOR).$(VERSION_FIRMWARE_PATCH).bin
 
 combined-release:
-	if [ -z $(shell echo $(VERSION_BOOTLOADER) | egrep "^[0-9]+\.[0-9]+\.[0-9]+$$" ) ]; then echo "Wrong firmware version format"; exit 1; fi ; \
+	if [ -z "$(shell echo $(VERSION_BOOTLOADER) | egrep '^[0-9]+\.[0-9]+\.[0-9]+$$' )" ]; then echo "Wrong firmware version format"; exit 1; fi ; \
 	make bootloader-release VERSION_BOOTLOADER=$(VERSION_BOOTLOADER_MAJOR).$(VERSION_BOOTLOADER_MINOR).$(VERSION_BOOTLOADER_PATCH) ; \
 	cp bootloader-$(VERSION_BOOTLOADER_MAJOR).$(VERSION_BOOTLOADER_MINOR).$(VERSION_BOOTLOADER_PATCH)-no-memory-protect.bin tiny-firmware/bootloader/combine/bl.bin
-	if [ -z $(shell echo $(VERSION_FIRMWARE) | egrep "^[0-9]+\.[0-9]+\.[0-9]+$$" ) ]; then echo "Wrong firmware version format"; exit 1; fi ; \
+	if [ -z "$(shell echo $(VERSION_FIRMWARE) | egrep '^[0-9]+\.[0-9]+\.[0-9]+$$' )" ]; then echo "Wrong firmware version format"; exit 1; fi ; \
 	make firmware-release VERSION_FIRMWARE=$(VERSION_FIRMWARE_MAJOR).$(VERSION_FIRMWARE_MINOR).$(VERSION_FIRMWARE_PATCH); \
 	cp skycoin-$(VERSION_FIRMWARE_MAJOR).$(VERSION_FIRMWARE_MINOR).$(VERSION_FIRMWARE_PATCH).bin tiny-firmware/bootloader/combine/fw.bin
 	cd tiny-firmware/bootloader/combine/ ; /usr/bin/python prepare.py
 	mv tiny-firmware/bootloader/combine/combined.bin bootloader-$(VERSION_BOOTLOADER_MAJOR).$(VERSION_BOOTLOADER_MINOR).$(VERSION_BOOTLOADER_PATCH)-firmware-$(VERSION_FIRMWARE_MAJOR).$(VERSION_FIRMWARE_MINOR).$(VERSION_FIRMWARE_PATCH)-no-memory-protect.bin
 
 combined-release-mem-protect:
-	if [ -z $(shell echo $(VERSION_BOOTLOADER) | egrep "^[0-9]+\.[0-9]+\.[0-9]+$$" ) ]; then echo "Wrong firmware version format"; exit 1; fi ; \
+	if [ -z "$(shell echo $(VERSION_BOOTLOADER) | egrep '^[0-9]+\.[0-9]+\.[0-9]+$$' )" ]; then echo "Wrong firmware version format"; exit 1; fi ; \
 	make bootloader-release-mem-protect VERSION_BOOTLOADER=$(VERSION_BOOTLOADER_MAJOR).$(VERSION_BOOTLOADER_MINOR).$(VERSION_BOOTLOADER_PATCH) ; \
 	cp bootloader-$(VERSION_BOOTLOADER_MAJOR).$(VERSION_BOOTLOADER_MINOR).$(VERSION_BOOTLOADER_PATCH)-mem-protect.bin tiny-firmware/bootloader/combine/bl.bin
-	if [ -z $(shell echo $(VERSION_FIRMWARE) | egrep "^[0-9]+\.[0-9]+\.[0-9]+$$" ) ]; then echo "Wrong firmware version format"; exit 1; fi ; \
+	if [ -z "$(shell echo $(VERSION_FIRMWARE) | egrep '^[0-9]+\.[0-9]+\.[0-9]+$$' )" ]; then echo "Wrong firmware version format"; exit 1; fi ; \
 	make firmware-release VERSION_FIRMWARE=$(VERSION_FIRMWARE_MAJOR).$(VERSION_FIRMWARE_MINOR).$(VERSION_FIRMWARE_PATCH); \
 	cp skycoin-$(VERSION_FIRMWARE_MAJOR).$(VERSION_FIRMWARE_MINOR).$(VERSION_FIRMWARE_PATCH).bin tiny-firmware/bootloader/combine/fw.bin
 	cd tiny-firmware/bootloader/combine/ ; /usr/bin/python prepare.py
