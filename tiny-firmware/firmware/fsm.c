@@ -333,6 +333,133 @@ int fsm_getKeyPairAtIndex(uint32_t nbAddress, uint8_t* pubkey, uint8_t* seckey, 
     return 0;
 }
 
+int msgSignTransactionMessage(uint8_t* message_digest, uint32_t index, char* signed_message) {
+    uint8_t pubkey[33] = {0};
+    uint8_t seckey[32] = {0};
+    size_t size_sign;
+    uint8_t signature[65];
+	int res = 0;
+    fsm_getKeyPairAtIndex(1, pubkey, seckey, NULL, index);
+    res = ecdsa_skycoin_sign(rand(), seckey, message_digest, signature);
+	size_sign = 90;
+    b58enc(signed_message, &size_sign, signature, sizeof(signature));
+#if EMULATOR
+    printf("Size_sign: %ld, sign58: %s\n", size_sign, signed_message);
+#endif
+    return res;
+}
+
+void fsm_msgTransactionSign(TransactionSign* msg) {
+
+	if (storage_hasMnemonic() == false) {
+		fsm_sendFailure(FailureType_Failure_AddressGeneration, "Mnemonic not set");
+		return;
+	}
+
+	if (msg->nbIn > 8) {
+		fsm_sendFailure(FailureType_Failure_InvalidSignature, _("Cannot have more than 8 inputs"));
+		return;
+	}
+	if (msg->nbOut > 8) {
+		fsm_sendFailure(FailureType_Failure_InvalidSignature, _("Cannot have more than 8 outputs"));
+		return;
+	}
+#if EMULATOR
+	printf("%s: %d. nbOut: %d\n", 
+		_("Transaction signed nbIn"), 
+		msg->nbIn, msg->nbOut);
+
+	for (uint32_t i = 0; i < msg->nbIn; ++i) {
+		printf("Input: addressIn: %s, index: %d\n",
+			msg->transactionIn[i].hashIn, msg->transactionIn[i].index);
+	}
+	for (uint32_t i = 0; i < msg->nbOut; ++i) {
+		printf("Output: coin: %d, hour: %d address: %s address_index: %d\n",
+			msg->transactionOut[i].coin, msg->transactionOut[i].hour, 
+			msg->transactionOut[i].address, msg->transactionOut[i].address_index);
+	}
+#endif
+	Transaction transaction;
+	transaction_initZeroTransaction(&transaction);
+	for (uint32_t i = 0; i < msg->nbIn; ++i) {
+		uint8_t hashIn[32];
+		writebuf_fromhexstr(msg->transactionIn[i].hashIn, hashIn);
+		transaction_addInput(&transaction, hashIn);
+	}
+	for (uint32_t i = 0; i < msg->nbOut; ++i) {
+		char strHour[21];
+		char strCoin[21];
+		char* coinString = msg->transactionOut[i].coin == 1000000 ? _("coin") : _("coins");
+		char* hourString = (msg->transactionOut[i].hour == 1 || msg->transactionOut[i].hour == 0) ? _("hour") : _("hours");
+		sprintf(strCoin, "%s %.2f %s",  _("send"), msg->transactionOut[i].coin / 1000000.00, coinString);
+#if EMULATOR
+		sprintf(strHour, "%u %s", msg->transactionOut[i].hour, hourString);
+#else
+		sprintf(strHour, "%lu %s", msg->transactionOut[i].hour, hourString);
+#endif
+
+		if (msg->transactionOut[i].has_address_index) {
+			uint8_t pubkey[33] = {0};
+    		uint8_t seckey[32] = {0};
+			size_t size_address = 36;
+			char address[36] = {0};
+    		fsm_getKeyPairAtIndex(1, pubkey, seckey, NULL, msg->transactionOut[i].address_index);
+			generate_base58_address_from_pubkey(pubkey, address, &size_address);
+		    if (strcmp(msg->transactionOut[i].address, address) != 0)
+		    {
+		        fsm_sendFailure(FailureType_Failure_AddressGeneration, _("Wrong return address"));
+		        #if EMULATOR
+		        printf("Internal address: %s, message address: %s\n", address, msg->transactionOut[i].address);
+		        printf("Comparaison size %ld\n", size_address);
+		        #endif
+		        return;
+		    }
+		} else {
+			layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Next"), NULL, _("Do you really want to"), strCoin, strHour, _("to address"), _("..."), NULL);
+			if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) {
+				fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
+				layoutHome();
+				return;
+			}
+			layoutAddress(msg->transactionOut[i].address);		
+			if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) {
+				fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
+				layoutHome();
+				return;
+			}
+		}
+		transaction_addOutput(&transaction, msg->transactionOut[i].coin, msg->transactionOut[i].hour, msg->transactionOut[i].address);
+	}
+
+	CHECK_PIN_UNCACHED
+	RESP_INIT(ResponseTransactionSign);
+	for (uint32_t i = 0; i < msg->nbIn; ++i) {
+		uint8_t digest[32];
+    	transaction_msgToSign(&transaction, i, digest);
+    	if (msgSignTransactionMessage(digest, msg->transactionIn[i].index, resp->signatures[resp->signatures_count]) != 0) {
+			fsm_sendFailure(FailureType_Failure_InvalidSignature, NULL);
+    		return;
+    	}
+		resp->signatures_count++;
+#if EMULATOR
+		char str[64];
+		tohex(str, (uint8_t*)digest, 32);
+		printf("Signing message:  %s\n", str);
+		printf("Signed message:  %s\n", resp->signatures[i]);
+		printf("Nb signatures: %d\n", resp->signatures_count);
+#endif
+	}
+#if EMULATOR
+	char str[64];
+	tohex(str, transaction.innerHash, 32);
+	printf("InnerHash %s\n", str);
+	printf("Signed message:  %s\n", resp->signatures[0]);
+	printf("Nb signatures: %d\n", resp->signatures_count);
+#endif
+    msg_write(MessageType_MessageType_ResponseTransactionSign, resp);
+	layoutHome();
+}
+
 void fsm_msgSkycoinSignMessage(SkycoinSignMessage* msg)
 {
     uint8_t pubkey[33] = {0};
