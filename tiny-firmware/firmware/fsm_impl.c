@@ -23,7 +23,6 @@
 #include "memory.h"
 #include "usb.h"
 #include "util.h"
-#include "base58.h"
 #include "gettext.h"
 #include "skycoin_crypto.h"
 #include "skycoin_check_signature.h"

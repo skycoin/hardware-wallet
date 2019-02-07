@@ -30,7 +30,6 @@ bool is_a_base16_caharacter(char c) {
 	if ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
 		return true;
 	}
-	printf("char: %c, ascii: %d is not a base 16 encoding character\n", c, c);
 	return false;
 }
 
