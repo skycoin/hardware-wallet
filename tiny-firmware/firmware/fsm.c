@@ -32,7 +32,6 @@
 #include "protect.h"
 #include "pinmatrix.h"
 #include "layout2.h"
-#include "base58.h"
 #include "reset.h"
 #include "recovery.h"
 #include "bip39.h"
@@ -296,22 +295,6 @@ int fsm_getKeyPairAtIndex(uint32_t nbAddress, uint8_t* pubkey, uint8_t* seckey, 
     return 0;
 }
 
-int msgSignTransactionMessage(uint8_t* message_digest, uint32_t index, char* signed_message) {
-    uint8_t pubkey[33] = {0};
-    uint8_t seckey[32] = {0};
-    size_t size_sign;
-    uint8_t signature[65];
-	int res = 0;
-    fsm_getKeyPairAtIndex(1, pubkey, seckey, NULL, index);
-    res = ecdsa_skycoin_sign(rand(), seckey, message_digest, signature);
-	size_sign = 90;
-    b58enc(signed_message, &size_sign, signature, sizeof(signature));
-#if EMULATOR
-    printf("Size_sign: %ld, sign58: %s\n", size_sign, signed_message);
-#endif
-    return res;
-}
-
 void fsm_msgTransactionSign(TransactionSign* msg) {
 
 	if (storage_hasMnemonic() == false) {
@@ -399,7 +382,7 @@ void fsm_msgTransactionSign(TransactionSign* msg) {
 	for (uint32_t i = 0; i < msg->nbIn; ++i) {
 		uint8_t digest[32];
     	transaction_msgToSign(&transaction, i, digest);
-    	if (msgSignTransactionMessage(digest, msg->transactionIn[i].index, resp->signatures[resp->signatures_count]) != 0) {
+    	if (msgSignTransactionMessageImpl(digest, msg->transactionIn[i].index, resp->signatures[resp->signatures_count]) != ErrOk) {
 			fsm_sendFailure(FailureType_Failure_InvalidSignature, NULL);
     		return;
     	}
@@ -426,7 +409,7 @@ void fsm_msgTransactionSign(TransactionSign* msg) {
 void fsm_msgSkycoinSignMessage(SkycoinSignMessage *msg)
 {
 	RESP_INIT(ResponseSkycoinSignMessage);
-	fsm_msgSkycoinSignMessageImpl(msg, resp);
+	msgSkycoinSignMessageImpl(msg, resp);
 }
 
 void fsm_msgSkycoinAddress(SkycoinAddress* msg)
@@ -555,7 +538,7 @@ void fsm_msgWipeDevice(WipeDevice *msg)
 
 void fsm_msgGenerateMnemonic(GenerateMnemonic* msg) {
 	RESP_INIT(Success);
-	if(fsm_msgGenerateMnemonicImpl(msg) == ErrOk) {
+	if(msgGenerateMnemonicImpl(msg) == ErrOk) {
 		fsm_sendSuccess(_("Mnemonic successfully configured"));
 	}
 	layoutHome();

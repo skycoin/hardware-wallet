@@ -28,7 +28,7 @@
 #include "skycoin_check_signature.h"
 #include "check_digest.h"
 
-ErrCode_t fsm_msgGenerateMnemonicImpl(GenerateMnemonic* msg) {
+ErrCode_t msgGenerateMnemonicImpl(GenerateMnemonic* msg) {
  	CHECK_NOT_INITIALIZED_RET_ERR_CODE
 	const char* mnemonic = mnemonic_generate(128);
 	if (mnemonic == 0) {
@@ -47,7 +47,7 @@ ErrCode_t fsm_msgGenerateMnemonicImpl(GenerateMnemonic* msg) {
 }
 
 
-void fsm_msgSkycoinSignMessageImpl(SkycoinSignMessage* msg,
+void msgSkycoinSignMessageImpl(SkycoinSignMessage* msg,
 								   ResponseSkycoinSignMessage *resp)
 {
 	if (storage_hasMnemonic() == false) {
@@ -77,4 +77,20 @@ void fsm_msgSkycoinSignMessageImpl(SkycoinSignMessage* msg,
 	memcpy(resp->signed_message, signature_in_hex, hex_len);
 	msg_write(MessageType_MessageType_ResponseSkycoinSignMessage, resp);
 	layoutHome();
+}
+
+ErrCode_t msgSignTransactionMessageImpl(uint8_t* message_digest, uint32_t index, char* signed_message) {
+	uint8_t pubkey[33] = {0};
+	uint8_t seckey[32] = {0};
+	uint8_t signature[65];
+	int res = ErrOk;
+	fsm_getKeyPairAtIndex(1, pubkey, seckey, NULL, index);
+	if (ecdsa_skycoin_sign(rand(), seckey, message_digest, signature)) {
+		res = ErrFailed;
+	}
+	tohex(signed_message, signature, sizeof(signature));
+#if EMULATOR
+	printf("Size_sign: %ld, sign58: %s\n", sizeof(signature) * 2, signed_message);
+#endif
+	return res;
 }

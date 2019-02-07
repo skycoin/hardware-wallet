@@ -50,8 +50,9 @@
 enum ErrCode{ErrOk = 0, ErrFailed};
 typedef enum ErrCode ErrCode_t;
 
-ErrCode_t fsm_msgGenerateMnemonicImpl(GenerateMnemonic* msg);
-void fsm_msgSkycoinSignMessageImpl(SkycoinSignMessage* msg,
+ErrCode_t msgGenerateMnemonicImpl(GenerateMnemonic* msg);
+void msgSkycoinSignMessageImpl(SkycoinSignMessage* msg,
 								   ResponseSkycoinSignMessage *msg_resp);
+ErrCode_t msgSignTransactionMessageImpl(uint8_t* message_digest, uint32_t index, char* signed_message);
 
 #endif  // __TINYFIRMWARE_FIRMWARE_FSMIMPL_H__
