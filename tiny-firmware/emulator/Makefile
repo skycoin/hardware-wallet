@@ -1,4 +1,5 @@
 EMULATOR := 1
+UNAME_S := $(shell uname -s)
 
 CFLAGS += -DEMULATOR=1
 CFLAGS += -Wno-pointer-to-int-cast
@@ -25,8 +26,9 @@ OBJS += oled.o
 OBJS += rng.o
 OBJS += timer.o
 OBJS += udp.o
-
+ifneq ($(UNAME_S),Darwin)
 OBJS += strl.o
+endif
 
 libemulator.a: $(OBJS)
 	$(AR) rcs $@ $(OBJS)
