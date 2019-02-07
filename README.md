@@ -119,7 +119,25 @@ make test
 
 ### Pre-release testing
 
-TODO: Tests with desktop wallet
+Once the candidate release build artifacts have been downloaded it is necessary to check once again that they behave according to specifications. The followinfg steps are aimed at ensuring this is the case. Execute 
+
+0. Flash the device with latest versions of bootloader and firmware
+0. Ensure you have a recent version of Skycoin desktop software in one of the following ways
+  - build desktop wallet from source either following instructions [from master branch](https://github.com/skycoin/skycoin/blob/master/electron/README.md) or [from develop branch](https://github.com/skycoin/skycoin/blob/master/electron/README.md)
+  - download Skycoin wallet from [official downloads page](https://www.skycoin.net/downloads/)
+0. Open desktop wallet
+0. Recover a test wallet with nonzero balance from seed to confirm wallet loading works
+0. Send coins to another wallet to confirm spending works
+0. Check that transferred amounts reported in transaction history are correct
+0. Add a PIN to the hardware wallet 
+0. Use the same recovery seed of the wallet configured in the Skywallet device and to load a wallet directly in desktop wallet
+0. Send coins to another wallet again
+0. Check transaction history once again
+0. Wipe the wallet
+0. Set up the hardware wallet with a random seed and write down the first address
+0. Create a seed backup
+0. Wipe the wallet and restore the seed. Check if the first address is equal to the one previously written
+0. Repeat steps from the top but using combined bootloader + firmware image to flash the hardware wallet device.
 
 ### Creating release builds
 
