@@ -34,7 +34,7 @@ before_script:
   - pip install --user --upgrade protobuf
 script:
   - make lint
-  - make -C skycoin-api test
+  - make test
   - make -C skycoin-api clean
   - make emulator
   - make clean
