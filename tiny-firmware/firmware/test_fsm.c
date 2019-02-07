@@ -74,27 +74,27 @@ END_TEST
 // define test suite and cases
 Suite *test_suite(void)
 {
-    Suite *s = suite_create("firmware");
-    TCase *tc = tcase_create("fsm");
+	Suite *s = suite_create("firmware");
+	TCase *tc = tcase_create("fsm");
 	tcase_add_checked_fixture(tc, setup_tc_fsm, teardown_tc_fsm);
-    tcase_add_test(tc, test_msgSkycoinSignMessageReturnIsInHex);
+	tcase_add_test(tc, test_msgSkycoinSignMessageReturnIsInHex);
 	tcase_add_test(tc, test_fsm_msgGenerateMnemonicImplOk);
 	tcase_add_test(tc, test_fsm_msgGenerateMnemonicImplShouldFaildIfItWasDone);
-    suite_add_tcase(s, tc);
-    return s;
+	suite_add_tcase(s, tc);
+	return s;
 }
 
 // run suite
 int main(void)
 {
-    int number_failed;
-    Suite *s = test_suite();
-    SRunner *sr = srunner_create(s);
-    srunner_run_all(sr, CK_VERBOSE);
-    number_failed = srunner_ntests_failed(sr);
-    srunner_free(sr);
-    if (number_failed == 0) {
-        printf("PASSED ALL TESTS\n");
-    }
-    return number_failed;
+	int number_failed;
+	Suite *s = test_suite();
+	SRunner *sr = srunner_create(s);
+	srunner_run_all(sr, CK_VERBOSE);
+	number_failed = srunner_ntests_failed(sr);
+	srunner_free(sr);
+	if (number_failed == 0) {
+		printf("PASSED ALL TESTS\n");
+	}
+	return number_failed;
 }
