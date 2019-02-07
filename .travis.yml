@@ -34,7 +34,9 @@ before_script:
   - pip install --user --upgrade protobuf
 script:
   - make lint
-  - make test
+  - EMULATOR=1 make -C tiny-firmware/emulator/
+  - EMULATOR=1 make -C skycoin-api/ test
+  - EMULATOR=1 make -C tiny-firmware/ test
   - make -C skycoin-api clean
   - make emulator
   - make clean
