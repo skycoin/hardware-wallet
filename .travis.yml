@@ -35,6 +35,7 @@ before_script:
 script:
   - make lint
   - EMULATOR=1 make -C tiny-firmware/emulator/
+  - EMULATOR=1 make build-deps # is required before EMULATOR=1 make -C skycoin-api/ test
   - EMULATOR=1 make -C skycoin-api/ test
   - EMULATOR=1 make -C tiny-firmware/ test
   - make -C skycoin-api clean
