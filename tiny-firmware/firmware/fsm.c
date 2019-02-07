@@ -414,38 +414,10 @@ void fsm_msgSkycoinSignMessage(SkycoinSignMessage *msg)
 
 void fsm_msgSkycoinAddress(SkycoinAddress* msg)
 {
-    uint8_t seckey[32] = {0};
-    uint8_t pubkey[33] = {0};
-	uint32_t start_index = !msg->has_start_index ? 0 : msg->start_index;
-
-	CHECK_PIN
-
 	RESP_INIT(ResponseSkycoinAddress);
-	if (msg->address_n > 99) {
-		fsm_sendFailure(FailureType_Failure_AddressGeneration, "Asking for too much addresses");
-		return;
+	if (msgSkycoinAddress(msg, resp) == ErrOk) {
+		msg_write(MessageType_MessageType_ResponseSkycoinAddress, resp);
 	}
-
-	if (storage_hasMnemonic() == false) {
-		fsm_sendFailure(FailureType_Failure_AddressGeneration, "Mnemonic not set");
-		return;
-	}
-
-	if (fsm_getKeyPairAtIndex(msg->address_n, pubkey, seckey, resp, start_index) != 0) 
-	{
-		fsm_sendFailure(FailureType_Failure_AddressGeneration, "Key pair generation failed");
-		return;
-	}
-	if (msg->address_n == 1 && msg->has_confirm_address && msg->confirm_address) {
-		char * addr = resp->addresses[0];
-		layoutAddress(addr);
-		if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) {
-			fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
-			layoutHome();
-			return;
-		}
-	}
-	msg_write(MessageType_MessageType_ResponseSkycoinAddress, resp);
 	layoutHome();
 }
 

@@ -34,6 +34,12 @@
 		return; \
 	}
 
+#define CHECK_PIN_RET_ERR_CODE \
+	if (!protectPin(true)) { \
+		layoutHome(); \
+		return ErrFailed; \
+	}
+
 #define CHECK_PIN_UNCACHED \
 	if (!protectPin(false)) { \
 		layoutHome(); \
@@ -54,5 +60,6 @@ ErrCode_t msgGenerateMnemonicImpl(GenerateMnemonic* msg);
 void msgSkycoinSignMessageImpl(SkycoinSignMessage* msg,
 								   ResponseSkycoinSignMessage *msg_resp);
 ErrCode_t msgSignTransactionMessageImpl(uint8_t* message_digest, uint32_t index, char* signed_message);
+ErrCode_t msgSkycoinAddress(SkycoinAddress* msg, ResponseSkycoinAddress *resp);
 
 #endif  // __TINYFIRMWARE_FIRMWARE_FSMIMPL_H__

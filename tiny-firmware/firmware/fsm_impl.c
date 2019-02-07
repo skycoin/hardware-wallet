@@ -94,3 +94,36 @@ ErrCode_t msgSignTransactionMessageImpl(uint8_t* message_digest, uint32_t index,
 #endif
 	return res;
 }
+
+ErrCode_t msgSkycoinAddress(SkycoinAddress* msg, ResponseSkycoinAddress *resp)
+{
+	uint8_t seckey[32] = {0};
+	uint8_t pubkey[33] = {0};
+	uint32_t start_index = !msg->has_start_index ? 0 : msg->start_index;
+	CHECK_PIN_RET_ERR_CODE
+	if (msg->address_n > 99) {
+		fsm_sendFailure(FailureType_Failure_AddressGeneration, "Asking for too much addresses");
+		return ErrFailed;
+	}
+
+	if (storage_hasMnemonic() == false) {
+		fsm_sendFailure(FailureType_Failure_AddressGeneration, "Mnemonic not set");
+		return ErrFailed;
+	}
+
+	if (fsm_getKeyPairAtIndex(msg->address_n, pubkey, seckey, resp, start_index) != 0)
+	{
+		fsm_sendFailure(FailureType_Failure_AddressGeneration, "Key pair generation failed");
+		return ErrFailed;
+	}
+	if (msg->address_n == 1 && msg->has_confirm_address && msg->confirm_address) {
+		char * addr = resp->addresses[0];
+		layoutAddress(addr);
+		if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) {
+			fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
+			layoutHome();
+			return ErrFailed;
+		}
+	}
+	return ErrOk;
+}
