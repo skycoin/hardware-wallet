@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
   - `deviceSignMessage` and `deviceSignMessage` messages returns the signed message in hex format.
 
+  - `msgSignTransactionMessageImpl` encode in hex format.
+
   - Refactor build scheme, now the firmware is build as a separate library and this can be linked against a main for tests or the main to be use in production with the firmware.
 
   - Refcator in `fsm` it was split into two files, `fsm_impl` and `fsm` it selft, the funtions from `fsm_impl` return some kind of `err_code` and in general are more easy to use in unit tests.
