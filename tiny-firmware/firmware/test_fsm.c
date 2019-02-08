@@ -105,8 +105,6 @@ START_TEST(test_msgSkycoinCheckMessageSignature)
 	uint8_t msg_resp_sign[MSG_OUT_SIZE] __attribute__ ((aligned)) = {0};
 	ResponseSkycoinSignMessage *respSign = (ResponseSkycoinSignMessage *) (void *) msg_resp_sign;
 	msgSkycoinSignMessageImpl(&msgSign, respSign);
-
-	// NOTE(denisacostaq@gmail.com): Then
 	SkycoinCheckMessageSignature checkMsg = SkycoinCheckMessageSignature_init_zero;
 	strncpy(checkMsg.message, msgSign.message, sizeof(checkMsg.message));
 	memcpy(checkMsg.address, respAddress->addresses[0], sizeof(checkMsg.address));
@@ -114,6 +112,8 @@ START_TEST(test_msgSkycoinCheckMessageSignature)
 	uint8_t msg_resp_check[MSG_OUT_SIZE] __attribute__ ((aligned)) = {0};
 	Success *respCheck = (Success *) (void *) msg_resp_check;
 	msgSkycoinCheckMessageSignature(&checkMsg, respCheck);
+
+	// NOTE(denisacostaq@gmail.com): Then
 	ck_assert(respCheck->has_message);
 	// FIXME(denisacostaq@gmail.com): Enable this test.
 	// int address_diff = strncmp(respAddress->addresses[0], respCheck->message, sizeof(respAddress->addresses[0]));
