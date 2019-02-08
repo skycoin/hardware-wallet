@@ -34,12 +34,10 @@ before_script:
   - pip install --user --upgrade protobuf
 script:
   - make lint
-  - EMULATOR=1 make -C tiny-firmware/emulator/
-  - EMULATOR=1 make build-deps # is required before EMULATOR=1 make -C skycoin-api/ test
   - EMULATOR=1 make -C skycoin-api/ test
-  - EMULATOR=1 make -C tiny-firmware/ test
   - make -C skycoin-api clean
-  - make emulator
+  - EMULATOR=1 make emulator # is required before EMULATOR=1 make -C skycoin-api/ test
+  - EMULATOR=1 make -C tiny-firmware/ test
   - make clean
   - make full-firmware
   - md5sum tiny-firmware/bootloader/combine/*.bin
