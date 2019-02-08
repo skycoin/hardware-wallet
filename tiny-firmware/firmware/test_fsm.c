@@ -38,7 +38,7 @@ START_TEST(test_msgGenerateMnemonicImplOk)
 	storage_wipe();
 	GenerateMnemonic msg = GenerateMnemonic_init_zero;
 	ErrCode_t ret = msgGenerateMnemonicImpl(&msg);
-	ck_assert_int_eq(ret, ErrOk);
+	ck_assert_int_eq(ErrOk, ret);
 }
 END_TEST
 
@@ -48,7 +48,7 @@ START_TEST(test_msgGenerateMnemonicImplShouldFaildIfItWasDone)
 	GenerateMnemonic msg = GenerateMnemonic_init_zero;
 	msgGenerateMnemonicImpl(&msg);
 	ErrCode_t ret = msgGenerateMnemonicImpl(&msg);
-	ck_assert_int_eq(ret, ErrFailed);
+	ck_assert_int_eq(ErrFailed, ret);
 }
 END_TEST
 
