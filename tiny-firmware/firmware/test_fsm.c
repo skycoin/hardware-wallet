@@ -70,6 +70,42 @@ START_TEST(test_msgSkycoinSignMessageReturnIsInHex)
 }
 END_TEST
 
+START_TEST(test_msgSkycoinCheckMessageSignature)
+{
+	const uint32_t address_n = 1;
+	forceGenerateMnemonic();
+	SkycoinAddress msgSkyAddress = SkycoinAddress_init_zero;
+	msgSkyAddress.address_n = address_n;
+	uint8_t msg_resp_addr[MSG_OUT_SIZE] __attribute__ ((aligned)) = {0};
+	ResponseSkycoinAddress *respAddress = (ResponseSkycoinAddress *) (void *) msg_resp_addr;
+	ErrCode_t err = msgSkycoinAddress(&msgSkyAddress, respAddress);
+	ck_assert_int_eq(ErrOk, err);
+	ck_assert_int_eq(respAddress->addresses_count, 1);
+
+	char raw_msg[] = {
+		"32018964c1ac8c2a536b59dd830a80b9d4ce3bb1ad6a182c13b36240ebf4ec11"};
+	SkycoinSignMessage msgSign = SkycoinSignMessage_init_zero;
+	strncpy(msgSign.message, raw_msg, sizeof(msgSign.message));
+	msgSign.address_n = address_n;
+	uint8_t msg_resp_sign[MSG_OUT_SIZE] __attribute__ ((aligned)) = {0};
+	ResponseSkycoinSignMessage *respSign = (ResponseSkycoinSignMessage *) (void *) msg_resp_sign;
+	msgSkycoinSignMessageImpl(&msgSign, respSign);
+
+
+	SkycoinCheckMessageSignature checkMsg = SkycoinCheckMessageSignature_init_zero;
+	strncpy(checkMsg.message, msgSign.message, sizeof(checkMsg.message));
+	memcpy(checkMsg.address, respAddress->addresses[0], sizeof(checkMsg.address));
+	memcpy(checkMsg.signature, respSign->signed_message, sizeof(checkMsg.signature));
+	uint8_t msg_resp_check[MSG_OUT_SIZE] __attribute__ ((aligned)) = {0};
+	Success *respCheck = (Success *) (void *) msg_resp_check;
+	msgSkycoinCheckMessageSignature(&checkMsg, respCheck);
+	ck_assert(respCheck->has_message);
+	// FIXME(denisacostaq@gmail.com): Enable this test.
+	// 	int address_diff = strncmp(respAddress->addresses[0], respCheck->message, sizeof(respAddress->addresses[0]));
+	// 	ck_assert_int_eq(0, address_diff);
+}
+END_TEST
+
 // define test suite and cases
 Suite *test_suite(void)
 {
@@ -79,6 +115,7 @@ Suite *test_suite(void)
 	tcase_add_test(tc, test_msgSkycoinSignMessageReturnIsInHex);
 	tcase_add_test(tc, test_msgGenerateMnemonicImplOk);
 	tcase_add_test(tc, test_msgGenerateMnemonicImplShouldFaildIfItWasDone);
+	tcase_add_test(tc, test_msgSkycoinCheckMessageSignature);
 	suite_add_tcase(s, tc);
 	return s;
 }
