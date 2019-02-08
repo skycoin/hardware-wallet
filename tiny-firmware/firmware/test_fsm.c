@@ -23,7 +23,7 @@ void teardown_tc_fsm(void)
 void forceGenerateMnemonic(void) {
 	storage_wipe();
 	GenerateMnemonic msg = GenerateMnemonic_init_zero;
-	fsm_msgGenerateMnemonicImpl(&msg);
+	msgGenerateMnemonicImpl(&msg);
 }
 
 bool is_a_base16_caharacter(char c) {
@@ -33,21 +33,21 @@ bool is_a_base16_caharacter(char c) {
 	return false;
 }
 
-START_TEST(test_fsm_msgGenerateMnemonicImplOk)
+START_TEST(test_msgGenerateMnemonicImplOk)
 {
 	storage_wipe();
 	GenerateMnemonic msg = GenerateMnemonic_init_zero;
-	ErrCode_t ret = fsm_msgGenerateMnemonicImpl(&msg);
+	ErrCode_t ret = msgGenerateMnemonicImpl(&msg);
 	ck_assert_int_eq(ret, ErrOk);
 }
 END_TEST
 
-START_TEST(test_fsm_msgGenerateMnemonicImplShouldFaildIfItWasDone)
+START_TEST(test_msgGenerateMnemonicImplShouldFaildIfItWasDone)
 {
 	storage_wipe();
 	GenerateMnemonic msg = GenerateMnemonic_init_zero;
-	fsm_msgGenerateMnemonicImpl(&msg);
-	ErrCode_t ret = fsm_msgGenerateMnemonicImpl(&msg);
+	msgGenerateMnemonicImpl(&msg);
+	ErrCode_t ret = msgGenerateMnemonicImpl(&msg);
 	ck_assert_int_eq(ret, ErrFailed);
 }
 END_TEST
@@ -60,7 +60,7 @@ START_TEST(test_msgSkycoinSignMessageReturnIsInHex)
 	SkycoinSignMessage msg = SkycoinSignMessage_init_zero;
 	strncpy(msg.message, raw_msg, sizeof(msg.message));
 	RESP_INIT(ResponseSkycoinSignMessage);
-	fsm_msgSkycoinSignMessageImpl(&msg, resp);
+	msgSkycoinSignMessageImpl(&msg, resp);
 	// NOTE(denisacostaq@gmail.com): ecdsa signature have 65 bytes,
 	// 2 for each one in hex = 130
 	// TODO(denisacostaq@gmail.com): this kind of "dependency" is maintainable.
@@ -77,8 +77,8 @@ Suite *test_suite(void)
 	TCase *tc = tcase_create("fsm");
 	tcase_add_checked_fixture(tc, setup_tc_fsm, teardown_tc_fsm);
 	tcase_add_test(tc, test_msgSkycoinSignMessageReturnIsInHex);
-	tcase_add_test(tc, test_fsm_msgGenerateMnemonicImplOk);
-	tcase_add_test(tc, test_fsm_msgGenerateMnemonicImplShouldFaildIfItWasDone);
+	tcase_add_test(tc, test_msgGenerateMnemonicImplOk);
+	tcase_add_test(tc, test_msgGenerateMnemonicImplShouldFaildIfItWasDone);
 	suite_add_tcase(s, tc);
 	return s;
 }
