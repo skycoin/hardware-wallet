@@ -144,8 +144,7 @@ include Makefile.include
 
 clean::
 	rm -f $(OBJS)
-	rm -rf firmware/main.o
-	rm -rf firmware/test_fsm.o
+	rm -f firmware/*.o
 	rm -f *.a
 	rm -f *.bin
 	rm -f *.d

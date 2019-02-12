@@ -141,7 +141,7 @@ endif
 
 CFLAGS += -DDEBUG_RNG=0
 
-ifeq ($(BOOTLOADER),)
+ifneq ($(BOOTLOADER),1)
 lib$(NAME).a: $(OBJS) $(LIBDEPS)
 	$(AR) rcs lib$(NAME).a $(OBJS) $(LIBDEPS)
 endif
