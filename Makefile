@@ -143,7 +143,7 @@ run-emulator: emulator ## Run wallet emulator
 	./emulator
 
 test: ## Run all project test suites.
-	EMULATOR=1 make -C skycoin-api/ test
+	make -C skycoin-api/ test
 	make emulator
 	EMULATOR=1 make -C tiny-firmware/ test
 
