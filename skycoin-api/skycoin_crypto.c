@@ -1,3 +1,14 @@
+/*
+ * This file is part of the Skycoin project, https://skycoin.net/ 
+ *
+ * Copyright (C) 2018-2019 Skycoin Project
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ */
+
 #include "skycoin_crypto.h"
 
 #include <string.h>
@@ -241,4 +252,92 @@ int ecdsa_skycoin_sign(const uint32_t nonce_value, const uint8_t *priv_key, cons
 	memset(&randk, 0, sizeof(randk));
 
 	return -1;
+}
+
+void transaction_initZeroTransaction(Transaction* self) {
+    self->nbIn = 0;
+    self->nbOut = 0;
+    self->has_innerHash = 0;
+}
+
+void transaction_addInput(Transaction* self, uint8_t* address) {
+    memcpy(&self->inAddress[self->nbIn], address, 32);
+    self->nbIn++;
+};
+
+void transaction_addOutput(Transaction* self,  uint32_t coin, uint32_t hour, char* address) {
+    self->outAddress[self->nbOut].coin = coin;
+    self->outAddress[self->nbOut].hour = hour;
+    size_t len = 36;
+    uint8_t b58string[36];
+    b58tobin(b58string, &len, address);
+    memcpy(self->outAddress[self->nbOut].address, &b58string[36 - len], len);
+    self->nbOut++;
+}
+
+void transaction_innerHash(Transaction* self) {
+
+    uint8_t ctx[sizeof(Transaction)];
+    memset(ctx, 0, sizeof(Transaction));
+    uint64_t bitcount = 0;
+    // serialized in
+    uint8_t nbIn = self->nbIn;
+    memcpy(&ctx[bitcount], &nbIn, 1);
+    memset(&ctx[bitcount + 1], 0, 3);
+    bitcount += 4;
+    for (uint8_t i = 0; i < self->nbIn; ++i) {
+        memcpy(&ctx[bitcount], (uint8_t*)&self->inAddress[i], 32);
+        bitcount += 32;
+    }
+
+    // serialized out
+    uint8_t nbOut = self->nbOut;
+    memcpy(&ctx[bitcount], &nbOut, 1);
+    memset(&ctx[bitcount + 1], 0, 3);
+    bitcount += 4;
+    for (uint8_t i = 0; i < self->nbOut; ++i) {
+        ctx[bitcount] = 0;
+        bitcount += 1;
+        memcpy(&ctx[bitcount], &self->outAddress[i].address, 20);
+        bitcount += 20;
+        memcpy(&ctx[bitcount], (uint8_t*)&self->outAddress[i].coin, 4);
+        bitcount += 4;
+        memset(&ctx[bitcount], 0, 4);
+        bitcount += 4;
+        memcpy(&ctx[bitcount], (uint8_t*)&self->outAddress[i].hour, 4);
+        bitcount += 4;
+        memset(&ctx[bitcount], 0, 4);
+        bitcount += 4;
+    }
+
+    SHA256_CTX sha256ctx;
+    sha256_Init(&sha256ctx);
+    sha256_Update(&sha256ctx, ctx, bitcount);
+    sha256_Final(&sha256ctx, self->innerHash);
+    self->has_innerHash = 1;
+}
+
+void transaction_msgToSign(Transaction* self, uint8_t index, uint8_t* msg_digest) {
+    if (index >= self->nbIn) {
+        return;
+    }
+    // concat innerHash and transaction hash
+    uint8_t shaInput[64];
+    if (!self->has_innerHash) {
+        transaction_innerHash(self);
+    }
+    memcpy(shaInput, self->innerHash, 32);
+    memcpy(&shaInput[32], (uint8_t*)&self->inAddress[index], 32);
+#ifdef EMULATOR
+#if EMULATOR
+    char str[128];
+    tohex(str, shaInput, 64);
+    printf("InnerHash computation on %s\n", str);
+#endif
+#endif
+    // compute hash
+    SHA256_CTX sha256ctx;
+    sha256_Init(&sha256ctx);
+    sha256_Update(&sha256ctx, shaInput, 64);
+    sha256_Final(&sha256ctx, msg_digest);
 }
