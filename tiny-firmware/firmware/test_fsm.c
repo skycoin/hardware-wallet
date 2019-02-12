@@ -115,7 +115,7 @@ START_TEST(test_msgSkycoinCheckMessageSignature)
 
 	// NOTE(denisacostaq@gmail.com): Then
 	ck_assert(respCheck->has_message);
-	int address_diff = strncmp(respAddress->addresses[0], respCheck->message, sizeof(respAddress->addresses[0]));
+	//  int address_diff = strncmp(respAddress->addresses[0], respCheck->message, sizeof(respAddress->addresses[0]));
 	// FIXME(denisacostaq@gmail.com): Enable this test.
 	//	if (address_diff) {
 	//		fprintf(stderr, "\nrespAddress->addresses[0]: ");
