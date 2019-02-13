@@ -484,8 +484,6 @@ void fsm_msgWipeDevice(WipeDevice *msg)
 }
 
 void fsm_msgGenerateMnemonic(GenerateMnemonic* msg) {
-	int strength = msg->word_count * 4 / 3 * 8;
-	const char* mnemonic = mnemonic_generate(strength);
 	RESP_INIT(Success);
 	if(msgGenerateMnemonicImpl(msg) == ErrOk) {
 		fsm_sendSuccess(_("Mnemonic successfully configured"));

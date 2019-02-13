@@ -34,6 +34,7 @@ void teardown_tc_fsm(void)
 void forceGenerateMnemonic(void) {
 	storage_wipe();
 	GenerateMnemonic msg = GenerateMnemonic_init_zero;
+	msg.word_count = 12;
 	msgGenerateMnemonicImpl(&msg);
 }
 
@@ -48,6 +49,7 @@ START_TEST(test_msgGenerateMnemonicImplOk)
 {
 	storage_wipe();
 	GenerateMnemonic msg = GenerateMnemonic_init_zero;
+	msg.word_count = 12;
 	ErrCode_t ret = msgGenerateMnemonicImpl(&msg);
 	ck_assert_int_eq(ErrOk, ret);
 }
@@ -74,8 +76,8 @@ START_TEST(test_msgSkycoinSignMessageReturnIsInHex)
 	msgSkycoinSignMessageImpl(&msg, resp);
 	// NOTE(denisacostaq@gmail.com): ecdsa signature have 65 bytes,
 	// 2 for each one in hex = 130
-	// TODO(denisacostaq@gmail.com): this kind of "dependency" is maintainable.
-	for (int i = 0; i < 130; ++i) {
+	// TODO(denisacostaq@gmail.com): this kind of "dependency" is not maintainable.
+	for (size_t i = 0; i < sizeof(resp->signed_message); ++i) {
 		ck_assert(is_a_base16_caharacter(resp->signed_message[i]));
 	}
 }
