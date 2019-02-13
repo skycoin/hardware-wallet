@@ -13,12 +13,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Refactor build workflow, now the firmware is build as a separate library and this can be linked against a main for tests or the main to be use in production with the firmware.
 - Split `fsm` into two files, `fsm_impl` and `fsm` itself, the functions from `fsm_impl` return an integer `err_code` value and in general are more easy to use in unit tests.
 - Add some unit tests for `tiny-firmware` folder.
-- [\#33](https://github.com/skycoin/hardware-wallet/issues/33)
-
-  - In `GenerateMnemonic` message you can specify the `word_count` for the seed.
-
-  - In `RecoveryDevice` message you can specify the `word_count` for the seed.
-
+- Add `word_count` in `RecoveryDevice` and `GenerateMnemonic` messages to specify recovery seeds of either 12 or 24 words.
 - Firmware and bootloader generation tested on linux and osx (travis-ci)
 
 ### Fixed
