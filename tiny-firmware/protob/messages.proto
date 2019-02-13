@@ -125,8 +125,9 @@ message ApplySettings {
  * Request: Ask the device to generate a mnemonic and configure itself with it
  * @next Success
  */
- message GenerateMnemonic {
+message GenerateMnemonic {
  	optional bool passphrase_protection = 1;
+ 	optional uint32 word_count = 2; // number of words for seed
 }
 
 /**
@@ -405,10 +406,6 @@ message RecoveryDevice {
 	optional bool pin_protection = 3;			// enable PIN protection
 	optional string language = 4 [default='english'];	// device language
 	optional string label = 5;				// device label
-	optional bool enforce_wordlist = 6;			// enforce BIP-39 wordlist during the process
-	// 7 reserved for unused recovery method
-	optional uint32 type = 8;				// supported recovery type (see RecoveryType)
-	optional bool dry_run = 10;				// perform dry-run recovery workflow (for safe mnemonic validation)
 }
 
 /**

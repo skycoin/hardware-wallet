@@ -39,9 +39,13 @@
 #include "skycoin_check_signature.h"
 #include "check_digest.h"
 
+#define MNEMONIC_STRENGTH_12 128
+#define MNEMONIC_STRENGTH_24 256
+
 ErrCode_t msgGenerateMnemonicImpl(GenerateMnemonic* msg) {
- 	CHECK_NOT_INITIALIZED_RET_ERR_CODE
-	const char* mnemonic = mnemonic_generate(128);
+ 	CHECK_NOT_INITIALIZED_RET_ERR_CODE	    
+	int strength = (msg->word_count == 24)? MNEMONIC_STRENGTH_24 : MNEMONIC_STRENGTH_12 ;
+	const char* mnemonic = mnemonic_generate(strength);
 	if (mnemonic == 0) {
 		fsm_sendFailure(FailureType_Failure_ProcessError, _("Device could not generate a Mnemonic"));
 		return ErrFailed;
