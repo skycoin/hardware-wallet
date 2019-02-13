@@ -619,7 +619,7 @@ void fsm_msgRecoveryDevice(RecoveryDevice *msg)
 		return;
 	}
 	recovery_init(
-		msg->word_count,
+		msg->has_word_count ? msg->word_count : 12,
 		msg->has_passphrase_protection && msg->passphrase_protection,
 		msg->has_pin_protection && msg->pin_protection,
 		msg->has_language ? msg->language : 0,
