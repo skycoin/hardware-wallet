@@ -4,8 +4,6 @@ Features.vendor				max_size:33
 Features.device_id			max_size:25
 Features.language			max_size:17
 Features.label				max_size:33
-Features.coins				max_count:16
-Features.revision			max_size:20
 Features.bootloader_hash		max_size:32
 Features.model				max_size:17
 Features.fw_vendor			max_size:256
@@ -45,8 +43,6 @@ PassphraseAck.state			max_size:64
 PassphraseStateRequest.state		max_size:64
 
 Entropy.entropy				max_size:1024
-
-Address.address				max_size:76
 
 LoadDevice.mnemonic			max_size:241
 LoadDevice.pin				max_size:10
