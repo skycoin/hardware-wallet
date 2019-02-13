@@ -40,18 +40,22 @@ void tohex(char * str, const uint8_t* buffer, int bufferLength)
     }
 }
 
+void tobuff(const char* str, uint8_t* buf, size_t bufferLength ) {
+  for (size_t i = 0; i < bufferLength; i++) {
+      uint8_t c = 0;
+      if (str[i * 2] >= '0' && str[i*2] <= '9') c += (str[i * 2] - '0') << 4;
+      if ((str[i * 2] & ~0x20) >= 'A' && (str[i*2] & ~0x20) <= 'F') c += (10 + (str[i * 2] & ~0x20) - 'A') << 4;
+      if (str[i * 2 + 1] >= '0' && str[i * 2 + 1] <= '9') c += (str[i * 2 + 1] - '0');
+      if ((str[i * 2 + 1] & ~0x20) >= 'A' && (str[i * 2 + 1] & ~0x20) <= 'F') c += (10 + (str[i * 2 + 1] & ~0x20) - 'A');
+      buf[i] = c;
+  }
+}
+
 void writebuf_fromhexstr(const char *str, uint8_t* buf)
 {
     size_t len = strlen(str) / 2;
     if (len > 32) len = 32;
-    for (size_t i = 0; i < len; i++) {
-        uint8_t c = 0;
-        if (str[i * 2] >= '0' && str[i*2] <= '9') c += (str[i * 2] - '0') << 4;
-        if ((str[i * 2] & ~0x20) >= 'A' && (str[i*2] & ~0x20) <= 'F') c += (10 + (str[i * 2] & ~0x20) - 'A') << 4;
-        if (str[i * 2 + 1] >= '0' && str[i * 2 + 1] <= '9') c += (str[i * 2 + 1] - '0');
-        if ((str[i * 2 + 1] & ~0x20) >= 'A' && (str[i * 2 + 1] & ~0x20) <= 'F') c += (10 + (str[i * 2 + 1] & ~0x20) - 'A');
-        buf[i] = c;
-    }
+		tobuff(str, buf, len);
 }
 
 void generate_pubkey_from_seckey(const uint8_t* seckey, uint8_t* pubkey)
