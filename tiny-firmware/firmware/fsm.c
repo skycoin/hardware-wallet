@@ -607,23 +607,31 @@ void fsm_msgBackupDevice(BackupDevice *msg)
 
 void fsm_msgRecoveryDevice(RecoveryDevice *msg)
 {
-	CHECK_NOT_INITIALIZED
+	const bool dry_run = msg->has_dry_run ? msg->dry_run : false;
+	if (dry_run) {
+		CHECK_PIN
+	} else {
+		CHECK_NOT_INITIALIZED
+	}
+
 	CHECK_PARAM(!msg->has_word_count || msg->word_count == 12
-				|| msg->word_count == 24, _("Invalid word count"));
-	layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL,
-					  _("Do you really want to"), _("recover the device?"),
-					  NULL, NULL, NULL, NULL);
-	if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) {
-		fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
-		layoutHome();
-		return;
+			|| msg->word_count == 24, _("Invalid word count"));
+
+	if (!dry_run) {
+		layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"), _("recover the device?"), NULL, NULL, NULL, NULL);
+		if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) {
+			fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
+			layoutHome();
+			return;
+		}
 	}
 	recovery_init(
 		msg->has_word_count ? msg->word_count : 12,
 		msg->has_passphrase_protection && msg->passphrase_protection,
 		msg->has_pin_protection && msg->pin_protection,
 		msg->has_language ? msg->language : 0,
-		msg->has_label ? msg->label : 0
+		msg->has_label ? msg->label : 0,
+		dry_run
 	);
 }
 
