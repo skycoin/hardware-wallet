@@ -491,9 +491,9 @@ static void recovery_scrambledword(const char *word)
 			wl++;
 		}
 		if (!found) {
-				if (!dry_run) {
-					session_clear(true);
-				}
+			if (!dry_run) {
+				session_clear(true);
+			}
 			fsm_sendFailure(FailureType_Failure_DataError, _("Word not found in a wordlist"));
 			layoutHome();
 			return;
