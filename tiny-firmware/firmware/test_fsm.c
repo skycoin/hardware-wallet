@@ -84,10 +84,9 @@ END_TEST
 START_TEST(test_msgSkycoinCheckMessageSignature)
 {
 	// NOTE(denisacostaq@gmail.com): Given
-	const uint32_t address_n = 1;
 	forceGenerateMnemonic();
 	SkycoinAddress msgSkyAddress = SkycoinAddress_init_zero;
-	msgSkyAddress.address_n = address_n;
+	msgSkyAddress.address_n = 1;
 	uint8_t msg_resp_addr[MSG_OUT_SIZE] __attribute__ ((aligned)) = {0};
 	ResponseSkycoinAddress *respAddress = (ResponseSkycoinAddress *) (void *) msg_resp_addr;
 	ErrCode_t err = msgSkycoinAddress(&msgSkyAddress, respAddress);
@@ -99,7 +98,7 @@ START_TEST(test_msgSkycoinCheckMessageSignature)
 		"66687aadf862bd776c8fc18b8e9f8e20089714856ee233b3902a591d0d5f2925"};
 	SkycoinSignMessage msgSign = SkycoinSignMessage_init_zero;
 	strncpy(msgSign.message, raw_msg, sizeof(msgSign.message));
-	msgSign.address_n = address_n;
+	msgSign.address_n = 0;
 
 	// NOTE(denisacostaq@gmail.com): When
 	uint8_t msg_resp_sign[MSG_OUT_SIZE] __attribute__ ((aligned)) = {0};
@@ -115,20 +114,22 @@ START_TEST(test_msgSkycoinCheckMessageSignature)
 
 	// NOTE(denisacostaq@gmail.com): Then
 	ck_assert(respCheck->has_message);
-	//  int address_diff = strncmp(respAddress->addresses[0], respCheck->message, sizeof(respAddress->addresses[0]));
-	// FIXME(denisacostaq@gmail.com): Enable this test.
-	//	if (address_diff) {
-	//		fprintf(stderr, "\nrespAddress->addresses[0]: ");
-	//		for (size_t i = 0; i < sizeof(respAddress->addresses[0]); ++i) {
-	//			fprintf(stderr, "%c", respAddress->addresses[0][i]);
-	//		}
-	//		fprintf(stderr, "\nrespCheck->message: ");
-	//		for (size_t i = 0; i < sizeof(respCheck->message); ++i) {
-	//			fprintf(stderr, "%c", respCheck->message[i]);
-	//		}
-	//		fprintf(stderr, "\n");
-	//	}
-	//	ck_assert_int_eq(0, address_diff);
+	int address_diff = strncmp(
+			respAddress->addresses[0],
+	    respCheck->message,
+	    sizeof(respAddress->addresses[0]));
+	if (address_diff) {
+		fprintf(stderr, "\nrespAddress->addresses[0]: ");
+		for (size_t i = 0; i < sizeof(respAddress->addresses[0]); ++i) {
+			fprintf(stderr, "%c", respAddress->addresses[0][i]);
+		}
+		fprintf(stderr, "\nrespCheck->message: ");
+		for (size_t i = 0; i < sizeof(respCheck->message); ++i) {
+			fprintf(stderr, "%c", respCheck->message[i]);
+		}
+		fprintf(stderr, "\n");
+	}
+	ck_assert_int_eq(0, address_diff);
 }
 END_TEST
 
