@@ -142,6 +142,5 @@ TCase *add_fsm_tests(TCase *tc)
 	tcase_add_test(tc, test_msgGenerateMnemonicImplOk);
 	tcase_add_test(tc, test_msgGenerateMnemonicImplShouldFaildIfItWasDone);
 	tcase_add_test(tc, test_msgSkycoinCheckMessageSignature);
-	suite_add_tcase(s, tc);
-	return s;
+	return tc;
 }
