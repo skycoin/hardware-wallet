@@ -1,12 +1,3 @@
----
-name: Pull request
-about: Contribute with code to this project
-title: ''
-labels: ''
-assignees: ''
-
----
-
 
 Fixes #
 
