@@ -11,8 +11,9 @@
 
 #include <check.h>
 
-#define "droplet.h"
-#define "skyparams.h"
+#include "test_droplet.h"
+#include "droplet.h"
+#include "skyparams.h"
 
 START_TEST(test_droplet_all_digits)
 {
@@ -57,4 +58,12 @@ START_TEST(test_droplet_trim_integer)
   ck_assert_str_eq("2001300", sprint_coins(coins, SKYPARAM_DROPLET_PRECISION_EXP, 20, msg));
 }
 END_TEST
+
+TCase *add_droplet_tests(TCase *tc) {
+  tcase_add_test(tc, test_droplet_all_digits);
+  tcase_add_test(tc, test_droplet_small_buffer);
+  tcase_add_test(tc, test_droplet_trim_fraction);
+  tcase_add_test(tc, test_droplet_trim_integer);
+  return tc;
+}
 

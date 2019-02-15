@@ -25,6 +25,12 @@ endif
 OBJS += gen/fonts.o
 #end libtrezor.a
 
+#test_skyhw
+TEST_OBJS += firmware/test_fsm.o
+TEST_OBJS += firmware/test_droplet.o
+TEST_OBJS += firmware/test_main.o
+#end test_skyhw
+
 ifneq ($(EMULATOR),1)
 LDSCRIPT  = memory.ld
 LDLIBS   += -lopencm3_stm32f2
