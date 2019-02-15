@@ -45,6 +45,8 @@
 #include "skycoin_check_signature.h"
 #include "check_digest.h"
 #include "fsm_impl.h"
+#include "droplet.h"
+#include "skyparams.h"
 
 static uint8_t msg_resp[MSG_OUT_SIZE] __attribute__ ((aligned));
 
@@ -309,16 +311,18 @@ void fsm_msgTransactionSign(TransactionSign* msg) {
 		transaction_addInput(&transaction, hashIn);
 	}
 	for (uint32_t i = 0; i < msg->nbOut; ++i) {
-		char strHour[21];
-		char strCoin[21];
+		char strHour[30];
+		char strCoin[30];
+    char strValue[20];
 		char* coinString = msg->transactionOut[i].coin == 1000000 ? _("coin") : _("coins");
 		char* hourString = (msg->transactionOut[i].hour == 1 || msg->transactionOut[i].hour == 0) ? _("hour") : _("hours");
-		sprintf(strCoin, "%s %.2f %s",  _("send"), msg->transactionOut[i].coin / 1000000.00, coinString);
-#if EMULATOR
+    char *strValueMsg = sprint_coin(msg->transactionOut[i].coin, SKYPARAM_DROPLET_PRECISION_EXP, sizeof(strValue), strValue);
+    if (strValueMsg == NULL) {
+      // FIXME: For Skycoin coin supply and precision buffer size should be enough
+      strCoin = "too many coins";
+    }
+		sprintf(strCoin, "%s %s %s", _("send"), strValueMsg, coinString);
 		sprintf(strHour, "%" PRIu64 " %s", msg->transactionOut[i].hour, hourString);
-#else
-		sprintf(strHour, "%" PRIu64 " %s", msg->transactionOut[i].hour, hourString);
-#endif
 
 		if (msg->transactionOut[i].has_address_index) {
 			uint8_t pubkey[33] = {0};
