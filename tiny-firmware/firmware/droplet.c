@@ -12,6 +12,11 @@ char *sprint_coins(uint64_t coins, int precision_exp, size_t sz, char *msg) {
     mod = div % 10;
     div = div / 10;
   }
+  if (precision_exp > 0) {
+    *ptr = '0' + mod;
+    --ptr;
+    --sz;
+  }
   // Print decimal digits
   for (; div > 0 && precision_exp > 0 && sz > 0; --precision_exp, --sz, --ptr) {
     mod = div % 10;
@@ -22,20 +27,21 @@ char *sprint_coins(uint64_t coins, int precision_exp, size_t sz, char *msg) {
     // No space left in buffer
     return NULL;
   }
-  if (*ptr != 0) {
+  if (ptr != eos) {
     // Not an integer value
     *ptr = '.';
-    if (--sz == 0) {
+    if ((--sz) == 0) {
       return NULL;
     }
     --ptr;
   }
+  // A fraction of 1 SKY
   if (div == 0) {
     *ptr = '0';
     return ptr;
   }
   // Print integer part
-  for (--ptr, --sz; div > 0 && sz > 0; --sz, --ptr) {
+  for (; div > 0 && sz > 0; --sz, --ptr) {
     mod = div % 10;
     div = div / 10;
     *ptr = '0' + mod;
