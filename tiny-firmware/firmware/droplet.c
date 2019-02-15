@@ -15,7 +15,9 @@ char *sprint_coins(uint64_t coins, int precision_exp, size_t sz, char *msg) {
   if (precision_exp > 0) {
     *ptr = '0' + mod;
     --ptr;
-    --sz;
+    if ((--sz) == 0) {
+      return NULL;
+    }
   }
   // Print decimal digits
   for (; div > 0 && precision_exp > 0 && sz > 0; --precision_exp, --sz, --ptr) {
@@ -27,7 +29,7 @@ char *sprint_coins(uint64_t coins, int precision_exp, size_t sz, char *msg) {
     // No space left in buffer
     return NULL;
   }
-  if (ptr != eos) {
+  if (ptr != eos + 1) {
     // Not an integer value
     *ptr = '.';
     if ((--sz) == 0) {
