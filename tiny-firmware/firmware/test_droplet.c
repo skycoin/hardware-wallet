@@ -22,7 +22,7 @@ START_TEST(test_droplet_all_digits)
   ck_assert_str_eq("99999999.999999", sprint_coins(coins, SKYPARAM_DROPLET_PRECISION_EXP, 20, msg));
 
   coins = 10000000000001;
-  ck_assert_str_eq("100000000.000001", sprint_coins(coins, SKYPARAM_DROPLET_PRECISION_EXP, 20, msg));
+  ck_assert_str_eq("10000000.000001", sprint_coins(coins, SKYPARAM_DROPLET_PRECISION_EXP, 20, msg));
 
   coins = 2000001;
   ck_assert_str_eq("2.000001", sprint_coins(coins, SKYPARAM_DROPLET_PRECISION_EXP, 20, msg));
