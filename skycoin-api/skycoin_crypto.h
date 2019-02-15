@@ -16,8 +16,8 @@
 #include <stddef.h>
 
 typedef struct TransactionOutput{
-    uint32_t coin;
-    uint32_t hour;
+    uint64_t coin;
+    uint64_t hour;
     uint8_t address[20];
 }TransactionOutput;
 

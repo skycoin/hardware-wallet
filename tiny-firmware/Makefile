@@ -54,6 +54,7 @@ OBJS += firmware/trezor.o
 OBJS += firmware/layout2.o
 OBJS += firmware/storage.o
 OBJS += firmware/messages.o
+OBJS += firmware/droplet.o
 OBJS += firmware/fsm.o
 OBJS += firmware/fsm_impl.o
 OBJS += firmware/protect.o

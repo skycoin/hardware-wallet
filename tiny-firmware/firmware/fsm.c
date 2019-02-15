@@ -21,6 +21,7 @@
 #include <libopencm3/stm32/flash.h>
 
 #include <stdio.h>
+#include <inttypes.h>
 #include "trezor.h"
 #include "fsm.h"
 #include "messages.h"
@@ -295,7 +296,7 @@ void fsm_msgTransactionSign(TransactionSign* msg) {
 			msg->transactionIn[i].hashIn, msg->transactionIn[i].index);
 	}
 	for (uint32_t i = 0; i < msg->nbOut; ++i) {
-		printf("Output: coin: %d, hour: %d address: %s address_index: %d\n",
+		printf("Output: coin: %" PRIu64 ", hour: %" PRIu64 " address: %s address_index: %d\n",
 			msg->transactionOut[i].coin, msg->transactionOut[i].hour, 
 			msg->transactionOut[i].address, msg->transactionOut[i].address_index);
 	}
@@ -314,9 +315,9 @@ void fsm_msgTransactionSign(TransactionSign* msg) {
 		char* hourString = (msg->transactionOut[i].hour == 1 || msg->transactionOut[i].hour == 0) ? _("hour") : _("hours");
 		sprintf(strCoin, "%s %.2f %s",  _("send"), msg->transactionOut[i].coin / 1000000.00, coinString);
 #if EMULATOR
-		sprintf(strHour, "%u %s", msg->transactionOut[i].hour, hourString);
+		sprintf(strHour, "%" PRIu64 " %s", msg->transactionOut[i].hour, hourString);
 #else
-		sprintf(strHour, "%lu %s", msg->transactionOut[i].hour, hourString);
+		sprintf(strHour, "%" PRIu64 " %s", msg->transactionOut[i].hour, hourString);
 #endif
 
 		if (msg->transactionOut[i].has_address_index) {
