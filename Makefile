@@ -9,6 +9,9 @@
 
 UNAME_S ?= $(shell uname -s)
 
+MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
+MKFILE_DIR  := $(dir $(MKFILE_PATH))
+
 VERSION_FIRMWARE         ?= $(shell cat tiny-firmware/VERSION)
 VERSION_FIRMWARE_MAJOR   ?= $(shell cat tiny-firmware/VERSION | cut -d. -f1)
 VERSION_FIRMWARE_MINOR   ?= $(shell cat tiny-firmware/VERSION | cut -d. -f2)
@@ -17,6 +20,12 @@ VERSION_BOOTLOADER       ?= $(shell cat tiny-firmware/bootloader/VERSION)
 VERSION_BOOTLOADER_MAJOR ?= $(shell cat tiny-firmware/bootloader/VERSION | cut -d. -f1)
 VERSION_BOOTLOADER_MINOR ?= $(shell cat tiny-firmware/bootloader/VERSION | cut -d. -f2)
 VERSION_BOOTLOADER_PATCH ?= $(shell cat tiny-firmware/bootloader/VERSION | cut -d. -f3)
+
+ifeq ($(UNAME_S), Darwin)
+	LD_VAR=DYLD_LIBRARY_PATH
+else
+	LD_VAR=LD_LIBRARY_PATH
+endif
 
 install-linters-Darwin:
 	brew install yamllint
@@ -143,6 +152,8 @@ run-emulator: emulator ## Run wallet emulator
 	./emulator
 
 test: ## Run all project test suites.
+	export LIBRARY_PATH="$(MKFILE_DIR)/skycoin-api/:$$LIBRARY_PATH"
+	export $(LD_VAR)="$(MKFILE_DIR)/skycoin-api/:$$$(LD_VAR)"
 	make -C skycoin-api/ test
 	make emulator
 	EMULATOR=1 make -C tiny-firmware/ test

@@ -23,6 +23,8 @@
 #include "setup.h"
 #include "storage.h"
 
+#include "test_fsm.h"
+
 static uint8_t msg_resp[MSG_OUT_SIZE] __attribute__ ((aligned));
 
 #define setup_tc_fsm setup
@@ -135,31 +137,13 @@ START_TEST(test_msgSkycoinCheckMessageSignature)
 }
 END_TEST
 
-// define test suite and cases
-Suite *test_suite(void)
+// define test cases
+TCase *add_fsm_tests(TCase *tc)
 {
-	Suite *s = suite_create("firmware");
-	TCase *tc = tcase_create("fsm");
 	tcase_add_checked_fixture(tc, setup_tc_fsm, teardown_tc_fsm);
 	tcase_add_test(tc, test_msgSkycoinSignMessageReturnIsInHex);
 	tcase_add_test(tc, test_msgGenerateMnemonicImplOk);
 	tcase_add_test(tc, test_msgGenerateMnemonicImplShouldFaildIfItWasDone);
 	tcase_add_test(tc, test_msgSkycoinCheckMessageSignature);
-	suite_add_tcase(s, tc);
-	return s;
-}
-
-// run suite
-int main(void)
-{
-	int number_failed;
-	Suite *s = test_suite();
-	SRunner *sr = srunner_create(s);
-	srunner_run_all(sr, CK_VERBOSE);
-	number_failed = srunner_ntests_failed(sr);
-	srunner_free(sr);
-	if (number_failed == 0) {
-		printf("PASSED ALL TESTS\n");
-	}
-	return number_failed;
+	return tc;
 }

@@ -21,6 +21,7 @@
 #include <libopencm3/stm32/flash.h>
 
 #include <stdio.h>
+#include <inttypes.h>
 #include "trezor.h"
 #include "fsm.h"
 #include "messages.h"
@@ -44,6 +45,8 @@
 #include "skycoin_check_signature.h"
 #include "check_digest.h"
 #include "fsm_impl.h"
+#include "droplet.h"
+#include "skyparams.h"
 
 static uint8_t msg_resp[MSG_OUT_SIZE] __attribute__ ((aligned));
 
@@ -295,7 +298,7 @@ void fsm_msgTransactionSign(TransactionSign* msg) {
 			msg->transactionIn[i].hashIn, msg->transactionIn[i].index);
 	}
 	for (uint32_t i = 0; i < msg->nbOut; ++i) {
-		printf("Output: coin: %d, hour: %d address: %s address_index: %d\n",
+		printf("Output: coin: %" PRIu64 ", hour: %" PRIu64 " address: %s address_index: %d\n",
 			msg->transactionOut[i].coin, msg->transactionOut[i].hour, 
 			msg->transactionOut[i].address, msg->transactionOut[i].address_index);
 	}
@@ -308,33 +311,35 @@ void fsm_msgTransactionSign(TransactionSign* msg) {
 		transaction_addInput(&transaction, hashIn);
 	}
 	for (uint32_t i = 0; i < msg->nbOut; ++i) {
-		char strHour[21];
-		char strCoin[21];
-		char* coinString = msg->transactionOut[i].coin == 1000000 ? _("coin") : _("coins");
-		char* hourString = (msg->transactionOut[i].hour == 1 || msg->transactionOut[i].hour == 0) ? _("hour") : _("hours");
-		sprintf(strCoin, "%s %.2f %s",  _("send"), msg->transactionOut[i].coin / 1000000.00, coinString);
-#if EMULATOR
-		sprintf(strHour, "%u %s", msg->transactionOut[i].hour, hourString);
-#else
-		sprintf(strHour, "%lu %s", msg->transactionOut[i].hour, hourString);
-#endif
+		char strHour[30];
+		char strCoin[30];
+		char strValue[20];
+		char *coinString = msg->transactionOut[i].coin == 1000000 ? _("coin") : _("coins");
+		char *hourString = (msg->transactionOut[i].hour == 1 || msg->transactionOut[i].hour == 0) ? _("hour") : _("hours");
+		char *strValueMsg = sprint_coins(msg->transactionOut[i].coin, SKYPARAM_DROPLET_PRECISION_EXP, sizeof(strValue), strValue);
+		if (strValueMsg == NULL) {
+			// FIXME: For Skycoin coin supply and precision buffer size should be enough
+			strcpy(strCoin, "too many coins");
+		}
+		sprintf(strCoin, "%s %s %s", _("send"), strValueMsg, coinString);
+		sprintf(strHour, "%" PRIu64 " %s", msg->transactionOut[i].hour, hourString);
 
 		if (msg->transactionOut[i].has_address_index) {
 			uint8_t pubkey[33] = {0};
-    		uint8_t seckey[32] = {0};
+			uint8_t seckey[32] = {0};
 			size_t size_address = 36;
 			char address[36] = {0};
-    		fsm_getKeyPairAtIndex(1, pubkey, seckey, NULL, msg->transactionOut[i].address_index);
+			fsm_getKeyPairAtIndex(1, pubkey, seckey, NULL, msg->transactionOut[i].address_index);
 			generate_base58_address_from_pubkey(pubkey, address, &size_address);
-		    if (strcmp(msg->transactionOut[i].address, address) != 0)
-		    {
-		        fsm_sendFailure(FailureType_Failure_AddressGeneration, _("Wrong return address"));
-		        #if EMULATOR
-		        printf("Internal address: %s, message address: %s\n", address, msg->transactionOut[i].address);
-		        printf("Comparaison size %ld\n", size_address);
-		        #endif
-		        return;
-		    }
+			if (strcmp(msg->transactionOut[i].address, address) != 0)
+			{
+					fsm_sendFailure(FailureType_Failure_AddressGeneration, _("Wrong return address"));
+					#if EMULATOR
+					printf("Internal address: %s, message address: %s\n", address, msg->transactionOut[i].address);
+					printf("Comparaison size %ld\n", size_address);
+					#endif
+					return;
+			}
 		} else {
 			layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Next"), NULL, _("Do you really want to"), strCoin, strHour, _("to address"), _("..."), NULL);
 			if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) {
