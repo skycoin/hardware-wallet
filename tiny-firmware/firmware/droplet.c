@@ -1,5 +1,6 @@
 
 #include "droplet.h"
+#include <stdio.h>
 
 char *sprint_coins(uint64_t coins, int precision_exp, size_t sz, char *msg) {
   uint64_t div, mod;
@@ -7,6 +8,16 @@ char *sprint_coins(uint64_t coins, int precision_exp, size_t sz, char *msg) {
   char* ptr = eos;
   // EOS
   *ptr = 0;
+  --sz;
+  // Trivial case handled differently for performance
+  if (coins == 0) {
+    if (sz > 0) {
+      *(--ptr) = '0';
+      return ptr;
+    } else {
+      return NULL;
+    }
+  }
   // Skip least significant decimal digits
   for (--ptr, div = coins, mod = 0; mod == 0 && precision_exp > 0; --precision_exp) {
     mod = div % 10;
@@ -15,7 +26,7 @@ char *sprint_coins(uint64_t coins, int precision_exp, size_t sz, char *msg) {
   if (precision_exp > 0) {
     *ptr = '0' + mod;
     --ptr;
-    if ((--sz) == 0) {
+    if ((--sz) <= 0) {
       return NULL;
     }
   }
@@ -25,14 +36,14 @@ char *sprint_coins(uint64_t coins, int precision_exp, size_t sz, char *msg) {
     div = div / 10;
     *ptr = '0' + mod;
   }
-  if (sz == 0) {
+  if (sz <= 0) {
     // No space left in buffer
     return NULL;
   }
   if (*(ptr + 1) != 0) {
     // Not an integer value
     *ptr = '.';
-    if ((--sz) == 0) {
+    if ((--sz) <= 0) {
       return NULL;
     }
     --ptr;

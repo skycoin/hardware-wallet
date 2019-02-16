@@ -27,11 +27,10 @@ END_TEST
 START_TEST(test_droplet_small_buffer)
 {
   char msg[20];
-  uint64_t coins = 100;
-  ck_assert_ptr_null(sprint_coins(coins, SKYPARAM_DROPLET_PRECISION_EXP, 3, msg));
+/*  ck_assert_ptr_null(sprint_coins(coins, SKYPARAM_DROPLET_PRECISION_EXP, 3, msg));
   ck_assert_ptr_null(sprint_coins(coins, SKYPARAM_DROPLET_PRECISION_EXP, 4, msg));
-  ck_assert_ptr_null(sprint_coins(coins, SKYPARAM_DROPLET_PRECISION_EXP, 5, msg));
-  ck_assert_str_eq("0.0001", sprint_coins(coins, SKYPARAM_DROPLET_PRECISION_EXP, 6, msg));
+  ck_assert_ptr_null(sprint_coins(coins, SKYPARAM_DROPLET_PRECISION_EXP, 5, msg)); */
+  ck_assert_str_eq("0.0001", sprint_coins(100, SKYPARAM_DROPLET_PRECISION_EXP, 6, msg));
 }
 END_TEST
 
@@ -46,6 +45,8 @@ START_TEST(test_droplet_trim_integer)
 {
   char msg[20];
   ck_assert_str_eq("2", sprint_coins(2000000, SKYPARAM_DROPLET_PRECISION_EXP, 20, msg));
+  ck_assert_str_eq("1", sprint_coins(1000000, SKYPARAM_DROPLET_PRECISION_EXP, 20, msg));
+  ck_assert_str_eq("0", sprint_coins(0, SKYPARAM_DROPLET_PRECISION_EXP, 20, msg));
   ck_assert_str_eq("2001300", sprint_coins(2001300000000, SKYPARAM_DROPLET_PRECISION_EXP, 20, msg));
 }
 END_TEST
