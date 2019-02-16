@@ -27,10 +27,11 @@ END_TEST
 START_TEST(test_droplet_small_buffer)
 {
   char msg[20];
-/*  ck_assert_ptr_null(sprint_coins(coins, SKYPARAM_DROPLET_PRECISION_EXP, 3, msg));
-  ck_assert_ptr_null(sprint_coins(coins, SKYPARAM_DROPLET_PRECISION_EXP, 4, msg));
-  ck_assert_ptr_null(sprint_coins(coins, SKYPARAM_DROPLET_PRECISION_EXP, 5, msg)); */
-  ck_assert_str_eq("0.0001", sprint_coins(100, SKYPARAM_DROPLET_PRECISION_EXP, 6, msg));
+  ck_assert_ptr_null(sprint_coins(100, SKYPARAM_DROPLET_PRECISION_EXP, 3, msg));
+  ck_assert_ptr_null(sprint_coins(100, SKYPARAM_DROPLET_PRECISION_EXP, 4, msg));
+  ck_assert_ptr_null(sprint_coins(100, SKYPARAM_DROPLET_PRECISION_EXP, 5, msg));
+  ck_assert_ptr_null(sprint_coins(100, SKYPARAM_DROPLET_PRECISION_EXP, 6, msg));
+  ck_assert_str_eq("0.0001", sprint_coins(100, SKYPARAM_DROPLET_PRECISION_EXP, 7, msg));
 }
 END_TEST
 

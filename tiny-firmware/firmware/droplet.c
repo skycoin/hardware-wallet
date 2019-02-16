@@ -31,7 +31,7 @@ char *sprint_coins(uint64_t coins, int precision_exp, size_t sz, char *msg) {
     }
   }
   // Print decimal digits
-  for (; div > 0 && precision_exp > 0 && sz > 0; --precision_exp, --sz, --ptr) {
+  for (; precision_exp > 0 && sz > 0; --precision_exp, --sz, --ptr) {
     mod = div % 10;
     div = div / 10;
     *ptr = '0' + mod;
