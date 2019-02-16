@@ -7,7 +7,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
-- Recover dry-run feature deleted with https://github.com/skycoin/hardware-wallet/pull/70
 - `deviceSignMessage` and `deviceSignMessage` messages return the signed message serialized in hex format.
 -`msgSkycoinSignMessage` and `msgSignTransactionMessageImpl` encode signature in hex format.
 - Refactor build workflow, now the firmware is build as a separate library and this can be linked against a main for tests or the main to be use in production with the firmware.
@@ -17,7 +16,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Firmware and bootloader generation tested on linux and osx (travis-ci)
 - Remove support to recover device from words matrix. The only support method is scrambled words.
 - Not possible to enforce BIP-39 wordlist during recovery process.
-- Not possible to perform dry-run recovery workflow (for safe mnemonic validation)
 
 ### Fixed
 
