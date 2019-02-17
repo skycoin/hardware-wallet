@@ -34,11 +34,14 @@ before_script:
   - pip install --user --upgrade protobuf
 script:
   - make lint
-  - make -C skycoin-api/ test
+  - make -C skycoin-api test
   - make -C skycoin-api clean
-  - EMULATOR=1 make emulator # is required before EMULATOR=1 make -C skycoin-api/ test
-  - EMULATOR=1 make -C tiny-firmware/ test
+  - make emulator
   - make clean
   - make full-firmware
   - md5sum tiny-firmware/bootloader/combine/*.bin
   - md5sum full-firmware-no-mem-protect.bin
+notifications:
+  # https://github.com/kvld/travisci-telegram TravisCI Telegram Bot integration
+  webhooks: https://fathomless-fjord-24024.herokuapp.com/notify
+
