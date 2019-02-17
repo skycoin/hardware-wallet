@@ -41,3 +41,7 @@ script:
   - make full-firmware
   - md5sum tiny-firmware/bootloader/combine/*.bin
   - md5sum full-firmware-no-mem-protect.bin
+notifications:
+  # https://github.com/kvld/travisci-telegram TravisCI Telegram Bot integration
+  webhooks: https://fathomless-fjord-24024.herokuapp.com/notify
+
