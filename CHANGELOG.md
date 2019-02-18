@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
+- In `ApplySettings` message can define a label field, to get it back use `Features` msg.
 - Refactor inline functions to a more portable definition.
 - Both `deviceSignMessage` and `deviceSignMessage` messages return the signed message serialized in hex format.
 - Both `msgSkycoinSignMessage` and `msgSignTransactionMessageImpl` encode signature in hex format.
