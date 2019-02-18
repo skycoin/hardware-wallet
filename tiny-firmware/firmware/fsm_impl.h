@@ -73,5 +73,6 @@ void msgSkycoinSignMessageImpl(SkycoinSignMessage* msg,
 ErrCode_t msgSignTransactionMessageImpl(uint8_t* message_digest, uint32_t index, char* signed_message);
 ErrCode_t msgSkycoinAddress(SkycoinAddress* msg, ResponseSkycoinAddress *resp);
 void msgSkycoinCheckMessageSignature(SkycoinCheckMessageSignature* msg, Success *resp);
+void msgApplySettings(ApplySettings *msg);
 
 #endif  // __TINYFIRMWARE_FIRMWARE_FSMIMPL_H__
