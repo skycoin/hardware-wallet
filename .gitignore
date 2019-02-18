@@ -36,6 +36,7 @@
 *.x86_64
 *.hex
 emulator
+tiny-firmware/test_skycoin-emulator
 tiny-firmware/skycoin-emulator
 tiny-firmware/test_skycoin-emulator
 **/*.img
