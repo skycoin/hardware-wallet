@@ -32,7 +32,7 @@
  * or erasing. Multiple calls of flash_program and flash_erase can
  * follow and should be completed with flash_lock().
  */
-inline void svc_flash_unlock(void) {
+static inline void svc_flash_unlock(void) {
 	__asm__ __volatile__ ("svc %0" :: "i" (SVC_FLASH_UNLOCK) : "memory");
 }
 
@@ -40,16 +40,16 @@ inline void svc_flash_unlock(void) {
  * @param program_size (8-bit, 16-bit, 32-bit or 64-bit)
  *       should be one of the FLASH_CR_PROGRAM_X.. constants
  */
-inline void svc_flash_program(uint32_t program_size) {
+static inline void svc_flash_program(uint32_t program_size) {
 	register uint32_t r0 __asm__("r0") = program_size;
 	__asm__ __volatile__ ("svc %0" :: "i" (SVC_FLASH_PROGRAM), "r" (r0) : "memory");
 }
 
 /* Erase a flash sector.
- * @param sector sector number 0..11 
+ * @param sector sector number 0..11
  *    (this only allows erasing meta sectors 2 and 3 though).
  */
-inline void svc_flash_erase_sector(uint8_t sector) {
+static inline void svc_flash_erase_sector(uint8_t sector) {
 	register uint32_t r0 __asm__("r0") = sector;
 	__asm__ __volatile__ ("svc %0" :: "i" (SVC_FLASH_ERASE), "r" (r0) : "memory");
 }
@@ -57,13 +57,13 @@ inline void svc_flash_erase_sector(uint8_t sector) {
 /* Lock flash after programming or erasing.
  * @return flash status register (FLASH_SR)
  */
-inline uint32_t svc_flash_lock(void) {
+static inline uint32_t svc_flash_lock(void) {
 	register uint32_t r0 __asm__("r0");
 	__asm__ __volatile__ ("svc %1" : "=r" (r0) : "i" (SVC_FLASH_LOCK) : "memory");
 	return r0;
 }
 
-inline uint32_t svc_timer_ms(void) {
+static inline uint32_t svc_timer_ms(void) {
 	register uint32_t r0 __asm__("r0");
 	__asm__ __volatile__ ("svc %1" : "=r" (r0) : "i" (SVC_TIMER_MS) : "memory");
 	return r0;
