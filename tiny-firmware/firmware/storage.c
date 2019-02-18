@@ -471,6 +471,11 @@ void storage_setHomescreen(const uint8_t *data, uint32_t size)
 	}
 }
 
+bool storage_hasLabel(void)
+{
+	return storageRom->has_label;
+}
+
 const char *storage_getLabel(void)
 {
 	return storageRom->has_label ? storageRom->label : 0;

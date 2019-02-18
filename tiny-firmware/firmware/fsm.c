@@ -28,7 +28,6 @@
 #include "bip32.h"
 #include "storage.h"
 #include "rng.h"
-#include "storage.h"
 #include "oled.h"
 #include "protect.h"
 #include "pinmatrix.h"
@@ -144,6 +143,9 @@ void fsm_msgInitialize(Initialize *msg)
 
 void fsm_msgApplySettings(ApplySettings *msg)
 {
+    _Static_assert(
+        sizeof(msg->label) == DEVICE_LABEL_SIZE, 
+        "device label size inconsitent betwen protocol and final storage");
 	CHECK_PARAM(msg->has_label || msg->has_language || msg->has_use_passphrase || msg->has_homescreen,
 				_("No setting provided"));
 

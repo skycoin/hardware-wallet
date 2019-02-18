@@ -44,6 +44,8 @@
 #define STORAGE_NODE(NAME)   STORAGE_FIELD(StorageHDNode, NAME)
 #define STORAGE_UINT32(NAME) STORAGE_FIELD(uint32_t,      NAME)
 
+#define DEVICE_LABEL_SIZE 33
+
 typedef struct {
     uint32_t depth;
     uint32_t fingerprint;
@@ -66,7 +68,7 @@ typedef struct _Storage {
     STORAGE_UINT32 (pin_failed_attempts)
     STORAGE_STRING (pin, 10)
     STORAGE_STRING (language, 17)
-    STORAGE_STRING (label, 33)
+    STORAGE_STRING (label, DEVICE_LABEL_SIZE)
     STORAGE_BOOL   (imported)
     STORAGE_BYTES  (homescreen, 1024)
     STORAGE_UINT32 (u2f_counter)
@@ -89,6 +91,7 @@ void storage_loadDevice(LoadDevice *msg);
 
 const uint8_t *storage_getSeed(bool usePassphrase);
 
+bool storage_hasLabel(void);
 const char *storage_getLabel(void);
 void storage_setLabel(const char *label);
 
