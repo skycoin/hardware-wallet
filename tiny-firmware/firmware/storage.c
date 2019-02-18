@@ -111,7 +111,7 @@ static char CONFIDENTIAL sessionPassphrase[51];
 
 #define STORAGE_VERSION 9
 
-void storage_show_error(void)
+void __attribute__((noreturn)) storage_show_error(void)
 {
 	layoutDialog(&bmp_icon_error, NULL, NULL, NULL, _("Storage failure"), _("detected."), NULL, _("Please unplug"), _("the device."), NULL);
 	shutdown();
