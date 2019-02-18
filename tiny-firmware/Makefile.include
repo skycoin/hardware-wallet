@@ -173,8 +173,8 @@ ifeq ($(UNAME_S), Darwin)
 	TESTLIBS=$(TESTLIBS_DARWIN)
 endif
 
-test_$(NAME): proto lib$(NAME).a firmware/test_fsm.o
-	$(LD) -o test_$(NAME) firmware/test_fsm.o $(OBJS) $(LDLIBS) $(LDFLAGS) $(TESTLIBS)
+test_$(NAME): proto lib$(NAME).a $(TEST_OBJS)
+	$(LD) -o test_$(NAME) $(TEST_OBJS) $(OBJS) $(LDLIBS) $(LDFLAGS) $(TESTLIBS)
 
 test: test_$(NAME) ## Run test suite for tiny-firmware.
 	./test_$(NAME)
