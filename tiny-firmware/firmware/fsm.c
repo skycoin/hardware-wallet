@@ -199,13 +199,6 @@ void fsm_msgApplySettings(ApplySettings *msg)
 	layoutHome();
 }
 
-void fsm_msgGetVersion(GetVersion *msg) {
-	(void)msg;
-	char str[50];
-	sprintf(str, "Firmware Version %d.%d.%d", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH);
-	fsm_sendSuccess(str);
-}
-
 void fsm_msgGetFeatures(GetFeatures *msg)
 {
 	(void)msg;
