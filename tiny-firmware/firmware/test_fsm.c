@@ -140,12 +140,12 @@ END_TEST
 START_TEST(test_msgApplySettingsLabelSuccess)
 {
     storage_wipe();
-	char raw_label[] = {
-		"my custom device label"};
-	ApplySettings msg = ApplySettings_init_zero;
+    char raw_label[] = {
+        "my custom device label"};
+    ApplySettings msg = ApplySettings_init_zero;
     msg.has_label = true;
-	strncpy(msg.label, raw_label, sizeof(msg.label));
-	msgApplySettings(&msg);
+    strncpy(msg.label, raw_label, sizeof(msg.label));
+    msgApplySettings(&msg);
     ck_assert_int_eq(storage_hasLabel(), 1);
     ck_assert_str_eq(storage_getLabel(), raw_label);
 }
@@ -159,7 +159,7 @@ START_TEST(test_msgApplySettingsLabelSuccessCheck)
 	ApplySettings msg = ApplySettings_init_zero;
 	strncpy(msg.label, raw_label, sizeof(msg.label));
 	msgApplySettings(&msg);
-    ck_assert_int_eq(storage_hasLabel(), false);
+	ck_assert_int_eq(storage_hasLabel(), false);
 }
 END_TEST
 
