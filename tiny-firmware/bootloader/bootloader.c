@@ -125,7 +125,8 @@ void bootloader_loop(void)
 	oledDrawBitmap(0, 0, &bmp_logo64);
 	if (firmware_present()) {
 		oledDrawString(52, 0, "SKYCOIN", FONT_STANDARD);
-		static char serial[25];
+		// NOTE(denisacostaq@gmail.com): *2 because the hex formad and +1 because the EOL
+		static char serial[SERIAL_NUMBER_SIZE*2 + 1];
 		fill_serialno_fixed(serial);
 		oledDrawString(52, 20, "Serial No.", FONT_STANDARD);
 		oledDrawString(52, 40, serial + 12, FONT_STANDARD); // second part of serial

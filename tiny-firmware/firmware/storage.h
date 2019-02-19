@@ -24,6 +24,7 @@
 #include "types.pb.h"
 #include "messages.pb.h"
 #include "bip32.h"
+#include "serialno.h"
 
 #define STORAGE_FIELD(TYPE, NAME) \
     bool has_##NAME; \
@@ -93,6 +94,7 @@ const uint8_t *storage_getSeed(bool usePassphrase);
 
 bool storage_hasLabel(void);
 const char *storage_getLabel(void);
+const char *storage_getLabelOrDeviceId(void);
 void storage_setLabel(const char *label);
 
 const char *storage_getLanguage(void);
@@ -145,6 +147,9 @@ void storage_wipe(void);
 
 const char* storage_getFullSeed(void);
 
-extern char storage_uuid_str[25];
+/**
+ * @brief storage_uuid_str *2 because the hex formad and +1 because the EOL
+ */
+extern char storage_uuid_str[SERIAL_NUMBER_SIZE*2 + 1];
 
 #endif

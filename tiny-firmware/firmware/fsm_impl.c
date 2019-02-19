@@ -38,6 +38,7 @@
 #include "skycoin_crypto.h"
 #include "skycoin_check_signature.h"
 #include "check_digest.h"
+#include "storage.h"
 
 #define MNEMONIC_STRENGTH_12 128
 #define MNEMONIC_STRENGTH_24 256
@@ -183,7 +184,14 @@ void msgApplySettings(ApplySettings *msg)
 				_("No setting provided"));
 	if (msg->has_label) {
 		storage_setLabel(msg->label);
-	}
+    } else {
+        char label[DEVICE_LABEL_SIZE];
+        _Static_assert(sizeof(label) >= sizeof(storage_uuid_str), 
+                       "Label can be truncated");
+        strncpy(label, storage_uuid_str, 
+                MIN(sizeof(storage_uuid_str), sizeof(label)));
+        storage_setLabel(label);
+    }
 	if (msg->has_language) {
 		storage_setLanguage(msg->language);
 	}

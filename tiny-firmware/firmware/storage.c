@@ -54,7 +54,8 @@ _Static_assert((sizeof(storageUpdate) & 3) == 0, "storage unaligned");
 #define FLASH_STORAGE (FLASH_STORAGE_START + sizeof(storage_magic) + sizeof(storage_uuid))
 #define storageRom ((const Storage *) FLASH_PTR(FLASH_STORAGE))
 
-char storage_uuid_str[25];
+// size *2 because the hex formad and +1 because the EOL
+char storage_uuid_str[SERIAL_NUMBER_SIZE*2 + 1];
 
 /*
  storage layout:
@@ -481,6 +482,11 @@ const char *storage_getLabel(void)
 	return storageRom->has_label ? storageRom->label : 0;
 }
 
+const char *storage_getLabelOrDeviceId(void)
+{
+    return storageRom->has_label ? storage_getLabel() : storage_uuid_str;
+}
+
 const char *storage_getLanguage(void)
 {
 	return storageRom->has_language ? storageRom->language : 0;
@@ -766,4 +772,8 @@ void storage_wipe(void)
 	storage_check_flash_errors(svc_flash_lock());
 
 	storage_clearPinArea();
+    
+    storageUpdate.has_label = true;
+    strncpy(storageUpdate.label, storage_uuid_str, sizeof(storageUpdate.label));
+    storage_update();
 }

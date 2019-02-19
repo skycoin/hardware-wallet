@@ -204,17 +204,13 @@ void fsm_msgGetFeatures(GetFeatures *msg)
 		resp->has_language = true;
 		strlcpy(resp->language, storage_getLanguage(), sizeof(resp->language));
 	}
-	if (storage_getLabel()) {
-		resp->has_label = true;
-		strlcpy(resp->label, storage_getLabel(), sizeof(resp->label));
-	}
-	
+	resp->has_label = true;
+	strlcpy(resp->label, storage_getLabelOrDeviceId(), sizeof(resp->label));	
 	resp->has_initialized = true; resp->initialized = storage_isInitialized();
 	resp->has_pin_cached = true; resp->pin_cached = session_isPinCached();
 	resp->has_passphrase_cached = true; resp->passphrase_cached = session_isPassphraseCached();
 	resp->has_needs_backup = true; resp->needs_backup = storage_needsBackup();
 	resp->has_model = true; strlcpy(resp->model, "1", sizeof(resp->model));
-
 	msg_write(MessageType_MessageType_Features, resp);
 }
 

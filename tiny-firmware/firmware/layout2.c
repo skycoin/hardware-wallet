@@ -125,14 +125,21 @@ void layoutHome(void)
 			oledBox(0, 0, 127, 8, false);
 			oledDrawStringCenter(0, "NEEDS BACKUP!", FONT_STANDARD);
 		} else {
-			oledBox(0, 0, 127, 8, false);
-			if (storage_hasLabel()) {
-				const char *label = storage_getLabel();
+				// NOTE(denisacostaq@gmail.com): The scree is not long enough, so cut the
+				// label string.
+				char label[MAX(sizeof (storageUpdate.label), sizeof (storage_uuid_str))];
+				_Static_assert(sizeof(storageUpdate.label) > 23 
+							|| sizeof(storage_uuid_str) > 23, 
+                           "The label fits well on the screen");
+				strncpy(label, storage_getLabelOrDeviceId(), sizeof(label));
+				const int lastIndex = 23;
+				label[lastIndex - 3] = '.';
+				label[lastIndex - 2] = '.';
+				label[lastIndex - 1] = '.';
+				label[lastIndex] = '\0';
+				oledBox(0, 0, 127, 8, false);
 				oledDrawStringCenter(0, label, FONT_STANDARD);
-			} else {
-				oledDrawStringCenter(0, _("My hardware wallet"), FONT_STANDARD);
 			}
-		}
 	}
 	oledRefresh();
 
