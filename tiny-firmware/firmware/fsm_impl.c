@@ -177,9 +177,9 @@ void msgSkycoinCheckMessageSignature(SkycoinCheckMessageSignature* msg, Success 
 void msgGetFeaturesImpl(Features *resp)
 {
     resp->has_vendor = true;         strlcpy(resp->vendor, "Skycoin Foundation", sizeof(resp->vendor));
-	resp->has_major_version = true;  resp->major_version = VERSION_MAJOR;
-	resp->has_minor_version = true;  resp->minor_version = VERSION_MINOR;
-	resp->has_patch_version = true;  resp->patch_version = VERSION_PATCH;
+	resp->has_fw_major = true;  resp->fw_major = VERSION_MAJOR;
+	resp->has_fw_minor = true;  resp->fw_minor = VERSION_MINOR;
+	resp->has_fw_patch = true;  resp->fw_patch = VERSION_PATCH;
 	resp->has_device_id = true;      strlcpy(resp->device_id, storage_uuid_str, sizeof(resp->device_id));
 	resp->has_pin_protection = true; resp->pin_protection = storage_hasPin();
 	resp->has_passphrase_protection = true; resp->passphrase_protection = storage_hasPassphraseProtection();
