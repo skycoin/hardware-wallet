@@ -176,7 +176,7 @@ void msgSkycoinCheckMessageSignature(SkycoinCheckMessageSignature* msg, Success 
 
 void msgGetFeaturesImpl(Features *resp)
 {
-    resp->has_vendor = true;         strlcpy(resp->vendor, "Skycoin Foundation", sizeof(resp->vendor));
+	resp->has_vendor = true;         strlcpy(resp->vendor, "Skycoin Foundation", sizeof(resp->vendor));
 	resp->has_fw_major = true;  resp->fw_major = VERSION_MAJOR;
 	resp->has_fw_minor = true;  resp->fw_minor = VERSION_MINOR;
 	resp->has_fw_patch = true;  resp->fw_patch = VERSION_PATCH;
