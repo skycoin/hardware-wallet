@@ -203,7 +203,7 @@ void fsm_msgGetFeatures(GetFeatures *msg)
 {
 	(void)msg;
 	RESP_INIT(Features);
-	msgGetFeatures(resp);
+	msgGetFeaturesImpl(resp);
 	msg_write(MessageType_MessageType_Features, resp);
 }
 

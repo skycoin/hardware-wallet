@@ -75,6 +75,6 @@ ErrCode_t msgSignTransactionMessageImpl(uint8_t* message_digest, uint32_t index,
 ErrCode_t msgSkycoinAddress(SkycoinAddress* msg, ResponseSkycoinAddress *resp);
 void msgSkycoinCheckMessageSignature(SkycoinCheckMessageSignature* msg, 
 									Success *resp);
-void msgGetFeatures(Features *resp);
+void msgGetFeaturesImpl(Features *resp);
 
 #endif  // __TINYFIRMWARE_FIRMWARE_FSMIMPL_H__
