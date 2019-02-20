@@ -125,8 +125,8 @@ void layoutHome(void)
 			oledBox(0, 0, 127, 8, false);
 			oledDrawStringCenter(0, "NEEDS BACKUP!", FONT_STANDARD);
 		} else {
-				// NOTE(denisacostaq@gmail.com): The scree is not long enough, so cut the
-				// label string.
+				// NOTE(denisacostaq@gmail.com): The screen is not long enough
+				// so clip the label string.
 				char label[MAX(sizeof (storageUpdate.label), sizeof (storage_uuid_str))];
 				_Static_assert(sizeof(storageUpdate.label) > 23 
 							|| sizeof(storage_uuid_str) > 23, 
