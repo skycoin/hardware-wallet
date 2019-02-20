@@ -54,7 +54,7 @@ _Static_assert((sizeof(storageUpdate) & 3) == 0, "storage unaligned");
 #define FLASH_STORAGE (FLASH_STORAGE_START + sizeof(storage_magic) + sizeof(storage_uuid))
 #define storageRom ((const Storage *) FLASH_PTR(FLASH_STORAGE))
 
-// size *2 because the hex formad and +1 because the EOL
+// size *2 due to the hex formad and +1 because of the trailing NUL char
 char storage_uuid_str[SERIAL_NUMBER_SIZE*2 + 1];
 
 /*
