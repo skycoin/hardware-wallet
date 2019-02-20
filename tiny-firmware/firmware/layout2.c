@@ -105,6 +105,7 @@ void layoutHome(void)
 		layoutSwipe();
 	}
 	layoutLast = layoutHome;
+	const char *label = storage_isInitialized() ? storage_getLabel() : _("Go to trezor.io/start");
 	const uint8_t *homescreen = bmp_skycoin_logo64.data;
 	if (homescreen) {
 		BITMAP b;
@@ -113,9 +114,12 @@ void layoutHome(void)
 		b.data = homescreen;
 		oledDrawBitmap(0, 0, &b);
 	} else {
-		oledDrawBitmap(44, 4, &bmp_logo48);
-		oledDrawStringCenter(OLED_HEIGHT - 8, _("Go to www.skycoin.net"), 
-												FONT_STANDARD);
+		if (label && strlen(label) > 0) {
+			oledDrawBitmap(44, 4, &bmp_logo48);
+			oledDrawStringCenter(OLED_HEIGHT - 8, label, FONT_STANDARD);
+		} else {
+			oledDrawBitmap(40, 0, &bmp_logo64);
+		}
 	}
 	if (!storage_isInitialized()) {
 		oledBox(0, 0, 127, 8, false);
