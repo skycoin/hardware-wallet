@@ -50,7 +50,6 @@ void fsm_msgPinMatrixAck(PinMatrixAck *msg);
 void fsm_msgCancel(Cancel *msg);
 void fsm_msgRecoveryDevice(RecoveryDevice *msg);
 void fsm_msgWordAck(WordAck *msg);
-void fsm_msgGetVersion(GetVersion *msg);
 void fsm_msgTransactionSign(TransactionSign* msg);
 
 #endif

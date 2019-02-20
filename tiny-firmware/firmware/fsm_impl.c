@@ -63,7 +63,7 @@ ErrCode_t msgGenerateMnemonicImpl(GenerateMnemonic* msg) {
 
 
 void msgSkycoinSignMessageImpl(SkycoinSignMessage* msg,
-								   ResponseSkycoinSignMessage *resp)
+								ResponseSkycoinSignMessage *resp)
 {
 	if (storage_hasMnemonic() == false) {
 		fsm_sendFailure(FailureType_Failure_AddressGeneration, "Mnemonic not set");
@@ -172,4 +172,29 @@ void msgSkycoinCheckMessageSignature(SkycoinCheckMessageSignature* msg, Success 
 	memcpy(resp->message, pubkeybase58, pubkeybase58_size);
 	resp->has_message = true;
 	msg_write(MessageType_MessageType_Success, resp);
+}
+
+void msgGetFeaturesImpl(Features *resp)
+{
+	resp->has_vendor = true;         strlcpy(resp->vendor, "Skycoin Foundation", sizeof(resp->vendor));
+	resp->has_fw_major = true;  resp->fw_major = VERSION_MAJOR;
+	resp->has_fw_minor = true;  resp->fw_minor = VERSION_MINOR;
+	resp->has_fw_patch = true;  resp->fw_patch = VERSION_PATCH;
+	resp->has_device_id = true;      strlcpy(resp->device_id, storage_uuid_str, sizeof(resp->device_id));
+	resp->has_pin_protection = true; resp->pin_protection = storage_hasPin();
+	resp->has_passphrase_protection = true; resp->passphrase_protection = storage_hasPassphraseProtection();
+	resp->has_bootloader_hash = true; resp->bootloader_hash.size = memory_bootloader_hash(resp->bootloader_hash.bytes);
+	if (storage_getLanguage()) {
+		resp->has_language = true;
+		strlcpy(resp->language, storage_getLanguage(), sizeof(resp->language));
+	}
+	if (storage_getLabel()) {
+		resp->has_label = true;
+		strlcpy(resp->label, storage_getLabel(), sizeof(resp->label));
+	}
+	resp->has_initialized = true; resp->initialized = storage_isInitialized();
+	resp->has_pin_cached = true; resp->pin_cached = session_isPinCached();
+	resp->has_passphrase_cached = true; resp->passphrase_cached = session_isPassphraseCached();
+	resp->has_needs_backup = true; resp->needs_backup = storage_needsBackup();
+	resp->has_model = true; strlcpy(resp->model, "1", sizeof(resp->model));
 }

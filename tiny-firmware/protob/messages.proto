@@ -52,7 +52,6 @@ enum MessageType {
 	MessageType_ResponseSkycoinAddress = 117 [(wire_out) = true];
 	MessageType_ResponseSkycoinSignMessage = 118 [(wire_out) = true];
 	MessageType_GenerateMnemonic = 119 [(wire_in) = true];
-	MessageType_GetVersion = 120 [(wire_in) = true];
 	MessageType_TransactionSign = 122 [(wire_in) = true];
 	MessageType_ResponseTransactionSign = 123 [(wire_out) = true];
 }
@@ -314,13 +313,6 @@ message PassphraseStateAck {
  */
 message GetEntropy {
 	required uint32 size = 1;		// size of requested entropy
-}
-
-/**
- * Request: Request firmware version
- * @next Success
- */
-message GetVersion {
 }
 
 /**
