@@ -64,7 +64,7 @@ ErrCode_t msgGenerateMnemonicImpl(GenerateMnemonic* msg) {
 
 
 void msgSkycoinSignMessageImpl(SkycoinSignMessage* msg,
-								ResponseSkycoinSignMessage *resp)
+								   ResponseSkycoinSignMessage *resp)
 {
 	if (storage_hasMnemonic() == false) {
 		fsm_sendFailure(FailureType_Failure_AddressGeneration, "Mnemonic not set");
@@ -203,6 +203,7 @@ void msgApplySettings(ApplySettings *msg)
 	}
 	storage_update();
 }
+
 void msgGetFeaturesImpl(Features *resp)
 {
 	resp->has_vendor = true;         strlcpy(resp->vendor, "Skycoin Foundation", sizeof(resp->vendor));

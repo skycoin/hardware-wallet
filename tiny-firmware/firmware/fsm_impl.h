@@ -69,11 +69,11 @@ typedef enum ErrCode ErrCode_t;
 
 ErrCode_t msgGenerateMnemonicImpl(GenerateMnemonic* msg);
 void msgSkycoinSignMessageImpl(SkycoinSignMessage* msg,
-								ResponseSkycoinSignMessage *msg_resp);
+															ResponseSkycoinSignMessage *msg_resp);
 ErrCode_t msgSignTransactionMessageImpl(uint8_t* message_digest, uint32_t index, 
-										char* signed_message);
+																			char* signed_message);
 ErrCode_t msgSkycoinAddress(SkycoinAddress* msg, ResponseSkycoinAddress *resp);
-void msgSkycoinCheckMessageSignature(SkycoinCheckMessageSignature* msg, 
+void msgSkycoinCheckMessageSignature(SkycoinCheckMessageSignature* msg, Success *resp);
 void msgApplySettings(ApplySettings *msg);
 void msgGetFeaturesImpl(Features *resp);
 

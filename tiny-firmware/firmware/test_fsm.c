@@ -168,6 +168,7 @@ START_TEST(test_msgFeaturesLabelDefaultsToDeviceId)
 	ck_assert_str_eq(storage_uuid_str, label);
 }
 END_TEST
+
 START_TEST(test_msgGetFeatures)
 {
 	RESP_INIT(Features);
@@ -190,7 +191,6 @@ TCase *add_fsm_tests(TCase *tc)
 	tcase_add_test(tc, test_msgGenerateMnemonicImplShouldFaildIfItWasDone);
 	tcase_add_test(tc, test_msgSkycoinCheckMessageSignature);
 	tcase_add_test(tc, test_msgApplySettingsLabelSuccess);
-	tcase_add_test(tc, test_msgApplySettingsLabelSuccessCheck);
 	tcase_add_test(tc, test_msgFeaturesLabelDefaultsToDeviceId);
 	tcase_add_test(tc, test_msgGetFeatures);
 	tcase_add_test(tc, test_msgApplySettingsLabelSuccessCheck);
