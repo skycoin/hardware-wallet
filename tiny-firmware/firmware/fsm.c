@@ -181,36 +181,11 @@ void fsm_msgApplySettings(ApplySettings *msg)
 	layoutHome();
 }
 
-void fsm_msgGetVersion(GetVersion *msg) {
-	(void)msg;
-	char str[50];
-	sprintf(str, "Firmware Version %d.%d.%d", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH);
-	fsm_sendSuccess(str);
-}
-
 void fsm_msgGetFeatures(GetFeatures *msg)
 {
 	(void)msg;
 	RESP_INIT(Features);
-	resp->has_vendor = true;         strlcpy(resp->vendor, "Skycoin Foundation", sizeof(resp->vendor));
-	resp->has_major_version = true;  resp->major_version = VERSION_MAJOR;
-	resp->has_minor_version = true;  resp->minor_version = VERSION_MINOR;
-	resp->has_patch_version = true;  resp->patch_version = VERSION_PATCH;
-	resp->has_device_id = true;      strlcpy(resp->device_id, storage_uuid_str, sizeof(resp->device_id));
-	resp->has_pin_protection = true; resp->pin_protection = storage_hasPin();
-	resp->has_passphrase_protection = true; resp->passphrase_protection = storage_hasPassphraseProtection();
-	resp->has_bootloader_hash = true; resp->bootloader_hash.size = memory_bootloader_hash(resp->bootloader_hash.bytes);
-	if (storage_getLanguage()) {
-		resp->has_language = true;
-		strlcpy(resp->language, storage_getLanguage(), sizeof(resp->language));
-	}
-	resp->has_label = true;
-	strlcpy(resp->label, storage_getLabelOrDeviceId(), sizeof(resp->label));	
-	resp->has_initialized = true; resp->initialized = storage_isInitialized();
-	resp->has_pin_cached = true; resp->pin_cached = session_isPinCached();
-	resp->has_passphrase_cached = true; resp->passphrase_cached = session_isPassphraseCached();
-	resp->has_needs_backup = true; resp->needs_backup = storage_needsBackup();
-	resp->has_model = true; strlcpy(resp->model, "1", sizeof(resp->model));
+	msgGetFeaturesImpl(resp);
 	msg_write(MessageType_MessageType_Features, resp);
 }
 
