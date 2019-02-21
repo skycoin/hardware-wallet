@@ -130,19 +130,21 @@ void layoutHome(void)
 			oledDrawStringCenter(0, "NEEDS BACKUP!", FONT_STANDARD);
 		} else {
 				// NOTE(denisacostaq@gmail.com): The screen is not long enough
-				// so clip the label string.
-				char label[MAX(sizeof (storageUpdate.label), sizeof (storage_uuid_str))];
+				// so clip the device label string.
+				char devLabel[MAX(sizeof (storageUpdate.label), 
+								sizeof (storage_uuid_str))];
 				_Static_assert(sizeof(storageUpdate.label) > 23 
 							|| sizeof(storage_uuid_str) > 23, 
                            "The label fits well on the screen");
-				strncpy(label, storage_getLabelOrDeviceId(), sizeof(label));
+				strncpy(devLabel, storage_getLabelOrDeviceId(), 
+						sizeof(devLabel));
 				const int lastIndex = 23;
-				label[lastIndex - 3] = '.';
-				label[lastIndex - 2] = '.';
-				label[lastIndex - 1] = '.';
-				label[lastIndex] = '\0';
+				devLabel[lastIndex - 3] = '.';
+				devLabel[lastIndex - 2] = '.';
+				devLabel[lastIndex - 1] = '.';
+				devLabel[lastIndex] = '\0';
 				oledBox(0, 0, 127, 8, false);
-				oledDrawStringCenter(0, label, FONT_STANDARD);
+				oledDrawStringCenter(0, devLabel, FONT_STANDARD);
 			}
 	}
 	oledRefresh();
