@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
+
+- In `ApplySettings` message it is possible to set a label for identifying the device
+- Return device label in `GetFeatures` message.
+- If no label explicitly set it defaults to the same value of `device_ID` set in wipe function.
 - Refactor inline functions to a more portable definition.
 - Both `deviceSignMessage` and `deviceSignMessage` messages return the signed message serialized in hex format.
 - Both `msgSkycoinSignMessage` and `msgSignTransactionMessageImpl` encode signature in hex format.

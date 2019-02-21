@@ -128,7 +128,24 @@ void layoutHome(void)
 		if (storage_needsBackup()) {
 			oledBox(0, 0, 127, 8, false);
 			oledDrawStringCenter(0, "NEEDS BACKUP!", FONT_STANDARD);
-		}
+		} else {
+				// NOTE(denisacostaq@gmail.com): The screen is not long enough
+				// so clip the device label string.
+				char devLabel[MAX(sizeof (storageUpdate.label), 
+								sizeof (storage_uuid_str))];
+				_Static_assert(sizeof(storageUpdate.label) > 23 
+							|| sizeof(storage_uuid_str) > 23, 
+                           "The label fits well on the screen");
+				strncpy(devLabel, storage_getLabelOrDeviceId(), 
+						sizeof(devLabel));
+				const int lastIndex = 23;
+				devLabel[lastIndex - 3] = '.';
+				devLabel[lastIndex - 2] = '.';
+				devLabel[lastIndex - 1] = '.';
+				devLabel[lastIndex] = '\0';
+				oledBox(0, 0, 127, 8, false);
+				oledDrawStringCenter(0, devLabel, FONT_STANDARD);
+			}
 	}
 	oledRefresh();
 

@@ -28,7 +28,6 @@
 #include "bip32.h"
 #include "storage.h"
 #include "rng.h"
-#include "storage.h"
 #include "oled.h"
 #include "protect.h"
 #include "pinmatrix.h"
@@ -144,11 +143,7 @@ void fsm_msgInitialize(Initialize *msg)
 
 void fsm_msgApplySettings(ApplySettings *msg)
 {
-	CHECK_PARAM(msg->has_label || msg->has_language || msg->has_use_passphrase || msg->has_homescreen,
-				_("No setting provided"));
-
 	CHECK_PIN
-
 	if (msg->has_label && strlen(msg->label)) {
 		layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"), _("change name to"), msg->label, "?", NULL, NULL);
 		if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) {
@@ -181,20 +176,7 @@ void fsm_msgApplySettings(ApplySettings *msg)
 			return;
 		}
 	}
-
-	if (msg->has_label) {
-		storage_setLabel(msg->label);
-	}
-	if (msg->has_language) {
-		storage_setLanguage(msg->language);
-	}
-	if (msg->has_use_passphrase) {
-		storage_setPassphraseProtection(msg->use_passphrase);
-	}
-	if (msg->has_homescreen) {
-		storage_setHomescreen(msg->homescreen.bytes, msg->homescreen.size);
-	}
-	storage_update();
+	msgApplySettings(msg);
 	fsm_sendSuccess(_("Settings applied"));
 	layoutHome();
 }

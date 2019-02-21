@@ -24,6 +24,7 @@
 #include "types.pb.h"
 #include "messages.pb.h"
 #include "bip32.h"
+#include "serialno.h"
 
 #define STORAGE_FIELD(TYPE, NAME) \
     bool has_##NAME; \
@@ -43,6 +44,8 @@
 #define STORAGE_BOOL(NAME)   STORAGE_FIELD(bool,          NAME)
 #define STORAGE_NODE(NAME)   STORAGE_FIELD(StorageHDNode, NAME)
 #define STORAGE_UINT32(NAME) STORAGE_FIELD(uint32_t,      NAME)
+
+#define DEVICE_LABEL_SIZE 33
 
 typedef struct {
     uint32_t depth;
@@ -66,7 +69,7 @@ typedef struct _Storage {
     STORAGE_UINT32 (pin_failed_attempts)
     STORAGE_STRING (pin, 10)
     STORAGE_STRING (language, 17)
-    STORAGE_STRING (label, 33)
+    STORAGE_STRING (label, DEVICE_LABEL_SIZE)
     STORAGE_BOOL   (imported)
     STORAGE_BYTES  (homescreen, 1024)
     STORAGE_UINT32 (u2f_counter)
@@ -89,7 +92,9 @@ void storage_loadDevice(LoadDevice *msg);
 
 const uint8_t *storage_getSeed(bool usePassphrase);
 
+bool storage_hasLabel(void);
 const char *storage_getLabel(void);
+const char *storage_getLabelOrDeviceId(void);
 void storage_setLabel(const char *label);
 
 const char *storage_getLanguage(void);
@@ -142,6 +147,9 @@ void storage_wipe(void);
 
 const char* storage_getFullSeed(void);
 
-extern char storage_uuid_str[25];
+/**
+ * @brief storage_uuid_str *2 due to the hex format and +1 because of the trailing NULL char
+ */
+extern char storage_uuid_str[SERIAL_NUMBER_SIZE * 2 + 1];
 
 #endif
