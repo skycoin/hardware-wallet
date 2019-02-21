@@ -38,6 +38,7 @@
 #include "skycoin_crypto.h"
 #include "skycoin_check_signature.h"
 #include "check_digest.h"
+#include "storage.h"
 
 #define MNEMONIC_STRENGTH_12 128
 #define MNEMONIC_STRENGTH_24 256
@@ -63,7 +64,7 @@ ErrCode_t msgGenerateMnemonicImpl(GenerateMnemonic* msg) {
 
 
 void msgSkycoinSignMessageImpl(SkycoinSignMessage* msg,
-								ResponseSkycoinSignMessage *resp)
+								   ResponseSkycoinSignMessage *resp)
 {
 	if (storage_hasMnemonic() == false) {
 		fsm_sendFailure(FailureType_Failure_AddressGeneration, "Mnemonic not set");
@@ -172,6 +173,35 @@ void msgSkycoinCheckMessageSignature(SkycoinCheckMessageSignature* msg, Success 
 	memcpy(resp->message, pubkeybase58, pubkeybase58_size);
 	resp->has_message = true;
 	msg_write(MessageType_MessageType_Success, resp);
+}
+
+void msgApplySettings(ApplySettings *msg)
+{
+	_Static_assert(
+		sizeof(msg->label) == DEVICE_LABEL_SIZE, 
+		"device label size inconsitent betwen protocol and final storage");
+	CHECK_PARAM(msg->has_label || msg->has_language || msg->has_use_passphrase || msg->has_homescreen,
+				_("No setting provided"));
+	if (msg->has_label) {
+		storage_setLabel(msg->label);
+	} else {
+		char label[DEVICE_LABEL_SIZE];
+		_Static_assert(sizeof(label) >= sizeof(storage_uuid_str), 
+						"Label can be truncated");
+		strncpy(label, storage_uuid_str, 
+				MIN(sizeof(storage_uuid_str), sizeof(label)));
+		storage_setLabel(label);
+	}
+	if (msg->has_language) {
+		storage_setLanguage(msg->language);
+	}
+	if (msg->has_use_passphrase) {
+		storage_setPassphraseProtection(msg->use_passphrase);
+	}
+	if (msg->has_homescreen) {
+		storage_setHomescreen(msg->homescreen.bytes, msg->homescreen.size);
+	}
+	storage_update();
 }
 
 void msgGetFeaturesImpl(Features *resp)

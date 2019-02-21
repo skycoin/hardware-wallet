@@ -135,6 +135,40 @@ START_TEST(test_msgSkycoinCheckMessageSignature)
 }
 END_TEST
 
+START_TEST(test_msgApplySettingsLabelSuccess)
+{
+    storage_wipe();
+    char raw_label[] = {
+        "my custom device label"};
+    ApplySettings msg = ApplySettings_init_zero;
+    msg.has_label = true;
+    strncpy(msg.label, raw_label, sizeof(msg.label));
+    msgApplySettings(&msg);
+    ck_assert_int_eq(storage_hasLabel(), 1);
+    ck_assert_str_eq(storage_getLabel(), raw_label);
+}
+END_TEST
+
+START_TEST(test_msgApplySettingsLabelSuccessCheck)
+{
+	storage_wipe();
+	char raw_label[] = {
+		"my custom device label"};
+	ApplySettings msg = ApplySettings_init_zero;
+	strncpy(msg.label, raw_label, sizeof(msg.label));
+	msgApplySettings(&msg);
+	ck_assert_int_eq(storage_hasLabel(), true);
+}
+END_TEST
+
+START_TEST(test_msgFeaturesLabelDefaultsToDeviceId)
+{
+	storage_wipe();
+	const char *label = storage_getLabelOrDeviceId();
+	ck_assert_str_eq(storage_uuid_str, label);
+}
+END_TEST
+
 START_TEST(test_msgGetFeatures)
 {
 	RESP_INIT(Features);
@@ -156,6 +190,10 @@ TCase *add_fsm_tests(TCase *tc)
 	tcase_add_test(tc, test_msgGenerateMnemonicImplOk);
 	tcase_add_test(tc, test_msgGenerateMnemonicImplShouldFaildIfItWasDone);
 	tcase_add_test(tc, test_msgSkycoinCheckMessageSignature);
+	tcase_add_test(tc, test_msgApplySettingsLabelSuccess);
+	tcase_add_test(tc, test_msgFeaturesLabelDefaultsToDeviceId);
 	tcase_add_test(tc, test_msgGetFeatures);
+	tcase_add_test(tc, test_msgApplySettingsLabelSuccessCheck);
+	tcase_add_test(tc, test_msgFeaturesLabelDefaultsToDeviceId);
 	return tc;
 }

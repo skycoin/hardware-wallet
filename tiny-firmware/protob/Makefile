@@ -15,4 +15,4 @@ messages_map.h: messages_map.py messages_pb2.py types_pb2.py
 	$(PYTHON) $< > $@
 
 clean:
-	rm -f *.pb *.o *.d *.pb.c *.pb.h *_pb2.py messages_map.h
+	rm -f *.pb *.o *.d *.pb.c *.pb.h *_pb2.py *.pyc messages_map.h
