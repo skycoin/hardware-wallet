@@ -14,6 +14,10 @@
 
 #include "messages.pb.h"
 
+#define EXTERNAL_ENTROPY_SIZE 32
+#define MNEMONIC_WORD_COUNT_12 12
+#define MNEMONIC_WORD_COUNT_24 24
+
 // message methods
 
 #define RESP_INIT(TYPE) \

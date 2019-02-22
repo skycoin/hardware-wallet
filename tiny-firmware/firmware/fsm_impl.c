@@ -42,24 +42,41 @@
 
 #define MNEMONIC_STRENGTH_12 128
 #define MNEMONIC_STRENGTH_24 256
+#define INTERNAL_ENTROPY_SIZE 32
 
 ErrCode_t msgGenerateMnemonicImpl(GenerateMnemonic* msg) {
- 	CHECK_NOT_INITIALIZED_RET_ERR_CODE	    
-	int strength = (msg->word_count == 24)? MNEMONIC_STRENGTH_24 : MNEMONIC_STRENGTH_12 ;
-	const char* mnemonic = mnemonic_generate(strength);
-	if (mnemonic == 0) {
-		fsm_sendFailure(FailureType_Failure_ProcessError, _("Device could not generate a Mnemonic"));
+	CHECK_NOT_INITIALIZED_RET_ERR_CODE
+	uint8_t int_entropy[INTERNAL_ENTROPY_SIZE];
+	random_buffer(int_entropy, sizeof(int_entropy));
+	SHA256_CTX ctx;
+	sha256_Init(&ctx);
+	sha256_Update(&ctx, int_entropy, sizeof(int_entropy));
+	sha256_Update(&ctx, msg->entropy.bytes, msg->entropy.size);
+	sha256_Final(&ctx, int_entropy);
+	int strength = (msg->word_count == 24)
+			? MNEMONIC_STRENGTH_24 : MNEMONIC_STRENGTH_12;
+	const char* mnemonic = mnemonic_from_data(int_entropy, strength / 8);
+	if (mnemonic) {
+		if (!mnemonic_check(mnemonic)) {
+			fsm_sendFailure(
+				FailureType_Failure_DataError, 
+				_("Mnemonic with wrong checksum provided"));
+			return ErrFailed;
+		}
+		storage_setMnemonic(mnemonic);
+		storage_setNeedsBackup(true);
+		storage_setPassphraseProtection(
+					msg->has_passphrase_protection
+					&& msg->passphrase_protection);
+		memset(int_entropy, 0, sizeof(int_entropy));
+		storage_update();
+		return ErrOk;
+	} else {
+		fsm_sendFailure(
+					FailureType_Failure_ProcessError, 
+					_("Device could not generate a Mnemonic"));
 		return ErrFailed;
 	}
-	if (!mnemonic_check(mnemonic)) {
-		fsm_sendFailure(FailureType_Failure_DataError, _("Mnemonic with wrong checksum provided"));
-		return ErrFailed;
-	}
-	storage_setMnemonic(mnemonic);
-	storage_setNeedsBackup(true);
-	storage_setPassphraseProtection(msg->has_passphrase_protection && msg->passphrase_protection);
-	storage_update();
-	return ErrOk;
 }
 
 
