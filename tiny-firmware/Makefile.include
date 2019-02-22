@@ -160,9 +160,9 @@ endif
 CFLAGS += $(TESTINC)
 endif
 LIBS_DARWIN +=
-TESTLIBS_DARWIN += -L$(CHECK_PATH)/lib -lcheck
-LIBS_LINUX += -L/usr/local/lib/ -lm -lrt
-TESTLIBS_LINUX += -L$(CHECK_PATH)/src -lcheck
+TESTLIBS_DARWIN += -L$(CHECK_PATH)/lib -lcheck -lm
+LIBS_LINUX += -L/usr/local/lib/ -lm -lrt -lm
+TESTLIBS_LINUX += -L$(CHECK_PATH)/src -lcheck -lm
 
 ifeq ($(UNAME_S), Linux)
 	LIBS=$(LIBS_LINUX)
