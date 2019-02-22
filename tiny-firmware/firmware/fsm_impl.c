@@ -107,7 +107,23 @@ ErrCode_t engout_entropy(const uint8_t* const bytes, uint16_t size) {
 }
 
 ErrCode_t msgGenerateMnemonicImpl(GenerateMnemonic* msg) {
+	_Static_assert(
+		EXTERNAL_ENTROPY_SIZE == sizeof(msg->entropy.bytes),
+		"External entropy size not match.");
 	CHECK_NOT_INITIALIZED_RET_ERR_CODE
+	if (msg->entropy.size < EXTERNAL_ENTROPY_SIZE) {
+		fsm_sendFailure(
+			FailureType_Failure_DataError,
+			_("Entropy buffer not have engouth size."));
+		return ErrFailed;
+	}
+	ErrCode_t entropyOk = engout_entropy(msg->entropy.bytes, msg->entropy.size);
+	if (entropyOk != ErrOk ) {
+		fsm_sendFailure(
+			FailureType_Failure_DataError,
+			_("Not engouth entropy level recived."));
+		return ErrFailed;
+	}
 	uint8_t int_entropy[INTERNAL_ENTROPY_SIZE];
 	random_buffer(int_entropy, sizeof(int_entropy));
 	SHA256_CTX ctx;
@@ -135,7 +151,7 @@ ErrCode_t msgGenerateMnemonicImpl(GenerateMnemonic* msg) {
 		return ErrOk;
 	} else {
 		fsm_sendFailure(
-					FailureType_Failure_ProcessError, 
+					FailureType_Failure_ProcessError,
 					_("Device could not generate a Mnemonic"));
 		return ErrFailed;
 	}
