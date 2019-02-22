@@ -442,7 +442,6 @@ void fsm_msgWipeDevice(WipeDevice *msg)
 }
 
 void fsm_msgGenerateMnemonic(GenerateMnemonic* msg) {
-	RESP_INIT(Success);
 	if(msgGenerateMnemonicImpl(msg) == ErrOk) {
 		fsm_sendSuccess(_("Mnemonic successfully configured"));
 	}
@@ -469,26 +468,6 @@ void fsm_msgSetMnemonic(SetMnemonic* msg)
 	storage_setNeedsBackup(true);
 	storage_update();
 	fsm_sendSuccess(_(msg->mnemonic));
-	layoutHome();
-}
-
-void fsm_msgGetEntropy(GetEntropy *msg)
-{
-	layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"), _("send entropy?"), NULL, NULL, NULL, NULL);
-	if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) {
-		fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
-		layoutHome();
-		return;
-	}
-
-	RESP_INIT(Entropy);
-	uint32_t len = msg->size;
-	if (len > 1024) {
-		len = 1024;
-	}
-	resp->entropy.size = len;
-	random_buffer(resp->entropy.bytes, len);
-	msg_write(MessageType_MessageType_Entropy, resp);
 	layoutHome();
 }
 

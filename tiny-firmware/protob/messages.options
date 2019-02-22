@@ -15,6 +15,9 @@ ApplySettings.homescreen		max_size:1024
 
 Ping.message				max_size:256
 
+# 256 bits (32 bytes) of random data
+GenerateMnemonic.entropy			max_size:32
+
 SetMnemonic.mnemonic							max_size:256
 ResponseSkycoinAddress.addresses				max_size:36, max_count:100
 // signed_message with ecdsa algoritm have a length of 65 bytes, in hex format this is 130
@@ -41,8 +44,6 @@ PassphraseAck.passphrase		max_size:51
 PassphraseAck.state			max_size:64
 
 PassphraseStateRequest.state		max_size:64
-
-Entropy.entropy				max_size:1024
 
 LoadDevice.mnemonic			max_size:241
 LoadDevice.pin				max_size:10
