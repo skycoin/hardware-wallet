@@ -6,6 +6,7 @@
 
 <!-- MarkdownTOC levels="1,2,3,4,5" autolink="true" bracket="round" -->
 - [Ovwerview](#)
+- [FAQ](#)
 - [Install tools](#)
 - [Build instructions:](#)
   - [Build and run emulator](#)
