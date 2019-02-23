@@ -6,7 +6,7 @@
 
 <!-- MarkdownTOC levels="1,2,3,4,5" autolink="true" bracket="round" -->
 - [Ovwerview](#)
-- [FAQ](#)
+- [FAQ](#FAQ)
 - [Install tools](#)
 - [Build instructions:](#)
   - [Build and run emulator](#)
@@ -40,7 +40,7 @@ Follow up [the wiki](https://github.com/skycoin/hardware-wallet/wiki/Hardware-wa
 
 ## FAQ
 
-[Frequently Asked Question](https://github.com/skycoin/hardware-wallet/blob/develop/FAQ.md)
+[Frequently Asked Question](FAQ.md)
 
 ## Install tools
 
