@@ -17,17 +17,3 @@ brew install  sdl2_image sdl2 mesa mesalib-glw
 # Install protobuf
 brew install protobuf
 brew install protobuf-c
-
-# Install objconv
-if [ ! -d "objconv" ]; then
-  wget -c http://www.agner.org/optimize/objconv.zip
-  mkdir -p build-objconv
-  unzip objconv.zip -d build-objconv
-
-  cd build-objconv
-  unzip source.zip -d src
-  clang++ -o objconv -O2 src/*.cpp --prefix="$PREFIX"
-fi
-# brew tap hawkw/homebrew-grub
-# brew install objconv
-
