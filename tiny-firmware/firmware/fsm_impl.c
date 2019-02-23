@@ -117,8 +117,7 @@ ErrCode_t msgGenerateMnemonicImpl(GenerateMnemonic* msg) {
 			_("Entropy buffer not have engouth size."));
 		return ErrFailed;
 	}
-	ErrCode_t entropyOk = engout_entropy(msg->entropy.bytes, msg->entropy.size);
-	if (entropyOk != ErrOk ) {
+	if (engout_entropy(msg->entropy.bytes, msg->entropy.size) != ErrOk ) {
 		fsm_sendFailure(
 			FailureType_Failure_DataError,
 			_("Not engouth entropy level recived."));
@@ -131,6 +130,12 @@ ErrCode_t msgGenerateMnemonicImpl(GenerateMnemonic* msg) {
 	sha256_Update(&ctx, int_entropy, sizeof(int_entropy));
 	sha256_Update(&ctx, msg->entropy.bytes, msg->entropy.size);
 	sha256_Final(&ctx, int_entropy);
+	if (engout_entropy(int_entropy, sizeof(int_entropy)) != ErrOk ) {
+		fsm_sendFailure(
+			FailureType_Failure_ProcessError,
+			_("Not engouth entropy level for combined entropy values."));
+		return ErrFailed;
+	}
 	int strength = (msg->word_count == 24)
 			? MNEMONIC_STRENGTH_24 : MNEMONIC_STRENGTH_12;
 	const char* mnemonic = mnemonic_from_data(int_entropy, strength / 8);
