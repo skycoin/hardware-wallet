@@ -32,4 +32,3 @@
   - The device build an histogram with the random buffer and mesure the Shannon
     entropy level over this histogram, a value of at least 4.0 bits/symbol is 
     considered good engouth.
-
