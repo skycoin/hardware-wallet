@@ -44,6 +44,7 @@ static void rand_entropy_buffer(uint8_t *entropy, uint16_t buffer_size) {
 
 static void set_external_entropy_in_generate_mnemonic(GenerateMnemonic *msg) {
 	msg->word_count = MNEMONIC_WORD_COUNT_12;
+	msg->has_word_count = true;
 	msg->entropy.size = EXTERNAL_ENTROPY_SIZE;
 	rand_entropy_buffer(msg->entropy.bytes, msg->entropy.size);
 }
@@ -66,7 +67,6 @@ START_TEST(test_msgGenerateMnemonicImplOk)
 {
 	storage_wipe();
 	GenerateMnemonic msg = GenerateMnemonic_init_zero;
-	msg.word_count = MNEMONIC_WORD_COUNT_12;
 	set_external_entropy_in_generate_mnemonic(&msg);
 	ErrCode_t ret = msgGenerateMnemonicImpl(&msg);
 	ck_assert_int_eq(ErrOk, ret);
@@ -79,6 +79,17 @@ START_TEST(test_msgGenerateMnemonicImplShouldFaildIfItWasDone)
 	GenerateMnemonic msg = GenerateMnemonic_init_zero;
 	set_external_entropy_in_generate_mnemonic(&msg);
 	msgGenerateMnemonicImpl(&msg);
+	ErrCode_t ret = msgGenerateMnemonicImpl(&msg);
+	ck_assert_int_eq(ErrFailed, ret);
+}
+END_TEST
+
+START_TEST(test_msgGenerateMnemonicImplShouldFaildWithInvalidWordCount)
+{
+	storage_wipe();
+	GenerateMnemonic msg = GenerateMnemonic_init_zero;
+	set_external_entropy_in_generate_mnemonic(&msg);
+	msg.word_count = MNEMONIC_WORD_COUNT_12 + 1;
 	ErrCode_t ret = msgGenerateMnemonicImpl(&msg);
 	ck_assert_int_eq(ErrFailed, ret);
 }
@@ -228,6 +239,9 @@ TCase *add_fsm_tests(TCase *tc)
 	tcase_add_test(tc, test_msgSkycoinSignMessageReturnIsInHex);
 	tcase_add_test(tc, test_msgGenerateMnemonicImplOk);
 	tcase_add_test(tc, test_msgGenerateMnemonicImplShouldFaildIfItWasDone);
+	tcase_add_test(
+		tc, 
+		test_msgGenerateMnemonicImplShouldFaildWithInvalidWordCount);
 	tcase_add_test(tc, test_msgSkycoinCheckMessageSignature);
 	tcase_add_test(tc, test_msgApplySettingsLabelSuccess);
 	tcase_add_test(tc, test_msgFeaturesLabelDefaultsToDeviceId);
