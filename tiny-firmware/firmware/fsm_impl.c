@@ -136,8 +136,22 @@ ErrCode_t msgGenerateMnemonicImpl(GenerateMnemonic* msg) {
 			_("Not engouth entropy level for combined entropy values."));
 		return ErrFailed;
 	}
-	int strength = (msg->word_count == 24)
-			? MNEMONIC_STRENGTH_24 : MNEMONIC_STRENGTH_12;
+	int strength = MNEMONIC_STRENGTH_12;
+	if (msg->has_word_count) {
+		switch (msg->word_count) {
+			case MNEMONIC_WORD_COUNT_12:
+				strength = MNEMONIC_STRENGTH_12;
+				break;
+			case MNEMONIC_WORD_COUNT_24:
+				strength = MNEMONIC_STRENGTH_24;
+				break;
+			default:
+				fsm_sendFailure(
+					FailureType_Failure_DataError,
+					_("Invalid word count expecified the valid options are 12 or 24."));
+				return ErrFailed;
+		}
+	}
 	const char* mnemonic = mnemonic_from_data(int_entropy, strength / 8);
 	if (mnemonic) {
 		if (!mnemonic_check(mnemonic)) {
