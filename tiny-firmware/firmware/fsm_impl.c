@@ -195,7 +195,7 @@ void msgSkycoinSignMessageImpl(SkycoinSignMessage* msg,
 		writebuf_fromhexstr(msg->message, digest);
 	}
 	uint8_t signature[65];
-	int res = ecdsa_skycoin_sign(rand(), seckey, digest, signature);
+	int res = ecdsa_skycoin_sign(random32(), seckey, digest, signature);
 	if (res == 0) {
 		layoutRawMessage("Signature success");
 	} else {
@@ -215,7 +215,7 @@ ErrCode_t msgSignTransactionMessageImpl(uint8_t* message_digest, uint32_t index,
 	uint8_t signature[65];
 	int res = ErrOk;
 	fsm_getKeyPairAtIndex(1, pubkey, seckey, NULL, index);
-	if (ecdsa_skycoin_sign(rand(), seckey, message_digest, signature)) {
+	if (ecdsa_skycoin_sign(random32(), seckey, message_digest, signature)) {
 		res = ErrFailed;
 	}
 	tohex(signed_message, signature, sizeof(signature));
