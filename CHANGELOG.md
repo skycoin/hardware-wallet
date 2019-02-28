@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+- Add an `entropy` buffer field in the `GenerateMnemonic` message and validations over `entropy`.
+- Link against math library.
+- Add a "Frequently Asked Question" file.
 - In `ApplySettings` message it is possible to set a label for identifying the device
 - Return device label in `GetFeatures` message.
 - If no label explicitly set it defaults to the same value of `device_ID` set in wipe function.
@@ -28,6 +31,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Removed
 
+- `GetEntropy` and `Entropy` protobuf messages.
 - Remove support to recover device from words matrix. The only support method is scrambled words.
 - Not possible to enforce BIP-39 wordlist during recovery process.
 - Not possible to perform dry-run recovery workflow (for safe mnemonic validation)
