@@ -52,7 +52,7 @@ make clean && make run-emulator
 If SDL library was installed with brew on Mac OS X then try the following command instead
 
 ```
-make clean && make run-emulator SDL_INCLUDE=$(brew --prefix sdl2)/include
+make clean && make run-emulator SDL_INCLUDE=$(brew --prefix sdl2)/include/SDL2
 ```
 
 ### Build a bootloader
