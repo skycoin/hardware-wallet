@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+- While building emulator specify path to SDL via `SDL_INCLUDE` environment variable.
 - In `ApplySettings` message it is possible to set a label for identifying the device
 - Return device label in `GetFeatures` message.
 - If no label explicitly set it defaults to the same value of `device_ID` set in wipe function.
