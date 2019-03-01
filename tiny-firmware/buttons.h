@@ -31,6 +31,8 @@ struct buttonState {
 };
 
 extern struct buttonState button;
+extern int falseButtonPress;
+extern int falseButtonType;
 
 uint16_t buttonRead(void);
 void buttonUpdate(void);

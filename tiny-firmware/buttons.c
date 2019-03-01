@@ -20,6 +20,8 @@
 #include "buttons.h"
 
 struct buttonState button;
+int falseButtonPress;
+int falseButtonType;
 
 #if !EMULATOR
 uint16_t buttonRead(void) {
@@ -69,6 +71,21 @@ void buttonUpdate()
 			button.NoUp = false;
 		}
 	}
+
+	if ( falseButtonPress ) { /// If a fake button press event is detected, override button state
+		if ( falseButtonType == 0 ) { /// Press NO
+			button.NoDown = 0;
+			button.NoUp = true;
+		} else if ( falseButtonType == 1 ) { /// Press YES
+			button.YesDown = 0;
+			button.YesUp = true;
+		} else if ( falseButtonType == 2 ) { /// Press BOTH
+			button.NoDown = 0;
+			button.NoUp = true;
+			button.YesDown = 0;
+			button.YesUp = true;
+		}
+	}//*/
 
 	last_state = state;
 }

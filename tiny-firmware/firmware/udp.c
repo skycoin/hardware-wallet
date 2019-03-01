@@ -36,17 +36,34 @@ void usbInit(void) {
 #define _ISDBG ('n')
 #endif
 
+extern int falseButtonPress;
+extern int falseButtonType;
+
 void usbPoll(void) {
 	emulatorPoll();
 
 	static uint8_t buffer[64];
 
-	int iface = 0;
+	int iface = 0, i, j = 0;
+
 	if (emulatorSocketRead(&iface, buffer, sizeof(buffer)) > 0) {
-		if (!tiny) {
-			msg_read_common(_ISDBG, buffer, sizeof(buffer));
+		for (i = 0; i < 5; i++) {
+			if ( buffer[i] == i ) {
+				j++;
+			} else {
+				break;
+			}
+		}
+		if ( j == 5 ) {
+			falseButtonPress = 1;
+			falseButtonType = buffer[5];
+			return;
 		} else {
-			msg_read_tiny(buffer, sizeof(buffer));
+			if (!tiny) {
+				msg_read_common(_ISDBG, buffer, sizeof(buffer));
+			} else {
+				msg_read_tiny(buffer, sizeof(buffer));
+			}
 		}
 	}
 
