@@ -46,7 +46,13 @@ Follow the instructions written on [tiny-firware/README.md](https://github.com/s
 ### Build and run emulator
 
 ```
-make run-emulator
+make clean && make run-emulator
+```
+
+If SDL library was installed with brew on Mac OS X then try the following command instead
+
+```
+make clean && make run-emulator SDL_INCLUDE=$(brew --prefix sdl2)/include
 ```
 
 ### Build a bootloader
