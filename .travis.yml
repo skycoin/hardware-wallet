@@ -27,7 +27,7 @@ before_script:
   # Install OS-specific test and build dependencies
   - eval "./ci-scripts/install-${TRAVIS_OS_NAME}.sh"
   # Include paths for brew packages e.g. SDL2
-  - if [[ "$TRAVIS_OS_NAME" == 'osx' ]]; then export CFLAGS="-I$(brew --prefix sdl2)/include/SDL2" ; fi
+  - if [[ "$TRAVIS_OS_NAME" == 'osx' ]]; then export SDL_INCLUDE="-I$(brew --prefix sdl2)/include/SDL2" ; fi
   # Upgrade protobuf python
   - pip3 install --user --upgrade protobuf
   - pip3 install --user "protobuf==${PROTOBUF_VERSION}" ecdsa
