@@ -73,7 +73,8 @@ void msgSkycoinSignMessageImpl(SkycoinSignMessage* msg,
 ErrCode_t msgSignTransactionMessageImpl(uint8_t* message_digest, uint32_t index, 
 										char* signed_message);
 ErrCode_t msgSkycoinAddress(SkycoinAddress* msg, ResponseSkycoinAddress *resp);
-void msgSkycoinCheckMessageSignature(SkycoinCheckMessageSignature* msg, Success *resp);
+ErrCode_t msgSkycoinCheckMessageSignature(SkycoinCheckMessageSignature* msg, 
+										Success *resp);
 void msgApplySettings(ApplySettings *msg);
 void msgGetFeaturesImpl(Features *resp);
 

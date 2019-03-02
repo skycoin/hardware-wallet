@@ -144,35 +144,39 @@ ErrCode_t msgSkycoinAddress(SkycoinAddress* msg, ResponseSkycoinAddress *resp)
 	return ErrOk;
 }
 
-void msgSkycoinCheckMessageSignature(SkycoinCheckMessageSignature* msg, Success *resp)
-{
+ErrCode_t msgSkycoinCheckMessageSignature(
+		SkycoinCheckMessageSignature* msg, Success *resp) {
 	// NOTE(denisacostaq@gmail.com): -1 because the end of string ('\0')
 	// /2 because the hex to buff conversion.
 	uint8_t sign[(sizeof(msg->signature) - 1)/2];
 	// NOTE(denisacostaq@gmail.com): -1 because the end of string ('\0')
-	char pubkeybase58[sizeof(msg->address) - 1];
+	char pubkeybase58[sizeof(msg->address)] = {0};
 	uint8_t pubkey[33] = {0};
 	// NOTE(denisacostaq@gmail.com): -1 because the end of string ('\0')
 	// /2 because the hex to buff conversion.
 	uint8_t digest[(sizeof(msg->message) - 1) / 2] = {0};
-	//     RESP_INIT(Success);
 	if (is_digest(msg->message) == false) {
 		compute_sha256sum((const uint8_t *)msg->message, digest, strlen(msg->message));
 	} else {
 		tobuff(msg->message, digest, MIN(sizeof(digest), sizeof(msg->message)));
 	}
 	tobuff(msg->signature, sign, sizeof(sign));
-	recover_pubkey_from_signed_message((char*)digest, sign, pubkey);
-	size_t pubkeybase58_size = sizeof(pubkeybase58);
-	generate_base58_address_from_pubkey(pubkey, pubkeybase58, &pubkeybase58_size);
-	if (memcmp(pubkeybase58, msg->address, pubkeybase58_size) == 0) {
+	ErrCode_t ret = recover_pubkey_from_signed_message((char*)digest, sign, pubkey) == 0 
+			? ErrOk 
+			: ErrFailed;
+	if (ret == ErrOk) {
+		size_t pubkeybase58_size = sizeof(pubkeybase58);
+		generate_base58_address_from_pubkey(
+					pubkey, pubkeybase58, &pubkeybase58_size);
 		layoutRawMessage("Verification success");
+		memcpy(resp->message, pubkeybase58, pubkeybase58_size);
 	} else {
-		layoutRawMessage("Wrong signature");
+		strncpy(resp->message,
+				_("Unable to get pub key from signed message"), 
+				sizeof (resp->message));
 	}
-	memcpy(resp->message, pubkeybase58, pubkeybase58_size);
 	resp->has_message = true;
-	msg_write(MessageType_MessageType_Success, resp);
+	return ret;
 }
 
 void msgApplySettings(ApplySettings *msg)

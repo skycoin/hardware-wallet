@@ -192,7 +192,11 @@ void fsm_msgGetFeatures(GetFeatures *msg)
 void fsm_msgSkycoinCheckMessageSignature(SkycoinCheckMessageSignature* msg)
 {
 	RESP_INIT(Success);
-	msgSkycoinCheckMessageSignature(msg, resp);
+	if (msgSkycoinCheckMessageSignature(msg, resp) == ErrOk) {
+		msg_write(MessageType_MessageType_Success, resp);
+	} else {
+		msg_write(MessageType_MessageType_Failure, resp);
+	}
 	layoutHome();
 }
 
