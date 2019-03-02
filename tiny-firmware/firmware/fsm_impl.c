@@ -92,13 +92,13 @@ static float entropy(
 }
 
 /**
- * @brief engout_entropy says if a bytes distribution have engout entropy
+ * @brief verify_entropy says if a bytes distribution have enough entropy
  * @param bytes the bytes to mesur the entropy
  * @param size the size of bytes
  * @return an error if not fit minimal entropy required
  * @sa entropy, make_histogram
  */
-ErrCode_t engout_entropy(const uint8_t* const bytes, uint16_t size) {
+ErrCode_t verify_entropy(const uint8_t* const bytes, uint16_t size) {
 	uint8_t hist[size];
 	memset(hist, 0, size);
 	uint8_t histlen = make_histogram(bytes, size, hist);
@@ -114,13 +114,13 @@ ErrCode_t msgGenerateMnemonicImpl(GenerateMnemonic* msg) {
 	if (msg->entropy.size < EXTERNAL_ENTROPY_SIZE) {
 		fsm_sendFailure(
 			FailureType_Failure_DataError,
-			_("Entropy buffer not have engouth size."));
+			_("Entropy buffer not have enough size."));
 		return ErrFailed;
 	}
-	if (engout_entropy(msg->entropy.bytes, msg->entropy.size) != ErrOk ) {
+	if (verify_entropy(msg->entropy.bytes, msg->entropy.size) != ErrOk ) {
 		fsm_sendFailure(
 			FailureType_Failure_DataError,
-			_("Not engouth entropy level recived."));
+			_("Not enough entropy level recived."));
 		return ErrFailed;
 	}
 	uint8_t int_entropy[INTERNAL_ENTROPY_SIZE];
@@ -130,10 +130,10 @@ ErrCode_t msgGenerateMnemonicImpl(GenerateMnemonic* msg) {
 	sha256_Update(&ctx, int_entropy, sizeof(int_entropy));
 	sha256_Update(&ctx, msg->entropy.bytes, msg->entropy.size);
 	sha256_Final(&ctx, int_entropy);
-	if (engout_entropy(int_entropy, sizeof(int_entropy)) != ErrOk ) {
+	if (verify_entropy(int_entropy, sizeof(int_entropy)) != ErrOk ) {
 		fsm_sendFailure(
 			FailureType_Failure_ProcessError,
-			_("Not engouth entropy level for combined entropy values."));
+			_("Not enough entropy level for combined entropy values."));
 		return ErrFailed;
 	}
 	int strength = MNEMONIC_STRENGTH_12;

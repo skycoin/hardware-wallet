@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+- While building emulator specify path to SDL via `SDL_INCLUDE` environment variable.
 - Add an `entropy` buffer field in the `GenerateMnemonic` message and validations over `entropy`.
 - Link against math library.
 - Add a "Frequently Asked Question" file.

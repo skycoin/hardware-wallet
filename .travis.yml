@@ -23,11 +23,16 @@ before_script:
     export CHECK_PATH="$(brew --prefix check)" ;
     export DYLD_LIBRARY_PATH="${DYLD_LIBRARY_PATH}:${CHECK_PATH}/lib" ;
     fi
-  - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then export PATH="$PATH:$(pwd)/protoc/bin" ; echo "PATH=$PATH"; fi
+  - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then
+    export PATH="$PATH:$(pwd)/protoc/bin" ;
+    echo "PATH=$PATH";
+    fi
   # Install OS-specific test and build dependencies
   - eval "./ci-scripts/install-${TRAVIS_OS_NAME}.sh"
   # Include paths for brew packages e.g. SDL2
-  - if [[ "$TRAVIS_OS_NAME" == 'osx' ]]; then export CFLAGS="-I$(brew --prefix sdl2)/include/SDL2" ; fi
+  - if [[ "$TRAVIS_OS_NAME" == 'osx' ]]; then
+    export SDL_INCLUDE="$(brew --prefix sdl2)/include/SDL2" ;
+    fi
   # Upgrade protobuf python
   - pip3 install --user --upgrade protobuf
   - pip3 install --user "protobuf==${PROTOBUF_VERSION}" ecdsa

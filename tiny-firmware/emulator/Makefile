@@ -1,6 +1,9 @@
 EMULATOR := 1
 UNAME_S := $(shell uname -s)
 
+SDL_INCLUDE ?= /usr/include/SDL2
+TOOLCHAIN_DIR ?= $(TOP_DIR)vendor/libopencm3
+
 CFLAGS += -DEMULATOR=1
 CFLAGS += -Wno-pointer-to-int-cast
 CFLAGS += -Wno-int-to-pointer-cast
@@ -14,7 +17,7 @@ ifeq ($(HEADLESS),1)
 CFLAGS   += -DHEADLESS=1
 else
 CFLAGS   += -DHEADLESS=0
-CFLAGS   += -I/usr/include/SDL2 -D_REENTRANT
+CFLAGS   += -I$(SDL_INCLUDE) -I$(TOOLCHAIN_DIR)/include -D_REENTRANT
 LDLIBS   += -lSDL2
 endif
 
