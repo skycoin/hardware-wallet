@@ -197,6 +197,50 @@ START_TEST(test_msgSkycoinCheckMessageSignatureFailedAsExpectedForInvalidSignedM
 }
 END_TEST
 
+START_TEST(test_msgSkycoinCheckMessageSignatureFailedAsExpectedForInvalidMessage)
+{
+    // NOTE(denisacostaq@gmail.com): Given
+    forceGenerateMnemonic();
+    SkycoinAddress msgSkyAddress = SkycoinAddress_init_zero;
+    msgSkyAddress.address_n = 1;
+    uint8_t msg_resp_addr[MSG_OUT_SIZE] __attribute__ ((aligned)) = {0};
+    ResponseSkycoinAddress *respAddress = 
+            (ResponseSkycoinAddress *) (void *) msg_resp_addr;
+    ErrCode_t err = msgSkycoinAddress(&msgSkyAddress, respAddress);
+    ck_assert_int_eq(ErrOk, err);
+    ck_assert_int_eq(respAddress->addresses_count, 1);
+    // NOTE(denisacostaq@gmail.com): `raw_msg` hash become from:
+    // https://github.com/skycoin/skycoin/blob/develop/src/cipher/testsuite/testdata/input-hashes.golden
+    char raw_msg[] = {
+      "66687aadf862bd776c8fc18b8e9f8e20089714856ee233b3902a591d0d5f2925"};
+    SkycoinSignMessage msgSign = SkycoinSignMessage_init_zero;
+    strncpy(msgSign.message, raw_msg, sizeof(msgSign.message));
+    msgSign.address_n = 0;
+
+    // NOTE(denisacostaq@gmail.com): When
+    uint8_t msg_resp_sign[MSG_OUT_SIZE] __attribute__ ((aligned)) = {0};
+    ResponseSkycoinSignMessage *respSign = 
+            (ResponseSkycoinSignMessage *) (void *) msg_resp_sign;
+    msgSkycoinSignMessageImpl(&msgSign, respSign);
+    // NOTE(denisaostaq@gmail.com): An attacker change our msg(hash).
+    random_shuffle(msgSign.message, sizeof (msgSign.message));
+    SkycoinCheckMessageSignature checkMsg = SkycoinCheckMessageSignature_init_zero;
+    strncpy(checkMsg.message, msgSign.message, sizeof(checkMsg.message));
+    memcpy(checkMsg.address, respAddress->addresses[0], sizeof(checkMsg.address));
+    memcpy(checkMsg.signature, respSign->signed_message, sizeof(checkMsg.signature));
+    uint8_t msg_resp_check[MSG_OUT_SIZE] __attribute__ ((aligned)) = {0};
+    Success *respCheck = (Success *) (void *) msg_resp_check;
+    err = msgSkycoinCheckMessageSignature(&checkMsg, respCheck);
+
+    // NOTE(denisacostaq@gmail.com): Then
+    ck_assert_int_ne(ErrOk, err);
+    ck_assert(respCheck->has_message);
+    int address_diff = strncmp(respAddress->addresses[0], respCheck->message,
+            sizeof(respAddress->addresses[0]));
+    ck_assert_int_ne(0, address_diff);
+}
+END_TEST
+
 START_TEST(test_msgApplySettingsLabelSuccess)
 {
     storage_wipe();
@@ -255,6 +299,9 @@ TCase *add_fsm_tests(TCase *tc)
 	tcase_add_test(
 		tc,
 		test_msgSkycoinCheckMessageSignatureFailedAsExpectedForInvalidSignedMessage);
+	tcase_add_test(
+		tc, 
+		test_msgSkycoinCheckMessageSignatureFailedAsExpectedForInvalidMessage);
 	tcase_add_test(tc, test_msgApplySettingsLabelSuccess);
 	tcase_add_test(tc, test_msgFeaturesLabelDefaultsToDeviceId);
 	tcase_add_test(tc, test_msgGetFeatures);
