@@ -168,8 +168,16 @@ ErrCode_t msgSkycoinCheckMessageSignature(
 		size_t pubkeybase58_size = sizeof(pubkeybase58);
 		generate_base58_address_from_pubkey(
 					pubkey, pubkeybase58, &pubkeybase58_size);
-		layoutRawMessage("Verification success");
-		memcpy(resp->message, pubkeybase58, pubkeybase58_size);
+		if (memcmp(pubkeybase58, msg->address, pubkeybase58_size)) {
+			strncpy(resp->message, 
+					_("Address does not match"), 
+					sizeof (resp->message));
+			layoutRawMessage("Wrong signature");
+			ret = ErrFailed;
+		} else {
+			layoutRawMessage("Verification success");
+			memcpy(resp->message, pubkeybase58, pubkeybase58_size);
+		}
 	} else {
 		strncpy(resp->message,
 				_("Unable to get pub key from signed message"), 
