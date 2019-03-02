@@ -19,14 +19,15 @@ SetMnemonic.mnemonic							max_size:256
 ResponseSkycoinAddress.addresses				max_size:36, max_count:100
 // signed_message with ecdsa algoritm have a length of 65 bytes, in hex format this is 130
 ResponseSkycoinSignMessage.signed_message		max_size:130
-SkycoinCheckMessageSignature.address			max_size:37
+SkycoinCheckMessageSignature.address			max_size:35
 SkycoinCheckMessageSignature.message			max_size:66
+// signed_message with ecdsa algoritm have a length of 65 bytes, in hex format + a end of line this is 131
 SkycoinCheckMessageSignature.signature			max_size:131
-SkycoinSignMessage.message			            max_size:131
+SkycoinSignMessage.message			            max_size:65
 TransactionSign.transactionIn					max_count:8
 TransactionSign.transactionOut					max_count:8
 // signed_message with ecdsa algoritm have a length of 65 bytes, in hex format this is 130
-ResponseTransactionSign.signatures				max_size:130, max_count:8
+ResponseTransactionSign.signatures				max_size:131, max_count:8
 
 
 Success.message				max_size:256
