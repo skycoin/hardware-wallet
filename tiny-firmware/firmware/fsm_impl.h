@@ -68,9 +68,6 @@
 		return; \
 	}
 
-enum ErrCode{ErrOk = 0, ErrFailed};
-typedef enum ErrCode ErrCode_t;
-
 ErrCode_t msgGenerateMnemonicImpl(GenerateMnemonic* msg);
 void msgSkycoinSignMessageImpl(SkycoinSignMessage* msg,
 							ResponseSkycoinSignMessage *msg_resp);
