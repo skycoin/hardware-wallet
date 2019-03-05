@@ -1,5 +1,7 @@
 APPVER = 1.0.0
 
+SDL_INCLUDE ?= /usr/include/SDL2
+
 #libtrezor.a
 ifneq ($(EMULATOR),1)
 CFLAGS += -DAPPVER=$(APPVER)
@@ -24,6 +26,12 @@ OBJS += gen/bitmaps.o
 endif
 OBJS += gen/fonts.o
 #end libtrezor.a
+
+#test_skyhw
+TEST_OBJS += firmware/test_fsm.o
+TEST_OBJS += firmware/test_droplet.o
+TEST_OBJS += firmware/test_main.o
+#end test_skyhw
 
 ifneq ($(EMULATOR),1)
 LDSCRIPT  = memory.ld
@@ -54,7 +62,9 @@ OBJS += firmware/trezor.o
 OBJS += firmware/layout2.o
 OBJS += firmware/storage.o
 OBJS += firmware/messages.o
+OBJS += firmware/droplet.o
 OBJS += firmware/fsm.o
+OBJS += firmware/fsm_impl.o
 OBJS += firmware/protect.o
 OBJS += firmware/pinmatrix.o
 OBJS += firmware/reset.o
@@ -66,6 +76,7 @@ OBJS += protob/types.pb.o
 
 #skycoin-crypto
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/skycoin_crypto.o
+OBJS += $(TOP_DIR)vendor/skycoin-crypto/check_digest.o
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/skycoin_check_signature_tools.o
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/skycoin_check_signature.o
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/base58.o
@@ -107,7 +118,7 @@ CFLAGS   += -DHEADLESS=1
 else
 CFLAGS   += -DHEADLESS=0
 
-CFLAGS   += -I/usr/include/SDL2 -D_REENTRANT
+CFLAGS   += -I$(SDL_INCLUDE) -D_REENTRANT
 LDLIBS   += -lSDL2
 endif
 endif
@@ -142,6 +153,7 @@ include Makefile.include
 
 clean::
 	rm -f $(OBJS)
+	rm -f firmware/*.o
 	rm -f *.a
 	rm -f *.bin
 	rm -f *.d
