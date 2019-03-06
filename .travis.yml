@@ -6,6 +6,7 @@ matrix:
         apt:
           sources:
             - ubuntu-toolchain-r-test
+    - os: osx
 before_script:
   - git submodule update --remote --recursive
   - sh "./tiny-firmware/protob/ci-scripts/common.sh"
