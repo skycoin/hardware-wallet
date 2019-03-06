@@ -6,11 +6,6 @@ matrix:
         apt:
           sources:
             - ubuntu-toolchain-r-test
-      env:
-        - PROTOBUF_VERSION=3.4.0
-    - os: osx
-      env:
-        - PROTOBUF_VERSION=3.6.1
 before_script:
   # install linters
   - make install-linters
@@ -33,11 +28,7 @@ before_script:
   - if [[ "$TRAVIS_OS_NAME" == 'osx' ]]; then
     export SDL_INCLUDE="$(brew --prefix sdl2)/include/SDL2" ;
     fi
-  # Upgrade protobuf python
-  - pip3 install --user --upgrade protobuf
-  - pip3 install --user "protobuf==${PROTOBUF_VERSION}" ecdsa
-  - pip install --user --upgrade protobuf
-  - git submodule update --remote --recursive
+  - device-wallet/messages/ci-scripts/common.sh
 script:
   - make lint
   - make -C skycoin-api test
