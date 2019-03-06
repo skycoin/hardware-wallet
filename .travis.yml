@@ -37,6 +37,7 @@ before_script:
   - pip3 install --user --upgrade protobuf
   - pip3 install --user "protobuf==${PROTOBUF_VERSION}" ecdsa
   - pip install --user --upgrade protobuf
+  - git submodule update --remote --recursive
 script:
   - make lint
   - make -C skycoin-api test
