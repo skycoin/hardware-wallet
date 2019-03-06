@@ -28,7 +28,8 @@ before_script:
   - if [[ "$TRAVIS_OS_NAME" == 'osx' ]]; then
     export SDL_INCLUDE="$(brew --prefix sdl2)/include/SDL2" ;
     fi
-  - device-wallet/messages/ci-scripts/common.sh
+  - git submodule update --remote --recursive
+  - tiny-firmware/protob/ci-scripts/common.sh
 script:
   - make lint
   - make -C skycoin-api test
