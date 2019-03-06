@@ -7,6 +7,9 @@ matrix:
           sources:
             - ubuntu-toolchain-r-test
 before_script:
+  - git submodule update --remote --recursive
+  - sh "./tiny-firmware/protob/ci-scripts/common.sh"
+  - sh "./tiny-firmware/protob/ci-scripts/install-${TRAVIS_OS_NAME}.sh" ;
   # install linters
   - make install-linters
   # Define env vars for Linux builds
@@ -28,8 +31,6 @@ before_script:
   - if [[ "$TRAVIS_OS_NAME" == 'osx' ]]; then
     export SDL_INCLUDE="$(brew --prefix sdl2)/include/SDL2" ;
     fi
-  - git submodule update --remote --recursive
-  - tiny-firmware/protob/ci-scripts/common.sh
 script:
   - make lint
   - make -C skycoin-api test
