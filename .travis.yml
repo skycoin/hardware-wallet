@@ -2,11 +2,15 @@ language: c
 matrix:
   include:
     - os: linux
+      env:
+        - PIP_COMMAND = 'sudo pip3'
       addons:
         apt:
           sources:
             - ubuntu-toolchain-r-test
     - os: osx
+	env:
+	  - PIP_COMMAND = 'pip3'
 
 before_script:
   - sh "./tiny-firmware/protob/ci-scripts/install-${TRAVIS_OS_NAME}.sh" ;
@@ -35,11 +39,11 @@ before_script:
     fi
 script:
   - make lint
-  - make -C skycoin-api test PIP='sudo pip3'
+  - make -C skycoin-api test PIP=$PIP_COMMAND
   - make -C skycoin-api clean
-  - make emulator PIP='sudo pip3'
+  - make emulator PIP=$PIP_COMMAND
   - make clean
-  - make full-firmware PIP='sudo pip3'
+  - make full-firmware PIP=$PIP_COMMAND
   - md5sum tiny-firmware/bootloader/combine/*.bin
   - md5sum full-firmware-no-mem-protect.bin
 notifications:
