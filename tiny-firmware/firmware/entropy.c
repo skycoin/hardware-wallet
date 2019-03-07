@@ -11,6 +11,10 @@
 
 #include "entropy.h"
 
+#include <string.h>
+
+#include "messages.pb.h"
+
 /**
  * @brief make_histogram create a histogram in plce from bytes
  * @param bytes source to build the histogram
@@ -95,11 +99,10 @@ static uint64_t entropy_factor(
  * @return an error if not fit minimal entropy required
  * @sa entropy, make_histogram
  */
-ErrCode_t verify_entropy(const uint8_t* const bytes, uint16_t size) {
+ErrCode_t verify_entropy(const uint8_t* const bytes, uint64_t size) {
 	uint8_t hist[size];
 	memset(hist, 0, size);
 	uint8_t histlen = make_histogram(bytes, size, hist);
 	uint64_t entr = entropy_factor(hist, histlen, size);
 	return (entr < size << 2) ? ErrLowEntropy : ErrOk;
 }
-

@@ -9,9 +9,11 @@
  *
  */
 
-#include "error.h"
+#include "firmware/error.h"
 
-static uint8_t make_histogram(const uint8_t* const bytes, uint16_t bytes_size, uint8_t *hist);
-static uint64_t entropy_factor(const uint8_t *const hist, uint8_t histlen, uint16_t len);
-ErrCode_t verify_entropy(const uint8_t* const bytes, uint16_t size);
+#ifndef __TINYFIRMWARE_FIRMWARE_ENTROPY__
+#define __TINYFIRMWARE_FIRMWARE_ENTROPY__
 
+ErrCode_t verify_entropy(const uint8_t* const bytes, uint64_t size);
+
+#endif  // __TINYFIRMWARE_FIRMWARE_ENTROPY__
