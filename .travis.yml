@@ -3,7 +3,7 @@ matrix:
   include:
     - os: linux
       env:
-        - PIP='sudo pip3'
+        - PIP='python -m pip'
       addons:
         apt:
           sources:
