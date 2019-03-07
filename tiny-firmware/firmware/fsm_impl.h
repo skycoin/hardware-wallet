@@ -13,6 +13,7 @@
 #define __TINYFIRMWARE_FIRMWARE_FSMIMPL_H__
 
 #include "messages.pb.h"
+#include "firmware/error.h"
 
 #define EXTERNAL_ENTROPY_SIZE 32
 #define MNEMONIC_WORD_COUNT_12 12

@@ -9,10 +9,25 @@
  *
  */
 
+#ifndef __TINYFIRMWARE_FIRMWARE_ERRORCODES__
+#define __TINYFIRMWARE_FIRMWARE_ERRORCODES__
+
 #include <stdint.h>
 
-// ErrCode_t represents the status of an operation
-typedef uint32_t ErrCode_t;
+/**
+ * @brief The ErrCode_t enum represents the status of an operation with different error modes.
+ */
+enum ErrCode_t {
+	// Success
+	ReasonSuccess = 0,
+	// Reason unknown
+	ReasonUnknown = 0xFFF,
+	// Unexpected or invalid value
+	ReasonValueError = 1,
+	// Value out of bounds
+	ReasonOutOfBounds = 2,
+};
+typedef enum ErrCode_t ErrCode_t;
 
 // 32-bits error constants are structured as folows:
 //
@@ -27,23 +42,6 @@ typedef uint32_t ErrCode_t;
 
 // Byte prefix for generic error codes
 #define PkgGeneric 0
-
-/**
- * Generic error modes
- */
-
-// Success
-#define ReasonSuccess      0
-// Reason unknown
-#define ReasonUnknown      0xFFF
-// Unexpected or invalid value
-#define ReasonValueError   1
-// Value out of bounds
-#define ReasonOutOfBounds  2
-
-/**
- * Generic error codes
- */
 
 // Operation completed successfully
 #define ErrOk           ERROR_CODE(PkgGeneric, ReasonSuccess)
@@ -65,3 +63,4 @@ typedef uint32_t ErrCode_t;
 // Buffer entropy under 4.0 bits/symbol
 # define ErrLowEntropy  ERROR_CODE(PkgEntropy, ReasonOutOfBounds)
 
+#endif  // __TINYFIRMWARE_FIRMWARE_ERRORCODES__
