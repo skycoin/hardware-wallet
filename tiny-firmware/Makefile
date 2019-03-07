@@ -92,11 +92,8 @@ OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/bip32.o
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/ecdsa.o
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/memzero.o
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/secp256k1.o
+OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/bip39.o
 #end skycoin-crypto
-
-#trezor-crypto
-OBJS += $(TOP_DIR)vendor/skycoin-crypto/trezor-tools/bip39.o
-#end trezor-crypto
 
 ifeq ($(REVERSE_SCREEN),1)
 CFLAGS   += -DREVERSE_SCREEN=1
