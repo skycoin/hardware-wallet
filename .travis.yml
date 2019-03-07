@@ -3,7 +3,7 @@ matrix:
   include:
     - os: linux
       env:
-        - PIP = 'sudo pip3'
+        - PIP='sudo pip3'
       addons:
         apt:
           sources:
@@ -21,6 +21,7 @@ before_script:
     export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${CHECK_PATH}/src" ;
     export PATH="/usr/local/bin:$(pwd)/protoc/bin:$PATH" ;
     echo "PATH=$PATH";
+    echo "PIP=$PIP";
     fi
   # Define env vars for osx builds
   # Include paths for brew packages e.g. SDL2
