@@ -3,12 +3,13 @@ matrix:
   include:
     - os: linux
       env:
-        - PIP = 'sudo pip3'
+        - PIP_COMMAND = "sudo pip3"
       addons:
         apt:
           sources:
             - ubuntu-toolchain-r-test
     - os: osx
+        - PIP_COMMAND = "pip3"
 
 before_script:
   - sh "./tiny-firmware/protob/ci-scripts/install-${TRAVIS_OS_NAME}.sh" ;
@@ -22,6 +23,7 @@ before_script:
     export PATH="/usr/local/bin:$(pwd)/protoc/bin:$PATH" ;
     echo "PATH=$PATH";
     fi
+    - export PIP=${PIP_COMMAND}
   # Define env vars for osx builds
   # Include paths for brew packages e.g. SDL2
   - if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
@@ -33,7 +35,7 @@ before_script:
   - eval "./ci-scripts/install-${TRAVIS_OS_NAME}.sh"
 script:
   - make lint
-  - make -C skycoin-api test
+  - make -C skycoin-api test PIP=$PIP_COMMAND
   - make -C skycoin-api clean
   - make emulator
   - make clean
