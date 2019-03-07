@@ -3,13 +3,12 @@ matrix:
   include:
     - os: linux
       env:
-        - PIP_COMMAND = "sudo pip3"
+       - PIP='sudo pip3'
       addons:
         apt:
           sources:
             - ubuntu-toolchain-r-test
     - os: osx
-        - PIP_COMMAND = "pip3"
 
 before_script:
   - sh "./tiny-firmware/protob/ci-scripts/install-${TRAVIS_OS_NAME}.sh" ;
@@ -22,8 +21,8 @@ before_script:
     export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${CHECK_PATH}/src" ;
     export PATH="/usr/local/bin:$(pwd)/protoc/bin:$PATH" ;
     echo "PATH=$PATH";
+    echo "PIP=$PIP";
     fi
-    - export PIP=${PIP_COMMAND}
   # Define env vars for osx builds
   # Include paths for brew packages e.g. SDL2
   - if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
@@ -33,10 +32,21 @@ before_script:
     fi
   # Install OS-specific test and build dependencies
   - eval "./ci-scripts/install-${TRAVIS_OS_NAME}.sh"
+  - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then
+    sudo pip3 install protobuf==3.6.1 ecdsa ;
+    fi
+  - if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
+    pip3 install protobuf==3.6.1 ecdsa ;
+    fi
 script:
+  - find tiny-firmware/protob/nanopb/vendor/nanopb
   - make lint
-  - make -C skycoin-api test PIP=$PIP_COMMAND
+  - make -C tiny-firmware/protob install-deps-nanopb
+  - make -C tiny-firmware/protob install-protoc
+  - make -C tiny-firmware/protob/nanopb/vendor/nanopb/generator/proto
+  - make -C skycoin-api test
   - make -C skycoin-api clean
+  - find tiny-firmware/protob/nanopb/vendor/nanopb
   - make emulator
   - make clean
   - make full-firmware
@@ -45,4 +55,3 @@ script:
 notifications:
   # https://github.com/kvld/travisci-telegram TravisCI Telegram Bot integration
   webhooks: https://fathomless-fjord-24024.herokuapp.com/notify
-
