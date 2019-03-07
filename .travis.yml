@@ -2,11 +2,15 @@ language: c
 matrix:
   include:
     - os: linux
+      env:
+        - PIP_COMMAND = 'sudo pip3'
       addons:
         apt:
           sources:
             - ubuntu-toolchain-r-test
     - os: osx
+	env:
+	  - PIP_COMMAND = 'pip3'
 
 before_script:
   - sh "./tiny-firmware/protob/ci-scripts/install-${TRAVIS_OS_NAME}.sh" ;
