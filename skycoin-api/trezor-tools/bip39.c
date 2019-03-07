@@ -1,6 +1,10 @@
 /**
+ *
+ * This file is part of the Skycoin project, https://skycoin.net/
+ *
  * Copyright (c) 2013-2014 Tomas Dzetkulic
  * Copyright (c) 2013-2014 Pavol Rusnak
+ * Copyright (C) 2018-2019 Skycoin Project
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the "Software"),
