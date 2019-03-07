@@ -3,14 +3,12 @@ matrix:
   include:
     - os: linux
       env:
-        - PIP_COMMAND = 'sudo pip3'
+        - PIP = 'sudo pip3'
       addons:
         apt:
           sources:
             - ubuntu-toolchain-r-test
     - os: osx
-	env:
-	  - PIP_COMMAND = 'pip3'
 
 before_script:
   - sh "./tiny-firmware/protob/ci-scripts/install-${TRAVIS_OS_NAME}.sh" ;
@@ -21,7 +19,6 @@ before_script:
     ls -l /usr/local/bin/protoc ;
     export CHECK_PATH="$(pwd)/check-0.12.0" ;
     export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${CHECK_PATH}/src" ;
-    export PIP="sudo pip3"
     export PATH="/usr/local/bin:$(pwd)/protoc/bin:$PATH" ;
     echo "PATH=$PATH";
     fi
