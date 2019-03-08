@@ -104,6 +104,8 @@ const uint16_t *mnemonic_from_data_indexes(const uint8_t *data, int len)
 	return mnemo;
 }
 
+static CONFIDENTIAL char mnemo[24 * 10];
+
 const char *mnemonic_from_data(const uint8_t *data, int len)
 {
 	if (len % 4 || len < 16 || len > 32) {
@@ -118,7 +120,6 @@ const char *mnemonic_from_data(const uint8_t *data, int len)
 	// data
 	memcpy(bits, data, len);
 
-	static CONFIDENTIAL char mnemo[24 * 10];
 	int mlen = len * 3 / 4;
 
 	int i, j, idx;
