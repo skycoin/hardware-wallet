@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+- Use`protobuf` file definitions as a `git submodule` from http://github.com/skycoin/hardware-wallet-protob/
 - While building emulator specify path to SDL via `SDL_INCLUDE` environment variable.
 - Add an `entropy` buffer field in the `GenerateMnemonic` message and validations over `entropy`.
 - Link against math library.

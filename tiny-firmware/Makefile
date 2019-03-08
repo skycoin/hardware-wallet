@@ -41,7 +41,7 @@ endif
 
 DEBUG_LINK ?= 0
 CFLAGS += -Wno-sequence-point
-CFLAGS += -I$(TOP_DIR)vendor/nanopb -Iprotob -DPB_FIELD_16BIT=1
+CFLAGS += -I$(TOP_DIR)protob/nanopb/vendor/nanopb -I$(TOP_DIR)protob/c -DPB_FIELD_16BIT=1
 # CFLAGS += -DQR_MAX_VERSION=0
 CFLAGS += -DDEBUG_LINK=$(DEBUG_LINK)
 CFLAGS += -DDEBUG_LOG=$(DEBUG_LOG)
@@ -49,9 +49,9 @@ CFLAGS += -DDEBUG_LOG=$(DEBUG_LOG)
 INC+=-Ifirmware
 CFLAGS += -I. $(INC)
 
-OBJS += $(TOP_DIR)vendor/nanopb/pb_common.o
-OBJS += $(TOP_DIR)vendor/nanopb/pb_decode.o
-OBJS += $(TOP_DIR)vendor/nanopb/pb_encode.o
+OBJS += $(TOP_DIR)protob/nanopb/vendor/nanopb/pb_common.o
+OBJS += $(TOP_DIR)protob/nanopb/vendor/nanopb/pb_decode.o
+OBJS += $(TOP_DIR)protob/nanopb/vendor/nanopb/pb_encode.o
 
 ifneq ($(EMULATOR),1)
 OBJS += firmware/usb.o
@@ -72,8 +72,8 @@ OBJS += firmware/recovery.o
 OBJS += firmware/factory_test.o
 OBJS += firmware/entropy.o
 
-OBJS += protob/messages.pb.o
-OBJS += protob/types.pb.o
+OBJS += protob/c/messages.pb.o
+OBJS += protob/c/types.pb.o
 
 #skycoin-crypto
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/skycoin_crypto.o
@@ -143,7 +143,7 @@ endif
 
 
 proto:
-	cd protob && make
+	cd protob && make build-c
 
 libopencm3:
 	cd vendor/libopencm3 && make
@@ -164,4 +164,4 @@ clean::
 	rm -f *.list
 	rm -f *.log
 	rm -f *.srec
-	cd protob && make clean
+	cd protob && make clean-c
