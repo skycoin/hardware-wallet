@@ -21,10 +21,12 @@
 
 // message methods
 
-#define RESP_INIT(TYPE) \
-			TYPE *resp = (TYPE *) (void *) msg_resp; \
+#define GET_MSG_POINTER(TYPE, VarName) \
+			TYPE *VarName = (TYPE *) (void *) msg_resp; \
 			_Static_assert(sizeof(msg_resp) >= sizeof(TYPE), #TYPE " is too large"); \
-			memset(resp, 0, sizeof(TYPE));
+			memset(VarName, 0, sizeof(TYPE));
+
+#define RESP_INIT(TYPE) GET_MSG_POINTER(TYPE, resp);
 
 #define CHECK_INITIALIZED \
 	if (!storage_isInitialized()) { \
