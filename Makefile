@@ -9,8 +9,9 @@
 
 UNAME_S ?= $(shell uname -s)
 
-PYTHON ?= /usr/bin/python
-PIP    ?= pip
+PYTHON   ?= /usr/bin/python
+PIP      ?= pip
+PIPARGS  ?=
 
 MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 MKFILE_DIR  := $(dir $(MKFILE_PATH))
@@ -34,7 +35,7 @@ install-linters-Darwin:
 	brew install yamllint
 
 install-linters-Linux:
-	$(PIP) install --user yamllint
+	$(PIP) install $(PIPARGS) yamllint
 
 install-linters: install-linters-$(UNAME_S) ## Install code quality checking tools
 
