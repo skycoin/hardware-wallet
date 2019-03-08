@@ -72,20 +72,22 @@ void buttonUpdate()
 		}
 	}
 
-	if ( falseButtonPress ) { /// If a fake button press event is detected, override button state
-		if ( falseButtonType == 0 ) { /// Press NO
-			button.NoDown = 0;
-			button.NoUp = true;
-		} else if ( falseButtonType == 1 ) { /// Press YES
-			button.YesDown = 0;
-			button.YesUp = true;
-		} else if ( falseButtonType == 2 ) { /// Press BOTH
-			button.NoDown = 0;
-			button.NoUp = true;
-			button.YesDown = 0;
-			button.YesUp = true;
-		}
-	}//*/
+	#if EMULATOR
+		if ( falseButtonPress ) { /// If a fake button press event is detected, override button state
+			if ( falseButtonType == 0 ) { /// Press NO
+				button.NoDown = 0;
+				button.NoUp = true;
+			} else if ( falseButtonType == 1 ) { /// Press YES
+				button.YesDown = 0;
+				button.YesUp = true;
+			} else if ( falseButtonType == 2 ) { /// Press BOTH
+				button.NoDown = 0;
+				button.NoUp = true;
+				button.YesDown = 0;
+				button.YesUp = true;
+			}
+		}//*/
+	#endif
 
 	last_state = state;
 }

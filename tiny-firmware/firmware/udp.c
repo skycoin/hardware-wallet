@@ -47,24 +47,28 @@ void usbPoll(void) {
 	int iface = 0, i, j = 0;
 
 	if (emulatorSocketRead(&iface, buffer, sizeof(buffer)) > 0) {
-		for (i = 0; i < 5; i++) {
-			if ( buffer[i] == i ) {
-				j++;
-			} else {
-				break;
+		#if EMULATOR
+			for (i = 0; i < 5; i++) {
+				if ( buffer[i] == i ) {
+					j++;
+				} else {
+					break;
+				}
 			}
-		}
-		if ( j == 5 ) {
-			falseButtonPress = 1;
-			falseButtonType = buffer[5];
-			return;
-		} else {
+			if ( j == 5 ) {
+				falseButtonPress = 1;
+				falseButtonType = buffer[5];
+				return;
+			} else {
+		#endif
 			if (!tiny) {
 				msg_read_common(_ISDBG, buffer, sizeof(buffer));
 			} else {
 				msg_read_tiny(buffer, sizeof(buffer));
 			}
-		}
+		#if EMULATOR
+			}
+		#endif
 	}
 
 	const uint8_t *data = msg_out_data();
