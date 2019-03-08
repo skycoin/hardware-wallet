@@ -3,7 +3,7 @@ matrix:
   include:
     - os: linux
       env:
-        - PIP='sudo pip3'
+        - PIP='sudo pip'
       addons:
         apt:
           sources:
@@ -12,8 +12,6 @@ matrix:
 
 before_script:
   - sh "./tiny-firmware/protob/ci-scripts/install-${TRAVIS_OS_NAME}.sh" ;
-  # install linters
-  - make install-linters
   # Define env vars for Linux builds
   - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then
     ls -l /usr/local/bin/protoc ;
@@ -32,6 +30,8 @@ before_script:
     fi
   # Install OS-specific test and build dependencies
   - eval "./ci-scripts/install-${TRAVIS_OS_NAME}.sh"
+  # Install linters
+  - make install-linters
 script:
   - find tiny-firmware/protob/nanopb/vendor/nanopb
   - make lint
