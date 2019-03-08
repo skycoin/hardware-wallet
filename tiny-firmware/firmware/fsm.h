@@ -41,6 +41,7 @@ void fsm_msgSetMnemonic(SetMnemonic* msg);
 void fsm_msgPing(Ping *msg);
 void fsm_msgChangePin(ChangePin *msg);
 void fsm_msgWipeDevice(WipeDevice *msg);
+void fsm_msgGetEntropy(GetEntropy *msg);
 void fsm_msgEntropyAck(EntropyAck *msg);
 void fsm_msgLoadDevice(LoadDevice *msg);
 void fsm_msgResetDevice(ResetDevice *msg);

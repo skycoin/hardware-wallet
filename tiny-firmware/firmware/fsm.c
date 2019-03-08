@@ -47,7 +47,7 @@
 #include "droplet.h"
 #include "skyparams.h"
 
-static uint8_t msg_resp[MSG_OUT_SIZE] __attribute__ ((aligned));
+extern uint8_t msg_resp[MSG_OUT_SIZE] __attribute__ ((aligned));
 
 void fsm_sendSuccess(const char *text)
 {
@@ -442,8 +442,18 @@ void fsm_msgWipeDevice(WipeDevice *msg)
 }
 
 void fsm_msgGenerateMnemonic(GenerateMnemonic* msg) {
-	if(msgGenerateMnemonicImpl(msg) == ErrOk) {
-		fsm_sendSuccess(_("Mnemonic successfully configured"));
+	GET_MSG_POINTER(EntropyRequest, entropy_request);
+	switch (msgGenerateMnemonicImpl(msg)) {
+		case ErrOk:
+			fsm_sendSuccess(_("Mnemonic successfully configured"));
+			break;
+		case ErrLowEntropy:
+			msg_write(MessageType_MessageType_EntropyRequest, entropy_request);
+			break;
+		default:
+			fsm_sendFailure(FailureType_Failure_FirmwareError, 
+							_("Mnemonic generation failed"));
+			break;
 	}
 	layoutHome();
 }
@@ -468,6 +478,26 @@ void fsm_msgSetMnemonic(SetMnemonic* msg)
 	storage_setNeedsBackup(true);
 	storage_update();
 	fsm_sendSuccess(_(msg->mnemonic));
+	layoutHome();
+}
+
+void fsm_msgGetEntropy(GetEntropy *msg)
+{
+	layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"), _("send entropy?"), NULL, NULL, NULL, NULL);
+	if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) {
+		fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
+		layoutHome();
+		return;
+	}
+
+	RESP_INIT(Entropy);
+	uint32_t len = msg->size;
+	if (len > 1024) {
+		len = 1024;
+	}
+	resp->entropy.size = len;
+	random_buffer(resp->entropy.bytes, len);
+	msg_write(MessageType_MessageType_Entropy, resp);
 	layoutHome();
 }
 
@@ -586,9 +616,10 @@ void fsm_msgCancel(Cancel *msg)
 
 void fsm_msgEntropyAck(EntropyAck *msg)
 {
-	if (msg->has_entropy) {
-		reset_entropy(msg->entropy.bytes, msg->entropy.size);
+	if (msgEntropyAckImpl(msg) == ErrOk) {
+		fsm_sendSuccess(_("Recived entropy"));
 	} else {
-		reset_entropy(0, 0);
+		fsm_sendFailure(FailureType_Failure_UnexpectedMessage, 
+		                _("Unexpected entropy ack msg."));
 	}
 }

@@ -15,7 +15,7 @@
 #include "messages.pb.h"
 #include "firmware/error.h"
 
-#define EXTERNAL_ENTROPY_SIZE 32
+#define EXTERNAL_ENTROPY_MAX_SIZE 128
 #define MNEMONIC_WORD_COUNT_12 12
 #define MNEMONIC_WORD_COUNT_24 24
 
@@ -72,6 +72,7 @@
 	}
 
 ErrCode_t msgGenerateMnemonicImpl(GenerateMnemonic* msg);
+ErrCode_t msgEntropyAckImpl(EntropyAck* msg);
 void msgSkycoinSignMessageImpl(SkycoinSignMessage* msg,
 							ResponseSkycoinSignMessage *msg_resp);
 ErrCode_t msgSignTransactionMessageImpl(uint8_t* message_digest, uint32_t index, 

@@ -45,37 +45,40 @@
 #define MNEMONIC_STRENGTH_24 256
 #define INTERNAL_ENTROPY_SIZE 32
 
+uint8_t msg_resp[MSG_OUT_SIZE] __attribute__ ((aligned));
+
+extern bool awaiting_entropy;
+extern uint32_t strength;
+extern bool     skip_backup;
+static bool has_passphrase_protection;
+static bool passphrase_protection;
+
+ErrCode_t msgEntropyAckImpl(EntropyAck* msg) {
+	ErrCode_t ret;
+	_Static_assert(EXTERNAL_ENTROPY_MAX_SIZE == sizeof(msg->entropy.bytes),
+					"External entropy size does not match.");
+	if (awaiting_entropy) {
+		skip_backup = true;
+		if (msg->has_entropy) {
+			reset_entropy(msg->entropy.bytes, msg->entropy.size);
+		} else {
+			reset_entropy(0, 0);
+		}
+		if (has_passphrase_protection) {
+			storage_setPassphraseProtection(passphrase_protection);
+			storage_update();
+		}
+		ret = ErrOk;
+	} else {
+		ret = ErrUnexpectedMessage;
+	}
+	has_passphrase_protection = false;
+	return ret;
+}
+
 ErrCode_t msgGenerateMnemonicImpl(GenerateMnemonic* msg) {
-	_Static_assert(
-		EXTERNAL_ENTROPY_SIZE == sizeof(msg->entropy.bytes),
-		"External entropy size not match.");
 	CHECK_NOT_INITIALIZED_RET_ERR_CODE
-	if (msg->entropy.size < EXTERNAL_ENTROPY_SIZE) {
-		fsm_sendFailure(
-			FailureType_Failure_DataError,
-			_("Entropy buffer not have enough size."));
-		return ErrFailed;
-	}
-	if (verify_entropy(msg->entropy.bytes, msg->entropy.size) != ErrOk ) {
-		fsm_sendFailure(
-			FailureType_Failure_DataError,
-			_("Not enough entropy level recived."));
-		return ErrFailed;
-	}
-	uint8_t int_entropy[INTERNAL_ENTROPY_SIZE];
-	random_buffer(int_entropy, sizeof(int_entropy));
-	SHA256_CTX ctx;
-	sha256_Init(&ctx);
-	sha256_Update(&ctx, int_entropy, sizeof(int_entropy));
-	sha256_Update(&ctx, msg->entropy.bytes, msg->entropy.size);
-	sha256_Final(&ctx, int_entropy);
-	if (verify_entropy(int_entropy, sizeof(int_entropy)) != ErrOk ) {
-		fsm_sendFailure(
-			FailureType_Failure_ProcessError,
-			_("Not enough entropy level for combined entropy values."));
-		return ErrFailed;
-	}
-	int strength = MNEMONIC_STRENGTH_12;
+	strength = MNEMONIC_STRENGTH_12;
 	if (msg->has_word_count) {
 		switch (msg->word_count) {
 			case MNEMONIC_WORD_COUNT_12:
@@ -86,10 +89,20 @@ ErrCode_t msgGenerateMnemonicImpl(GenerateMnemonic* msg) {
 				break;
 			default:
 				fsm_sendFailure(
-					FailureType_Failure_DataError,
-					_("Invalid word count expecified the valid options are 12 or 24."));
+							FailureType_Failure_DataError,
+							_("Invalid word count expecified the valid options are 12 or 24."));
 				return ErrFailed;
 		}
+	}
+	uint8_t int_entropy[INTERNAL_ENTROPY_SIZE];
+	random_buffer(int_entropy, sizeof(int_entropy));
+	if (verify_entropy(int_entropy, sizeof(int_entropy)) != ErrOk) {
+		awaiting_entropy = true;
+		if (msg->has_passphrase_protection) {
+			has_passphrase_protection = msg->has_passphrase_protection;
+			passphrase_protection = msg->passphrase_protection;
+		}
+		return ErrLowEntropy;
 	}
 	const char* mnemonic = mnemonic_from_data(int_entropy, strength / 8);
 	if (mnemonic) {
