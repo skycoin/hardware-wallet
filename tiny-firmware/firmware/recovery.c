@@ -50,10 +50,6 @@ static int awaiting_word = 0;
  */
 static bool dry_run;
 
-/* True if we should check that seed corresponds to bip39.
- */
-static bool enforce_wordlist;
-
 /* For scrambled recovery Trezor may ask for faked words if
  * seed is short.  This contains the fake word.
  */
@@ -161,16 +157,12 @@ static void recovery_done(void) {
 		strlcat(new_mnemonic, " ", sizeof(new_mnemonic));
 		strlcat(new_mnemonic, words[i], sizeof(new_mnemonic));
 	}
-	if (!enforce_wordlist || mnemonic_check(new_mnemonic)) {
+	if (mnemonic_check(new_mnemonic)) {
 		// New mnemonic is valid.
 		if (!dry_run) {
 			// Update mnemonic on storage.
 			storage_setMnemonic(new_mnemonic);
 			memzero(new_mnemonic, sizeof(new_mnemonic));
-			if (!enforce_wordlist) {
-				// not enforcing => mark storage as imported
-				storage_setImported(true);
-			}
 			storage_update();
 			fsm_sendSuccess(_("Device recovered"));
 		} else {
@@ -447,12 +439,11 @@ void next_word(void) {
 	recovery_request();
 }
 
-void recovery_init(uint32_t _word_count, bool passphrase_protection, bool pin_protection, const char *language, const char *label, bool _enforce_wordlist, uint32_t type, bool _dry_run)
+void recovery_init(uint32_t _word_count, bool passphrase_protection, bool pin_protection, const char *language, const char *label, bool _dry_run)
 {
-	if (_word_count != 12 && _word_count != 18 && _word_count != 24) return;
+	if (_word_count != 12 && _word_count != 24) return;
 
 	word_count = _word_count;
-	enforce_wordlist = _enforce_wordlist;
 	dry_run = _dry_run;
 
 	if (!dry_run) {
@@ -461,30 +452,21 @@ void recovery_init(uint32_t _word_count, bool passphrase_protection, bool pin_pr
 			layoutHome();
 			return;
 		}
-
 		storage_setPassphraseProtection(passphrase_protection);
 		storage_setLanguage(language);
 		storage_setLabel(label);
 		storage_update();
 	}
-
-	if ((type & RecoveryDeviceType_RecoveryDeviceType_Matrix) != 0) {
-		awaiting_word = 2;
-		word_index = 0;
-		word_pincode = 0;
-		next_matrix();
-	} else {
-		for (uint32_t i = 0; i < word_count; i++) {
-			word_order[i] = i + 1;
-		}
-		for (uint32_t i = word_count; i < 24; i++) {
-			word_order[i] = 0;
-		}
-		random_permute(word_order, 24);
-		awaiting_word = 1;
-		word_index = 0;
-		next_word();
+	for (uint32_t i = 0; i < word_count; i++) {
+		word_order[i] = i + 1;
 	}
+	for (uint32_t i = word_count; i < 24; i++) {
+		word_order[i] = 0;
+	}
+	random_permute(word_order, 24);
+	awaiting_word = 1;
+	word_index = 0;
+	next_word();
 }
 
 static void recovery_scrambledword(const char *word)
@@ -499,28 +481,25 @@ static void recovery_scrambledword(const char *word)
 			return;
 		}
 	} else { // real word
-		if (enforce_wordlist) { // check if word is valid
-			const char * const *wl = mnemonic_wordlist();
-			bool found = false;
-			while (*wl) {
-				if (strcmp(word, *wl) == 0) {
-					found = true;
-					break;
-				}
-				wl++;
+		const char * const *wl = mnemonic_wordlist();
+		bool found = false;
+		while (*wl) {
+			if (strcmp(word, *wl) == 0) {
+				found = true;
+				break;
 			}
-			if (!found) {
-				if (!dry_run) {
-					session_clear(true);
-				}
-				fsm_sendFailure(FailureType_Failure_DataError, _("Word not found in a wordlist"));
-				layoutHome();
-				return;
+			wl++;
+		}
+		if (!found) {
+			if (!dry_run) {
+				session_clear(true);
 			}
+			fsm_sendFailure(FailureType_Failure_DataError, _("Word not found in a wordlist"));
+			layoutHome();
+			return;
 		}
 		strlcpy(words[word_pos - 1], word, sizeof(words[word_pos - 1]));
 	}
-
 	if (word_index + 1 == 24) { // last one
 		recovery_done();
 	} else {

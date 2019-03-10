@@ -1,5 +1,5 @@
 /*
- * This file is part of the Skycoin project, https://skycoin.net/ 
+ * This file is part of the Skycoin project, https://skycoin.net/
  *
  * Copyright (C) 2018-2019 Skycoin Project
  *
@@ -9,9 +9,6 @@
  *
  */
 
-#include <string.h>
+#include <check.h>
 
-void memzero(void *s, size_t n)
-{
-	memset(s, 0, n);
-}
+TCase *add_fsm_tests(TCase *tc);

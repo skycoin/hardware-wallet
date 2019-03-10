@@ -1,7 +1,8 @@
 /*
- * This file is part of the TREZOR project, https://trezor.io/
+ * This file is part of the Skycoin project, https://skycoin.net/ 
  *
  * Copyright (C) 2014 Pavol Rusnak <stick@satoshilabs.com>
+ * Copyright (C) 2018-2019 Skycoin Project
  *
  * This library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -53,7 +54,8 @@ _Static_assert((sizeof(storageUpdate) & 3) == 0, "storage unaligned");
 #define FLASH_STORAGE (FLASH_STORAGE_START + sizeof(storage_magic) + sizeof(storage_uuid))
 #define storageRom ((const Storage *) FLASH_PTR(FLASH_STORAGE))
 
-char storage_uuid_str[25];
+// size *2 due to the hex formad and +1 because of the trailing NUL char
+char storage_uuid_str[SERIAL_NUMBER_SIZE*2 + 1];
 
 /*
  storage layout:
@@ -110,7 +112,7 @@ static char CONFIDENTIAL sessionPassphrase[51];
 
 #define STORAGE_VERSION 9
 
-void storage_show_error(void)
+void __attribute__((noreturn)) storage_show_error(void)
 {
 	layoutDialog(&bmp_icon_error, NULL, NULL, NULL, _("Storage failure"), _("detected."), NULL, _("Please unplug"), _("the device."), NULL);
 	shutdown();
@@ -470,9 +472,19 @@ void storage_setHomescreen(const uint8_t *data, uint32_t size)
 	}
 }
 
+bool storage_hasLabel(void)
+{
+	return storageRom->has_label;
+}
+
 const char *storage_getLabel(void)
 {
 	return storageRom->has_label ? storageRom->label : 0;
+}
+
+const char *storage_getLabelOrDeviceId(void)
+{
+    return storageRom->has_label ? storage_getLabel() : storage_uuid_str;
 }
 
 const char *storage_getLanguage(void)
@@ -760,4 +772,8 @@ void storage_wipe(void)
 	storage_check_flash_errors(svc_flash_lock());
 
 	storage_clearPinArea();
+    
+    storageUpdate.has_label = true;
+    strncpy(storageUpdate.label, storage_uuid_str, sizeof(storageUpdate.label));
+    storage_update();
 }

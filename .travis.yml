@@ -2,40 +2,45 @@ language: c
 matrix:
   include:
     - os: linux
+      env:
+        - PIP='sudo pip'
       addons:
         apt:
           sources:
             - ubuntu-toolchain-r-test
-      env:
-        - PROTOBUF_VERSION=3.4.0
     - os: osx
-      env:
-        - PROTOBUF_VERSION=3.6.1
+
 before_script:
-  # install linters
-  - make install-linters
+  - sh "./tiny-firmware/protob/ci-scripts/install-${TRAVIS_OS_NAME}.sh" ;
   # Define env vars for Linux builds
   - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then
+    ls -l /usr/local/bin/protoc ;
     export CHECK_PATH="$(pwd)/check-0.12.0" ;
     export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${CHECK_PATH}/src" ;
+    export PATH="/usr/local/bin:$(pwd)/protoc/bin:$PATH" ;
+    echo "PATH=$PATH";
+    echo "PIP=$PIP";
     fi
+  # Define env vars for osx builds
+  # Include paths for brew packages e.g. SDL2
   - if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
     export CHECK_PATH="$(brew --prefix check)" ;
     export DYLD_LIBRARY_PATH="${DYLD_LIBRARY_PATH}:${CHECK_PATH}/lib" ;
+    export SDL_INCLUDE="$(brew --prefix sdl2)/include/SDL2" ;
     fi
-  - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then export PATH="$PATH:$(pwd)/protoc/bin" ; echo "PATH=$PATH"; fi
   # Install OS-specific test and build dependencies
   - eval "./ci-scripts/install-${TRAVIS_OS_NAME}.sh"
-  # Include paths for brew packages e.g. SDL2
-  - if [[ "$TRAVIS_OS_NAME" == 'osx' ]]; then export CFLAGS="-I$(brew --prefix sdl2)/include/SDL2" ; fi
-  # Upgrade protobuf python
-  - pip3 install --user --upgrade protobuf
-  - pip3 install --user "protobuf==${PROTOBUF_VERSION}" ecdsa
-  - pip install --user --upgrade protobuf
+  # Install linters
+  - make install-linters
 script:
+  - find tiny-firmware/protob/nanopb/vendor/nanopb
   - make lint
+  - make -C tiny-firmware/protob install-deps-nanopb
+  - make -C tiny-firmware/protob install-protoc
+  - make -C tiny-firmware/protob/nanopb/vendor/nanopb/generator/proto
   - make -C skycoin-api test
   - make -C skycoin-api clean
+  - find tiny-firmware/protob/nanopb/vendor/nanopb
   - make emulator
   - make clean
   - make full-firmware
@@ -44,4 +49,3 @@ script:
 notifications:
   # https://github.com/kvld/travisci-telegram TravisCI Telegram Bot integration
   webhooks: https://fathomless-fjord-24024.herokuapp.com/notify
-
