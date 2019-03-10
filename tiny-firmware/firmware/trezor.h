@@ -22,9 +22,15 @@
 
 #include <stdint.h>
 
+#ifndef VERSION_MAJOR
 #define VERSION_MAJOR 1
-#define VERSION_MINOR 6
-#define VERSION_PATCH 1
+#endif
+#ifndef VERSION_MINOR
+#define VERSION_MINOR 7
+#endif
+#ifndef VERSION_PATCH
+#define VERSION_PATCH 0
+#endif
 
 #define STR(X) #X
 #define VERSTR(X) STR(X)
@@ -36,6 +42,9 @@
 #ifndef DEBUG_LOG
 #define DEBUG_LOG 0
 #endif
+
+void check_lock_screen(void);
+void check_factory_test(void);
 
 /* Screen timeout */
 extern uint32_t system_millis_lock_start;

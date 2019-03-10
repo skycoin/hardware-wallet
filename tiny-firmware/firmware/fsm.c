@@ -1,7 +1,8 @@
 /*
- * This file is part of the TREZOR project, https://trezor.io/
+ * This file is part of the Skycoin project, https://skycoin.net/ 
  *
  * Copyright (C) 2014 Pavol Rusnak <stick@satoshilabs.com>
+ * Copyright (C) 2018-2019 Skycoin Project
  *
  * This library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -20,18 +21,17 @@
 #include <libopencm3/stm32/flash.h>
 
 #include <stdio.h>
+#include <inttypes.h>
 #include "trezor.h"
 #include "fsm.h"
 #include "messages.h"
 #include "bip32.h"
 #include "storage.h"
 #include "rng.h"
-#include "storage.h"
 #include "oled.h"
 #include "protect.h"
 #include "pinmatrix.h"
 #include "layout2.h"
-#include "base58.h"
 #include "reset.h"
 #include "recovery.h"
 #include "bip39.h"
@@ -43,46 +43,11 @@
 #include "skycoin_crypto.h"
 #include "skycoin_check_signature.h"
 #include "check_digest.h"
-
-// message methods
+#include "fsm_impl.h"
+#include "droplet.h"
+#include "skyparams.h"
 
 static uint8_t msg_resp[MSG_OUT_SIZE] __attribute__ ((aligned));
-
-#define RESP_INIT(TYPE) \
-			TYPE *resp = (TYPE *) (void *) msg_resp; \
-			_Static_assert(sizeof(msg_resp) >= sizeof(TYPE), #TYPE " is too large"); \
-			memset(resp, 0, sizeof(TYPE));
-
-#define CHECK_INITIALIZED \
-	if (!storage_isInitialized()) { \
-		fsm_sendFailure(FailureType_Failure_NotInitialized, NULL); \
-		return; \
-	}
-
-#define CHECK_NOT_INITIALIZED \
-	if (storage_isInitialized()) { \
-		fsm_sendFailure(FailureType_Failure_UnexpectedMessage, _("Device is already initialized. Use Wipe first.")); \
-		return; \
-	}
-
-#define CHECK_PIN \
-	if (!protectPin(true)) { \
-		layoutHome(); \
-		return; \
-	}
-
-#define CHECK_PIN_UNCACHED \
-	if (!protectPin(false)) { \
-		layoutHome(); \
-		return; \
-	}
-
-#define CHECK_PARAM(cond, errormsg) \
-	if (!(cond)) { \
-		fsm_sendFailure(FailureType_Failure_DataError, (errormsg)); \
-		layoutHome(); \
-		return; \
-	}
 
 void fsm_sendSuccess(const char *text)
 {
@@ -178,11 +143,7 @@ void fsm_msgInitialize(Initialize *msg)
 
 void fsm_msgApplySettings(ApplySettings *msg)
 {
-	CHECK_PARAM(msg->has_label || msg->has_language || msg->has_use_passphrase || msg->has_homescreen,
-				_("No setting provided"));
-
 	CHECK_PIN
-
 	if (msg->has_label && strlen(msg->label)) {
 		layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"), _("change name to"), msg->label, "?", NULL, NULL);
 		if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) {
@@ -215,90 +176,23 @@ void fsm_msgApplySettings(ApplySettings *msg)
 			return;
 		}
 	}
-
-	if (msg->has_label) {
-		storage_setLabel(msg->label);
-	}
-	if (msg->has_language) {
-		storage_setLanguage(msg->language);
-	}
-	if (msg->has_use_passphrase) {
-		storage_setPassphraseProtection(msg->use_passphrase);
-	}
-	if (msg->has_homescreen) {
-		storage_setHomescreen(msg->homescreen.bytes, msg->homescreen.size);
-	}
-	storage_update();
+	msgApplySettings(msg);
 	fsm_sendSuccess(_("Settings applied"));
 	layoutHome();
-}
-
-void fsm_msgGetVersion(GetVersion *msg) {
-	(void)msg;
-	char str[50];
-	sprintf(str, "Firmware Version %d.%d.%d", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH);
-	fsm_sendSuccess(str);
 }
 
 void fsm_msgGetFeatures(GetFeatures *msg)
 {
 	(void)msg;
 	RESP_INIT(Features);
-	resp->has_vendor = true;         strlcpy(resp->vendor, "Skycoin Foundation", sizeof(resp->vendor));
-	resp->has_major_version = true;  resp->major_version = VERSION_MAJOR;
-	resp->has_minor_version = true;  resp->minor_version = VERSION_MINOR;
-	resp->has_patch_version = true;  resp->patch_version = VERSION_PATCH;
-	resp->has_device_id = true;      strlcpy(resp->device_id, storage_uuid_str, sizeof(resp->device_id));
-	resp->has_pin_protection = true; resp->pin_protection = storage_hasPin();
-	resp->has_passphrase_protection = true; resp->passphrase_protection = storage_hasPassphraseProtection();
-	resp->has_bootloader_hash = true; resp->bootloader_hash.size = memory_bootloader_hash(resp->bootloader_hash.bytes);
-	if (storage_getLanguage()) {
-		resp->has_language = true;
-		strlcpy(resp->language, storage_getLanguage(), sizeof(resp->language));
-	}
-	if (storage_getLabel()) {
-		resp->has_label = true;
-		strlcpy(resp->label, storage_getLabel(), sizeof(resp->label));
-	}
-	
-	resp->has_initialized = true; resp->initialized = storage_isInitialized();
-	resp->has_pin_cached = true; resp->pin_cached = session_isPinCached();
-	resp->has_passphrase_cached = true; resp->passphrase_cached = session_isPassphraseCached();
-	resp->has_needs_backup = true; resp->needs_backup = storage_needsBackup();
-	resp->has_model = true; strlcpy(resp->model, "1", sizeof(resp->model));
-
+	msgGetFeaturesImpl(resp);
 	msg_write(MessageType_MessageType_Features, resp);
 }
 
 void fsm_msgSkycoinCheckMessageSignature(SkycoinCheckMessageSignature* msg)
 {
-	uint8_t sign[65];
-    size_t size_sign = sizeof(sign);
-    char pubkeybase58[36];
-    uint8_t pubkey[33] = {0};
-    uint8_t digest[32] = {0};
-
-    RESP_INIT(Success);
-	if (is_digest(msg->message) == false) {
-    	compute_sha256sum((const uint8_t *)msg->message, digest, strlen(msg->message));
-	} else {
-		writebuf_fromhexstr(msg->message, digest);
-	}
-    size_sign = sizeof(sign);
-    b58tobin(sign, &size_sign, msg->signature);
-    recover_pubkey_from_signed_message((char*)digest, sign, pubkey);
-    size_sign = sizeof(pubkeybase58);
-    generate_base58_address_from_pubkey(pubkey, pubkeybase58, &size_sign);
-    if (memcmp(pubkeybase58, msg->address, size_sign) == 0)
-    {
-        layoutRawMessage("Verification success");
-    }
-    else {
-        layoutRawMessage("Wrong signature");
-    }
-    memcpy(resp->message, pubkeybase58, size_sign);
-    resp->has_message = true;
-    msg_write(MessageType_MessageType_Success, resp);
+	RESP_INIT(Success);
+	msgSkycoinCheckMessageSignature(msg, resp);
 	layoutHome();
 }
 
@@ -332,80 +226,131 @@ int fsm_getKeyPairAtIndex(uint32_t nbAddress, uint8_t* pubkey, uint8_t* seckey, 
     return 0;
 }
 
-void fsm_msgSkycoinSignMessage(SkycoinSignMessage* msg)
-{
-    uint8_t pubkey[33] = {0};
-    uint8_t seckey[32] = {0};
-	uint8_t digest[32] = {0};
-    size_t size_sign;
-    uint8_t signature[65];
-	char sign58[90] = {0};
-	int res = 0;
-	
+void fsm_msgTransactionSign(TransactionSign* msg) {
+
 	if (storage_hasMnemonic() == false) {
 		fsm_sendFailure(FailureType_Failure_AddressGeneration, "Mnemonic not set");
 		return;
 	}
-	
-	CHECK_PIN_UNCACHED
 
-	RESP_INIT(ResponseSkycoinSignMessage);
-    fsm_getKeyPairAtIndex(1, pubkey, seckey, NULL, msg->address_n);
-	if (is_digest(msg->message) == false) {
-    	compute_sha256sum((const uint8_t *)msg->message, digest, strlen(msg->message));
-	} else {
-		writebuf_fromhexstr(msg->message, digest);
+	if (msg->nbIn > 8) {
+		fsm_sendFailure(FailureType_Failure_InvalidSignature, _("Cannot have more than 8 inputs"));
+		return;
 	}
-    res = ecdsa_skycoin_sign(rand(), seckey, digest, signature);
-	if (res == 0)
-	{
-		layoutRawMessage("Signature success");
+	if (msg->nbOut > 8) {
+		fsm_sendFailure(FailureType_Failure_InvalidSignature, _("Cannot have more than 8 outputs"));
+		return;
 	}
-	else
-	{
-		layoutRawMessage("Signature failed");
+#if EMULATOR
+	printf("%s: %d. nbOut: %d\n", 
+		_("Transaction signed nbIn"), 
+		msg->nbIn, msg->nbOut);
+
+	for (uint32_t i = 0; i < msg->nbIn; ++i) {
+		printf("Input: addressIn: %s, index: %d\n",
+			msg->transactionIn[i].hashIn, msg->transactionIn[i].index);
 	}
-	size_sign = sizeof(sign58);
-    b58enc(sign58, &size_sign, signature, sizeof(signature));
-	memcpy(resp->signed_message, sign58, size_sign);
-	msg_write(MessageType_MessageType_ResponseSkycoinSignMessage, resp);
+	for (uint32_t i = 0; i < msg->nbOut; ++i) {
+		printf("Output: coin: %" PRIu64 ", hour: %" PRIu64 " address: %s address_index: %d\n",
+			msg->transactionOut[i].coin, msg->transactionOut[i].hour, 
+			msg->transactionOut[i].address, msg->transactionOut[i].address_index);
+	}
+#endif
+	Transaction transaction;
+	transaction_initZeroTransaction(&transaction);
+	for (uint32_t i = 0; i < msg->nbIn; ++i) {
+		uint8_t hashIn[32];
+		writebuf_fromhexstr(msg->transactionIn[i].hashIn, hashIn);
+		transaction_addInput(&transaction, hashIn);
+	}
+	for (uint32_t i = 0; i < msg->nbOut; ++i) {
+		char strHour[30];
+		char strCoin[30];
+		char strValue[20];
+		char *coinString = msg->transactionOut[i].coin == 1000000 ? _("coin") : _("coins");
+		char *hourString = (msg->transactionOut[i].hour == 1 || msg->transactionOut[i].hour == 0) ? _("hour") : _("hours");
+		char *strValueMsg = sprint_coins(msg->transactionOut[i].coin, SKYPARAM_DROPLET_PRECISION_EXP, sizeof(strValue), strValue);
+		if (strValueMsg == NULL) {
+			// FIXME: For Skycoin coin supply and precision buffer size should be enough
+			strcpy(strCoin, "too many coins");
+		}
+		sprintf(strCoin, "%s %s %s", _("send"), strValueMsg, coinString);
+		sprintf(strHour, "%" PRIu64 " %s", msg->transactionOut[i].hour, hourString);
+
+		if (msg->transactionOut[i].has_address_index) {
+			uint8_t pubkey[33] = {0};
+			uint8_t seckey[32] = {0};
+			size_t size_address = 36;
+			char address[36] = {0};
+			fsm_getKeyPairAtIndex(1, pubkey, seckey, NULL, msg->transactionOut[i].address_index);
+			generate_base58_address_from_pubkey(pubkey, address, &size_address);
+			if (strcmp(msg->transactionOut[i].address, address) != 0)
+			{
+					fsm_sendFailure(FailureType_Failure_AddressGeneration, _("Wrong return address"));
+					#if EMULATOR
+					printf("Internal address: %s, message address: %s\n", address, msg->transactionOut[i].address);
+					printf("Comparaison size %ld\n", size_address);
+					#endif
+					return;
+			}
+		} else {
+			layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Next"), NULL, _("Do you really want to"), strCoin, strHour, _("to address"), _("..."), NULL);
+			if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) {
+				fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
+				layoutHome();
+				return;
+			}
+			layoutAddress(msg->transactionOut[i].address);		
+			if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) {
+				fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
+				layoutHome();
+				return;
+			}
+		}
+		transaction_addOutput(&transaction, msg->transactionOut[i].coin, msg->transactionOut[i].hour, msg->transactionOut[i].address);
+	}
+
+	CHECK_PIN_UNCACHED
+	RESP_INIT(ResponseTransactionSign);
+	for (uint32_t i = 0; i < msg->nbIn; ++i) {
+		uint8_t digest[32];
+    	transaction_msgToSign(&transaction, i, digest);
+    	if (msgSignTransactionMessageImpl(digest, msg->transactionIn[i].index, resp->signatures[resp->signatures_count]) != ErrOk) {
+			fsm_sendFailure(FailureType_Failure_InvalidSignature, NULL);
+    		return;
+    	}
+		resp->signatures_count++;
+#if EMULATOR
+		char str[64];
+		tohex(str, (uint8_t*)digest, 32);
+		printf("Signing message:  %s\n", str);
+		printf("Signed message:  %s\n", resp->signatures[i]);
+		printf("Nb signatures: %d\n", resp->signatures_count);
+#endif
+	}
+#if EMULATOR
+	char str[64];
+	tohex(str, transaction.innerHash, 32);
+	printf("InnerHash %s\n", str);
+	printf("Signed message:  %s\n", resp->signatures[0]);
+	printf("Nb signatures: %d\n", resp->signatures_count);
+#endif
+    msg_write(MessageType_MessageType_ResponseTransactionSign, resp);
 	layoutHome();
+}
+
+void fsm_msgSkycoinSignMessage(SkycoinSignMessage *msg)
+{
+	RESP_INIT(ResponseSkycoinSignMessage);
+	msgSkycoinSignMessageImpl(msg, resp);
 }
 
 void fsm_msgSkycoinAddress(SkycoinAddress* msg)
 {
-    uint8_t seckey[32] = {0};
-    uint8_t pubkey[33] = {0};
-	uint32_t start_index = !msg->has_start_index ? 0 : msg->start_index;
-
-	CHECK_PIN
-
 	RESP_INIT(ResponseSkycoinAddress);
-	if (msg->address_n > 99) {
-		fsm_sendFailure(FailureType_Failure_AddressGeneration, "Asking for too much addresses");
-		return;
+	if (msgSkycoinAddress(msg, resp) == ErrOk) {
+		msg_write(MessageType_MessageType_ResponseSkycoinAddress, resp);
 	}
-
-	if (storage_hasMnemonic() == false) {
-		fsm_sendFailure(FailureType_Failure_AddressGeneration, "Mnemonic not set");
-		return;
-	}
-
-	if (fsm_getKeyPairAtIndex(msg->address_n, pubkey, seckey, resp, start_index) != 0) 
-	{
-		fsm_sendFailure(FailureType_Failure_AddressGeneration, "Key pair generation failed");
-		return;
-	}
-	if (msg->address_n == 1 && msg->has_confirm_address && msg->confirm_address) {
-		char * addr = resp->addresses[0];
-		layoutAddress(addr);
-		if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) {
-			fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
-			layoutHome();
-			return;
-		}
-	}
-	msg_write(MessageType_MessageType_ResponseSkycoinAddress, resp);
 	layoutHome();
 }
 
@@ -497,26 +442,10 @@ void fsm_msgWipeDevice(WipeDevice *msg)
 }
 
 void fsm_msgGenerateMnemonic(GenerateMnemonic* msg) {
-
-	CHECK_NOT_INITIALIZED
-	
-	const char* mnemonic = mnemonic_generate(128);
-	if (mnemonic == 0) {
-		fsm_sendFailure(FailureType_Failure_ProcessError, _("Device could not generate a Mnemonic"));
-		layoutHome();
-		return;
-	}
-	if (!mnemonic_check(mnemonic)) {
-		fsm_sendFailure(FailureType_Failure_DataError, _("Mnemonic with wrong checksum provided"));
-		layoutHome();
-		return;
-	}
 	RESP_INIT(Success);
-	storage_setMnemonic(mnemonic);
-	storage_setNeedsBackup(true);
-	storage_setPassphraseProtection(msg->has_passphrase_protection && msg->passphrase_protection);
-	storage_update();
-	fsm_sendSuccess(_("Mnemonic successfully configured"));
+	if(msgGenerateMnemonicImpl(msg) == ErrOk) {
+		fsm_sendSuccess(_("Mnemonic successfully configured"));
+	}
 	layoutHome();
 }
 
@@ -643,7 +572,8 @@ void fsm_msgRecoveryDevice(RecoveryDevice *msg)
 		CHECK_NOT_INITIALIZED
 	}
 
-	CHECK_PARAM(!msg->has_word_count || msg->word_count == 12 || msg->word_count == 18 || msg->word_count == 24, _("Invalid word count"));
+	CHECK_PARAM(!msg->has_word_count || msg->word_count == 12
+			|| msg->word_count == 24, _("Invalid word count"));
 
 	if (!dry_run) {
 		layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"), _("recover the device?"), NULL, NULL, NULL, NULL);
@@ -653,15 +583,12 @@ void fsm_msgRecoveryDevice(RecoveryDevice *msg)
 			return;
 		}
 	}
-
 	recovery_init(
 		msg->has_word_count ? msg->word_count : 12,
 		msg->has_passphrase_protection && msg->passphrase_protection,
 		msg->has_pin_protection && msg->pin_protection,
 		msg->has_language ? msg->language : 0,
 		msg->has_label ? msg->label : 0,
-		msg->has_enforce_wordlist && msg->enforce_wordlist,
-		msg->has_type ? msg->type : 0,
 		dry_run
 	);
 }

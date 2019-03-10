@@ -1,7 +1,8 @@
 /*
- * This file is part of the TREZOR project, https://trezor.io/
+ * This file is part of the Skycoin project, https://skycoin.net/ 
  *
  * Copyright (C) 2014 Pavol Rusnak <stick@satoshilabs.com>
+ * Copyright (C) 2018-2019 Skycoin Project
  *
  * This library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -101,49 +102,4 @@ void check_factory_test(void)
 		usbTiny(0);
 		layoutHome();
 	}
-}
-
-int main(void)
-{
-#ifndef APPVER
-	setup();
-	__stack_chk_guard = random32(); // this supports compiler provided unpredictable stack protection checks
-	oledInit();
-#else
-	setupApp();
-	__stack_chk_guard = random32(); // this supports compiler provided unpredictable stack protection checks
-#endif
-
-#if FASTFLASH
-	uint16_t state = gpio_port_read(BTN_PORT);
-	if ((state & BTN_PIN_NO) == 0) {
-		run_bootloader();
-	}
-#endif
-
-	timer_init();
-
-#ifdef APPVER
-	// enable MPU (Memory Protection Unit)
-	mpu_config();
-#endif
-
-#if DEBUG_LINK
-	oledSetDebugLink(1);
-	storage_wipe();
-#endif
-
-	oledDrawBitmap(0, 0, &bmp_skycoin_logo64);
-	oledRefresh();
-
-	storage_init();
-	layoutHome();
-	usbInit();
-	for (;;) {
-		usbPoll();
-		check_lock_screen();
-		check_factory_test();
-	}
-
-	return 0;
 }

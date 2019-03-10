@@ -14,10 +14,6 @@ brew install md5sha1sum curl unzip python gcc-arm-none-eabi
 # Install SDL
 brew install  sdl2_image sdl2 mesa mesalib-glw
 
-# Install protobuf
-brew install protobuf
-brew install protobuf-c
-
 # Install objconv
 if [ ! -d "objconv" ]; then
   wget -c http://www.agner.org/optimize/objconv.zip

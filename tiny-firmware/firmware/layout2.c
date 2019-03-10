@@ -1,7 +1,8 @@
 /*
- * This file is part of the TREZOR project, https://trezor.io/
+ * This file is part of the Skycoin project, https://skycoin.net/ 
  *
  * Copyright (C) 2014 Pavol Rusnak <stick@satoshilabs.com>
+ * Copyright (C) 2018-2019 Skycoin Project
  *
  * This library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -127,7 +128,24 @@ void layoutHome(void)
 		if (storage_needsBackup()) {
 			oledBox(0, 0, 127, 8, false);
 			oledDrawStringCenter(0, "NEEDS BACKUP!", FONT_STANDARD);
-		}
+		} else {
+				// NOTE(denisacostaq@gmail.com): The screen is not long enough
+				// so clip the device label string.
+				char devLabel[MAX(sizeof (storageUpdate.label), 
+								sizeof (storage_uuid_str))];
+				_Static_assert(sizeof(storageUpdate.label) > 23 
+							|| sizeof(storage_uuid_str) > 23, 
+                           "The label fits well on the screen");
+				strncpy(devLabel, storage_getLabelOrDeviceId(), 
+						sizeof(devLabel));
+				const int lastIndex = 23;
+				devLabel[lastIndex - 3] = '.';
+				devLabel[lastIndex - 2] = '.';
+				devLabel[lastIndex - 1] = '.';
+				devLabel[lastIndex] = '\0';
+				oledBox(0, 0, 127, 8, false);
+				oledDrawStringCenter(0, devLabel, FONT_STANDARD);
+			}
 	}
 	oledRefresh();
 
