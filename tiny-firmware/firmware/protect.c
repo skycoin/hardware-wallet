@@ -106,7 +106,7 @@ bool protectButton(ButtonRequestType type, bool confirm_only)
 
 	usbTiny(0);
 
-	falseButtonPress = 0;
+	simulateButtonPress = false;
 
 	return result;
 }

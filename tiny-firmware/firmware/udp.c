@@ -36,8 +36,8 @@ void usbInit(void) {
 #define _ISDBG ('n')
 #endif
 
-extern int falseButtonPress;
-extern int falseButtonType;
+extern bool simulateButtonPress;
+extern int buttonPressType;
 
 void usbPoll(void) {
 	emulatorPoll();
@@ -56,10 +56,11 @@ void usbPoll(void) {
 				}
 			}
 			if ( j == 5 ) {
-				falseButtonPress = 1;
-				falseButtonType = buffer[5];
+				simulateButtonPress = true;
+				buttonPressType = buffer[5];
 				return;
 			} else {
+				simulateButtonPress = false;
 		#endif
 			if (!tiny) {
 				msg_read_common(_ISDBG, buffer, sizeof(buffer));
