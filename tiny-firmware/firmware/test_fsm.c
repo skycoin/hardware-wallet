@@ -57,11 +57,21 @@ START_TEST(test_msgGenerateMnemonicImplOk)
 }
 END_TEST
 
-START_TEST(test_msgGenerateMnemonicImplShouldFaildIfItWasDone)
+START_TEST(test_msgGenerateMnemonicImplShouldFailIfItWasDone)
 {
 	storage_wipe();
 	GenerateMnemonic msg = GenerateMnemonic_init_zero;
 	msgGenerateMnemonicImpl(&msg);
+	ErrCode_t ret = msgGenerateMnemonicImpl(&msg);
+	ck_assert_int_eq(ErrFailed, ret);
+}
+END_TEST
+
+START_TEST(test_msgGenerateMnemonicImplShouldFailForWrongSeedCount)
+{
+	storage_wipe();
+	GenerateMnemonic msg = GenerateMnemonic_init_zero;
+	msg.word_count = 17;
 	ErrCode_t ret = msgGenerateMnemonicImpl(&msg);
 	ck_assert_int_eq(ErrFailed, ret);
 }
@@ -188,7 +198,8 @@ TCase *add_fsm_tests(TCase *tc)
 	tcase_add_checked_fixture(tc, setup_tc_fsm, teardown_tc_fsm);
 	tcase_add_test(tc, test_msgSkycoinSignMessageReturnIsInHex);
 	tcase_add_test(tc, test_msgGenerateMnemonicImplOk);
-	tcase_add_test(tc, test_msgGenerateMnemonicImplShouldFaildIfItWasDone);
+	tcase_add_test(tc, test_msgGenerateMnemonicImplShouldFailIfItWasDone);
+	tcase_add_test(tc, test_msgGenerateMnemonicImplShouldFailForWrongSeedCount);
 	tcase_add_test(tc, test_msgSkycoinCheckMessageSignature);
 	tcase_add_test(tc, test_msgApplySettingsLabelSuccess);
 	tcase_add_test(tc, test_msgFeaturesLabelDefaultsToDeviceId);

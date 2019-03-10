@@ -45,8 +45,8 @@
 
 ErrCode_t msgGenerateMnemonicImpl(GenerateMnemonic* msg) {
  	CHECK_NOT_INITIALIZED_RET_ERR_CODE	    
-  if (msg->wordCount != 12 || msg->wordCount != 24) {
-		fsm_sendFailure(FailureType_Failure_ProcessDataError, _("Invalid number of words for mnemonic"));
+  if (msg->word_count != 12 && msg->word_count != 24) {
+		fsm_sendFailure(FailureType_Failure_DataError, _("Invalid number of words for mnemonic"));
 		return ErrFailed;
   }
 	int strength = (msg->word_count == 24)? MNEMONIC_STRENGTH_24 : MNEMONIC_STRENGTH_12 ;
