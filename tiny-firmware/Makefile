@@ -122,7 +122,6 @@ LDLIBS   += -lSDL2
 endif
 endif
 
-LDLIBS   += -lm
 ifneq ($(EMULATOR),1)
 NAME  = skycoin
 else
