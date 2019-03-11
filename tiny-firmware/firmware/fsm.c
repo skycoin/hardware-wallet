@@ -616,10 +616,14 @@ void fsm_msgCancel(Cancel *msg)
 
 void fsm_msgEntropyAck(EntropyAck *msg)
 {
-	if (msgEntropyAckImpl(msg) == ErrOk) {
-		fsm_sendSuccess(_("Recived entropy"));
-	} else {
-		fsm_sendFailure(FailureType_Failure_UnexpectedMessage, 
-		                _("Unexpected entropy ack msg."));
+	switch (msgEntropyAckImpl(msg)) {
+		case ErrResponseAlreadySent:
+			break;
+		case ErrOk:
+			fsm_sendSuccess(_("Recived entropy"));
+			break;
+		default:
+			fsm_sendFailure(FailureType_Failure_UnexpectedMessage, 
+							_("Unexpected entropy ack msg."));
 	}
 }

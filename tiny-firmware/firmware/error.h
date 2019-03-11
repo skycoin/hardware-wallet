@@ -22,6 +22,8 @@ enum ErrMode {
 	ReasonUnknown = 0xFFF, /*!< Reason unknown */
 	ReasonValueError = 1, /*!< Unexpected or invalid value */
 	ReasonOutOfBounds = 2, /*!< Value out of bounds */
+	ReasonInvalidState = 3, /*!< The system get in an invalid state, for example a syc problem in server implementation */
+	ReasonNotUefulResult = 4, /*!< The result value is not useful */
 };
 
 // 32-bits error constants are structured as folows:
@@ -50,7 +52,8 @@ enum ErrCode {
 	ErrInvalidArg =        ERROR_CODE(PkgGeneric, ReasonValueError),  /*!< Invalid argument */
 	ErrIndexValue =        ERROR_CODE(PkgGeneric, ReasonOutOfBounds),  /*!< Index out of bounds */
 	ErrLowEntropy =        ERROR_CODE(PkgEntropy, ReasonOutOfBounds),  /*!< Buffer entropy under 4.0 bits/symbol */
-	ErrUnexpectedMessage = ERROR_CODE(PkgServer, ErrFailed),  /*! < Server state loses path */
+	ErrUnexpectedMessage = ERROR_CODE(PkgServer, ReasonInvalidState),  /*! < Server state loses path */
+	ErrResponseAlreadySent = ERROR_CODE(PkgServer, ReasonNotUefulResult),  /*! < Do not use the return value from this context */
 };
 typedef enum ErrCode ErrCode_t;
 _Static_assert(sizeof (ErrCode_t) == 4, "One byte as max for package");
