@@ -447,8 +447,19 @@ void fsm_msgGenerateMnemonic(GenerateMnemonic* msg) {
 		case ErrOk:
 			fsm_sendSuccess(_("Mnemonic successfully configured"));
 			break;
+		case ErrInvalidArg:
+			fsm_sendFailure(
+						FailureType_Failure_DataError,
+						_("Invalid word count expecified, the valid options are"
+						" 12 or 24."));
+			break;
 		case ErrLowEntropy:
 			msg_write(MessageType_MessageType_EntropyRequest, entropy_request);
+			break;
+		case ErrInvalidValue:
+			fsm_sendFailure(
+						FailureType_Failure_ProcessError,
+						_("Device could not generate a valid Mnemonic"));
 			break;
 		default:
 			fsm_sendFailure(FailureType_Failure_FirmwareError, 
@@ -617,13 +628,21 @@ void fsm_msgCancel(Cancel *msg)
 void fsm_msgEntropyAck(EntropyAck *msg)
 {
 	switch (msgEntropyAckImpl(msg)) {
-		case ErrResponseAlreadySent:
-			break;
 		case ErrOk:
 			fsm_sendSuccess(_("Recived entropy"));
 			break;
-		default:
+		case ErrInvalidValue:
+			fsm_sendFailure(
+						FailureType_Failure_ProcessError,
+						_("Device could not generate a valid Mnemonic"));
+			break;
+		case ErrUnexpectedMessage:
 			fsm_sendFailure(FailureType_Failure_UnexpectedMessage, 
 							_("Unexpected entropy ack msg."));
+			break;
+		default:
+			fsm_sendFailure(FailureType_Failure_UnexpectedMessage, 
+							_("Entropy ack failed."));
 	}
+	layoutHome();
 }
