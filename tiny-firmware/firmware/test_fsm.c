@@ -36,23 +36,11 @@ void setup_tc_fsm(void) {
 void teardown_tc_fsm(void) {
 }
 
-static void rand_entropy_buffer(uint8_t *entropy, uint16_t buffer_size) {
-	for (uint8_t i = 0; i < buffer_size; ++i) {
-		entropy[i] = (uint8_t)(rand() % 256);  // 256 = 2^(size of uint8_t)
-	}
-}
-
-static void set_external_entropy_in_generate_mnemonic(GenerateMnemonic *msg) {
-	msg->word_count = MNEMONIC_WORD_COUNT_12;
-	msg->has_word_count = true;
-	msg->entropy.size = EXTERNAL_ENTROPY_SIZE;
-	rand_entropy_buffer(msg->entropy.bytes, msg->entropy.size);
-}
-
 void forceGenerateMnemonic(void) {
 	storage_wipe();
 	GenerateMnemonic msg = GenerateMnemonic_init_zero;
-	set_external_entropy_in_generate_mnemonic(&msg);
+	msg.word_count = MNEMONIC_WORD_COUNT_12;
+	msg.has_word_count = true;
 	ck_assert_int_eq(ErrOk, msgGenerateMnemonicImpl(&msg));
 }
 
@@ -67,7 +55,8 @@ START_TEST(test_msgGenerateMnemonicImplOk)
 {
 	storage_wipe();
 	GenerateMnemonic msg = GenerateMnemonic_init_zero;
-	set_external_entropy_in_generate_mnemonic(&msg);
+	msg.word_count = MNEMONIC_WORD_COUNT_12;
+	msg.has_word_count = true;
 	ErrCode_t ret = msgGenerateMnemonicImpl(&msg);
 	ck_assert_int_eq(ErrOk, ret);
 }
@@ -77,7 +66,8 @@ START_TEST(test_msgGenerateMnemonicImplShouldFaildIfItWasDone)
 {
 	storage_wipe();
 	GenerateMnemonic msg = GenerateMnemonic_init_zero;
-	set_external_entropy_in_generate_mnemonic(&msg);
+	msg.word_count = MNEMONIC_WORD_COUNT_12;
+	msg.has_word_count = true;
 	msgGenerateMnemonicImpl(&msg);
 	ErrCode_t ret = msgGenerateMnemonicImpl(&msg);
 	ck_assert_int_eq(ErrFailed, ret);
@@ -88,32 +78,11 @@ START_TEST(test_msgGenerateMnemonicImplShouldFaildWithInvalidWordCount)
 {
 	storage_wipe();
 	GenerateMnemonic msg = GenerateMnemonic_init_zero;
-	set_external_entropy_in_generate_mnemonic(&msg);
+	msg.word_count = MNEMONIC_WORD_COUNT_12;
+	msg.has_word_count = true;
 	msg.word_count = MNEMONIC_WORD_COUNT_12 + 1;
 	ErrCode_t ret = msgGenerateMnemonicImpl(&msg);
 	ck_assert_int_eq(ErrFailed, ret);
-}
-END_TEST
-
-START_TEST(test_msgGenerateMnemonicImplShouldHaveEngouthExternalEntropySize)
-{
-	storage_wipe();
-	GenerateMnemonic msg = GenerateMnemonic_init_zero;
-	msg.entropy.size = EXTERNAL_ENTROPY_SIZE - 1;
-	rand_entropy_buffer(msg.entropy.bytes, msg.entropy.size);
-	ck_assert_int_eq(ErrFailed, msgGenerateMnemonicImpl(&msg));
-}
-END_TEST
-
-START_TEST(test_msgGenerateMnemonicImplShouldHaveEngouthExternalEntropyLevel)
-{
-	storage_wipe();
-	GenerateMnemonic msg = GenerateMnemonic_init_zero;
-	msg.entropy.size = EXTERNAL_ENTROPY_SIZE;
-	for (int i = 0; i < msg.entropy.size; ++i) {
-		msg.entropy.bytes[i] = i % 5;
-	}
-	ck_assert_int_eq(ErrFailed, msgGenerateMnemonicImpl(&msg));
 }
 END_TEST
 
@@ -248,11 +217,5 @@ TCase *add_fsm_tests(TCase *tc)
 	tcase_add_test(tc, test_msgGetFeatures);
 	tcase_add_test(tc, test_msgApplySettingsLabelSuccessCheck);
 	tcase_add_test(tc, test_msgFeaturesLabelDefaultsToDeviceId);
-	tcase_add_test(
-		tc, 
-		test_msgGenerateMnemonicImplShouldHaveEngouthExternalEntropySize);
-	tcase_add_test(
-		tc, 
-		test_msgGenerateMnemonicImplShouldHaveEngouthExternalEntropyLevel);
 	return tc;
 }
