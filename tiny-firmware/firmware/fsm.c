@@ -47,7 +47,7 @@
 #include "droplet.h"
 #include "skyparams.h"
 
-static uint8_t msg_resp[MSG_OUT_SIZE] __attribute__ ((aligned));
+extern uint8_t msg_resp[MSG_OUT_SIZE] __attribute__ ((aligned));
 
 void fsm_sendSuccess(const char *text)
 {
@@ -446,9 +446,18 @@ void fsm_msgWipeDevice(WipeDevice *msg)
 }
 
 void fsm_msgGenerateMnemonic(GenerateMnemonic* msg) {
-	RESP_INIT(Success);
-	if(msgGenerateMnemonicImpl(msg) == ErrOk) {
-		fsm_sendSuccess(_("Mnemonic successfully configured"));
+	GET_MSG_POINTER(EntropyRequest, entropy_request);
+	switch (msgGenerateMnemonicImpl(msg)) {
+		case ErrOk:
+			fsm_sendSuccess(_("Mnemonic successfully configured"));
+			break;
+		case ErrLowEntropy:
+			msg_write(MessageType_MessageType_EntropyRequest, entropy_request);
+			break;
+		default:
+			fsm_sendFailure(FailureType_Failure_FirmwareError, 
+							_("Mnemonic generation failed"));
+			break;
 	}
 	layoutHome();
 }
@@ -611,9 +620,14 @@ void fsm_msgCancel(Cancel *msg)
 
 void fsm_msgEntropyAck(EntropyAck *msg)
 {
-	if (msg->has_entropy) {
-		reset_entropy(msg->entropy.bytes, msg->entropy.size);
-	} else {
-		reset_entropy(0, 0);
+	switch (msgEntropyAckImpl(msg)) {
+		case ErrResponseAlreadySent:
+			break;
+		case ErrOk:
+			fsm_sendSuccess(_("Recived entropy"));
+			break;
+		default:
+			fsm_sendFailure(FailureType_Failure_UnexpectedMessage, 
+							_("Unexpected entropy ack msg."));
 	}
 }

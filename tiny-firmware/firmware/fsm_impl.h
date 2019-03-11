@@ -13,13 +13,20 @@
 #define __TINYFIRMWARE_FIRMWARE_FSMIMPL_H__
 
 #include "messages.pb.h"
+#include "firmware/error.h"
+
+#define EXTERNAL_ENTROPY_MAX_SIZE 128
+#define MNEMONIC_WORD_COUNT_12 12
+#define MNEMONIC_WORD_COUNT_24 24
 
 // message methods
 
-#define RESP_INIT(TYPE) \
-			TYPE *resp = (TYPE *) (void *) msg_resp; \
+#define GET_MSG_POINTER(TYPE, VarName) \
+			TYPE *VarName = (TYPE *) (void *) msg_resp; \
 			_Static_assert(sizeof(msg_resp) >= sizeof(TYPE), #TYPE " is too large"); \
-			memset(resp, 0, sizeof(TYPE));
+			memset(VarName, 0, sizeof(TYPE));
+
+#define RESP_INIT(TYPE) GET_MSG_POINTER(TYPE, resp);
 
 #define CHECK_INITIALIZED \
 	if (!storage_isInitialized()) { \
@@ -64,10 +71,8 @@
 		return; \
 	}
 
-enum ErrCode{ErrOk = 0, ErrFailed};
-typedef enum ErrCode ErrCode_t;
-
 ErrCode_t msgGenerateMnemonicImpl(GenerateMnemonic* msg);
+ErrCode_t msgEntropyAckImpl(EntropyAck* msg);
 void msgSkycoinSignMessageImpl(SkycoinSignMessage* msg,
 							ResponseSkycoinSignMessage *msg_resp);
 ErrCode_t msgSignTransactionMessageImpl(uint8_t* message_digest, uint32_t index, 

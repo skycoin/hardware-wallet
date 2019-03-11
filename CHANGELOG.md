@@ -8,7 +8,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+- Use`protobuf` file definitions as a `git submodule` from http://github.com/skycoin/hardware-wallet-protob/
 - While building emulator specify path to SDL via `SDL_INCLUDE` environment variable.
+- Add a "Frequently Asked Question" file.
 - In `ApplySettings` message it is possible to set a label for identifying the device
 - Return device label in `GetFeatures` message.
 - If no label explicitly set it defaults to the same value of `device_ID` set in wipe function.
@@ -29,6 +31,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Removed
 
+- Installation instructions for `protobuf` related tools, use this from `hardware-wallet-protob` submodule.
 - Remove support to recover device from words matrix. The only support method is scrambled words.
 - Not possible to enforce BIP-39 wordlist during recovery process.
 - Not possible to perform dry-run recovery workflow (for safe mnemonic validation)

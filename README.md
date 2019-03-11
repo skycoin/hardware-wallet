@@ -5,21 +5,22 @@
 ## Table of contents
 
 <!-- MarkdownTOC levels="1,2,3,4,5" autolink="true" bracket="round" -->
-- [Ovwerview](#)
-- [Install tools](#)
-- [Build instructions:](#)
-  - [Build and run emulator](#)
-  - [Build a bootloader](#)
-  - [Build a bootloader with memory protection enabled](#)
-  - [Build a firmware](#)
-  - [Sign firmware](#)
-  - [Combine bootloader and firmware](#)
-  - [Combine a memory protected bootloader and firmware](#)
-- [Running tests](#)
-- [Releases](#)
+- [Overview](#overview)
+- [FAQ](#FAQ)
+- [Install tools](#install-tools)
+- [Build instructions:](#build-instructions)
+  - [Build and run emulator](#build-and-run-emulator)
+  - [Build a bootloader](#build-a-bootloader)
+  - [Build a bootloader with memory protection enabled](#build-a-bootloader-with-memory-protection-enabled)
+  - [Build a firmware](#build-a-firmware)
+  - [Sign firmware](#sign-firmware)
+  - [Combine bootloader and firmware](#combine-bootloader-and-firmware)
+  - [Combine a memory protected bootloader and firmware](#combine-a-memory-protected-bootloader-and-firmware)
+- [Running tests](#running-tests)
+- [Releases](#releases)
   - [Update the version](#update-the-version)
   - [Pre-release testing](#pre-release-testing)
-  - [Creating release builds](#)
+  - [Creating release builds](#creating-release-builds)
 <!-- /MarkdownTOC -->
 
 ## Overview
@@ -36,6 +37,10 @@ The [skycoin-cli](https://github.com/skycoin/hardware-wallet-go/) defines golang
 There is also a [javascript API](https://github.com/skycoin/hardware-wallet-js/).
 
 Follow up [the wiki](https://github.com/skycoin/hardware-wallet/wiki/Hardware-wallet-project-advancement) to keep track of project advancement.
+
+## FAQ
+
+[Frequently Asked Question](FAQ.md)
 
 ## Install tools
 
