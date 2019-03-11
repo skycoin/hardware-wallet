@@ -34,6 +34,15 @@ uint16_t buttonRead(void) {
 	if (scancodes[SDL_SCANCODE_RIGHT]) {
 		state |= BTN_PIN_YES;
 	}
+	if ( simulateButtonPress ) {
+		if ( buttonPressType == BTN_LEFT ) {
+			state |= BTN_PIN_NO;
+		} else if ( buttonPressType == BTN_RIGHT ) {
+			state |= BTN_PIN_YES;
+		} else if ( buttonPressType == BTN_LEFT_RIGHT ) {
+			state = BTN_PIN_NO | BTN_PIN_YES;
+		}
+	}
 #endif
 
 	return ~state;
