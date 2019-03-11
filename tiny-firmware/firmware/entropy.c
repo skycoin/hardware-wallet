@@ -30,10 +30,6 @@ static uint8_t make_histogram(
 	for (uint16_t i = 0; i < byte_posibilities; ++i) {
 		wherechar[i] = -1;
 	}
-	{GenerateMnemonic gmMsg;
-		_Static_assert(
-			sizeof(gmMsg.entropy.bytes) < 256, // 2^(size of uint8_t )
-			"entropy.bytes can acumulate more than len, histlen and/or hist[i]");}
 	uint8_t histlen = 0;
 	for (uint8_t i = 0; i < bytes_size; ++i) {
 		if (wherechar[bytes[i]] == -1) {
