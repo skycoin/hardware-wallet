@@ -443,7 +443,7 @@ void fsm_msgWipeDevice(WipeDevice *msg)
 
 void fsm_msgGenerateMnemonic(GenerateMnemonic* msg) {
 	GET_MSG_POINTER(EntropyRequest, entropy_request);
-	switch (msgGenerateMnemonicImpl(msg)) {
+	switch (msgGenerateMnemonicImpl(msg, &random_buffer)) {
 		case ErrOk:
 			fsm_sendSuccess(_("Mnemonic successfully configured"));
 			break;

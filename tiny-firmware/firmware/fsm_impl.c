@@ -74,7 +74,9 @@ ErrCode_t msgEntropyAckImpl(EntropyAck* msg) {
 	return ret;
 }
 
-ErrCode_t msgGenerateMnemonicImpl(GenerateMnemonic* msg) {
+ErrCode_t msgGenerateMnemonicImpl(
+		GenerateMnemonic* msg,
+		void (*random_buffer_func)(uint8_t *buf, size_t len)) {
 	CHECK_NOT_INITIALIZED_RET_ERR_CODE
 	strength = MNEMONIC_STRENGTH_12;
 	if (msg->has_word_count) {
@@ -89,7 +91,7 @@ ErrCode_t msgGenerateMnemonicImpl(GenerateMnemonic* msg) {
 				return ErrInvalidArg;
 		}
 	}
-	random_buffer(int_entropy, sizeof(int_entropy));
+	random_buffer_func(int_entropy, sizeof(int_entropy));
 	if (verify_entropy(int_entropy, sizeof(int_entropy)) != ErrOk) {
 		awaiting_entropy = true;
 		if (msg->has_passphrase_protection) {
