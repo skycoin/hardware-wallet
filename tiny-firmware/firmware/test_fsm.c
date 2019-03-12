@@ -82,7 +82,7 @@ START_TEST(test_msgGenerateMnemonicImplShouldFailForWrongSeedCount)
 	msg.has_word_count = true;
 	msg.word_count = MNEMONIC_WORD_COUNT_12 + 1;
 	ErrCode_t ret = msgGenerateMnemonicImpl(&msg, &random_buffer);
-	ck_assert_int_eq(ErrFailed, ret);
+	ck_assert_int_eq(ErrInvalidArg, ret);
 }
 END_TEST
 
