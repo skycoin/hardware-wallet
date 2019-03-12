@@ -48,13 +48,13 @@ _Static_assert(sizeof (enum ErrCategory) == 1, "One byte as max for package");
  * @brief The ErrCode enum
  */
 enum ErrCode {
-	ErrOk =                ERROR_CODE(PkgGeneric, ReasonSuccess),  /*!< Operation completed successfully */
-	ErrFailed =            ERROR_CODE(PkgGeneric, ReasonUnknown),  /*!< Generic failure */
-	ErrInvalidArg =        ERROR_CODE(PkgGeneric, ReasonArgumentError),  /*!< Invalid argument */
-	ErrIndexValue =        ERROR_CODE(PkgGeneric, ReasonOutOfBounds),  /*!< Index out of bounds */
-	ErrInvalidValue =        ERROR_CODE(PkgGeneric, ReasonValueError),  /*!< Invalid value */
-	ErrLowEntropy =        ERROR_CODE(PkgEntropy, ReasonArgumentError),  /*!< Buffer entropy under 4.0 bits/symbol */
-	ErrUnexpectedMessage = ERROR_CODE(PkgServer, ReasonInvalidState),  /*! < Server state loses path */
+	ErrOk =						ERROR_CODE(PkgGeneric, ReasonSuccess),  /*!< Operation completed successfully */
+	ErrFailed =					ERROR_CODE(PkgGeneric, ReasonUnknown),  /*!< Generic failure */
+	ErrInvalidArg =				ERROR_CODE(PkgGeneric, ReasonArgumentError),  /*!< Invalid argument */
+	ErrIndexValue =				ERROR_CODE(PkgGeneric, ReasonOutOfBounds),  /*!< Index out of bounds */
+	ErrInvalidValue =			ERROR_CODE(PkgGeneric, ReasonValueError),  /*!< Invalid value */
+	ErrLowEntropy =				ERROR_CODE(PkgEntropy, ReasonArgumentError),  /*!< Buffer entropy under 4.0 bits/symbol */
+	ErrUnexpectedMessage =		ERROR_CODE(PkgServer, ReasonInvalidState),  /*! < Server state loses path */
 };
 typedef enum ErrCode ErrCode_t;
 _Static_assert(sizeof (ErrCode_t) == 4, "One byte as max for package");

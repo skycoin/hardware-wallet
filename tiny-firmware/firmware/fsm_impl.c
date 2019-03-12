@@ -50,6 +50,7 @@ uint8_t msg_resp[MSG_OUT_SIZE] __attribute__ ((aligned));
 extern bool awaiting_entropy;
 extern uint32_t strength;
 extern bool     skip_backup;
+extern uint8_t  int_entropy[INTERNAL_ENTROPY_SIZE];
 static bool has_passphrase_protection;
 static bool passphrase_protection;
 
@@ -88,7 +89,6 @@ ErrCode_t msgGenerateMnemonicImpl(GenerateMnemonic* msg) {
 				return ErrInvalidArg;
 		}
 	}
-	uint8_t int_entropy[INTERNAL_ENTROPY_SIZE];
 	random_buffer(int_entropy, sizeof(int_entropy));
 	if (verify_entropy(int_entropy, sizeof(int_entropy)) != ErrOk) {
 		awaiting_entropy = true;

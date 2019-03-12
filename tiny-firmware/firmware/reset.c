@@ -32,7 +32,7 @@
 #include "gettext.h"
 
 uint32_t strength;
-static uint8_t  int_entropy[32];
+uint8_t  int_entropy[32];
 bool     awaiting_entropy = false;
 bool     skip_backup = false;
 
