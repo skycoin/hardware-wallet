@@ -13,21 +13,21 @@
 
 #include <string.h>
 
-#include "messages.pb.h"
+#include "protob/c/messages.pb.h"
 
 /**
- * @brief make_histogram create a histogram in plce from bytes
- * @param bytes source to build the histogram
- * @param bytes_size size of source bites
+ * @brief make_histogram create a histogram in place from bytes
+ * @param bytes source to build the histogram from
+ * @param bytes_size size of source bytes
  * @param hist output variable to fill with histogram values
  * @return the histogram length
  */
-static uint8_t make_histogram(
+uint8_t make_histogram(
 	const uint8_t* const bytes, uint16_t bytes_size, uint8_t *hist) {
-	// NOTE(denisacostaq@gmail.com): byte_posibilities = 2^sizeof(S[0])
-	const uint16_t byte_posibilities = 256;
-	int wherechar[byte_posibilities];
-	for (uint16_t i = 0; i < byte_posibilities; ++i) {
+	// NOTE(denisacostaq@gmail.com): byte_posibilities = 2^sizeof(bytes[0])
+	const uint8_t byte_posibilities = 255; // +1, 0-255
+	int32_t wherechar[byte_posibilities];
+	for (uint16_t i = 0; i <= byte_posibilities; ++i) {
 		wherechar[i] = -1;
 	}
 	uint8_t histlen = 0;
@@ -41,64 +41,82 @@ static uint8_t make_histogram(
 }
 
 /**
- * @brief compute an integer entropy factor in a giving histogram
- * @param hist histogram to mesure the entropy from
- * @param histlen histogram length
- * @param len amount of symbols
- * @return the Shannon entropy (bits/symbol)
+ * @brief entropy return the entropy from a given histogram
+ * @param hist histogram to measure the entropy from (count values in formula)
+ * @param histlen histogram length (<strong>n</strong> in formula)
+ * @param len amount of symbols (<strong>N</strong> in formula)
+ * @details Given the discrete random variable <strong>X</strong> that is an 
+ * @details array of <strong>N</strong> "symbols" (total characters) consisting 
+ * @details of <strong>n</strong> different characters (n=2 for binary), 
+ * @details the Shannon entropy of X in bits/symbol is:
+ * @details \f{eqnarray*}{
+	H(x)=-\sum_i^n\frac{count_{i}}{N}\log_{2}{\frac{count_{i}}{N}}
+\f}
+ * @details where <strong>count_{i}</strong> is the count of character 
+ * @details <strong>n_{i}</strong>.
+ * @details In this implementation, the shanon entropy equation is modified as 
+ * @details follow (to avoid floating point aritmetics in a microcontroller 
+ * @details without FPU):
+ * @details \f{eqnarray*}{
+	H(x)=-\sum_i^n\frac{count_{i}}{N}\log_{2}{\frac{count_{i}}{N}} \\
+	100H(x)=-100\sum_i^n\frac{count_{i}}{N}\log_{2}{\frac{count_{i}}{N}} \\
+	100H(x)=-\sum_i^n\frac{count_{i}}{N}100\log_{2}{\frac{count_{i}}{N}} \\
+	100H(x)=-\sum_i^n\frac{count_{i}}{N}100(\log_{2}count_{i} - \log_{2}{N}) \\
+	100H(x)=-\sum_i^n\frac{count_{i}}{N}(100\log_{2}count_{i} - 100\log_{2}{N}) \\
+	100H(x)=-\frac{1}{N}\sum_i^ncount_{i}(100\log_{2}count_{i} - 100\log_{2}{N}) \\
+	100H(x)N=-\sum_i^ncount_{i}(100\log_{2}count_{i} - 100\log_{2}{N})
+\f}
+ * @return the Shannon entropy (bits/symbol) multiplied by 100 and by len
  * @sa https://rosettacode.org/wiki/Entropy
  */
-static uint64_t entropy_factor(
+int32_t entropy_factor(
 	const uint8_t *const hist, uint8_t histlen, uint16_t len) {
-	// Python : nlogn = [x * math.log2(x) * 100 for x in range(256) ]
-	static uint32_t nlog[256] = {
-		0, 0, 200, 475, 800, 1160, 1550, 1965, 2400, 2852, 3321,
-		3805, 4301, 4810, 5330, 5860, 6400, 6948, 7505, 8071, 8643,
-		9223, 9810, 10404, 11003, 11609, 12221, 12838, 13460, 14088, 14720,
-		15358, 16000, 16646, 17297, 17952, 18611, 19274, 19942, 20613, 21287,
-		21965, 22647, 23332, 24021, 24713, 25408, 26106, 26807, 27512, 28219,
-		28929, 29642, 30357, 31076, 31797, 32521, 33247, 33976, 34707, 35441,
-		36177, 36916, 37656, 38400, 39145, 39893, 40642, 41394, 42148, 42904,
-		43663, 44423, 45185, 45949, 46716, 47484, 48254, 49026, 49799, 50575,
-		51352, 52131, 52912, 53695, 54479, 55265, 56053, 56842, 57634, 58426,
-		59220, 60016, 60814, 61613, 62413, 63215, 64019, 64824, 65630, 66438,
-		67247, 68058, 68870, 69684, 70499, 71315, 72133, 72952, 73773, 74594,
-		75418, 76242, 77068, 77894, 78723, 79552, 80383, 81215, 82048, 82882,
-		83718, 84554, 85392, 86232, 87072, 87913, 88756, 89600, 90444, 91290,
-		92137, 92986, 93835, 94685, 95537, 96389, 97243, 98097, 98953, 99809,
-		100667, 101526, 102386, 103246, 104108, 104971, 105835, 106699, 107565, 108432,
-		109299, 110168, 111038, 111908, 112779, 113652, 114525, 115399, 116274, 117150,
-		118027, 118905, 119784, 120663, 121544, 122425, 123307, 124190, 125074, 125959,
-		126845, 127731, 128619, 129507, 130396, 131285, 132176, 133068, 133960, 134853,
-		135747, 136641, 137537, 138433, 139330, 140228, 141126, 142026, 142926, 143827,
-		144728, 145631, 146534, 147438, 148342, 149248, 150154, 151061, 151968, 152877,
-		153786, 154695, 155606, 156517, 157429, 158341, 159255, 160169, 161083, 161999,
-		162915, 163831, 164749, 165667, 166586, 167505, 168425, 169346, 170267, 171189,
-		172112, 173036, 173960, 174884, 175810, 176736, 177662, 178589, 179517, 180446,
-		181375, 182305, 183235, 184166, 185098, 186030, 186963, 187896, 188830, 189765,
-		190700, 191636, 192572, 193509, 194447, 195385, 196324, 197264, 198204, 199144,
-		200085, 201027, 201969, 202912, 203856
+	// Python : log2_100 = [math.round(math.log2(x) * 100) for x in range(256)]
+	static const uint16_t log2_100[] = {
+		0,   0,   100, 158, 200, 232, 258, 281, 300, 317, 332, 346, 358, 370, 
+		381, 391, 400, 409, 417, 425, 432, 439, 446, 452, 458, 464, 470, 475, 
+		481, 486, 491, 495, 500, 504, 509, 513, 517, 521, 525, 529, 532, 536, 
+		539, 543, 546, 549, 552, 555, 558, 561, 564, 567, 570, 573, 575, 578, 
+		581, 583, 586, 588, 591, 593, 595, 598, 600, 602, 604, 607, 609, 611, 
+		613, 615, 617, 619, 621, 623, 625, 627, 629, 630, 632, 634, 636, 638, 
+		639, 641, 643, 644, 646, 648, 649, 651, 652, 654, 655, 657, 658, 660, 
+		661, 663, 664, 666, 667, 669, 670, 671, 673, 674, 675, 677, 678, 679, 
+		681, 682, 683, 685, 686, 687, 688, 689, 691, 692, 693, 694, 695, 697, 
+		698, 699, 700, 701, 702, 703, 704, 706, 707, 708, 709, 710, 711, 712, 
+		713, 714, 715, 716, 717, 718, 719, 720, 721, 722, 723, 724, 725, 726, 
+		727, 728, 729, 729, 730, 731, 732, 733, 734, 735, 736, 737, 738, 738, 
+		739, 740, 741, 742, 743, 743, 744, 745, 746, 747, 748, 748, 749, 750, 
+		751, 752, 752, 753, 754, 755, 755, 756, 757, 758, 758, 759, 760, 761, 
+		761, 762, 763, 764, 764, 765, 766, 767, 767, 768, 769, 769, 770, 771,
+		771, 772, 773, 773, 774, 775, 775, 776, 777, 777, 778, 779, 779, 780, 
+		781, 781, 782, 783, 783, 784, 785, 785, 786, 786, 787, 788, 788, 789, 
+		789, 790, 791, 791, 792, 792, 793, 794, 794, 795, 795, 796, 797, 797, 
+		798, 798, 799, 799
 	};
-	uint64_t sum = 0;
-	uint64_t log_len = nlog[len] /	(100 * (uint64_t) len);
+	_Static_assert(
+		sizeof (log2_100)/sizeof (log2_100[0]) == 256, 
+		"Should have defined log2 in 0:255 range");
+	int32_t sum = 0; // max asigned value could be 52363264
+	uint16_t log2_len = log2_100[len];
 	for (uint8_t i = 0; i < histlen; ++i) {
-		uint64_t hval = hist[i];
-		sum += hval * log_len - nlog[hval];
+		sum -= hist[i] * (log2_100[hist[i]] - log2_len);
 	}
 	return sum;
 }
 
 /**
  * @brief verify_entropy says if a bytes distribution have enough entropy
- * @param bytes the bytes to mesur the entropy
+ * @param bytes the bytes to measure the entropy
  * @param size the size of bytes
  * @return an error if not fit minimal entropy required
- * @sa entropy, make_histogram
+ * @sa entropy_factor, make_histogram
  */
-ErrCode_t verify_entropy(const uint8_t* const bytes, uint64_t size) {
+ErrCode_t verify_entropy(const uint8_t* const bytes, uint16_t size) {
 	uint8_t hist[size];
 	memset(hist, 0, size);
 	uint8_t histlen = make_histogram(bytes, size, hist);
-	uint64_t entr = entropy_factor(hist, histlen, size);
-	return (entr < size << 2) ? ErrLowEntropy : ErrOk;
+	int32_t entr = entropy_factor(hist, histlen, size);
+	// NOTE(denisacostaq@gmail.com): multiplied by 100 and by size as specified 
+	// in entropy factor
+	return entr < 400 * size ? ErrFailed : ErrOk;
 }

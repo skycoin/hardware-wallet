@@ -20,10 +20,11 @@
 enum ErrMode {
 	ReasonSuccess = 0, /*!< Success */
 	ReasonUnknown = 0xFFF, /*!< Reason unknown */
-	ReasonValueError = 1, /*!< Unexpected or invalid value */
+	ReasonArgumentError = 1, /*!< Unexpected or invalid argument */
 	ReasonOutOfBounds = 2, /*!< Value out of bounds */
 	ReasonInvalidState = 3, /*!< The system get in an invalid state, for example a syc problem in server implementation */
 	ReasonNotUefulResult = 4, /*!< The result value is not useful */
+	ReasonValueError = 5, /*!< Unexpected or invalid value */
 };
 
 // 32-bits error constants are structured as folows:
@@ -47,13 +48,13 @@ _Static_assert(sizeof (enum ErrCategory) == 1, "One byte as max for package");
  * @brief The ErrCode enum
  */
 enum ErrCode {
-	ErrOk =                ERROR_CODE(PkgGeneric, ReasonSuccess),  /*!< Operation completed successfully */
-	ErrFailed =            ERROR_CODE(PkgGeneric, ReasonUnknown),  /*!< Generic failure */
-	ErrInvalidArg =        ERROR_CODE(PkgGeneric, ReasonValueError),  /*!< Invalid argument */
-	ErrIndexValue =        ERROR_CODE(PkgGeneric, ReasonOutOfBounds),  /*!< Index out of bounds */
-	ErrLowEntropy =        ERROR_CODE(PkgEntropy, ReasonOutOfBounds),  /*!< Buffer entropy under 4.0 bits/symbol */
-	ErrUnexpectedMessage = ERROR_CODE(PkgServer, ReasonInvalidState),  /*! < Server state loses path */
-	ErrResponseAlreadySent = ERROR_CODE(PkgServer, ReasonNotUefulResult),  /*! < Do not use the return value from this context */
+	ErrOk =						ERROR_CODE(PkgGeneric, ReasonSuccess),  /*!< Operation completed successfully */
+	ErrFailed =					ERROR_CODE(PkgGeneric, ReasonUnknown),  /*!< Generic failure */
+	ErrInvalidArg =				ERROR_CODE(PkgGeneric, ReasonArgumentError),  /*!< Invalid argument */
+	ErrIndexValue =				ERROR_CODE(PkgGeneric, ReasonOutOfBounds),  /*!< Index out of bounds */
+	ErrInvalidValue =			ERROR_CODE(PkgGeneric, ReasonValueError),  /*!< Invalid value */
+	ErrLowEntropy =				ERROR_CODE(PkgEntropy, ReasonArgumentError),  /*!< Buffer entropy under 4.0 bits/symbol */
+	ErrUnexpectedMessage =		ERROR_CODE(PkgServer, ReasonInvalidState),  /*! < Server state loses path */
 };
 typedef enum ErrCode ErrCode_t;
 _Static_assert(sizeof (ErrCode_t) == 4, "One byte as max for package");

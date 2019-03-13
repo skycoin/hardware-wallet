@@ -71,7 +71,9 @@
 		return; \
 	}
 
-ErrCode_t msgGenerateMnemonicImpl(GenerateMnemonic* msg);
+ErrCode_t msgGenerateMnemonicImpl(
+		GenerateMnemonic* msg,
+		void (*random_buffer_func)(uint8_t *buf, size_t len));
 ErrCode_t msgEntropyAckImpl(EntropyAck* msg);
 void msgSkycoinSignMessageImpl(SkycoinSignMessage* msg,
 							ResponseSkycoinSignMessage *msg_resp);
