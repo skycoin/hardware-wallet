@@ -31,10 +31,10 @@
 #include "util.h"
 #include "gettext.h"
 
-static uint32_t strength;
-static uint8_t  int_entropy[32];
-static bool     awaiting_entropy = false;
-static bool     skip_backup = false;
+uint32_t strength;
+uint8_t  int_entropy[32];
+bool     awaiting_entropy = false;
+bool     skip_backup = false;
 
 void reset_init(bool display_random, uint32_t _strength, bool passphrase_protection, bool pin_protection, const char *language, const char *label, bool _skip_backup)
 {
@@ -77,11 +77,10 @@ void reset_init(bool display_random, uint32_t _strength, bool passphrase_protect
 	awaiting_entropy = true;
 }
 
-void reset_entropy(const uint8_t *ext_entropy, uint32_t len)
+ErrCode_t reset_entropy(const uint8_t *ext_entropy, uint32_t len)
 {
 	if (!awaiting_entropy) {
-		fsm_sendFailure(FailureType_Failure_UnexpectedMessage, _("Not in Reset mode"));
-		return;
+		return ErrUnexpectedMessage;
 	}
 	SHA256_CTX ctx;
 	sha256_Init(&ctx);
@@ -89,18 +88,20 @@ void reset_entropy(const uint8_t *ext_entropy, uint32_t len)
 	sha256_Update(&ctx, ext_entropy, len);
 	sha256_Final(&ctx, int_entropy);
 	storage_setNeedsBackup(true);
-	storage_setMnemonic(mnemonic_from_data(int_entropy, strength / 8));
+	const char *mnemonic = mnemonic_from_data(int_entropy, strength / 8);
+	if (!mnemonic_check(mnemonic)) {
+		return ErrInvalidValue;
+	}
+	storage_setMnemonic(mnemonic);
 	memset(int_entropy, 0, 32);
 	awaiting_entropy = false;
 
 	if (skip_backup) {
 		storage_update();
-		fsm_sendSuccess(_("Device successfully initialized"));
-		layoutHome();
 	} else {
 		reset_backup(false);
 	}
-
+	return ErrOk;
 }
 
 static char current_word[10];

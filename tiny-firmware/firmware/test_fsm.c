@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <time.h>
 
 #include <pb_encode.h>
 #include <pb_decode.h>
@@ -22,22 +23,26 @@
 #include "messages.h"
 #include "setup.h"
 #include "storage.h"
+#include "rng.h"
 
 #include "test_fsm.h"
 
 static uint8_t msg_resp[MSG_OUT_SIZE] __attribute__ ((aligned));
 
-#define setup_tc_fsm setup
+void setup_tc_fsm(void) {
+	srand(time(NULL));
+	setup();
+}
 
-void teardown_tc_fsm(void)
-{
+void teardown_tc_fsm(void) {
 }
 
 void forceGenerateMnemonic(void) {
 	storage_wipe();
 	GenerateMnemonic msg = GenerateMnemonic_init_zero;
-	msg.word_count = 12;
-	msgGenerateMnemonicImpl(&msg);
+	msg.word_count = MNEMONIC_WORD_COUNT_12;
+	msg.has_word_count = true;
+	ck_assert_int_eq(ErrOk, msgGenerateMnemonicImpl(&msg, &random_buffer));
 }
 
 bool is_a_base16_caharacter(char c) {
@@ -51,8 +56,9 @@ START_TEST(test_msgGenerateMnemonicImplOk)
 {
 	storage_wipe();
 	GenerateMnemonic msg = GenerateMnemonic_init_zero;
-	msg.word_count = 12;
-	ErrCode_t ret = msgGenerateMnemonicImpl(&msg);
+	msg.word_count = MNEMONIC_WORD_COUNT_12;
+	msg.has_word_count = true;
+	ErrCode_t ret = msgGenerateMnemonicImpl(&msg, &random_buffer);
 	ck_assert_int_eq(ErrOk, ret);
 }
 END_TEST
@@ -61,8 +67,10 @@ START_TEST(test_msgGenerateMnemonicImplShouldFailIfItWasDone)
 {
 	storage_wipe();
 	GenerateMnemonic msg = GenerateMnemonic_init_zero;
-	msgGenerateMnemonicImpl(&msg);
-	ErrCode_t ret = msgGenerateMnemonicImpl(&msg);
+	msg.word_count = MNEMONIC_WORD_COUNT_12;
+	msg.has_word_count = true;
+	msgGenerateMnemonicImpl(&msg, &random_buffer);
+	ErrCode_t ret = msgGenerateMnemonicImpl(&msg, &random_buffer);
 	ck_assert_int_eq(ErrFailed, ret);
 }
 END_TEST
@@ -71,9 +79,42 @@ START_TEST(test_msgGenerateMnemonicImplShouldFailForWrongSeedCount)
 {
 	storage_wipe();
 	GenerateMnemonic msg = GenerateMnemonic_init_zero;
-	msg.word_count = 17;
-	ErrCode_t ret = msgGenerateMnemonicImpl(&msg);
-	ck_assert_int_eq(ErrFailed, ret);
+	msg.has_word_count = true;
+	msg.word_count = MNEMONIC_WORD_COUNT_12 + 1;
+	ErrCode_t ret = msgGenerateMnemonicImpl(&msg, &random_buffer);
+	ck_assert_int_eq(ErrInvalidArg, ret);
+}
+END_TEST
+
+START_TEST(test_msgEntropyAckImplFailAsExpectedForSyncProblemInProtocol)
+{
+	storage_wipe();
+	EntropyAck msg = EntropyAck_init_zero;
+	msg.has_entropy = true;
+	char entropy[EXTERNAL_ENTROPY_MAX_SIZE] = {0};
+	memcpy(msg.entropy.bytes, entropy, sizeof (entropy));
+	ErrCode_t ret = msgEntropyAckImpl(&msg/*, &random_buffer*/);
+	ck_assert_int_eq(ErrUnexpectedMessage, ret);
+}
+END_TEST
+
+static void random_buffer_with_low_entropy(uint8_t *buf, size_t len) {
+	for (size_t i = 0; i < len; ++i) {
+		buf[i] = i % 5;
+	}
+}
+
+START_TEST(test_msgGenerateMnemonicEntropyAckSequenceShouldBeOk)
+{
+	storage_wipe();
+	GenerateMnemonic gnMsg = GenerateMnemonic_init_zero;
+	ck_assert_int_eq(
+		ErrLowEntropy, 
+		msgGenerateMnemonicImpl(&gnMsg, &random_buffer_with_low_entropy));
+	EntropyAck eaMsg = EntropyAck_init_zero;
+	eaMsg.has_entropy = true;
+	random_buffer(eaMsg.entropy.bytes, 32);
+	ck_assert_int_eq(ErrOk, msgEntropyAckImpl(&eaMsg));
 }
 END_TEST
 
@@ -206,5 +247,9 @@ TCase *add_fsm_tests(TCase *tc)
 	tcase_add_test(tc, test_msgGetFeatures);
 	tcase_add_test(tc, test_msgApplySettingsLabelSuccessCheck);
 	tcase_add_test(tc, test_msgFeaturesLabelDefaultsToDeviceId);
+	tcase_add_test(
+		tc, 
+		test_msgEntropyAckImplFailAsExpectedForSyncProblemInProtocol);
+	tcase_add_test(tc, test_msgGenerateMnemonicEntropyAckSequenceShouldBeOk);
 	return tc;
 }

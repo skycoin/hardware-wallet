@@ -39,31 +39,79 @@
 #include "skycoin_check_signature.h"
 #include "check_digest.h"
 #include "storage.h"
+#include "entropy.h"
 
 #define MNEMONIC_STRENGTH_12 128
 #define MNEMONIC_STRENGTH_24 256
+#define INTERNAL_ENTROPY_SIZE 32
 
-ErrCode_t msgGenerateMnemonicImpl(GenerateMnemonic* msg) {
- 	CHECK_NOT_INITIALIZED_RET_ERR_CODE	    
-  if (msg->word_count != 12 && msg->word_count != 24) {
-		fsm_sendFailure(FailureType_Failure_DataError, _("Invalid number of words for mnemonic"));
-		return ErrFailed;
-  }
-	int strength = (msg->word_count == 24)? MNEMONIC_STRENGTH_24 : MNEMONIC_STRENGTH_12 ;
-	const char* mnemonic = mnemonic_generate(strength);
-	if (mnemonic == 0) {
-		fsm_sendFailure(FailureType_Failure_ProcessError, _("Device could not generate a Mnemonic"));
-		return ErrFailed;
+uint8_t msg_resp[MSG_OUT_SIZE] __attribute__ ((aligned));
+
+extern bool awaiting_entropy;
+extern uint32_t strength;
+extern bool     skip_backup;
+extern uint8_t  int_entropy[INTERNAL_ENTROPY_SIZE];
+static bool has_passphrase_protection;
+static bool passphrase_protection;
+
+ErrCode_t msgEntropyAckImpl(EntropyAck* msg) {
+	_Static_assert(EXTERNAL_ENTROPY_MAX_SIZE == sizeof(msg->entropy.bytes),
+					"External entropy size does not match.");
+	const bool skip_backup_saved = skip_backup;
+	skip_backup = true;
+	ErrCode_t ret;
+	if (msg->has_entropy) {
+		ret = reset_entropy(msg->entropy.bytes, msg->entropy.size);
+	} else {
+		ret = reset_entropy(0, 0);
 	}
-	if (!mnemonic_check(mnemonic)) {
-		fsm_sendFailure(FailureType_Failure_DataError, _("Mnemonic with wrong checksum provided"));
-		return ErrFailed;
+	if (has_passphrase_protection) {
+		storage_setPassphraseProtection(passphrase_protection);
+		storage_update();
 	}
-	storage_setMnemonic(mnemonic);
-	storage_setNeedsBackup(true);
-	storage_setPassphraseProtection(msg->has_passphrase_protection && msg->passphrase_protection);
-	storage_update();
-	return ErrOk;
+	skip_backup = skip_backup_saved;
+	has_passphrase_protection = false;
+	return ret;
+}
+
+ErrCode_t msgGenerateMnemonicImpl(
+		GenerateMnemonic* msg,
+		void (*random_buffer_func)(uint8_t *buf, size_t len)) {
+	CHECK_NOT_INITIALIZED_RET_ERR_CODE
+	strength = MNEMONIC_STRENGTH_12;
+	if (msg->has_word_count) {
+		switch (msg->word_count) {
+			case MNEMONIC_WORD_COUNT_12:
+				strength = MNEMONIC_STRENGTH_12;
+				break;
+			case MNEMONIC_WORD_COUNT_24:
+				strength = MNEMONIC_STRENGTH_24;
+				break;
+			default:
+				return ErrInvalidArg;
+		}
+	}
+	random_buffer_func(int_entropy, sizeof(int_entropy));
+	if (verify_entropy(int_entropy, sizeof(int_entropy)) != ErrOk) {
+		awaiting_entropy = true;
+		if (msg->has_passphrase_protection) {
+			has_passphrase_protection = msg->has_passphrase_protection;
+			passphrase_protection = msg->passphrase_protection;
+		}
+		return ErrLowEntropy;
+	}
+	const char* mnemonic = mnemonic_from_data(int_entropy, strength / 8);
+	if (mnemonic && mnemonic_check(mnemonic)) {
+		storage_setMnemonic(mnemonic);
+		storage_setNeedsBackup(true);
+		storage_setPassphraseProtection(
+					msg->has_passphrase_protection
+					&& msg->passphrase_protection);
+		memset(int_entropy, 0, sizeof(int_entropy));
+		storage_update();
+		return ErrOk;
+	}
+	return ErrInvalidValue;
 }
 
 
@@ -85,7 +133,7 @@ void msgSkycoinSignMessageImpl(SkycoinSignMessage* msg,
 		writebuf_fromhexstr(msg->message, digest);
 	}
 	uint8_t signature[65];
-	int res = ecdsa_skycoin_sign(rand(), seckey, digest, signature);
+	int res = ecdsa_skycoin_sign(random32(), seckey, digest, signature);
 	if (res == 0) {
 		layoutRawMessage("Signature success");
 	} else {
@@ -105,7 +153,7 @@ ErrCode_t msgSignTransactionMessageImpl(uint8_t* message_digest, uint32_t index,
 	uint8_t signature[65];
 	int res = ErrOk;
 	fsm_getKeyPairAtIndex(1, pubkey, seckey, NULL, index);
-	if (ecdsa_skycoin_sign(rand(), seckey, message_digest, signature)) {
+	if (ecdsa_skycoin_sign(random32(), seckey, message_digest, signature)) {
 		res = ErrFailed;
 	}
 	tohex(signed_message, signature, sizeof(signature));

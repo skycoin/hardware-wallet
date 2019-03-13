@@ -47,7 +47,7 @@
 #include "droplet.h"
 #include "skyparams.h"
 
-static uint8_t msg_resp[MSG_OUT_SIZE] __attribute__ ((aligned));
+extern uint8_t msg_resp[MSG_OUT_SIZE] __attribute__ ((aligned));
 
 void fsm_sendSuccess(const char *text)
 {
@@ -442,9 +442,29 @@ void fsm_msgWipeDevice(WipeDevice *msg)
 }
 
 void fsm_msgGenerateMnemonic(GenerateMnemonic* msg) {
-	RESP_INIT(Success);
-	if(msgGenerateMnemonicImpl(msg) == ErrOk) {
-		fsm_sendSuccess(_("Mnemonic successfully configured"));
+	GET_MSG_POINTER(EntropyRequest, entropy_request);
+	switch (msgGenerateMnemonicImpl(msg, &random_buffer)) {
+		case ErrOk:
+			fsm_sendSuccess(_("Mnemonic successfully configured"));
+			break;
+		case ErrInvalidArg:
+			fsm_sendFailure(
+						FailureType_Failure_DataError,
+						_("Invalid word count expecified, the valid options are"
+						" 12 or 24."));
+			break;
+		case ErrLowEntropy:
+			msg_write(MessageType_MessageType_EntropyRequest, entropy_request);
+			break;
+		case ErrInvalidValue:
+			fsm_sendFailure(
+						FailureType_Failure_ProcessError,
+						_("Device could not generate a valid Mnemonic"));
+			break;
+		default:
+			fsm_sendFailure(FailureType_Failure_FirmwareError, 
+							_("Mnemonic generation failed"));
+			break;
 	}
 	layoutHome();
 }
@@ -607,9 +627,22 @@ void fsm_msgCancel(Cancel *msg)
 
 void fsm_msgEntropyAck(EntropyAck *msg)
 {
-	if (msg->has_entropy) {
-		reset_entropy(msg->entropy.bytes, msg->entropy.size);
-	} else {
-		reset_entropy(0, 0);
+	switch (msgEntropyAckImpl(msg)) {
+		case ErrOk:
+			fsm_sendSuccess(_("Recived entropy"));
+			break;
+		case ErrInvalidValue:
+			fsm_sendFailure(
+						FailureType_Failure_ProcessError,
+						_("Device could not generate a valid Mnemonic"));
+			break;
+		case ErrUnexpectedMessage:
+			fsm_sendFailure(FailureType_Failure_UnexpectedMessage, 
+							_("Unexpected entropy ack msg."));
+			break;
+		default:
+			fsm_sendFailure(FailureType_Failure_UnexpectedMessage, 
+							_("Entropy ack failed."));
 	}
+	layoutHome();
 }

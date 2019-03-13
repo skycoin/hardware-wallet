@@ -14,9 +14,8 @@ char *sprint_coins(uint64_t coins, int precision_exp, size_t sz, char *msg) {
     if (sz > 0) {
       *(--ptr) = '0';
       return ptr;
-    } else {
-      return NULL;
     }
+    return NULL;
   }
   // Skip least significant decimal digits
   for (--ptr, div = coins, mod = 0; mod == 0 && precision_exp > 0; --precision_exp) {

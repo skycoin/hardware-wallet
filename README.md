@@ -6,6 +6,7 @@
 
 <!-- MarkdownTOC levels="1,2,3,4,5" autolink="true" bracket="round" -->
 - [Overview](#overview)
+- [FAQ](#FAQ)
 - [Install tools](#install-tools)
 - [Build instructions:](#build-instructions)
   - [Build and run emulator](#build-and-run-emulator)
@@ -36,6 +37,10 @@ The [skycoin-cli](https://github.com/skycoin/hardware-wallet-go/) defines golang
 There is also a [javascript API](https://github.com/skycoin/hardware-wallet-js/).
 
 Follow up [the wiki](https://github.com/skycoin/hardware-wallet/wiki/Hardware-wallet-project-advancement) to keep track of project advancement.
+
+## FAQ
+
+[Frequently Asked Question](FAQ.md)
 
 ## Install tools
 
