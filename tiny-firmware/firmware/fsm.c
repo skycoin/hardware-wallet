@@ -1,5 +1,5 @@
 /*
- * This file is part of the Skycoin project, https://skycoin.net/ 
+ * This file is part of the Skycoin project, https://skycoin.net/
  *
  * Copyright (C) 2014 Pavol Rusnak <stick@satoshilabs.com>
  * Copyright (C) 2018-2019 Skycoin Project
@@ -48,6 +48,20 @@
 #include "skyparams.h"
 
 extern uint8_t msg_resp[MSG_OUT_SIZE] __attribute__ ((aligned));
+
+void verifyLanguage(char *lang) {
+	int len = strlen(lang);
+	int spaces = 0, i;
+	for (i = 0; i < len; ++i) {
+		if ( ('a' <= lang[i] && lang[i] <= 'z') || ('A' <= lang[i] && lang[i] <= 'Z') ) {
+			break;
+		}
+		++spaces;
+	}
+	if ( spaces == len ) {
+		strcpy(lang, "English");
+	}
+}
 
 void fsm_sendSuccess(const char *text)
 {
@@ -153,6 +167,7 @@ void fsm_msgApplySettings(ApplySettings *msg)
 		}
 	}
 	if (msg->has_language && strlen(msg->label)) {
+		verifyLanguage(msg->language);
 		layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"), _("change language to"), msg->language, "?", NULL, NULL);
 		if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) {
 			fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
@@ -242,8 +257,8 @@ void fsm_msgTransactionSign(TransactionSign* msg) {
 		return;
 	}
 #if EMULATOR
-	printf("%s: %d. nbOut: %d\n", 
-		_("Transaction signed nbIn"), 
+	printf("%s: %d. nbOut: %d\n",
+		_("Transaction signed nbIn"),
 		msg->nbIn, msg->nbOut);
 
 	for (uint32_t i = 0; i < msg->nbIn; ++i) {
@@ -252,7 +267,7 @@ void fsm_msgTransactionSign(TransactionSign* msg) {
 	}
 	for (uint32_t i = 0; i < msg->nbOut; ++i) {
 		printf("Output: coin: %" PRIu64 ", hour: %" PRIu64 " address: %s address_index: %d\n",
-			msg->transactionOut[i].coin, msg->transactionOut[i].hour, 
+			msg->transactionOut[i].coin, msg->transactionOut[i].hour,
 			msg->transactionOut[i].address, msg->transactionOut[i].address_index);
 	}
 #endif
@@ -300,7 +315,7 @@ void fsm_msgTransactionSign(TransactionSign* msg) {
 				layoutHome();
 				return;
 			}
-			layoutAddress(msg->transactionOut[i].address);		
+			layoutAddress(msg->transactionOut[i].address);
 			if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) {
 				fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
 				layoutHome();
