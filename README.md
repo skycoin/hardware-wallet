@@ -117,7 +117,7 @@ The firmware defines a contract enforced upon all client libraries communicating
 
 - **Major version number** should be increased only if a new release introduces changes that are not backwards-compatible with respect to previous version
 - **Minor version number** should be increased for releases adding incremental backwards-compatible changes to the firmware contract
-- **Patch version number** should be increased for bug fix releases and similar changes keeping formware contract unchanged
+- **Patch version number** should be increased for bug fix releases and similar changes keeping firmware contract unchanged
 
 #### Bootloader
 
