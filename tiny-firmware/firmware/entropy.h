@@ -20,8 +20,6 @@
  * @param in_len in len.
  * @param out_mixed_entropy out parama to store the mixed entropy with 256 bits.
  */
-void mix_256(uint8_t *in, size_t in_len, uint8_t *out_mixed_entropy);
-
-ErrCode_t verify_entropy(const uint8_t* const bytes, uint16_t size);
+void mix_256(const uint8_t *in, size_t in_len, uint8_t *out_mixed_entropy);
 
 #endif  // __TINYFIRMWARE_FIRMWARE_ENTROPY__

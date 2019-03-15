@@ -468,11 +468,6 @@ void fsm_msgGenerateMnemonic(GenerateMnemonic* msg) {
 						_("Invalid word count expecified, the valid options are"
 						" 12 or 24."));
 			break;
-		case ErrInvalidValue:
-			fsm_sendFailure(
-						FailureType_Failure_ProcessError,
-						_("Device could not generate a valid Mnemonic"));
-			break;
 		default:
 			fsm_sendFailure(FailureType_Failure_FirmwareError, 
 							_("Mnemonic generation failed"));
