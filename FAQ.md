@@ -14,13 +14,7 @@
     SP 800-22rev1a (April 2010).
 - Does the hardware wallet get entropy from the host machine?
   * Yes, when performing cryptographically sensitive operations e.g. mnemonic generation
-    if a low internal entropy is detected then an external random 32 bytes 
-    buffer is used to increase internal entropy, as long as external buffer have an
-    entropy level of at least 4.0 bits/symbol.
+    an external random 32 bytes  buffer is used to increase internal entropy.
 - How does the hardware wallet get entropy?
   * The hardware wallet generates internal entropy from a peripheral device and
     eventually combine this with an external entropy received from the user host device.
-- How does the hardware wallet ensure having enough entropy to generate a recovery seed?
-  * The device builds a histogram with the random buffer as input and measures the
-    [Shannon entropy level](ihttps://en.wiktionary.org/wiki/Shannon_entropy) over
-    this histogram. A value of at least 4.0 bits/symbol is considered good enough.
