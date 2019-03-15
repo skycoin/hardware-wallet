@@ -109,6 +109,11 @@ make full-firmware-mem-protect # this will create a full-firmware-memory-protect
 
 Code added in this repository should comply to development guidelines documented in [Skycoin wiki](https://github.com/skycoin/skycoin/wiki).
 
+The project has two branches: `master` and `develop`.
+
+- `develop` is the default branch and will always have the latest code.
+- `master` will always be equal to the current stable release on the website, and should correspond with the latest release tag.
+
 ### Versioning policies
 
 #### Firmware version scheme
