@@ -74,9 +74,7 @@ ErrCode_t msgEntropyAckImpl(EntropyAck* msg) {
 	return ret;
 }
 
-ErrCode_t msgGenerateMnemonicImpl(
-		GenerateMnemonic* msg,
-		void (*random_buffer_func)(uint8_t *buf, size_t len)) {
+ErrCode_t msgGenerateMnemonicImpl(GenerateMnemonic* msg) {
 	CHECK_NOT_INITIALIZED_RET_ERR_CODE
 	strength = MNEMONIC_STRENGTH_12;
 	if (msg->has_word_count) {
@@ -91,27 +89,12 @@ ErrCode_t msgGenerateMnemonicImpl(
 				return ErrInvalidArg;
 		}
 	}
-	random_buffer_func(int_entropy, sizeof(int_entropy));
-	if (verify_entropy(int_entropy, sizeof(int_entropy)) != ErrOk) {
-		awaiting_entropy = true;
-		if (msg->has_passphrase_protection) {
-			has_passphrase_protection = msg->has_passphrase_protection;
-			passphrase_protection = msg->passphrase_protection;
-		}
-		return ErrLowEntropy;
+	awaiting_entropy = true;
+	if (msg->has_passphrase_protection) {
+		has_passphrase_protection = msg->has_passphrase_protection;
+		passphrase_protection = msg->passphrase_protection;
 	}
-	const char* mnemonic = mnemonic_from_data(int_entropy, strength / 8);
-	if (mnemonic && mnemonic_check(mnemonic)) {
-		storage_setMnemonic(mnemonic);
-		storage_setNeedsBackup(true);
-		storage_setPassphraseProtection(
-					msg->has_passphrase_protection
-					&& msg->passphrase_protection);
-		memset(int_entropy, 0, sizeof(int_entropy));
-		storage_update();
-		return ErrOk;
-	}
-	return ErrInvalidValue;
+	return ErrOk;
 }
 
 

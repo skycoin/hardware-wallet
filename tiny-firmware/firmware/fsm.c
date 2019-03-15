@@ -458,18 +458,15 @@ void fsm_msgWipeDevice(WipeDevice *msg)
 
 void fsm_msgGenerateMnemonic(GenerateMnemonic* msg) {
 	GET_MSG_POINTER(EntropyRequest, entropy_request);
-	switch (msgGenerateMnemonicImpl(msg, &random_buffer)) {
+	switch (msgGenerateMnemonicImpl(msg)) {
 		case ErrOk:
-			fsm_sendSuccess(_("Mnemonic successfully configured"));
+			msg_write(MessageType_MessageType_EntropyRequest, entropy_request);
 			break;
 		case ErrInvalidArg:
 			fsm_sendFailure(
 						FailureType_Failure_DataError,
 						_("Invalid word count expecified, the valid options are"
 						" 12 or 24."));
-			break;
-		case ErrLowEntropy:
-			msg_write(MessageType_MessageType_EntropyRequest, entropy_request);
 			break;
 		case ErrInvalidValue:
 			fsm_sendFailure(
