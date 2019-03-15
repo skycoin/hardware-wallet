@@ -11,6 +11,8 @@
 
 #include "firmware/error.h"
 
+#include <stddef.h>
+
 #ifndef __TINYFIRMWARE_FIRMWARE_ENTROPY__
 #define __TINYFIRMWARE_FIRMWARE_ENTROPY__
 
