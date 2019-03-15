@@ -113,7 +113,7 @@ Code added in this repository should comply to development guidelines documented
 
 #### Firmware
 
-The firmware defines a contract enforced upon all client libraries communicating with SkyWallet hardware devices. Firmware version expresses implemented contract version using an scheme based on [semantic versioning](http://semver.org). Individual components should be interpreted as follows :
+The firmware defines a contract enforced upon all client libraries communicating with SkyWallet hardware devices. Firmware version expresses implemented contract version using a scheme based on [semantic versioning](http://semver.org). Individual components should be interpreted as follows :
 
 - **Major version number** should be increased only if a new release introduces changes that are not backwards-compatible with respect to previous version
 - **Minor version number** should be increased for releases adding incremental backwards-compatible changes to the firmware contract
@@ -131,11 +131,12 @@ Bootloader versioning is independent and follows [semantic versioning](http://se
 
 The project releases production-ready binaries combining firmware and bootloader. A custom version scheme is used based on the rules that follow
 
-
 - **Bootloader version**: Consecutive bootloader version identifier
 - **Firmware version**: Consecutive firmware version identifier
 - **SoC identifier**: for the MCU model and combination of peripherals considered for building the specific combined binary release. A value of `0` should be reserved to developer's local environment
 - **Country Exit Code**: to cope with i18n and locale specific features. At present only a value of `1` is supported for American English (i.e. `en_US`).
+
+Version identifiers are strings including, in the same order, the numbers mentioned above separated by dots.
 
 #### Versioning libraries
 
