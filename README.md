@@ -15,11 +15,17 @@
   - [Sign firmware](#sign-firmware)
   - [Combine bootloader and firmware](#combine-bootloader-and-firmware)
   - [Combine a memory protected bootloader and firmware](#combine-a-memory-protected-bootloader-and-firmware)
-- [Running tests](#running-tests)
-- [Releases](#releases)
-  - [Update the version](#update-the-version)
-  - [Pre-release testing](#pre-release-testing)
-  - [Creating release builds](#creating-release-builds)
+- [Development guidelines](#development-guidelines)
+  - [Versioning policies](#versioning-policies)
+    - [Firmware version scheme](#firmware-version-scheme)
+    - [Bootloader version scheme](#bootloader-version-scheme)
+    - [Versioning combined binary builds](#versioning-combined-binary-builds)
+    - [Versioning libraries](#versioning-libraries)
+  - [Running tests](#running-tests)
+  - [Releases](#releases)
+    - [Update the version](#update-the-version)
+    - [Pre-release testing](#pre-release-testing)
+    - [Creating release builds](#creating-release-builds)
 <!-- /MarkdownTOC -->
 
 ## Overview
