@@ -139,7 +139,7 @@ The project releases production-ready binaries combining firmware and bootloader
 
 #### Versioning libraries
 
-In order to identify at first sight the features supported by a particular release of a client library, its major and minor version numbers should match the corresponding values of the version of the firmware they were built (tested) for. It is expected that the aforementioned library will be able to communicate to any firmware, as long as the versions both versions (client and firmware) have the same major version number and firmware minor number is greater than the one of the library.
+In order to identify at first sight the features supported by a particular release of a client library, its major and minor version numbers should match the corresponding values of the version of the firmware they were built (tested) for. It is expected that the aforementioned library will be able to communicate to any firmware, as long as both versions (client and firmware) have the same major version number and firmware minor number is greater than the one of the library.
 
 ### Running tests
 
