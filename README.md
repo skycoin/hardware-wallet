@@ -111,7 +111,7 @@ Code added in this repository should comply to development guidelines documented
 
 ### Versioning policies
 
-#### Firmware
+#### Firmware version scheme
 
 The firmware defines a contract enforced upon all client libraries communicating with SkyWallet hardware devices. Firmware version expresses implemented contract version using a scheme based on [semantic versioning](http://semver.org). Individual components should be interpreted as follows :
 
@@ -119,7 +119,7 @@ The firmware defines a contract enforced upon all client libraries communicating
 - **Minor version number** should be increased for releases adding incremental backwards-compatible changes to the firmware contract
 - **Patch version number** should be increased for bug fix releases and similar changes keeping firmware contract unchanged
 
-#### Bootloader
+#### Bootloader version scheme
 
 Bootloader versioning is independent and follows [semantic versioning](http://semver.org) rules.
 
@@ -127,7 +127,7 @@ Bootloader versioning is independent and follows [semantic versioning](http://se
 - **Minor version number** is used for progressive backwards-compatible changes
 - **Patch version number** increased for bug fix releases
 
-#### Combined binary builds
+#### Versioning combined binary builds
 
 The project releases production-ready binaries combining firmware and bootloader. A custom version scheme is used based on the rules that follow
 
