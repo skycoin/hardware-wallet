@@ -24,6 +24,7 @@
 #include "supervise.h"
 
 void timer_init(void);
+uint64_t get_system_millis(void);
 
 #if EMULATOR
 uint32_t timer_ms(void);

@@ -25,7 +25,11 @@
 #include <libopencm3/cm3/vector.h>
 
 /* 1 tick = 1 ms */
-volatile uint32_t system_millis;
+volatile uint64_t system_millis;
+
+uint64_t get_system_millis(void) {
+	return system_millis;
+}
 
 /*
  * Initialise the Cortex-M3 SysTick timer
