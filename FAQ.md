@@ -13,8 +13,12 @@
     National Institute of Standards and Technology (NIST) Statistical Test Suite (STS) 
     SP 800-22rev1a (April 2010).
 - Does the hardware wallet get entropy from the host machine?
-  * Yes, when performing cryptographically sensitive operations e.g. mnemonic generation
-    an external random 32 bytes  buffer is used to increase internal entropy.
+  * Yes, an external random 32 bytes  buffer is used to increase internal entropy
+    when performing cryptographically sensitive operations e.g. mnemonic generation
 - How does the hardware wallet get entropy?
-  * The hardware wallet generates internal entropy from a peripheral device and
-    eventually combine this with an external entropy received from the user host device.
+  * The hardware wallet generates internal entropy from a peripheral device. This value is
+    [salted with several sources](https://security.stackexchange.com/questions/73588/does-too-long-a-salt-reduce-the-security-of-a-stored-password-hash)
+    so as to make unfeasible some kinds of dictionary and lookup attacks (e.g. [rainbow tables](https://en.wikipedia.org/wiki/Rainbow_table) ).
+    The salt is chosen in such a way that no two devices can generate the same value in (at least) the time frame of a human lifetime.
+    Such values [might not be particularly random](https://security.stackexchange.com/questions/16117/in-hashing-does-it-matter-how-random-a-salt-is).
+    Internal entropy is eventually combined with an external entropy received from the user host device.
