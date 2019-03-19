@@ -16,6 +16,7 @@
 #include "protob/c/messages.pb.h"
 #include "vendor/skycoin-crypto/tools/sha2.h"
 #include "rng.h"
+#include "timer.h"
 
 #define INTERNAL_ENTROPY_SIZE SHA256_DIGEST_LENGTH
 
@@ -56,6 +57,10 @@ void mix_256(const uint8_t *in, size_t in_len, uint8_t *out_mixed_entropy) {
 	uint8_t val3[SHA256_DIGEST_LENGTH] = {0};
 	two_buffers_sum_sha256(
 		val1, sizeof (val1), val2, sizeof (val2), val3);
-	memcpy(entropy_mixer_prev_val, val3, sizeof (entropy_mixer_prev_val));
-	memcpy(out_mixed_entropy, val2, SHA256_DIGEST_LENGTH);
+	uint8_t val4[SHA256_DIGEST_LENGTH] = {0};
+	uint64_t ticker = get_system_millis();
+	two_buffers_sum_sha256(
+		val3, sizeof (val3), (uint8_t*)&ticker, sizeof (ticker), val4);
+	memcpy(entropy_mixer_prev_val, val4, sizeof (entropy_mixer_prev_val));
+	memcpy(out_mixed_entropy, val3, SHA256_DIGEST_LENGTH);
 }
