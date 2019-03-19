@@ -37,26 +37,24 @@ static void sum_sha256(
 }
 
 /**
- * @brief two_buffers_sum_sha256 append msg2 to msg1 and make a sum_sha256
+ * @brief add_sha256 make the sum of msg2 to msg1
  * @param msg1 buffer content
  * @param msg1_len buffer conttn len
  * @param msg2 buffer content
  * @param msg2_len buffer content len
  * @param out_digest sum_sha256 of msg1 appened to mag2
- * @sa sum_sha256
  */
-static void two_buffers_sum_sha256(
+static void add_sha256(
 		const uint8_t *msg1,
 		size_t msg1_len,
 		const uint8_t *msg2,
 		size_t msg2_len,
 		uint8_t *out_digest) {
-	size_t two_msgs_len = msg1_len + msg2_len;
-	uint8_t two_msgs[two_msgs_len];
-	memset(two_msgs, 0, two_msgs_len);
-	memcpy(two_msgs, msg1, msg1_len);
-	memcpy(two_msgs + msg1_len, msg2, msg2_len);
-	sum_sha256(two_msgs, two_msgs_len, out_digest);
+	SHA256_CTX ctx;
+	sha256_Init(&ctx);
+	sha256_Update(&ctx, msg1, msg1_len);
+	sha256_Update(&ctx, msg2, msg2_len);
+	sha256_Final(&ctx, out_digest);
 }
 
 void reset_entropy_mix_256(uint8_t *device_uuid, size_t device_uuid_len) {
@@ -67,12 +65,10 @@ void reset_entropy_mix_256(uint8_t *device_uuid, size_t device_uuid_len) {
 	uint8_t val1[SHA256_DIGEST_LENGTH] = {0};
 	sum_sha256(device_uuid, device_uuid_len, val1);
 	uint8_t val2[SHA256_DIGEST_LENGTH] = {0};
-	two_buffers_sum_sha256(
-				val1,
-				sizeof (val1),
-				entropy_mixer_prev_val,
-				sizeof (entropy_mixer_prev_val),
-				val2);
+	add_sha256(
+		val1, sizeof (val1), 
+		entropy_mixer_prev_val, sizeof (entropy_mixer_prev_val),
+		val2);
 	memcpy(entropy_mixer_prev_val, val2, sizeof (entropy_mixer_prev_val));
 }
 
@@ -80,14 +76,12 @@ void entropy_mix_256(const uint8_t *in, size_t in_len, uint8_t *out_mixed_entrop
 	uint8_t val1[SHA256_DIGEST_LENGTH] = {0};
 	sum_sha256(in, in_len, val1);
 	uint8_t val2[SHA256_DIGEST_LENGTH] = {0};
-	two_buffers_sum_sha256(
-				val1,
-				sizeof (val1),
-				entropy_mixer_prev_val,
-				sizeof (entropy_mixer_prev_val),
-				val2);
+	add_sha256(
+		val1, sizeof (val1),
+		entropy_mixer_prev_val, sizeof (entropy_mixer_prev_val),
+		val2);
 	uint8_t val3[SHA256_DIGEST_LENGTH] = {0};
-	two_buffers_sum_sha256(
+	add_sha256(
 		val1, sizeof (val1), val2, sizeof (val2), val3);
 	uint8_t val4[SHA256_DIGEST_LENGTH] = {0};
 #ifdef EMULATOR
@@ -96,7 +90,7 @@ void entropy_mix_256(const uint8_t *in, size_t in_len, uint8_t *out_mixed_entrop
 #else
 	uint64_t ticker = get_system_millis();
 #endif  // EMULATOR
-	two_buffers_sum_sha256(
+	add_sha256(
 		val3, sizeof (val3), (uint8_t*)&ticker, sizeof (ticker), val4);
 	memcpy(entropy_mixer_prev_val, val4, sizeof (entropy_mixer_prev_val));
 	memcpy(out_mixed_entropy, val3, SHA256_DIGEST_LENGTH);
