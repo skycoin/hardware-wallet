@@ -24,6 +24,8 @@
 #include <libopencm3/cm3/systick.h>
 #include <libopencm3/cm3/vector.h>
 
+#include "rng.h"
+
 /* 1 tick = 1 ms */
 volatile uint64_t system_millis;
 
@@ -35,7 +37,7 @@ uint64_t get_system_millis(void) {
  * Initialise the Cortex-M3 SysTick timer
  */
 void timer_init(void) {
-	system_millis = 0;
+	random_buffer((uint8_t*)&system_millis, sizeof (system_millis));
 
 	/*
 	 * MCU clock (120 MHz) as source
