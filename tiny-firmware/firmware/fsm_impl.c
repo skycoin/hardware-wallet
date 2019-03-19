@@ -43,7 +43,7 @@
 
 #define MNEMONIC_STRENGTH_12 128
 #define MNEMONIC_STRENGTH_24 256
-#define INTERNAL_ENTROPY_SIZE 32
+#define INTERNAL_ENTROPY_SIZE SHA256_DIGEST_LENGTH
 
 uint8_t msg_resp[MSG_OUT_SIZE] __attribute__ ((aligned));
 

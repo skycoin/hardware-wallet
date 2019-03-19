@@ -41,6 +41,7 @@
 #include "memzero.h"
 #include "protect.h"
 #include "supervise.h"
+#include "firmware/entropy.h"
 
 /* magic constant to check validity of storage block */
 static const uint32_t storage_magic = 0x726f7473;   // 'stor' as uint32_t
@@ -239,6 +240,9 @@ void storage_init(void)
 	if (!storage_from_flash()) {
 		storage_wipe();
 		storage_show_error();
+	} else {
+		reset_entropy_mix_256(
+			(uint8_t*)storage_uuid_str, sizeof(storage_uuid_str));
 	}
 }
 
@@ -247,6 +251,7 @@ void storage_generate_uuid(void)
 	// set random uuid
 	random_buffer((uint8_t *)storage_uuid, sizeof(storage_uuid));
 	data2hex(storage_uuid, sizeof(storage_uuid), storage_uuid_str);
+	reset_entropy_mix_256((uint8_t*)storage_uuid_str, sizeof(storage_uuid_str));
 }
 
 void session_clear(bool clear_pin)

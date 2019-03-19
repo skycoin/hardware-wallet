@@ -83,12 +83,7 @@ ErrCode_t reset_entropy(const uint8_t *ext_entropy, uint32_t len)
 	if (!awaiting_entropy) {
 		return ErrUnexpectedMessage;
 	}
-	mix_256(ext_entropy, len, int_entropy);
-//	SHA256_CTX ctx;
-//	sha256_Init(&ctx);
-//	sha256_Update(&ctx, int_entropy, 32);
-//	sha256_Update(&ctx, ext_entropy, len);
-//	sha256_Final(&ctx, int_entropy);
+	entropy_mix_256(ext_entropy, len, int_entropy);
 	storage_setNeedsBackup(true);
 	const char *mnemonic = mnemonic_from_data(int_entropy, strength / 8);
 	if (!mnemonic_check(mnemonic)) {
