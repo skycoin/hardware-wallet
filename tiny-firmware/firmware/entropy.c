@@ -19,6 +19,9 @@
 #include "timer.h"
 #include "firmware/storage.h"
 
+static uint8_t external_entropy[EXTERNAL_ENTROPY_MAX_SIZE] = {0};
+static bool external_entropy_available = false;
+
 #define INTERNAL_ENTROPY_SIZE SHA256_DIGEST_LENGTH
 
 static uint8_t entropy_mixer_prev_val[SHA256_DIGEST_LENGTH] = {0};
@@ -86,4 +89,18 @@ void entropy_mix_256(
 		val1, sizeof (val1), val2, sizeof (val2), val3);
 	memcpy(entropy_mixer_prev_val, val3, sizeof(entropy_mixer_prev_val));
 	memcpy(out_mixed_entropy, val2, SHA256_DIGEST_LENGTH);
+}
+
+ErrCode_t get_external_entropy(uint8_t* buffer) {
+	if (external_entropy_available) {
+		external_entropy_available = false;
+		memcpy(buffer, external_entropy, sizeof(external_entropy));
+		return ErrOk;
+	}
+	return ErrEntropyRequired;
+}
+
+void set_external_entropy(uint8_t *entropy) {
+	external_entropy_available = true;
+	memcpy(external_entropy, entropy, sizeof(external_entropy));
 }

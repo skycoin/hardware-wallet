@@ -15,7 +15,6 @@
 #include "messages.pb.h"
 #include "firmware/error.h"
 
-#define EXTERNAL_ENTROPY_MAX_SIZE 128
 #define MNEMONIC_WORD_COUNT_12 12
 #define MNEMONIC_WORD_COUNT_24 24
 
