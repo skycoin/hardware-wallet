@@ -18,11 +18,12 @@
 #include <pb_decode.h>
 #include <check.h>
 
-#include "fsm_impl.h"
-#include "messages.pb.h"
-#include "messages.h"
+#include "firmware/messages.h"
+#include "firmware/fsm_impl.h"
+#include "firmware/storage.h"
+#include "firmware/entropy.h"
+#include "protob/c/messages.pb.h"
 #include "setup.h"
-#include "storage.h"
 #include "rng.h"
 
 #include "test_fsm.h"
