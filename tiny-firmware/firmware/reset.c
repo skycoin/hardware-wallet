@@ -34,7 +34,6 @@
 
 uint32_t strength;
 uint8_t  int_entropy[32];
-bool     awaiting_entropy = false;
 bool     skip_backup = false;
 
 void reset_init(bool display_random, uint32_t _strength, bool passphrase_protection, bool pin_protection, const char *language, const char *label, bool _skip_backup)
@@ -75,14 +74,10 @@ void reset_init(bool display_random, uint32_t _strength, bool passphrase_protect
 	EntropyRequest resp;
 	memset(&resp, 0, sizeof(EntropyRequest));
 	msg_write(MessageType_MessageType_EntropyRequest, &resp);
-	awaiting_entropy = true;
 }
 
 ErrCode_t reset_entropy(const uint8_t *ext_entropy, uint32_t len)
 {
-	if (!awaiting_entropy) {
-		return ErrUnexpectedMessage;
-	}
 #ifdef EMULATOR
 	uint64_t ticker = 0;
 	random_buffer((uint8_t*)&ticker, sizeof (ticker));
@@ -99,7 +94,6 @@ ErrCode_t reset_entropy(const uint8_t *ext_entropy, uint32_t len)
 	}
 	storage_setMnemonic(mnemonic);
 	memset(int_entropy, 0, sizeof (int_entropy));
-	awaiting_entropy = false;
 
 	if (skip_backup) {
 		storage_update();

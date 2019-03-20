@@ -53,6 +53,7 @@ enum ErrCode {
 	ErrInvalidArg =				ERROR_CODE(PkgGeneric, ReasonArgumentError),  /*!< Invalid argument */
 	ErrIndexValue =				ERROR_CODE(PkgGeneric, ReasonOutOfBounds),  /*!< Index out of bounds */
 	ErrInvalidValue =			ERROR_CODE(PkgGeneric, ReasonValueError),  /*!< Invalid value */
+	ErrEntropyRequired =		ERROR_CODE(PkgEntropy, ReasonArgumentError),  /*!< Buffer entropy under 4.0 bits/symbol */
 	ErrUnexpectedMessage =		ERROR_CODE(PkgServer, ReasonInvalidState),  /*! < Server state loses path */
 };
 typedef enum ErrCode ErrCode_t;

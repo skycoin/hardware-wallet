@@ -460,6 +460,9 @@ void fsm_msgGenerateMnemonic(GenerateMnemonic* msg) {
 	GET_MSG_POINTER(EntropyRequest, entropy_request);
 	switch (msgGenerateMnemonicImpl(msg)) {
 		case ErrOk:
+			fsm_sendSuccess(_("Seed generated"));
+			break;
+		case ErrEntropyRequired:
 			msg_write(MessageType_MessageType_EntropyRequest, entropy_request);
 			break;
 		case ErrInvalidArg:
@@ -638,18 +641,10 @@ void fsm_msgEntropyAck(EntropyAck *msg)
 		case ErrOk:
 			fsm_sendSuccess(_("Recived entropy"));
 			break;
-		case ErrInvalidValue:
-			fsm_sendFailure(
-						FailureType_Failure_ProcessError,
-						_("Device could not generate a valid Mnemonic"));
-			break;
-		case ErrUnexpectedMessage:
-			fsm_sendFailure(FailureType_Failure_UnexpectedMessage, 
-							_("Unexpected entropy ack msg."));
-			break;
 		default:
-			fsm_sendFailure(FailureType_Failure_UnexpectedMessage, 
+			fsm_sendFailure(FailureType_Failure_FirmwareError, 
 							_("Entropy ack failed."));
+			break;
 	}
 	layoutHome();
 }

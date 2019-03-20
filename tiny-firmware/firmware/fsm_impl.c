@@ -47,31 +47,18 @@
 
 uint8_t msg_resp[MSG_OUT_SIZE] __attribute__ ((aligned));
 
-extern bool awaiting_entropy;
 extern uint32_t strength;
 extern bool     skip_backup;
 extern uint8_t  int_entropy[INTERNAL_ENTROPY_SIZE];
-static bool has_passphrase_protection;
-static bool passphrase_protection;
+static uint8_t external_entropy[EXTERNAL_ENTROPY_MAX_SIZE] = {0};
+static bool external_entropy_available = false;
 
 ErrCode_t msgEntropyAckImpl(EntropyAck* msg) {
 	_Static_assert(EXTERNAL_ENTROPY_MAX_SIZE == sizeof(msg->entropy.bytes),
 					"External entropy size does not match.");
-	const bool skip_backup_saved = skip_backup;
-	skip_backup = true;
-	ErrCode_t ret;
-	if (msg->has_entropy) {
-		ret = reset_entropy(msg->entropy.bytes, msg->entropy.size);
-	} else {
-		ret = reset_entropy(0, 0);
-	}
-	if (has_passphrase_protection) {
-		storage_setPassphraseProtection(passphrase_protection);
-		storage_update();
-	}
-	skip_backup = skip_backup_saved;
-	has_passphrase_protection = false;
-	return ret;
+	memcpy(external_entropy, msg->entropy.bytes, sizeof(external_entropy));
+	external_entropy_available = true;
+	return ErrOk;
 }
 
 ErrCode_t msgGenerateMnemonicImpl(GenerateMnemonic* msg) {
@@ -89,12 +76,18 @@ ErrCode_t msgGenerateMnemonicImpl(GenerateMnemonic* msg) {
 				return ErrInvalidArg;
 		}
 	}
-	awaiting_entropy = true;
+	if (!external_entropy_available) {
+		return ErrEntropyRequired;
+	}	
+	const bool skip_backup_saved = skip_backup;
+	skip_backup = true;
+	ErrCode_t ret = reset_entropy(external_entropy, sizeof(external_entropy));
+	skip_backup = skip_backup_saved;
 	if (msg->has_passphrase_protection) {
-		has_passphrase_protection = msg->has_passphrase_protection;
-		passphrase_protection = msg->passphrase_protection;
+		storage_setPassphraseProtection(msg->passphrase_protection);
+		storage_update();
 	}
-	return ErrOk;
+	return ret;
 }
 
 
