@@ -17,6 +17,7 @@
 #include "vendor/skycoin-crypto/tools/sha2.h"
 #include "rng.h"
 #include "timer.h"
+#include "firmware/storage.h"
 
 #define INTERNAL_ENTROPY_SIZE SHA256_DIGEST_LENGTH
 
@@ -37,7 +38,7 @@ static void sum_sha256(
 }
 
 /**
- * @brief add_sha256 make the sum of msg2 to msg1
+ * @brief add_sha256 make the sum of msg2 and to msg1
  * @param msg1 buffer content
  * @param msg1_len buffer conttn len
  * @param msg2 buffer content
@@ -57,22 +58,22 @@ static void add_sha256(
 	sha256_Final(&ctx, out_digest);
 }
 
-void reset_entropy_mix_256(uint8_t *device_uuid, size_t device_uuid_len) {
-	uint8_t null_buff[SHA256_DIGEST_LENGTH] = {0};
-	if (!memcmp(null_buff, entropy_mixer_prev_val, sizeof (null_buff))) {
-		random_buffer(entropy_mixer_prev_val, sizeof (entropy_mixer_prev_val));
-	}
-	uint8_t val1[SHA256_DIGEST_LENGTH] = {0};
-	sum_sha256(device_uuid, device_uuid_len, val1);
-	uint8_t val2[SHA256_DIGEST_LENGTH] = {0};
-	add_sha256(
-		val1, sizeof (val1), 
-		entropy_mixer_prev_val, sizeof (entropy_mixer_prev_val),
-		val2);
-	memcpy(entropy_mixer_prev_val, val2, sizeof (entropy_mixer_prev_val));
+void reset_entropy_mix_256(void) {
+	#ifdef EMULATOR
+		uint64_t ticker = 0;
+		random_buffer((uint8_t*)&ticker, sizeof (ticker));
+	#else
+		uint64_t ticker = get_system_millis();
+	#endif  // EMULATOR
+	uint8_t buf[SHA256_DIGEST_LENGTH] = {0};
+	entropy_mix_256((uint8_t*)&ticker, sizeof(ticker), buf);
+	entropy_mix_256((uint8_t*)storage_uuid_str, sizeof(storage_uuid_str), buf);
+	random_buffer(buf, sizeof(buf));
+	entropy_mix_256(buf, sizeof(buf), buf);
 }
 
-void entropy_mix_256(const uint8_t *in, size_t in_len, uint8_t *out_mixed_entropy) {
+void entropy_mix_256(
+		const uint8_t *in, size_t in_len, uint8_t *out_mixed_entropy) {
 	uint8_t val1[SHA256_DIGEST_LENGTH] = {0};
 	sum_sha256(in, in_len, val1);
 	uint8_t val2[SHA256_DIGEST_LENGTH] = {0};
@@ -83,15 +84,6 @@ void entropy_mix_256(const uint8_t *in, size_t in_len, uint8_t *out_mixed_entrop
 	uint8_t val3[SHA256_DIGEST_LENGTH] = {0};
 	add_sha256(
 		val1, sizeof (val1), val2, sizeof (val2), val3);
-	uint8_t val4[SHA256_DIGEST_LENGTH] = {0};
-#ifdef EMULATOR
-	uint64_t ticker = 0;
-	random_buffer((uint8_t*)&ticker, sizeof (ticker));
-#else
-	uint64_t ticker = get_system_millis();
-#endif  // EMULATOR
-	add_sha256(
-		val3, sizeof (val3), (uint8_t*)&ticker, sizeof (ticker), val4);
-	memcpy(entropy_mixer_prev_val, val4, sizeof (entropy_mixer_prev_val));
-	memcpy(out_mixed_entropy, val3, SHA256_DIGEST_LENGTH);
+	memcpy(entropy_mixer_prev_val, val3, sizeof(entropy_mixer_prev_val));
+	memcpy(out_mixed_entropy, val2, SHA256_DIGEST_LENGTH);
 }

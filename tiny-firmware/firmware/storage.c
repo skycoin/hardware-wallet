@@ -241,8 +241,7 @@ void storage_init(void)
 		storage_wipe();
 		storage_show_error();
 	} else {
-		reset_entropy_mix_256(
-			(uint8_t*)storage_uuid_str, sizeof(storage_uuid_str));
+		reset_entropy_mix_256();
 	}
 }
 
@@ -251,7 +250,7 @@ void storage_generate_uuid(void)
 	// set random uuid
 	random_buffer((uint8_t *)storage_uuid, sizeof(storage_uuid));
 	data2hex(storage_uuid, sizeof(storage_uuid), storage_uuid_str);
-	reset_entropy_mix_256((uint8_t*)storage_uuid_str, sizeof(storage_uuid_str));
+	reset_entropy_mix_256();
 }
 
 void session_clear(bool clear_pin)

@@ -83,6 +83,14 @@ ErrCode_t reset_entropy(const uint8_t *ext_entropy, uint32_t len)
 	if (!awaiting_entropy) {
 		return ErrUnexpectedMessage;
 	}
+#ifdef EMULATOR
+	uint64_t ticker = 0;
+	random_buffer((uint8_t*)&ticker, sizeof (ticker));
+#else
+	uint64_t ticker = get_system_millis();
+#endif  // EMULATOR
+	uint8_t buff[SHA256_DIGEST_LENGTH];
+	entropy_mix_256((uint8_t*)&ticker, sizeof(ticker), buff);
 	entropy_mix_256(ext_entropy, len, int_entropy);
 	storage_setNeedsBackup(true);
 	const char *mnemonic = mnemonic_from_data(int_entropy, strength / 8);

@@ -18,10 +18,9 @@
 
 /**
  * @brief reset_entropy_mix_256 initialze the internal entropy pool
- * @param device_uuid unique device identifier
- * @param device_uuid_len unique device identifier len
+ * @sa entropy_mix_256
  */
-void reset_entropy_mix_256(uint8_t *device_uuid, size_t device_uuid_len);
+void reset_entropy_mix_256(void);
 
 /**
  * @brief entropy_mix_256 entropy pool mixer.
@@ -29,6 +28,7 @@ void reset_entropy_mix_256(uint8_t *device_uuid, size_t device_uuid_len);
  * @param in_len in len.
  * @param out_mixed_entropy out parama to store the mixed entropy with 256 bits.
  */
-void entropy_mix_256(const uint8_t *in, size_t in_len, uint8_t *out_mixed_entropy);
+void entropy_mix_256(
+		const uint8_t *in, size_t in_len, uint8_t *out_mixed_entropy);
 
 #endif  // __TINYFIRMWARE_FIRMWARE_ENTROPY__
