@@ -16,11 +16,17 @@
   - [Sign firmware](#sign-firmware)
   - [Combine bootloader and firmware](#combine-bootloader-and-firmware)
   - [Combine a memory protected bootloader and firmware](#combine-a-memory-protected-bootloader-and-firmware)
-- [Running tests](#running-tests)
-- [Releases](#releases)
-  - [Update the version](#update-the-version)
-  - [Pre-release testing](#pre-release-testing)
-  - [Creating release builds](#creating-release-builds)
+- [Development guidelines](#development-guidelines)
+  - [Versioning policies](#versioning-policies)
+    - [Firmware version scheme](#firmware-version-scheme)
+    - [Bootloader version scheme](#bootloader-version-scheme)
+    - [Versioning combined binary builds](#versioning-combined-binary-builds)
+    - [Versioning libraries](#versioning-libraries)
+  - [Running tests](#running-tests)
+  - [Releases](#releases)
+    - [Update the version](#update-the-version)
+    - [Pre-release testing](#pre-release-testing)
+    - [Creating release builds](#creating-release-builds)
 <!-- /MarkdownTOC -->
 
 ## Overview
@@ -104,17 +110,59 @@ You won't be able to flash your device with an st-link again.
 make full-firmware-mem-protect # this will create a full-firmware-memory-protected.bin file 
 ```
 
-## Running tests
+## Development guidelines
 
-The project includes a test suite. In order to running just execute the following command
+Code added in this repository should comply to development guidelines documented in [Skycoin wiki](https://github.com/skycoin/skycoin/wiki).
+
+The project has two branches: `master` and `develop`.
+
+- `develop` is the default branch and will always have the latest code.
+- `master` will always be equal to the current stable release on the website, and should correspond with the latest release tag.
+
+### Versioning policies
+
+#### Firmware version scheme
+
+The firmware defines a contract enforced upon all client libraries communicating with SkyWallet hardware devices. Firmware version expresses implemented contract version using a scheme based on [semantic versioning](http://semver.org). Individual components should be interpreted as follows :
+
+- **Major version number** should be increased only if a new release introduces changes that are not backwards-compatible with respect to previous version
+- **Minor version number** should be increased for releases adding incremental backwards-compatible changes to the firmware contract
+- **Patch version number** should be increased for bug fix releases and similar changes keeping firmware contract unchanged
+
+#### Bootloader version scheme
+
+Bootloader versioning is independent and follows [semantic versioning](http://semver.org) rules.
+
+- **Major version number** indicates major changes in bootloader code
+- **Minor version number** is used for progressive backwards-compatible changes
+- **Patch version number** increased for bug fix releases
+
+#### Versioning combined binary builds
+
+The project releases production-ready binaries combining firmware and bootloader. A custom version scheme is used based on the rules that follow
+
+- **Bootloader version**: Consecutive bootloader version identifier
+- **Firmware version**: Consecutive firmware version identifier
+- **SoC identifier**: for the MCU model and combination of peripherals considered for building the specific combined binary release. A value of `0` should be reserved to developer's local environment
+- **Country Exit Code**: to cope with i18n and locale specific features. At present only a value of `1` is supported for American English (i.e. `en_US`).
+
+Version identifiers are strings including, in the same order, the numbers mentioned above separated by dots.
+
+#### Versioning libraries
+
+In order to identify at first sight the features supported by a particular release of a client library, its major and minor version numbers should match the corresponding values of the version of the firmware they were built (tested) for. It is expected that the aforementioned library will be able to communicate to any firmware, as long as both versions (client and firmware) have the same major version number and firmware minor number is greater than the one of the library.
+
+### Running tests
+
+The project includes a test suite. In order to run it just execute the following command
 
 ```
 make test
 ```
 
-## Releases
+### Releases
 
-### Update the version
+#### Update the version
 
 0. If the `master` branch has commits that are not in `develop` (e.g. due to a hotfix applied to `master`), merge `master` into `develop` (and fix any build or test failures)
 0. Switch to a new release branch named `release-X.Y.Z` for preparing the release.
@@ -125,10 +173,11 @@ make test
 0. Make a PR merging the release branch into `master`
 0. Review the PR and merge it
 0. Tag the `master` branch with the version number. Version tags start with `v`, e.g. `v0.20.0`. Sign the tag. If you have your GPG key in github, creating a release on the Github website will automatically tag the release. It can be tagged from the command line with `git tag -as v0.20.0 $COMMIT_ID`, but Github will not recognize it as a "release".
+0. Tag the changeset of the `protob` submodule checkout with the same version number as above.
 0. Release builds are created and uploaded by travis. To do it manually, checkout the master branch and follow the [create release builds instructions](#creating-release-builds).
 0. Checkout `develop` branch and bump `tiny-firmware/VERSION` and `tiny-firmware/bootloader/VERSION` to next [`dev` version number](https://www.python.org/dev/peps/pep-0440/#developmental-releases).
 
-### Pre-release testing
+#### Pre-release testing
 
 Once the candidate release build artifacts have been downloaded it is necessary to check once again that they behave according to specifications. The followinfg steps are aimed at ensuring this is the case. Execute 
 
@@ -150,7 +199,7 @@ Once the candidate release build artifacts have been downloaded it is necessary 
 0. Wipe the wallet and restore the seed. Check if the first address is equal to the one previously written
 0. Repeat steps from the top but using combined bootloader + firmware image to flash the hardware wallet device.
 
-### Creating release builds
+#### Creating release builds
 
 The following instruction creates a full firmware with:
 * firmware version: 1.1.0
