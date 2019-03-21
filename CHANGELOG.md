@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+- Skycoin logo in bootloader mode
+- Enforce setting default device language to English
 - Use`protobuf` file definitions as a `git submodule` from http://github.com/skycoin/hardware-wallet-protob/
 - While building emulator specify path to SDL via `SDL_INCLUDE` environment variable.
 - Add a "Frequently Asked Question" file.

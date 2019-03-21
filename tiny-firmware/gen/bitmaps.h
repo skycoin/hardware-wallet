@@ -27,12 +27,12 @@ extern const BITMAP bmp_icon_info;
 extern const BITMAP bmp_icon_ok;
 extern const BITMAP bmp_icon_question;
 extern const BITMAP bmp_icon_warning;
-extern const BITMAP bmp_logo64;
-extern const BITMAP bmp_logo64_empty;
 #ifndef BOOTLOADER
 extern const BITMAP bmp_logo48;
 extern const BITMAP bmp_logo48_empty;
 extern const BITMAP bmp_skycoin_logo64;
 #endif
+extern const BITMAP bmp_logo64;
+extern const BITMAP bmp_logo64_empty;
 
 #endif
