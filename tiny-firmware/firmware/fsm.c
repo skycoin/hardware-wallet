@@ -212,6 +212,7 @@ void fsm_msgSkycoinCheckMessageSignature(SkycoinCheckMessageSignature* msg)
 			== ErrOk) {
 		msg_write(MessageType_MessageType_Success, successResp);
 	} else {
+		failureResp->code = FailureType_Failure_InvalidSignature;
 		msg_write(MessageType_MessageType_Failure, failureResp);
 	}
 	layoutHome();
