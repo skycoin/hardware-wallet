@@ -196,7 +196,7 @@ ErrCode_t msgSkycoinAddress(SkycoinAddress* msg, ResponseSkycoinAddress *resp)
 	return ErrOk;
 }
 
-ErrCode_t msgSkycoinCheckMessageSignature(
+ErrCode_t msgSkycoinCheckMessageSignatureImpl(
 		SkycoinCheckMessageSignature* msg, Success *resp) {
 	// NOTE(denisacostaq@gmail.com): -1 because the end of string ('\0')
 	// /2 because the hex to buff conversion.

@@ -168,7 +168,7 @@ START_TEST(test_msgSkycoinCheckMessageSignatureOk)
     memcpy(checkMsg.signature, respSign->signed_message, sizeof(checkMsg.signature));
     uint8_t msg_resp_check[MSG_OUT_SIZE] __attribute__ ((aligned)) = {0};
     Success *respCheck = (Success *) (void *) msg_resp_check;
-    err = msgSkycoinCheckMessageSignature(&checkMsg, respCheck);
+    err = msgSkycoinCheckMessageSignatureImpl(&checkMsg, respCheck);
 
     // NOTE(denisacostaq@gmail.com): Then
     ck_assert_int_eq(ErrOk, err);
@@ -237,7 +237,7 @@ START_TEST(test_msgSkycoinCheckMessageSignatureFailedAsExpectedForInvalidSignedM
     memcpy(checkMsg.signature, respSign->signed_message, sizeof(checkMsg.signature));
     uint8_t msg_resp_check[MSG_OUT_SIZE] __attribute__ ((aligned)) = {0};
     Success *respCheck = (Success *) (void *) msg_resp_check;
-    err = msgSkycoinCheckMessageSignature(&checkMsg, respCheck);
+    err = msgSkycoinCheckMessageSignatureImpl(&checkMsg, respCheck);
 
     // NOTE(denisacostaq@gmail.com): Then
     ck_assert_int_ne(ErrOk, err);
@@ -281,7 +281,7 @@ START_TEST(test_msgSkycoinCheckMessageSignatureFailedAsExpectedForInvalidMessage
     memcpy(checkMsg.signature, respSign->signed_message, sizeof(checkMsg.signature));
     uint8_t msg_resp_check[MSG_OUT_SIZE] __attribute__ ((aligned)) = {0};
     Success *respCheck = (Success *) (void *) msg_resp_check;
-    err = msgSkycoinCheckMessageSignature(&checkMsg, respCheck);
+    err = msgSkycoinCheckMessageSignatureImpl(&checkMsg, respCheck);
 
     // NOTE(denisacostaq@gmail.com): Then
     ck_assert_int_ne(ErrOk, err);

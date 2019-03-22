@@ -66,6 +66,9 @@ build-deps: ## Build common dependencies (protob)
 firmware-deps: build-deps ## Build firmware dependencies
 	make -C tiny-firmware/vendor/libopencm3/
 
+generate-bitmaps:
+	( cd tiny-firmware/gen/bitmaps/ && python2 generate.py )
+
 bootloader: firmware-deps ## Build bootloader (RDP level 0)
 	rm -f tiny-firmware/memory.o tiny-firmware/gen/bitmaps.o # Force rebuild of these two files
 	SIGNATURE_PROTECT=1 REVERSE_BUTTONS=1 make -C tiny-firmware/bootloader/ align
