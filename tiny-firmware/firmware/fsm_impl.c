@@ -50,6 +50,7 @@ uint8_t msg_resp[MSG_OUT_SIZE] __attribute__ ((aligned));
 extern bool awaiting_entropy;
 extern uint32_t strength;
 extern bool     skip_backup;
+extern uint8_t  int_entropy[INTERNAL_ENTROPY_SIZE];
 static bool has_passphrase_protection;
 static bool passphrase_protection;
 
@@ -58,10 +59,11 @@ ErrCode_t msgEntropyAckImpl(EntropyAck* msg) {
 					"External entropy size does not match.");
 	const bool skip_backup_saved = skip_backup;
 	skip_backup = true;
+	ErrCode_t ret;
 	if (msg->has_entropy) {
-		reset_entropy(msg->entropy.bytes, msg->entropy.size);
+		ret = reset_entropy(msg->entropy.bytes, msg->entropy.size);
 	} else {
-		reset_entropy(0, 0);
+		ret = reset_entropy(0, 0);
 	}
 	if (has_passphrase_protection) {
 		storage_setPassphraseProtection(passphrase_protection);
@@ -69,10 +71,12 @@ ErrCode_t msgEntropyAckImpl(EntropyAck* msg) {
 	}
 	skip_backup = skip_backup_saved;
 	has_passphrase_protection = false;
-	return ErrResponseAlreadySent;
+	return ret;
 }
 
-ErrCode_t msgGenerateMnemonicImpl(GenerateMnemonic* msg) {
+ErrCode_t msgGenerateMnemonicImpl(
+		GenerateMnemonic* msg,
+		void (*random_buffer_func)(uint8_t *buf, size_t len)) {
 	CHECK_NOT_INITIALIZED_RET_ERR_CODE
 	strength = MNEMONIC_STRENGTH_12;
 	if (msg->has_word_count) {
@@ -84,14 +88,10 @@ ErrCode_t msgGenerateMnemonicImpl(GenerateMnemonic* msg) {
 				strength = MNEMONIC_STRENGTH_24;
 				break;
 			default:
-				fsm_sendFailure(
-							FailureType_Failure_DataError,
-							_("Invalid word count expecified the valid options are 12 or 24."));
-				return ErrFailed;
+				return ErrInvalidArg;
 		}
 	}
-	uint8_t int_entropy[INTERNAL_ENTROPY_SIZE];
-	random_buffer(int_entropy, sizeof(int_entropy));
+	random_buffer_func(int_entropy, sizeof(int_entropy));
 	if (verify_entropy(int_entropy, sizeof(int_entropy)) != ErrOk) {
 		awaiting_entropy = true;
 		if (msg->has_passphrase_protection) {
@@ -101,13 +101,7 @@ ErrCode_t msgGenerateMnemonicImpl(GenerateMnemonic* msg) {
 		return ErrLowEntropy;
 	}
 	const char* mnemonic = mnemonic_from_data(int_entropy, strength / 8);
-	if (mnemonic) {
-		if (!mnemonic_check(mnemonic)) {
-			fsm_sendFailure(
-				FailureType_Failure_DataError, 
-				_("Mnemonic with wrong checksum provided"));
-			return ErrFailed;
-		}
+	if (mnemonic && mnemonic_check(mnemonic)) {
 		storage_setMnemonic(mnemonic);
 		storage_setNeedsBackup(true);
 		storage_setPassphraseProtection(
@@ -116,12 +110,8 @@ ErrCode_t msgGenerateMnemonicImpl(GenerateMnemonic* msg) {
 		memset(int_entropy, 0, sizeof(int_entropy));
 		storage_update();
 		return ErrOk;
-	} else {
-		fsm_sendFailure(
-					FailureType_Failure_ProcessError,
-					_("Device could not generate a Mnemonic"));
-		return ErrFailed;
 	}
+	return ErrInvalidValue;
 }
 
 

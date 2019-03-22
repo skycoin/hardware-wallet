@@ -14,6 +14,6 @@
 #ifndef __TINYFIRMWARE_FIRMWARE_ENTROPY__
 #define __TINYFIRMWARE_FIRMWARE_ENTROPY__
 
-ErrCode_t verify_entropy(const uint8_t* const bytes, uint64_t size);
+ErrCode_t verify_entropy(const uint8_t* const bytes, uint16_t size);
 
 #endif  // __TINYFIRMWARE_FIRMWARE_ENTROPY__
