@@ -166,14 +166,19 @@ START_TEST(test_msgSkycoinCheckMessageSignatureOk)
     strncpy(checkMsg.message, msgSign.message, sizeof(checkMsg.message));
     memcpy(checkMsg.address, respAddress->addresses[0], sizeof(checkMsg.address));
     memcpy(checkMsg.signature, respSign->signed_message, sizeof(checkMsg.signature));
-    uint8_t msg_resp_check[MSG_OUT_SIZE] __attribute__ ((aligned)) = {0};
-    Success *respCheck = (Success *) (void *) msg_resp_check;
-    err = msgSkycoinCheckMessageSignatureImpl(&checkMsg, respCheck);
+    uint8_t msg_success_resp_check[MSG_OUT_SIZE] __attribute__ ((aligned)) = {0};
+    uint8_t msg_fail_resp_check[MSG_OUT_SIZE] __attribute__ ((aligned)) = {0};
+    Success *successRespCheck = (Success *) (void *) msg_success_resp_check;
+    Failure *failRespCheck = (Failure *) (void *) msg_fail_resp_check;
+    err = msgSkycoinCheckMessageSignatureImpl(
+                &checkMsg, successRespCheck, failRespCheck);
 
     // NOTE(denisacostaq@gmail.com): Then
     ck_assert_int_eq(ErrOk, err);
-    ck_assert(respCheck->has_message);
-    int address_diff = strncmp(respAddress->addresses[0], respCheck->message,
+    ck_assert(successRespCheck->has_message);
+    int address_diff = strncmp(
+            respAddress->addresses[0],
+            successRespCheck->message,
             sizeof(respAddress->addresses[0]));
     if (address_diff) {
         fprintf(stderr, "\nrespAddress->addresses[0]: ");
@@ -181,8 +186,8 @@ START_TEST(test_msgSkycoinCheckMessageSignatureOk)
             fprintf(stderr, "%c", respAddress->addresses[0][i]);
         }
         fprintf(stderr, "\nrespCheck->message: ");
-        for (size_t i = 0; i < sizeof(respCheck->message); ++i) {
-            fprintf(stderr, "%c", respCheck->message[i]);
+        for (size_t i = 0; i < sizeof(successRespCheck->message); ++i) {
+            fprintf(stderr, "%c", successRespCheck->message[i]);
         }
         fprintf(stderr, "\n");
     }
@@ -235,14 +240,19 @@ START_TEST(test_msgSkycoinCheckMessageSignatureFailedAsExpectedForInvalidSignedM
     strncpy(checkMsg.message, msgSign.message, sizeof(checkMsg.message));
     memcpy(checkMsg.address, respAddress->addresses[0], sizeof(checkMsg.address));
     memcpy(checkMsg.signature, respSign->signed_message, sizeof(checkMsg.signature));
-    uint8_t msg_resp_check[MSG_OUT_SIZE] __attribute__ ((aligned)) = {0};
-    Success *respCheck = (Success *) (void *) msg_resp_check;
-    err = msgSkycoinCheckMessageSignatureImpl(&checkMsg, respCheck);
+    uint8_t msg_success_resp_check[MSG_OUT_SIZE] __attribute__ ((aligned)) = {0};
+    uint8_t msg_fail_resp_check[MSG_OUT_SIZE] __attribute__ ((aligned)) = {0};
+    Success *successRespCheck = (Success *) (void *) msg_success_resp_check;
+    Failure *failRespCheck = (Failure *) (void *) msg_fail_resp_check;
+    err = msgSkycoinCheckMessageSignatureImpl(
+                &checkMsg, successRespCheck, failRespCheck);
 
     // NOTE(denisacostaq@gmail.com): Then
     ck_assert_int_ne(ErrOk, err);
-    ck_assert(respCheck->has_message);
-    int address_diff = strncmp(respAddress->addresses[0], respCheck->message,
+    ck_assert(failRespCheck->has_message);
+    int address_diff = strncmp(
+            respAddress->addresses[0], 
+            successRespCheck->message,
             sizeof(respAddress->addresses[0]));
     ck_assert_int_ne(0, address_diff);
 }
@@ -279,14 +289,19 @@ START_TEST(test_msgSkycoinCheckMessageSignatureFailedAsExpectedForInvalidMessage
     strncpy(checkMsg.message, msgSign.message, sizeof(checkMsg.message));
     memcpy(checkMsg.address, respAddress->addresses[0], sizeof(checkMsg.address));
     memcpy(checkMsg.signature, respSign->signed_message, sizeof(checkMsg.signature));
-    uint8_t msg_resp_check[MSG_OUT_SIZE] __attribute__ ((aligned)) = {0};
-    Success *respCheck = (Success *) (void *) msg_resp_check;
-    err = msgSkycoinCheckMessageSignatureImpl(&checkMsg, respCheck);
+    uint8_t msg_success_resp_check[MSG_OUT_SIZE] __attribute__ ((aligned)) = {0};
+    uint8_t msg_fail_resp_check[MSG_OUT_SIZE] __attribute__ ((aligned)) = {0};
+    Success *successRespCheck = (Success *) (void *) msg_success_resp_check;
+    Failure *failRespCheck = (Failure *) (void *) msg_fail_resp_check;
+    err = msgSkycoinCheckMessageSignatureImpl(
+                &checkMsg, successRespCheck, failRespCheck);
 
     // NOTE(denisacostaq@gmail.com): Then
     ck_assert_int_ne(ErrOk, err);
-    ck_assert(respCheck->has_message);
-    int address_diff = strncmp(respAddress->addresses[0], respCheck->message,
+    ck_assert(failRespCheck->has_message);
+    int address_diff = strncmp(
+            respAddress->addresses[0], 
+            successRespCheck->message,
             sizeof(respAddress->addresses[0]));
     ck_assert_int_ne(0, address_diff);
 }
