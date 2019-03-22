@@ -197,7 +197,9 @@ ErrCode_t msgSkycoinAddress(SkycoinAddress* msg, ResponseSkycoinAddress *resp)
 }
 
 ErrCode_t msgSkycoinCheckMessageSignatureImpl(
-		SkycoinCheckMessageSignature* msg, Success *resp) {
+		SkycoinCheckMessageSignature* msg,
+		Success *successResp,
+		Failure *failureResp) {
 	// NOTE(denisacostaq@gmail.com): -1 because the end of string ('\0')
 	// /2 because the hex to buff conversion.
 	uint8_t sign[(sizeof(msg->signature) - 1)/2];
@@ -221,21 +223,23 @@ ErrCode_t msgSkycoinCheckMessageSignatureImpl(
 		generate_base58_address_from_pubkey(
 					pubkey, pubkeybase58, &pubkeybase58_size);
 		if (memcmp(pubkeybase58, msg->address, pubkeybase58_size)) {
-			strncpy(resp->message, 
-					_("Address does not match"), 
-					sizeof (resp->message));
+			strncpy(failureResp->message,
+					_("Address does not match"),
+					sizeof (failureResp->message));
+			failureResp->has_message = true;
 			layoutRawMessage("Wrong signature");
 			ret = ErrFailed;
 		} else {
 			layoutRawMessage("Verification success");
-			memcpy(resp->message, pubkeybase58, pubkeybase58_size);
+			memcpy(successResp->message, pubkeybase58, pubkeybase58_size);
+			successResp->has_message = true;
 		}
 	} else {
-		strncpy(resp->message,
-				_("Unable to get pub key from signed message"), 
-				sizeof (resp->message));
+		strncpy(failureResp->message,
+				_("Unable to get pub key from signed message"),
+				sizeof (failureResp->message));
+		failureResp->has_message = true;
 	}
-	resp->has_message = true;
 	return ret;
 }
 
