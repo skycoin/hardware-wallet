@@ -8,6 +8,6 @@
 /**
  * String representation of coins
  */
-char *sprint_coins(uint64_t coins, int precision_exp, size_t sz, char *msg);
+char *sprint_coins(uint64_t coins, uint32_t precision_exp, size_t sz, char *msg);
 
 #endif
