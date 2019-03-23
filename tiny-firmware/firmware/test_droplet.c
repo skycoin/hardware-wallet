@@ -39,10 +39,11 @@ START_TEST(test_droplet_trim_fraction)
 {
   char msg[20];
   ck_assert_str_eq("4.9023", sprint_coins(4902300, SKYPARAM_DROPLET_PRECISION_EXP, 20, msg));
-  ck_assert_str_eq("9.503", sprint_coins(9503000, SKYPARAM_DROPLET_PRECISION_EXP, 20, msg));
-  ck_assert_str_eq("3.53", sprint_coins(3530000, SKYPARAM_DROPLET_PRECISION_EXP, 20, msg));
+  ck_assert_str_eq("9.703", sprint_coins(9703000, SKYPARAM_DROPLET_PRECISION_EXP, 20, msg));
+  ck_assert_str_eq("3.23", sprint_coins(3230000, SKYPARAM_DROPLET_PRECISION_EXP, 20, msg));
   ck_assert_str_eq("2.01", sprint_coins(2010000, SKYPARAM_DROPLET_PRECISION_EXP, 20, msg));
   ck_assert_str_eq("1.5", sprint_coins(1500000, SKYPARAM_DROPLET_PRECISION_EXP, 20, msg));
+  ck_assert_str_eq("0.1", sprint_coins(100000, SKYPARAM_DROPLET_PRECISION_EXP, 20, msg));
 }
 END_TEST
 
