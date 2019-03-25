@@ -18,6 +18,7 @@
 #include "rng.h"
 #include "timer.h"
 #include "firmware/storage.h"
+#include "skycoin_crypto.h"
 
 static uint8_t external_entropy[EXTERNAL_ENTROPY_MAX_SIZE] = {0};
 static bool external_entropy_available = false;
@@ -25,41 +26,6 @@ static bool external_entropy_available = false;
 #define INTERNAL_ENTROPY_SIZE SHA256_DIGEST_LENGTH
 
 static uint8_t entropy_mixer_prev_val[SHA256_DIGEST_LENGTH] = {0};
-
-/**
- * @brief sum_sha256 make a sha256 over buffer
- * @param buffer in data
- * @param buffer_len in data len
- * @param out_digest out sha256 data
- */
-static void sum_sha256(
-		const uint8_t *buffer, size_t buffer_len, uint8_t *out_digest) {
-	SHA256_CTX ctx;
-	sha256_Init(&ctx);
-	sha256_Update(&ctx, buffer, buffer_len);
-	sha256_Final(&ctx, out_digest);
-}
-
-/**
- * @brief add_sha256 make the sum of msg2 and to msg1
- * @param msg1 buffer content
- * @param msg1_len buffer conttn len
- * @param msg2 buffer content
- * @param msg2_len buffer content len
- * @param out_digest sum_sha256 of msg1 appened to mag2
- */
-static void add_sha256(
-		const uint8_t *msg1,
-		size_t msg1_len,
-		const uint8_t *msg2,
-		size_t msg2_len,
-		uint8_t *out_digest) {
-	SHA256_CTX ctx;
-	sha256_Init(&ctx);
-	sha256_Update(&ctx, msg1, msg1_len);
-	sha256_Update(&ctx, msg2, msg2_len);
-	sha256_Final(&ctx, out_digest);
-}
 
 void reset_entropy_mix_256(void) {
 	#ifdef EMULATOR
@@ -75,8 +41,7 @@ void reset_entropy_mix_256(void) {
 	entropy_mix_256(buf, sizeof(buf), buf);
 }
 
-void entropy_mix_256(
-		const uint8_t *in, size_t in_len, uint8_t *out_mixed_entropy) {
+void entropy_mix_256(const uint8_t *in, size_t in_len, uint8_t *out_mixed_entropy) {
 	uint8_t val1[SHA256_DIGEST_LENGTH] = {0};
 	sum_sha256(in, in_len, val1);
 	uint8_t val2[SHA256_DIGEST_LENGTH] = {0};
