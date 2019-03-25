@@ -56,7 +56,7 @@ void oledInit(void) {
 
 	int scale = emulatorScale();
 
-	SDL_Window *window = SDL_CreateWindow("TREZOR",
+	SDL_Window *window = SDL_CreateWindow("SkyWallet",
 		SDL_WINDOWPOS_UNDEFINED,
 		SDL_WINDOWPOS_UNDEFINED,
 		OLED_WIDTH * scale,

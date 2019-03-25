@@ -67,3 +67,6 @@ test_skycoin_crypto
 *.orig
 .DS_Store
 
+# IDE
+.vscode
+.idea
