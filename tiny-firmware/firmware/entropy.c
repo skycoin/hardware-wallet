@@ -43,7 +43,7 @@ void reset_entropy_mix_256(void) {
 
 void entropy_mix_256(const uint8_t *in, size_t in_len, uint8_t *out_mixed_entropy) {
 	uint8_t val1[SHA256_DIGEST_LENGTH] = {0};
-	sum_sha256(in, in_len, val1);
+	compute_sha256sum(in, in_len, val1);
 	uint8_t val2[SHA256_DIGEST_LENGTH] = {0};
 	add_sha256(
 		val1, sizeof (val1),
