@@ -34,16 +34,17 @@ void reset_entropy_mix_256(void) {
 	#else
 		uint64_t ticker = get_system_millis();
 	#endif  // EMULATOR
-	uint8_t buf[SHA256_DIGEST_LENGTH] = {0};
 	entropy_mix_256((uint8_t*)&ticker, sizeof(ticker), buf);
+	// FIXME : Read STM32_UUID instead
 	entropy_mix_256((uint8_t*)storage_uuid_str, sizeof(storage_uuid_str), buf);
+	uint8_t buf[SHA256_DIGEST_LENGTH] = {0};
 	random_buffer(buf, sizeof(buf));
 	entropy_mix_256(buf, sizeof(buf), buf);
 }
 
 void entropy_mix_256(const uint8_t *in, size_t in_len, uint8_t *out_mixed_entropy) {
 	uint8_t val1[SHA256_DIGEST_LENGTH] = {0};
-	compute_sha256sum(in, in_len, val1);
+	compute_sha256sum(in, val1, in_len);
 	uint8_t val2[SHA256_DIGEST_LENGTH] = {0};
 	add_sha256(
 		val1, sizeof (val1),
