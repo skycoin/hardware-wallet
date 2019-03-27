@@ -71,6 +71,7 @@ OBJS += firmware/reset.o
 OBJS += firmware/recovery.o
 OBJS += firmware/factory_test.o
 OBJS += firmware/entropy.o
+OBJS += firmware/swtimer.o
 
 OBJS += protob/c/messages.pb.o
 OBJS += protob/c/types.pb.o

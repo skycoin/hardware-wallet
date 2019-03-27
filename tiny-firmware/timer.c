@@ -25,71 +25,10 @@
 #include <libopencm3/cm3/vector.h>
 
 #include "rng.h"
+#include "firmware/swtimer.h"
 
 /* 1 tick = 1 ms */
 volatile uint64_t system_millis;
-
-uint64_t get_system_millis(void) {
-	return system_millis;
-}
-
-/* Software stopwatch timers */
-#define MAX_TIMERS 16
-
-typedef struct {
-	bool active;
-	uint64_t checkpoint;
-} TIMER;
-
-TIMER sw_timers[MAX_TIMERS];
-
-/*
- * Initialise stopwatch timers
- */
-void timer_init_sw(void) {
-	for (int i = 0; i < MAX_TIMERS; ++i) {
-		sw_timers[i].active = false;
-		sw_timers[i].checkpoint = 0;
-	}
-}
-
-SWTIMER stopwatch_open(void) {
-	for (int i = 0; i < MAX_TIMERS; ++i) {
-		if (sw_timers[i].active)
-			continue;
-		sw_timers[i].active = true;
-		sw_timers[i].checkpoint = system_millis;
-		return (SWTIMER) i;
-	}
-	return INVALID_TIMER;
-}
-
-int64_t stopwatch_counter(SWTIMER timerId) {
-	if (timerId >= MAX_TIMERS) {
-		return -1;
-	}
-	TIMER* t = sw_timers + timerId;
-	if (!t->active) {
-		return -1;
-	}
-	if (t->checkpoint > system_millis) {
-		return t->checkpoint - system_millis;
-	}
-	return UINT64_MAX - t->checkpoint + system_millis;
-}
-
-void stopwatch_reset(SWTIMER timerId) {
-	if (timerId < MAX_TIMERS) {
-		sw_timers[timerId].checkpoint = system_millis;
-	}
-}
-
-void stopwatch_close(SWTIMER timer) {
-	if (timer < MAX_TIMERS) {
-		sw_timers[timer].active = false;
-		sw_timers[timer].checkpoint = 0;
-	}
-}
 
 /*
  * Initialise the Cortex-M3 SysTick timer

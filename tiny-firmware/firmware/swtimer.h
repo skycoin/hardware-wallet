@@ -1,7 +1,7 @@
 /*
- * This file is part of the TREZOR project, https://trezor.io/
+ * This file is part of the Skycoin project, https://www.skycoin.net/
  *
- * Copyright (C) 2016 Saleem Rashid <trezor@saleemrashid.com>
+ * Copyright (C) 2018 Skycoin Project <contact@skycoin.net>
  *
  * This library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -17,18 +17,21 @@
  * along with this library.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __TIMER_H__
-#define __TIMER_H__
+#ifndef __SWTIMER_H__
+#define __SWTIMER_H__
 
 #include <stdint.h>
-#include "supervise.h"
 
-void timer_init(void);
+#define INVALID_TIMER 0x7F
+#define NO_TIMEOUT    0
+#define INFINITE_TS   UINT32_MAX
 
-#if EMULATOR
-uint32_t timer_ms(void);
-#else
-#define timer_ms svc_timer_ms
-#endif
+typedef uint8_t SWTIMER;
+
+void timer_init_sw(void);
+SWTIMER stopwatch_start(uint32_t timeout);
+uint32_t stopwatch_counter(SWTIMER);
+void stopwatch_reset(SWTIMER);
+void stopwatch_close(SWTIMER);
 
 #endif

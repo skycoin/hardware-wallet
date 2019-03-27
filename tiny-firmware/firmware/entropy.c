@@ -16,6 +16,7 @@
 #include "protob/c/messages.pb.h"
 #include "vendor/skycoin-crypto/tools/sha2.h"
 #include "rng.h"
+#include "firmware/swtimer.h"
 #include "timer.h"
 #include "firmware/storage.h"
 #include "skycoin_crypto.h"
@@ -32,10 +33,10 @@ ErrCode_t is_external_entropy_needed(void) {
 		return ErrEntropyAvailable;
 	}
 	// Request for external entropy after 60000 clock ticks ellapsed
-	if (stopwatch_counter(entropy_timeout) > EXTERNAL_ENTROPY_TIMEOUT) {
-		return ErrEntropyRequired;
+	if (stopwatch_counter(entropy_timeout)) {
+		return ErrEntropyNotNeeded;
 	}
-	return ErrEntropyNotNeeded;
+	return ErrEntropyRequired;
 }
 
 #define INTERNAL_ENTROPY_SIZE SHA256_DIGEST_LENGTH
@@ -44,7 +45,7 @@ static uint8_t entropy_mixer_prev_val[SHA256_DIGEST_LENGTH] = {0};
 
 void reset_entropy_mix_256(void) {
 	if (entropy_timeout == INVALID_TIMER) {
-		entropy_timeout = stopwatch_open();
+		entropy_timeout = stopwatch_start(EXTERNAL_ENTROPY_TIMEOUT);
 	}
 	uint8_t buf[SHA256_DIGEST_LENGTH] = {0};
 	// FIXME : Read STM32_UUID instead
