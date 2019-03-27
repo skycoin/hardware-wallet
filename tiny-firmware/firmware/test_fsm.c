@@ -316,8 +316,32 @@ START_TEST(test_msgApplySettingsLabelSuccess)
     msg.has_label = true;
     strncpy(msg.label, raw_label, sizeof(msg.label));
     msgApplySettings(&msg);
-    ck_assert_int_eq(storage_hasLabel(), 1);
+    ck_assert_int_eq(storage_hasLabel(), true);
     ck_assert_str_eq(storage_getLabel(), raw_label);
+}
+END_TEST
+
+START_TEST(test_msgApplySettingsLabelShouldNotBeRemovable)
+{
+    storage_wipe();
+    char raw_label[] = {
+        "my custom device label"};
+    ApplySettings msg = ApplySettings_init_zero;
+    msg.has_use_passphrase = true;
+    msg.use_passphrase = false;
+    msg.has_label = true;
+    strncpy(msg.label, raw_label, sizeof(msg.label));
+    msgApplySettings(&msg);
+    ck_assert(!storage_hasPassphraseProtection());
+    ck_assert_int_eq(storage_hasLabel(), true);
+    ck_assert_str_eq(storage_getLabel(), raw_label);
+    msg.has_label = false;
+    memset(msg.label, 0, sizeof(msg.label));
+    msg.has_use_passphrase = true;
+    msg.use_passphrase = true;
+    msgApplySettings(&msg);
+    ck_assert_str_eq(storage_getLabel(), raw_label);
+    ck_assert(storage_hasPassphraseProtection());
 }
 END_TEST
 
@@ -373,6 +397,7 @@ TCase *add_fsm_tests(TCase *tc)
 	tcase_add_test(tc, test_msgFeaturesLabelDefaultsToDeviceId);
 	tcase_add_test(tc, test_msgGetFeatures);
 	tcase_add_test(tc, test_msgApplySettingsLabelSuccessCheck);
+	tcase_add_test(tc, test_msgApplySettingsLabelShouldNotBeRemovable);
 	tcase_add_test(tc, test_msgFeaturesLabelDefaultsToDeviceId);
 	tcase_add_test(
 		tc, 
