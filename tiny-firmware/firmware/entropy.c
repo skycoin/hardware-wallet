@@ -20,26 +20,55 @@
 #include "firmware/storage.h"
 #include "skycoin_crypto.h"
 
+#define EXTERNAL_ENTROPY_TIMEOUT 60000
+#define ENTROPY_RANDOMSALT_SIZE 256
+
 static uint8_t external_entropy[EXTERNAL_ENTROPY_MAX_SIZE] = {0};
 static bool external_entropy_available = false;
+static SWTIMER entropy_timeout = INVALID_TIMER;
+
+ErrCode_t is_external_entropy_needed(void) {
+	if (external_entropy_available) {
+		return ErrEntropyAvailable;
+	}
+	// Request for external entropy after 60000 clock ticks ellapsed
+	if (stopwatch_counter(entropy_timeout) > EXTERNAL_ENTROPY_TIMEOUT) {
+		return ErrEntropyRequired;
+	}
+	return ErrEntropyNotNeeded;
+}
 
 #define INTERNAL_ENTROPY_SIZE SHA256_DIGEST_LENGTH
 
 static uint8_t entropy_mixer_prev_val[SHA256_DIGEST_LENGTH] = {0};
 
 void reset_entropy_mix_256(void) {
+	if (entropy_timeout == INVALID_TIMER) {
+		entropy_timeout = stopwatch_open();
+	}
+	uint8_t buf[SHA256_DIGEST_LENGTH] = {0};
+	// FIXME : Read STM32_UUID instead
+	entropy_mix_256((uint8_t*)storage_uuid_str, sizeof(storage_uuid_str), buf);
+	entropy_salt_mix_256(NULL, 0, buf);
+}
+
+void entropy_salt_mix_256(uint8_t *in, size_t in_len, uint8_t *buf) {
+	if (entropy_timeout == INVALID_TIMER) {
+		return;
+	}
+	if ((in != NULL) && (in_len > 0)) {
+		entropy_mix_256(in, in_len, buf);
+	}
 	#ifdef EMULATOR
 		uint64_t ticker = 0;
 		random_buffer((uint8_t*)&ticker, sizeof (ticker));
 	#else
 		uint64_t ticker = get_system_millis();
-	#endif  // EMULATOR
+	#endif	// EMULATOR
 	entropy_mix_256((uint8_t*)&ticker, sizeof(ticker), buf);
-	// FIXME : Read STM32_UUID instead
-	entropy_mix_256((uint8_t*)storage_uuid_str, sizeof(storage_uuid_str), buf);
-	uint8_t buf[SHA256_DIGEST_LENGTH] = {0};
-	random_buffer(buf, sizeof(buf));
-	entropy_mix_256(buf, sizeof(buf), buf);
+	uint8_t rndbuf[ENTROPY_RANDOMSALT_SIZE];
+	random_buffer(rndbuf, sizeof(rndbuf));
+	entropy_mix_256(rndbuf, sizeof(rndbuf), buf);
 }
 
 void entropy_mix_256(const uint8_t *in, size_t in_len, uint8_t *out_mixed_entropy) {
@@ -54,19 +83,22 @@ void entropy_mix_256(const uint8_t *in, size_t in_len, uint8_t *out_mixed_entrop
 	add_sha256(
 		val1, sizeof (val1), val2, sizeof (val2), val3);
 	memcpy(entropy_mixer_prev_val, val3, sizeof(entropy_mixer_prev_val));
-	memcpy(out_mixed_entropy, val2, SHA256_DIGEST_LENGTH);
+	if (out_mixed_entropy != NULL) {
+		memcpy(out_mixed_entropy, val2, SHA256_DIGEST_LENGTH);
+	}
 }
 
 ErrCode_t get_external_entropy(uint8_t* buffer) {
-	if (external_entropy_available) {
+	ErrCode_t action_needed = is_external_entropy_needed();
+	if (action_needed == ErrEntropyAvailable) {
 		external_entropy_available = false;
 		memcpy(buffer, external_entropy, sizeof(external_entropy));
-		return ErrOk;
 	}
-	return ErrEntropyRequired;
+	return action_needed;
 }
 
 void set_external_entropy(uint8_t *entropy) {
 	external_entropy_available = true;
+	stopwatch_reset(entropy_timeout);
 	memcpy(external_entropy, entropy, sizeof(external_entropy));
 }

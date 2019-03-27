@@ -23,14 +23,16 @@ enum ErrMode {
 	ReasonArgumentError = 1, /*!< Unexpected or invalid argument */
 	ReasonOutOfBounds = 2, /*!< Value out of bounds */
 	ReasonInvalidState = 3, /*!< The system get in an invalid state, for example a syc problem in server implementation */
-	ReasonNotUefulResult = 4, /*!< The result value is not useful */
+	ReasonNotUsefulResult = 4, /*!< The result value is not useful */
 	ReasonValueError = 5, /*!< Unexpected or invalid value */
+	ReasonExpired = 6, /*!< Validity period expired */
+	ReasonSkip = 7, /*!< Skip this action */
 };
 
 // 32-bits error constants are structured as folows:
 //
 // - First byte represents a package (i.e. logical part of the source code)
-//   being the origin of the error condition
+//	 being the origin of the error condition
 // - Remaining 24-LSB represent an specific error mode or condition
 #define ERROR_CODE(PKG, INDEX) ((int32_t)((PKG) << 24) | (INDEX))
 
@@ -45,18 +47,20 @@ enum ErrCategory {
 _Static_assert(sizeof (enum ErrCategory) == 1, "One byte as max for package");
 
 /**
- * @brief The ErrCode enum
+ * @brief firmware error codes
  */
 enum ErrCode {
-	ErrOk =						ERROR_CODE(PkgGeneric, ReasonSuccess),  /*!< Operation completed successfully */
-	ErrFailed =					ERROR_CODE(PkgGeneric, ReasonUnknown),  /*!< Generic failure */
-	ErrInvalidArg =				ERROR_CODE(PkgGeneric, ReasonArgumentError),  /*!< Invalid argument */
-	ErrIndexValue =				ERROR_CODE(PkgGeneric, ReasonOutOfBounds),  /*!< Index out of bounds */
-	ErrInvalidValue =			ERROR_CODE(PkgGeneric, ReasonValueError),  /*!< Invalid value */
-	ErrEntropyRequired =		ERROR_CODE(PkgEntropy, ReasonArgumentError),  /*!< Buffer entropy under 4.0 bits/symbol */
-	ErrUnexpectedMessage =		ERROR_CODE(PkgServer, ReasonInvalidState),  /*! < Server state loses path */
+	ErrOk =						ERROR_CODE(PkgGeneric, ReasonSuccess),	/*!< Operation completed successfully */
+	ErrFailed =					ERROR_CODE(PkgGeneric, ReasonUnknown),	/*!< Generic failure */
+	ErrInvalidArg =				ERROR_CODE(PkgGeneric, ReasonArgumentError),	/*!< Invalid argument */
+	ErrIndexValue =				ERROR_CODE(PkgGeneric, ReasonOutOfBounds),	/*!< Index out of bounds */
+	ErrInvalidValue =			ERROR_CODE(PkgGeneric, ReasonValueError),	/*!< Invalid value */
+	ErrEntropyRequired =		ERROR_CODE(PkgEntropy, ReasonExpired),	/*!< External entropy required */
+	ErrEntropyAvailable =		ERROR_CODE(PkgEntropy, ReasonSuccess),	/*!< External entropy available */
+	ErrEntropyNotNeeded =		ERROR_CODE(PkgEntropy, ReasonSkip),	/*!< External entropy not needed */
+	ErrUnexpectedMessage =		ERROR_CODE(PkgServer, ReasonInvalidState),	/*!< Server state loses path */
 };
 typedef enum ErrCode ErrCode_t;
 _Static_assert(sizeof (ErrCode_t) == 4, "One byte as max for package");
 
-#endif  // __TINYFIRMWARE_FIRMWARE_ERRORCODES__
+#endif	// __TINYFIRMWARE_FIRMWARE_ERRORCODES__

@@ -23,8 +23,16 @@
 #include <stdint.h>
 #include "supervise.h"
 
+#define INVALID_TIMER 0x7F
+
+typedef uint8_t SWTIMER;
+
 void timer_init(void);
 uint64_t get_system_millis(void);
+SWTIMER stopwatch_open(void);
+int64_t stopwatch_counter(SWTIMER);
+void stopwatch_reset(SWTIMER);
+void stopwatch_close(SWTIMER);
 
 #if EMULATOR
 uint32_t timer_ms(void);

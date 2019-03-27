@@ -75,12 +75,14 @@ ErrCode_t msgGenerateMnemonicImpl(GenerateMnemonic* msg) {
 	}
 	uint8_t external_entropy[EXTERNAL_ENTROPY_MAX_SIZE] = {0};
 	ErrCode_t ret = get_external_entropy(external_entropy);
-	if (ret != ErrOk) {
+	if (ret == ErrEntropyRequired) {
 		return ret;
 	}
 	const bool skip_backup_saved = skip_backup;
 	skip_backup = true;
-	ret = reset_entropy(external_entropy, sizeof(external_entropy));
+	if (ret == ErrEntropyAvailable) {
+		ret = reset_entropy(external_entropy, sizeof(external_entropy));
+	}
 	skip_backup = skip_backup_saved;
 	if (msg->has_passphrase_protection) {
 		storage_setPassphraseProtection(msg->passphrase_protection);
@@ -91,7 +93,7 @@ ErrCode_t msgGenerateMnemonicImpl(GenerateMnemonic* msg) {
 
 
 void msgSkycoinSignMessageImpl(SkycoinSignMessage* msg,
-								   ResponseSkycoinSignMessage *resp)
+									 ResponseSkycoinSignMessage *resp)
 {
 	if (storage_hasMnemonic() == false) {
 		fsm_sendFailure(FailureType_Failure_AddressGeneration, "Mnemonic not set");
@@ -249,11 +251,11 @@ void msgApplySettings(ApplySettings *msg)
 
 void msgGetFeaturesImpl(Features *resp)
 {
-	resp->has_vendor = true;         strlcpy(resp->vendor, "Skycoin Foundation", sizeof(resp->vendor));
-	resp->has_fw_major = true;  resp->fw_major = VERSION_MAJOR;
-	resp->has_fw_minor = true;  resp->fw_minor = VERSION_MINOR;
-	resp->has_fw_patch = true;  resp->fw_patch = VERSION_PATCH;
-	resp->has_device_id = true;      strlcpy(resp->device_id, storage_uuid_str, sizeof(resp->device_id));
+	resp->has_vendor = true;				 strlcpy(resp->vendor, "Skycoin Foundation", sizeof(resp->vendor));
+	resp->has_fw_major = true;	resp->fw_major = VERSION_MAJOR;
+	resp->has_fw_minor = true;	resp->fw_minor = VERSION_MINOR;
+	resp->has_fw_patch = true;	resp->fw_patch = VERSION_PATCH;
+	resp->has_device_id = true;			strlcpy(resp->device_id, storage_uuid_str, sizeof(resp->device_id));
 	resp->has_pin_protection = true; resp->pin_protection = storage_hasPin();
 	resp->has_passphrase_protection = true; resp->passphrase_protection = storage_hasPassphraseProtection();
 	resp->has_bootloader_hash = true; resp->bootloader_hash.size = memory_bootloader_hash(resp->bootloader_hash.bytes);

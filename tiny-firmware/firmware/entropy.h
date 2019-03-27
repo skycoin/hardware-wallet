@@ -9,9 +9,9 @@
  *
  */
 
-#include "firmware/error.h"
-
 #include <stddef.h>
+
+#include "error.h"
 
 #ifndef __TINYFIRMWARE_FIRMWARE_ENTROPY__
 #define __TINYFIRMWARE_FIRMWARE_ENTROPY__
@@ -19,19 +19,23 @@
 #define EXTERNAL_ENTROPY_MAX_SIZE 128
 
 /**
- * @brief reset_entropy_mix_256 initialze the internal entropy pool
+ * @brief reset_entropy_mix_256 initialize the internal entropy pool with fixed and variable salts
  * @sa entropy_mix_256
  */
 void reset_entropy_mix_256(void);
 
 /**
+ * @brief entropy_salt_mix_256 mixes variable salt sources within entropy pool value
+ * @sa entropy_mix_256
+ */
+void entropy_salt_mix_256(uint8_t *in, size_t in_len, uint8_t *buf);
+
+/**
  * @brief entropy_mix_256 entropy pool mixer.
  * @param in entropy with 256 bits. 
- * @param in_len in len.
  * @param out_mixed_entropy out parama to store the mixed entropy with 256 bits.
  */
-void entropy_mix_256(
-		const uint8_t *in, size_t in_len, uint8_t *out_mixed_entropy);
+void entropy_mix_256(const uint8_t *in, size_t in_len, uint8_t *out_mixed_entropy);
 
 /**
  * @brief get_external_entropy get a previous saved external entropy
@@ -47,5 +51,13 @@ ErrCode_t get_external_entropy(uint8_t* buffer);
  * @param entropy the external entropy to be stored
  */
 void set_external_entropy(uint8_t *entropy);
+
+/**
+ * @brief is_external_entropy_needed determine whether current entropy 
+ * @return Err_EntropyRequired if external entropy is needed
+ * @return Err_EntropyNotNeeded if external entropy is not needed
+ * @return Err_EntropyAvailable if external entropy is ready to be merged
+ */
+ErrCode_t is_external_entropy_needed(void);
 
 #endif  // __TINYFIRMWARE_FIRMWARE_ENTROPY__
