@@ -78,9 +78,8 @@ void reset_init(bool display_random, uint32_t _strength, bool passphrase_protect
 	msg_write(MessageType_MessageType_EntropyRequest, &resp);
 }
 
-ErrCode_t reset_entropy(const uint8_t *ext_entropy, size_t len)
+ErrCode_t reset_entropy(void)
 {
-	entropy_salt_mix_256(ext_entropy, len, int_entropy);
 	storage_setNeedsBackup(true);
 	const char *mnemonic = mnemonic_from_data(int_entropy, strength / 8);
 	if (!mnemonic_check(mnemonic)) {

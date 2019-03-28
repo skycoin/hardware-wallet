@@ -38,19 +38,10 @@ void entropy_salt_mix_256(uint8_t *in, size_t in_len, uint8_t *buf);
 void entropy_mix_256(const uint8_t *in, size_t in_len, uint8_t *out_mixed_entropy);
 
 /**
- * @brief get_external_entropy get a previous saved external entropy
- * @details This entropy have to be used only once.
- * @param buffer with the external entropy
- * @return An error code if there is not external entropy available
- * @sa set_external_entropy
- */
-ErrCode_t get_external_entropy(uint8_t* buffer);
-
-/**
  * @brief set_external_entropy This should be used from a EntropyAck only.
  * @param entropy the external entropy to be stored
  */
-void set_external_entropy(uint8_t *entropy);
+void set_external_entropy(uint8_t *entropy, size_t len);
 
 /**
  * @brief is_external_entropy_needed determine whether current entropy 

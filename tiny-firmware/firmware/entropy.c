@@ -24,14 +24,9 @@
 #define EXTERNAL_ENTROPY_TIMEOUT 60000
 #define ENTROPY_RANDOMSALT_SIZE 256
 
-static uint8_t external_entropy[EXTERNAL_ENTROPY_MAX_SIZE] = {0};
-static bool external_entropy_available = false;
 static SWTIMER entropy_timeout = INVALID_TIMER;
 
 ErrCode_t is_external_entropy_needed(void) {
-	if (external_entropy_available) {
-		return ErrEntropyAvailable;
-	}
 	// Request for external entropy after 60000 clock ticks ellapsed
 	if (stopwatch_counter(entropy_timeout)) {
 		return ErrEntropyNotNeeded;
@@ -47,7 +42,6 @@ void reset_entropy_mix_256(void) {
 	if (entropy_timeout == INVALID_TIMER) {
 		entropy_timeout = stopwatch_start(EXTERNAL_ENTROPY_TIMEOUT);
 	}
-	uint8_t buf[SHA256_DIGEST_LENGTH] = {0};
 	// FIXME : Read STM32_UUID instead
 	entropy_mix_256((uint8_t*)storage_uuid_str, sizeof(storage_uuid_str), NULL);
 	uint8_t rndbuf[ENTROPY_RANDOMSALT_SIZE];
@@ -94,17 +88,9 @@ void entropy_mix_256(const uint8_t *in, size_t in_len, uint8_t *out_mixed_entrop
 	}
 }
 
-ErrCode_t get_external_entropy(uint8_t* buffer) {
-	ErrCode_t action_needed = is_external_entropy_needed();
-	if (action_needed == ErrEntropyAvailable) {
-		external_entropy_available = false;
-		memcpy(buffer, external_entropy, sizeof(external_entropy));
-	}
-	return action_needed;
-}
+extern uint8_t int_entropy[32];
 
-void set_external_entropy(uint8_t *entropy) {
-	external_entropy_available = true;
+void set_external_entropy(uint8_t *entropy, size_t len) {
 	stopwatch_reset(entropy_timeout);
-	memcpy(external_entropy, entropy, sizeof(external_entropy));
+	entropy_salt_mix_256(entropy, len, int_entropy);
 }
