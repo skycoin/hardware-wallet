@@ -55,13 +55,19 @@
 #define CHECK_PIN_RET_ERR_CODE \
 	if (!protectPin(true)) { \
 		layoutHome(); \
-		return ErrFailed; \
+		return ErrPinRequired; \
 	}
 
 #define CHECK_PIN_UNCACHED \
 	if (!protectPin(false)) { \
 		layoutHome(); \
 		return; \
+	}
+
+#define CHECK_PIN_UNCACHED_RET_ERR_CODE \
+	if (!protectPin(false)) { \
+		layoutHome(); \
+		return ErrPinRequired; \
 	}
 
 #define CHECK_PARAM(cond, errormsg) \
@@ -71,17 +77,82 @@
 		return; \
 	}
 
+#define CHECK_PARAM_RET_ERR_CODE(cond, errormsg) \
+	if (!(cond)) { \
+		fsm_sendFailure(FailureType_Failure_DataError, (errormsg)); \
+		layoutHome(); \
+		return ErrInvalidArg; \
+	}
+
+#define CHECK_BUTTON_PROTECT \
+	if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) { \
+		fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL); \
+		layoutHome(); \
+		return; \
+	}
+
+#define CHECK_BUTTON_PROTECT_RET_ERR_CODE \
+	if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) { \
+		fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL); \
+		layoutHome(); \
+		return ErrFailed; \
+	}
+
+#define CHECK_MNEMONIC \
+	if (storage_hasMnemonic() == false) { \
+		fsm_sendFailure(FailureType_Failure_AddressGeneration, "Mnemonic not set"); \
+		layoutHome(); \
+		return; \
+	}
+
+#define CHECK_INPUTS(msg) \
+	if ((msg)->nbIn > 8) { \
+		fsm_sendFailure(FailureType_Failure_InvalidSignature, _("Cannot have more than 8 inputs")); \
+		layoutHome(); \
+		return; \
+	}
+
+#define CHECK_OUTPUTS(msg) \
+	if ((msg)->nbOut > 8) { \
+		fsm_sendFailure(FailureType_Failure_InvalidSignature, _("Cannot have more than 8 outputs")); \
+		layoutHome(); \
+		return; \
+	}
+
+#define CHECK_MNEMONIC_CHECKSUM \
+	if (!mnemonic_check(msg->mnemonic)) { \
+		fsm_sendFailure(FailureType_Failure_DataError, _("Mnemonic with wrong checksum provided")); \
+		layoutHome(); \
+		return ErrFailed; \
+	}
+
+#define CHECK_MNEMONIC_CHECKSUM_RET_ERR_CODE \
+	if (!mnemonic_check(msg->mnemonic)) { \
+		fsm_sendFailure(FailureType_Failure_DataError, _("Mnemonic with wrong checksum provided")); \
+		layoutHome(); \
+		return ErrFailed; \
+	}
+
 ErrCode_t msgGenerateMnemonicImpl(
 		GenerateMnemonic* msg,
 		void (*random_buffer_func)(uint8_t *buf, size_t len));
 ErrCode_t msgEntropyAckImpl(EntropyAck* msg);
-void msgSkycoinSignMessageImpl(SkycoinSignMessage* msg,
+ErrCode_t msgSkycoinSignMessageImpl(SkycoinSignMessage* msg,
 							ResponseSkycoinSignMessage *msg_resp);
-ErrCode_t msgSignTransactionMessageImpl(uint8_t* message_digest, uint32_t index, 
+ErrCode_t msgSignTransactionMessageImpl(uint8_t* message_digest, uint32_t index,
 										char* signed_message);
 ErrCode_t msgSkycoinAddress(SkycoinAddress* msg, ResponseSkycoinAddress *resp);
-void msgSkycoinCheckMessageSignature(SkycoinCheckMessageSignature* msg, Success *resp);
-void msgApplySettings(ApplySettings *msg);
-void msgGetFeaturesImpl(Features *resp);
+ErrCode_t msgSkycoinCheckMessageSignature(SkycoinCheckMessageSignature* msg, Success *resp);
+ErrCode_t msgApplySettings(ApplySettings *msg);
+ErrCode_t msgGetFeaturesImpl(Features *resp);
+ErrCode_t msgTransactionSign(TransactionSign *msg);
+ErrCode_t msgPing(Ping *msg);
+ErrCode_t msgChangePinImpl(ChangePin *msg);
+ErrCode_t msgWipeDeviceImpl(WipeDevice *msg);
+ErrCode_t msgSetMnemonicImpl(SetMnemonic *msg);
+ErrCode_t msgGetEntropyImpl(GetEntropy *msg);
+ErrCode_t msgLoadDeviceImpl(LoadDevice *msg);
+ErrCode_t msgBackupDeviceImpl(BackupDevice *msg);
+ErrCode_t msgRecoveryDeviceImpl(RecoveryDevice *msg);
 
 #endif  // __TINYFIRMWARE_FIRMWARE_FSMIMPL_H__

@@ -17,14 +17,16 @@
 /**
  * @brief The ErrMode enum represents the error modes.
  */
-enum ErrMode {
-	ReasonSuccess = 0, /*!< Success */
-	ReasonUnknown = 0xFFF, /*!< Reason unknown */
-	ReasonArgumentError = 1, /*!< Unexpected or invalid argument */
-	ReasonOutOfBounds = 2, /*!< Value out of bounds */
-	ReasonInvalidState = 3, /*!< The system get in an invalid state, for example a syc problem in server implementation */
-	ReasonNotUefulResult = 4, /*!< The result value is not useful */
-	ReasonValueError = 5, /*!< Unexpected or invalid value */
+enum ErrMode
+{
+	ReasonSuccess = 0,		/*!< Success */
+	ReasonUnknown = 0xFFF,		/*!< Reason unknown */
+	ReasonArgumentError = 1,	/*!< Unexpected or invalid argument */
+	ReasonOutOfBounds = 2,		/*!< Value out of bounds */
+	ReasonInvalidState = 3,		/*!< The system get in an invalid state, for example a syc problem in server implementation */
+	ReasonValueError = 5,		/*!< Unexpected or invalid value */
+	ReasonNotImplemented = 6,	/*!< Not implemented code */
+	ReasonPinRequired = 7,          /*!< Action requires PIN and it did not match or is not configured */
 };
 
 // 32-bits error constants are structured as folows:
@@ -38,23 +40,28 @@ enum ErrMode {
  * @brief The ErrCategory enum
  */
 enum ErrCategory {
-	PkgGeneric = 0, /*!< Byte prefix for generic error codes */
-	PkgEntropy = 1, /*!< Byte prefix for entropy error codes */
+	PkgGeneric = 0, /*!< Generic error codes */
+	PkgEntropy = 1, /*!< Entropy error codes */
 	PkgServer = 2, /*! < Server schema related errors */
+	PkgSign = 3, /*!   < Signing errors */
 } __attribute__ ((__packed__));
 _Static_assert(sizeof (enum ErrCategory) == 1, "One byte as max for package");
 
 /**
  * @brief The ErrCode enum
  */
-enum ErrCode {
-	ErrOk =						ERROR_CODE(PkgGeneric, ReasonSuccess),  /*!< Operation completed successfully */
-	ErrFailed =					ERROR_CODE(PkgGeneric, ReasonUnknown),  /*!< Generic failure */
-	ErrInvalidArg =				ERROR_CODE(PkgGeneric, ReasonArgumentError),  /*!< Invalid argument */
-	ErrIndexValue =				ERROR_CODE(PkgGeneric, ReasonOutOfBounds),  /*!< Index out of bounds */
-	ErrInvalidValue =			ERROR_CODE(PkgGeneric, ReasonValueError),  /*!< Invalid value */
-	ErrLowEntropy =				ERROR_CODE(PkgEntropy, ReasonArgumentError),  /*!< Buffer entropy under 4.0 bits/symbol */
-	ErrUnexpectedMessage =		ERROR_CODE(PkgServer, ReasonInvalidState),  /*! < Server state loses path */
+enum ErrCode
+{
+	ErrOk = ERROR_CODE(PkgGeneric, ReasonSuccess),			     /*!< Operation completed successfully */
+	ErrFailed = ERROR_CODE(PkgGeneric, ReasonUnknown),		     /*!< Generic failure */
+	ErrInvalidArg = ERROR_CODE(PkgGeneric, ReasonArgumentError),	     /*!< Invalid argument */
+	ErrIndexValue = ERROR_CODE(PkgGeneric, ReasonOutOfBounds),	     /*!< Index out of bounds */
+	ErrInvalidValue = ERROR_CODE(PkgGeneric, ReasonValueError),	     /*!< Invalid value */
+	ErrNotImplemented = ERROR_CODE(PkgGeneric, ReasonNotImplemented),    /*!< Feature not implemented */
+	ErrPinRequired = ERROR_CODE(PkgGeneric, ReasonPinRequired),          /*!< Action requires PIN and it did not match or is not configured */
+	ErrLowEntropy = ERROR_CODE(PkgEntropy, ReasonArgumentError),	     /*!< Buffer entropy under 4.0 bits/symbol */
+	ErrUnexpectedMessage = ERROR_CODE(PkgServer, ReasonInvalidState),    /*!< Server state loses path */
+	ErrSignPreconditionFailed = ERROR_CODE(PkgSign, ReasonInvalidState), /*!< Signing precondition failed */
 };
 typedef enum ErrCode ErrCode_t;
 _Static_assert(sizeof (ErrCode_t) == 4, "One byte as max for package");
