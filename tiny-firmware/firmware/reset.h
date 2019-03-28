@@ -26,7 +26,7 @@
 #include "firmware/error.h"
 
 void reset_init(bool display_random, uint32_t _strength, bool passphrase_protection, bool pin_protection, const char *language, const char *label, bool skip_backup);
-ErrCode_t reset_entropy(const uint8_t *ext_entropy, uint32_t len);
+ErrCode_t reset_entropy(const uint8_t *ext_entropy, size_t len);
 void reset_backup(bool separated);
 uint32_t reset_get_int_entropy(uint8_t *entropy);
 const char *reset_get_word(void);

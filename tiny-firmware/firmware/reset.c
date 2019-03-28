@@ -38,7 +38,9 @@ bool     skip_backup = false;
 
 void reset_init(bool display_random, uint32_t _strength, bool passphrase_protection, bool pin_protection, const char *language, const char *label, bool _skip_backup)
 {
-	if (_strength != 128 && _strength != 192 && _strength != 256) return;
+	if (_strength != 128 && _strength != 192 && _strength != 256) {
+		return;
+	}
 
 	strength = _strength;
 	skip_backup = _skip_backup;
@@ -46,8 +48,8 @@ void reset_init(bool display_random, uint32_t _strength, bool passphrase_protect
 	random_buffer(int_entropy, 32);
 
 	char ent_str[4][17];
-	data2hex(int_entropy     , 8, ent_str[0]);
-	data2hex(int_entropy +  8, 8, ent_str[1]);
+	data2hex(int_entropy		 , 8, ent_str[0]);
+	data2hex(int_entropy +	8, 8, ent_str[1]);
 	data2hex(int_entropy + 16, 8, ent_str[2]);
 	data2hex(int_entropy + 24, 8, ent_str[3]);
 
@@ -76,17 +78,9 @@ void reset_init(bool display_random, uint32_t _strength, bool passphrase_protect
 	msg_write(MessageType_MessageType_EntropyRequest, &resp);
 }
 
-ErrCode_t reset_entropy(const uint8_t *ext_entropy, uint32_t len)
+ErrCode_t reset_entropy(const uint8_t *ext_entropy, size_t len)
 {
-#ifdef EMULATOR
-	uint64_t ticker = 0;
-	random_buffer((uint8_t*)&ticker, sizeof (ticker));
-#else
-	uint64_t ticker = get_system_millis();
-#endif  // EMULATOR
-	uint8_t buff[SHA256_DIGEST_LENGTH];
-	entropy_mix_256((uint8_t*)&ticker, sizeof(ticker), buff);
-	entropy_mix_256(ext_entropy, len, int_entropy);
+	entropy_salt_mix_256(ext_entropy, len, int_entropy);
 	storage_setNeedsBackup(true);
 	const char *mnemonic = mnemonic_from_data(int_entropy, strength / 8);
 	if (!mnemonic_check(mnemonic)) {

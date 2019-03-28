@@ -49,27 +49,32 @@ void reset_entropy_mix_256(void) {
 	}
 	uint8_t buf[SHA256_DIGEST_LENGTH] = {0};
 	// FIXME : Read STM32_UUID instead
-	entropy_mix_256((uint8_t*)storage_uuid_str, sizeof(storage_uuid_str), buf);
-	entropy_salt_mix_256(NULL, 0, buf);
+	entropy_mix_256((uint8_t*)storage_uuid_str, sizeof(storage_uuid_str), NULL);
+	uint8_t rndbuf[ENTROPY_RANDOMSALT_SIZE];
+	random_buffer(rndbuf, sizeof(rndbuf));
+	entropy_mix_256(rndbuf, sizeof(rndbuf), NULL);
+	entropy_salt_mix_256(NULL, 0, NULL);
 }
 
 void entropy_salt_mix_256(uint8_t *in, size_t in_len, uint8_t *buf) {
 	if (entropy_timeout == INVALID_TIMER) {
 		return;
 	}
-	if ((in != NULL) && (in_len > 0)) {
+	#ifdef EMULATOR
+		uint64_t salt_ticker = 0;
+		random_buffer((uint8_t*)&salt_ticker, sizeof (salt_ticker));
+	#else
+		uint64_t salt_ticker = timer_ms();
+	#endif	// EMULATOR
+	// Salt source : System clock timer
+	entropy_mix_256((uint8_t*)&salt_ticker, sizeof(salt_ticker), NULL);
+	// Salt source : TRNG 32 bits
+	uint32_t salt_trng = random32();
+	random_buffer((uint8_t*)&salt_trng, sizeof (salt_trng));
+	entropy_mix_256((uint8_t*)&salt_trng, sizeof(salt_trng), NULL);
+	if (in != NULL) {
 		entropy_mix_256(in, in_len, buf);
 	}
-	#ifdef EMULATOR
-		uint64_t ticker = 0;
-		random_buffer((uint8_t*)&ticker, sizeof (ticker));
-	#else
-		uint64_t ticker = get_system_millis();
-	#endif	// EMULATOR
-	entropy_mix_256((uint8_t*)&ticker, sizeof(ticker), buf);
-	uint8_t rndbuf[ENTROPY_RANDOMSALT_SIZE];
-	random_buffer(rndbuf, sizeof(rndbuf));
-	entropy_mix_256(rndbuf, sizeof(rndbuf), buf);
 }
 
 void entropy_mix_256(const uint8_t *in, size_t in_len, uint8_t *out_mixed_entropy) {
