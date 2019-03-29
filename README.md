@@ -23,6 +23,7 @@
     - [Versioning combined binary builds](#versioning-combined-binary-builds)
     - [Versioning libraries](#versioning-libraries)
   - [Running tests](#running-tests)
+  - [Validate the TRNG](#Validate-the-TRNG)
   - [Releases](#releases)
     - [Update the version](#update-the-version)
     - [Pre-release testing](#pre-release-testing)
@@ -156,9 +157,24 @@ In order to identify at first sight the features supported by a particular relea
 
 The project includes a test suite. In order to run it just execute the following command
 
+### Validate the TRNG
+
+To be able to validate the device trng you need to install the following tools:
+
+- dieharder (A testing and benchmarking tool for random number generators)
+- ent (pseudorandom number sequence test)
+- rng-tools (Check the randomness of data using FIPS 140-2 tests)
+
+For example, in a debian based system you can run `apt install dieharder ent rng-tools`
+
+To generate rando buffers run:
+`make validate-trng`
+
 ```
 make test
 ```
+
+#### [Files description](trng-test/Files-description#Files-description)
 
 ### Releases
 
