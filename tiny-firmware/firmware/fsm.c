@@ -144,13 +144,11 @@ void fsm_msgInitialize(Initialize *msg)
 void fsm_msgApplySettings(ApplySettings *msg)
 {
 	CHECK_PIN
-	CHECK_PARAM( msgApplySettings(msg) == ErrOk, _("Action cancelled by user") )
+	if (msgApplySettings(msg) != ErrOk) {
+		fsm_sendFailure(FailureType_Failure_DataError, _("Action cancelled by user"));
 	} else {
-		msg->has_label = false;
-	if (msg->has_language && strlen(msg->language)) {
-	} else {
-		msg->has_language = false;
-	fsm_sendSuccess(_("Settings applied"));
+		fsm_sendSuccess(_("Settings applied"));
+	}
 	layoutHome();
 }
 
@@ -165,13 +163,10 @@ void fsm_msgGetFeatures(GetFeatures *msg)
 void fsm_msgSkycoinCheckMessageSignature(SkycoinCheckMessageSignature* msg)
 {
 	GET_MSG_POINTER(Success, successResp);
-	GET_MSG_POINTER(Failure, failureResp);
-	if (msgSkycoinCheckMessageSignatureImpl(msg, successResp, failureResp)
-			== ErrOk) {
+	if ( msgSkycoinCheckMessageSignature(msg, successResp) == ErrOk) {
 		msg_write(MessageType_MessageType_Success, successResp);
 	} else {
-		failureResp->code = FailureType_Failure_InvalidSignature;
-		msg_write(MessageType_MessageType_Failure, failureResp);
+		fsm_sendFailure(FailureType_Failure_InvalidSignature, _("Invalid signature"));
 	}
 	layoutHome();
 }
