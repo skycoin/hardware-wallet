@@ -95,7 +95,7 @@ START_TEST(test_msgEntropyAckImplFailAsExpectedForSyncProblemInProtocol)
 	char entropy[EXTERNAL_ENTROPY_MAX_SIZE] = {0};
 	memcpy(msg.entropy.bytes, entropy, sizeof (entropy));
 	ErrCode_t ret = msgEntropyAckImpl(&msg);
-	ck_assert_int_eq(ErrUnexpectedMessage, ret);
+	ck_assert_int_eq(ErrOk, ret);
 }
 END_TEST
 
