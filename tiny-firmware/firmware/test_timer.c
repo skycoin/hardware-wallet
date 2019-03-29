@@ -71,32 +71,32 @@ START_TEST(test_swtimer_counter_desc)
   // And after 20 ticks
   ck_assert_uint_eq(stopwatch_counter_impl(t, 12345698), 352);
   // And after 999 ticks
-  ck_assert_uint_eq(stopwatch_counter_impl(t, 12346677), 1);
+  ck_assert_uint_eq(stopwatch_counter_impl(t, 12346049), 1);
   // And after 1000 ticks
-  ck_assert_uint_eq(stopwatch_counter_impl(t, 12346678), 0);
+  ck_assert_uint_eq(stopwatch_counter_impl(t, 12346050), 0);
   // And after 1001 ticks
-  ck_assert_uint_eq(stopwatch_counter_impl(t, 12346679), 0);
+  ck_assert_uint_eq(stopwatch_counter_impl(t, 12346051), 0);
   // And after 1100 ticks
-  ck_assert_uint_eq(stopwatch_counter_impl(t, 12346778), 0);
+  ck_assert_uint_eq(stopwatch_counter_impl(t, 12346150), 0);
   // Close timer
   stopwatch_close_impl(t);
   // Restart timer at a later time
-  stopwatch_start_impl(t, 0, 23456000);
+  stopwatch_start_impl(t, 1000, 23456000);
   // Counter after 789 ticks
-  ck_assert_uint_eq(stopwatch_counter_impl(t, 23456789), 789);
+  ck_assert_uint_eq(stopwatch_counter_impl(t, 23456789), 211);
   // If timer had been reset
   stopwatch_reset_impl(t, 23456050);
-  ck_assert_uint_eq(stopwatch_counter_impl(t, 23456789), 739);
+  ck_assert_uint_eq(stopwatch_counter_impl(t, 23456789), 261);
   // And after 10 ticks
-  ck_assert_uint_eq(stopwatch_counter_impl(t, 23456799), 749);
+  ck_assert_uint_eq(stopwatch_counter_impl(t, 23456799), 251);
   // And after 999 ticks
-  ck_assert_uint_eq(stopwatch_counter_impl(t, 23457788), 1);
+  ck_assert_uint_eq(stopwatch_counter_impl(t, 23457049), 1);
   // And after 1000 ticks
-  ck_assert_uint_eq(stopwatch_counter_impl(t, 23457789), 0);
+  ck_assert_uint_eq(stopwatch_counter_impl(t, 23457050), 0);
   // And after 1001 ticks
-  ck_assert_uint_eq(stopwatch_counter_impl(t, 23457790), 0);
+  ck_assert_uint_eq(stopwatch_counter_impl(t, 23457051), 0);
   // And after 1100 ticks
-  ck_assert_uint_eq(stopwatch_counter_impl(t, 23457889), 0);
+  ck_assert_uint_eq(stopwatch_counter_impl(t, 23457150), 0);
   // Close timer
   stopwatch_close_impl(t);
 }
