@@ -178,7 +178,7 @@ ErrCode_t msgSignTransactionMessageImpl(uint8_t* message_digest, uint32_t index,
 	return res;
 }
 
-ErrCode_t msgSkycoinAddress(SkycoinAddress* msg, ResponseSkycoinAddress *resp)
+ErrCode_t msgSkycoinAddressImpl(SkycoinAddress* msg, ResponseSkycoinAddress *resp)
 {
 	uint8_t seckey[32] = {0};
 	uint8_t pubkey[33] = {0};
@@ -207,7 +207,7 @@ ErrCode_t msgSkycoinAddress(SkycoinAddress* msg, ResponseSkycoinAddress *resp)
 	return ErrOk;
 }
 
-ErrCode_t msgSkycoinCheckMessageSignature(SkycoinCheckMessageSignature* msg, Success *resp)
+ErrCode_t msgSkycoinCheckMessageSignatureImpl(SkycoinCheckMessageSignature* msg, Success *resp)
 {
 	// NOTE(denisacostaq@gmail.com): -1 because the end of string ('\0')
 	// /2 because the hex to buff conversion.
@@ -239,7 +239,7 @@ ErrCode_t msgSkycoinCheckMessageSignature(SkycoinCheckMessageSignature* msg, Suc
 	return ErrOk;
 }
 
-ErrCode_t msgApplySettings(ApplySettings *msg)
+ErrCode_t msgApplySettingsImpl(ApplySettings *msg)
 {
 	if (msg->has_label && strlen(msg->label)) {
 		layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"), _("change name to"), msg->label, "?", NULL, NULL);
@@ -313,7 +313,7 @@ ErrCode_t msgGetFeaturesImpl(Features *resp)
 	return ErrOk;
 }
 
-ErrCode_t msgTransactionSign(TransactionSign *msg) {
+ErrCode_t msgTransactionSignImpl(TransactionSign *msg) {
 	#if EMULATOR
 		printf("%s: %d. nbOut: %d\n",
 			_("Transaction signed nbIn"),
@@ -406,7 +406,7 @@ ErrCode_t msgTransactionSign(TransactionSign *msg) {
 	return ErrOk;
 }
 
-ErrCode_t msgPing(Ping *msg) {
+ErrCode_t msgPingImpl(Ping *msg) {
 	RESP_INIT(Success);
 
 	if (msg->has_button_protection && msg->button_protection) {

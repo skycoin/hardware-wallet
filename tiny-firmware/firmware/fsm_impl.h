@@ -141,12 +141,12 @@ ErrCode_t msgSkycoinSignMessageImpl(SkycoinSignMessage* msg,
 							ResponseSkycoinSignMessage *msg_resp);
 ErrCode_t msgSignTransactionMessageImpl(uint8_t* message_digest, uint32_t index,
 										char* signed_message);
-ErrCode_t msgSkycoinAddress(SkycoinAddress* msg, ResponseSkycoinAddress *resp);
-ErrCode_t msgSkycoinCheckMessageSignature(SkycoinCheckMessageSignature* msg, Success *resp);
-ErrCode_t msgApplySettings(ApplySettings *msg);
+ErrCode_t msgSkycoinAddressImpl(SkycoinAddress* msg, ResponseSkycoinAddress *resp);
+ErrCode_t msgSkycoinCheckMessageSignatureImpl(SkycoinCheckMessageSignature* msg, Success *resp);
+ErrCode_t msgApplySettingsImpl(ApplySettings *msg);
 ErrCode_t msgGetFeaturesImpl(Features *resp);
-ErrCode_t msgTransactionSign(TransactionSign *msg);
-ErrCode_t msgPing(Ping *msg);
+ErrCode_t msgTransactionSignImpl(TransactionSign *msg);
+ErrCode_t msgPingImpl(Ping *msg);
 ErrCode_t msgChangePinImpl(ChangePin *msg);
 ErrCode_t msgWipeDeviceImpl(WipeDevice *msg);
 ErrCode_t msgSetMnemonicImpl(SetMnemonic *msg);

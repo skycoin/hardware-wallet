@@ -144,7 +144,7 @@ void fsm_msgInitialize(Initialize *msg)
 void fsm_msgApplySettings(ApplySettings *msg)
 {
 	CHECK_PIN
-	if (msgApplySettings(msg) != ErrOk) {
+	if (msgApplySettingsImpl(msg) != ErrOk) {
 		fsm_sendFailure(FailureType_Failure_DataError, _("Action cancelled by user"));
 	} else {
 		fsm_sendSuccess(_("Settings applied"));
@@ -163,7 +163,7 @@ void fsm_msgGetFeatures(GetFeatures *msg)
 void fsm_msgSkycoinCheckMessageSignature(SkycoinCheckMessageSignature* msg)
 {
 	GET_MSG_POINTER(Success, successResp);
-	if ( msgSkycoinCheckMessageSignature(msg, successResp) == ErrOk) {
+	if ( msgSkycoinCheckMessageSignatureImpl(msg, successResp) == ErrOk) {
 		msg_write(MessageType_MessageType_Success, successResp);
 	} else {
 		fsm_sendFailure(FailureType_Failure_InvalidSignature, _("Invalid signature"));
@@ -207,7 +207,7 @@ void fsm_msgTransactionSign(TransactionSign* msg) {
 	CHECK_INPUTS(msg)
 	CHECK_OUTPUTS(msg)
 
-	if ( msgTransactionSign(msg) == ErrPinRequired ) {
+	if ( msgTransactionSignImpl(msg) == ErrPinRequired ) {
 		fsm_sendFailure(FailureType_Failure_PinExpected, _("Expected pin"));
 		layoutHome();
 	}
@@ -224,7 +224,7 @@ void fsm_msgSkycoinSignMessage(SkycoinSignMessage *msg)
 void fsm_msgSkycoinAddress(SkycoinAddress* msg)
 {
 	RESP_INIT(ResponseSkycoinAddress);
-	if (msgSkycoinAddress(msg, resp) == ErrOk) {
+	if (msgSkycoinAddressImpl(msg, resp) == ErrOk) {
 		msg_write(MessageType_MessageType_ResponseSkycoinAddress, resp);
 	}
 	layoutHome();
@@ -232,7 +232,7 @@ void fsm_msgSkycoinAddress(SkycoinAddress* msg)
 
 void fsm_msgPing(Ping *msg)
 {
-	msgPing(msg);
+	msgPingImpl(msg);
 	layoutHome();
 }
 
