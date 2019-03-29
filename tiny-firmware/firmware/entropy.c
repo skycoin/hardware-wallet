@@ -20,6 +20,8 @@
 #include "timer.h"
 #include "firmware/storage.h"
 #include "skycoin_crypto.h"
+#include "messages.h"
+#include "messages.pb.h"
 
 #define EXTERNAL_ENTROPY_TIMEOUT 60000
 #define ENTROPY_RANDOMSALT_SIZE 256
@@ -93,4 +95,13 @@ extern uint8_t int_entropy[32];
 void set_external_entropy(uint8_t *entropy, size_t len) {
 	stopwatch_reset(entropy_timeout);
 	entropy_salt_mix_256(entropy, len, int_entropy);
+}
+
+void check_entropy(void) {
+	if (is_external_entropy_needed() == ErrEntropyRequired) {
+		EntropyRequest resp;
+		memset(&resp, 0, sizeof(EntropyRequest));
+		msg_write(MessageType_MessageType_EntropyRequest, &resp);
+		stopwatch_reset(entropy_timeout);
+	}
 }

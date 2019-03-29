@@ -51,4 +51,9 @@ void set_external_entropy(uint8_t *entropy, size_t len);
  */
 ErrCode_t is_external_entropy_needed(void);
 
+/**
+ * @brief request external entropy from peer if entropy timer timed out
+ */
+void check_entropy(void);
+
 #endif  // __TINYFIRMWARE_FIRMWARE_ENTROPY__
