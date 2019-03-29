@@ -1,10 +1,11 @@
 DATA=$(wildcard *.dat)
 
-all: devicerandom osrandom osurandom dieharder ent rngtest ## Generate random buffers from host device and harware-wallet, run tests over those buffers
-	for i in `seq 8` ; do skycoin-hw-cli getEntropy --outFile stm32_rng_$$i.dat --entropyBytes 10; done
+trng-generate-buffers: devicerandom osrandom osurandom ## Generate random buffers from host device and harware-wallet
+
+run-tests: dieharder ent rngtest ## Run tests over those buffers
 
 devicerandom:
-	 for i in `seq 8` ; do skycoin-hw-cli getEntropy --outFile stm32_rng_$$i.dat --entropyBytes 10; done
+	 for i in `seq 8` ; do skycoin-hw-cli getEntropy --outFile stm32_rng_$$i.dat --entropyBytes 1048576; done
 
 osrandom:
 	for i in `seq 4`; do dd if=/dev/random bs=64K count=1 of=dev_random_$$i.dat iflag=fullblock; done
@@ -26,3 +27,9 @@ rngtest: $(DATA:%.dat=%.rngtest)
 
 %.rngtest: %.dat
 	cat $< | rngtest 2> $@ || true
+
+clean:
+	rm -rf *.dat
+	rm -rf *.ent
+	rm -rf *.rngtest
+	rm -rf *.dieharder
