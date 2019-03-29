@@ -30,7 +30,7 @@ uint32_t stopwatch_counter_impl(TIMER* t, uint32_t ticks){
 		return INFINITE_TS;
 	}
 	// FIXME: Conditional statement needed ?
-	uint32_t counter = (t->checkpoint > ticks)? t->checkpoint - ticks : UINT32_MAX - t->checkpoint + ticks;
+	uint32_t counter = (ticks > t->checkpoint)? ticks - t->checkpoint : UINT32_MAX - ticks + t->checkpoint;
 	if (!t->delay) {
 		// Ascending counter
 		return counter;

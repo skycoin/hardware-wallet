@@ -69,7 +69,7 @@ START_TEST(test_swtimer_counter_desc)
   stopwatch_reset_impl(t, 12345050);
   ck_assert_uint_eq(stopwatch_counter_impl(t, 12345678), 372);
   // And after 20 ticks
-  ck_assert_uint_eq(stopwatch_counter_impl(t, 12345678), 392);
+  ck_assert_uint_eq(stopwatch_counter_impl(t, 12345698), 352);
   // And after 999 ticks
   ck_assert_uint_eq(stopwatch_counter_impl(t, 12346677), 1);
   // And after 1000 ticks
