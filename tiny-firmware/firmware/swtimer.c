@@ -1,71 +1,36 @@
 /*
- * This file is part of the Skycoin project, https://www.skycoin.net/
+ * This file is part of the Skycoin project, https://skycoin.net/
  *
- * Copyright (C) 2018 Skycoin Project <contact@skycoin.net>
- *
- * This library is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * Copyright (C) 2018-2019 Skycoin Project
  *
  * This library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the
- * GNU Lesser General Public License for more details.
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this library.	If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdbool.h>
 #include "swtimer.h"
 #include "timer.h"
-
-/* Software stopwatch timers */
-#define MAX_TIMERS 16
-
-typedef struct {
-	bool active;
-	// Zero-delay for ascending counters, else countdown
-	uint32_t delay;
-	// Ticks at last time timer was either started or reset
-	uint32_t checkpoint;
-} TIMER;
+#include "timerimpl.h"
 
 TIMER sw_timers[MAX_TIMERS];
 
-/*
- * Initialise stopwatch timers
- */
-void timer_init_sw(void) {
-	for (int i = 0; i < MAX_TIMERS; ++i) {
-		sw_timers[i].active = false;
-		sw_timers[i].checkpoint = 0;
-	}
+/************************************
+ * Internal functions
+ ************************************/
+
+void stopwatch_start_impl(TIMER* t, uint32_t timeout, uint32_t ticks) {
+	t->active = true;
+	t->delay = timeout;
+	t->checkpoint = ticks;
 }
 
-SWTIMER stopwatch_start(uint32_t timeout) {
-	for (int i = 0; i < MAX_TIMERS; ++i) {
-		if (sw_timers[i].active)
-			continue;
-		sw_timers[i].active = true;
-		sw_timers[i].delay = timeout;
-		sw_timers[i].checkpoint = timer_ms();
-		return (SWTIMER) i;
-	}
-	return INVALID_TIMER;
-}
-
-uint32_t stopwatch_counter(SWTIMER timerId) {
-	if (timerId >= MAX_TIMERS) {
-		return INFINITE_TS;
-	}
-	TIMER* t = sw_timers + timerId;
+uint32_t stopwatch_counter_impl(TIMER* t, uint32_t ticks){
 	if (!t->active) {
 		return INFINITE_TS;
 	}
 	// FIXME: Conditional statement needed ?
-	uint32_t counter = (t->checkpoint > timer_ms())? t->checkpoint - timer_ms() : UINT32_MAX - t->checkpoint + timer_ms();
+	uint32_t counter = (t->checkpoint > ticks)? t->checkpoint - ticks : UINT32_MAX - t->checkpoint + ticks;
 	if (!t->delay) {
 		// Ascending counter
 		return counter;
@@ -78,16 +43,58 @@ uint32_t stopwatch_counter(SWTIMER timerId) {
 	return 0;
 }
 
+void stopwatch_reset_impl(TIMER* t, uint32_t ticks) {
+	t->checkpoint = ticks;
+}
+
+void stopwatch_close_impl(TIMER* t){
+	t->active = false;
+	t->checkpoint = 0;
+	t->delay = 0;
+}
+
+/************************************
+ * Public API functions
+ ************************************/
+
+/*
+ * Initialise stopwatch timers
+ */
+void timer_init_sw(void) {
+	for (int i = 0; i < MAX_TIMERS; ++i) {
+		// FIXME: swtimer_close_impl ?
+		sw_timers[i].active = false;
+		sw_timers[i].checkpoint = 0;
+		sw_timers[i].delay = 0;
+	}
+}
+
+SWTIMER stopwatch_start(uint32_t timeout) {
+	for (int i = 0; i < MAX_TIMERS; ++i) {
+		if (sw_timers[i].active)
+			continue;
+		stopwatch_start_impl(sw_timers + i, timeout, timer_ms());
+		return (SWTIMER) i;
+	}
+	return INVALID_TIMER;
+}
+
+uint32_t stopwatch_counter(SWTIMER timerId) {
+	if (timerId >= MAX_TIMERS) {
+		return INFINITE_TS;
+	}
+	return stopwatch_counter_impl(sw_timers + timerId, timer_ms());
+}
+
 void stopwatch_reset(SWTIMER timerId) {
 	if (timerId < MAX_TIMERS) {
-		sw_timers[timerId].checkpoint = timer_ms();
+		stopwatch_reset_impl(sw_timers + timerId, timer_ms());
 	}
 }
 
 void stopwatch_close(SWTIMER timer) {
 	if (timer < MAX_TIMERS) {
-		sw_timers[timer].active = false;
-		sw_timers[timer].checkpoint = 0;
+		stopwatch_close_impl(sw_timers + timer);
 	}
 }
 
