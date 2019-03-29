@@ -1,6 +1,7 @@
 APPVER = 1.0.0
 
 SDL_INCLUDE ?= /usr/include/SDL2
+ENABLE_BUTTON_CONFIRMATION_TO_GET_ENTROPY ?= 1
 
 #libtrezor.a
 ifneq ($(EMULATOR),1)

@@ -54,6 +54,8 @@ CFLAGS += -DCONFIDENTIAL='__attribute__((section("confidential")))'
 
 endif
 
+CFLAGS += -DENABLE_BUTTON_CONFIRMATION_TO_GET_ENTROPY=$(ENABLE_BUTTON_CONFIRMATION_TO_GET_ENTROPY)
+
 CFLAGS   += $(OPTFLAGS) \
             $(DBGFLAGS) \
             -std=gnu99 \
