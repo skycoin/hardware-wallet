@@ -2,7 +2,7 @@
 #include "droplet.h"
 #include <stdio.h>
 
-char *sprint_coins(uint64_t coins, int precision_exp, size_t sz, char *msg) {
+char *sprint_coins(uint64_t coins, uint32_t precision_exp, size_t sz, char *msg) {
   uint64_t div, mod;
   char* eos = msg + sz;
   char* ptr = eos;
@@ -22,7 +22,7 @@ char *sprint_coins(uint64_t coins, int precision_exp, size_t sz, char *msg) {
     mod = div % 10;
     div = div / 10;
   }
-  if (precision_exp > 0) {
+  if (precision_exp > 0 || mod > 0) {
     *ptr = '0' + mod;
     --ptr;
     if ((--sz) <= 0) {
