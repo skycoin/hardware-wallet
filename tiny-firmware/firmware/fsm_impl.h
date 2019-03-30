@@ -42,9 +42,9 @@
 
 #define CHECK_NOT_INITIALIZED_RET_ERR_CODE \
 	if (storage_isInitialized()) { \
-		fsm_sendFailure(FailureType_Failure_UnexpectedMessage, _("Device is already initialized. Use Wipe first.")); \
-		return ErrFailed; \
+		return ErrNotInitialized; \
 	}
+// fsm_sendFailure(FailureType_Failure_UnexpectedMessage, _("Device is already initialized. Use Wipe first."));
 
 #define CHECK_PIN \
 	if (!protectPin(true)) { \
@@ -54,7 +54,6 @@
 
 #define CHECK_PIN_RET_ERR_CODE \
 	if (!protectPin(true)) { \
-		layoutHome(); \
 		return ErrPinRequired; \
 	}
 
@@ -66,7 +65,6 @@
 
 #define CHECK_PIN_UNCACHED_RET_ERR_CODE \
 	if (!protectPin(false)) { \
-		layoutHome(); \
 		return ErrPinRequired; \
 	}
 
@@ -79,10 +77,9 @@
 
 #define CHECK_PARAM_RET_ERR_CODE(cond, errormsg) \
 	if (!(cond)) { \
-		fsm_sendFailure(FailureType_Failure_DataError, (errormsg)); \
-		layoutHome(); \
 		return ErrInvalidArg; \
 	}
+//fsm_sendFailure(FailureType_Failure_DataError, (errormsg));
 
 #define CHECK_BUTTON_PROTECT \
 	if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) { \
@@ -93,10 +90,9 @@
 
 #define CHECK_BUTTON_PROTECT_RET_ERR_CODE \
 	if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) { \
-		fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL); \
-		layoutHome(); \
-		return ErrFailed; \
+		return ErrActionCancelled; \
 	}
+//fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
 
 #define CHECK_MNEMONIC \
 	if (storage_hasMnemonic() == false) { \
@@ -104,6 +100,12 @@
 		layoutHome(); \
 		return; \
 	}
+
+#define CHECK_MNEMONIC_RET_ERR_CODE \
+	if (storage_hasMnemonic() == false) { \
+		return ErrMnemonicRequired; \
+	}
+//fsm_sendFailure(FailureType_Failure_AddressGeneration, "Mnemonic not set");
 
 #define CHECK_INPUTS(msg) \
 	if ((msg)->nbIn > 8) { \
@@ -123,15 +125,14 @@
 	if (!mnemonic_check(msg->mnemonic)) { \
 		fsm_sendFailure(FailureType_Failure_DataError, _("Mnemonic with wrong checksum provided")); \
 		layoutHome(); \
-		return ErrFailed; \
+		return; \
 	}
 
 #define CHECK_MNEMONIC_CHECKSUM_RET_ERR_CODE \
 	if (!mnemonic_check(msg->mnemonic)) { \
-		fsm_sendFailure(FailureType_Failure_DataError, _("Mnemonic with wrong checksum provided")); \
-		layoutHome(); \
-		return ErrFailed; \
+		return ErrInvalidValue; \
 	}
+// fsm_sendFailure(FailureType_Failure_DataError, _("Mnemonic with wrong checksum provided"));
 
 ErrCode_t msgGenerateMnemonicImpl(
 		GenerateMnemonic* msg,
@@ -141,12 +142,12 @@ ErrCode_t msgSkycoinSignMessageImpl(SkycoinSignMessage* msg,
 							ResponseSkycoinSignMessage *msg_resp);
 ErrCode_t msgSignTransactionMessageImpl(uint8_t* message_digest, uint32_t index,
 										char* signed_message);
-ErrCode_t msgSkycoinAddress(SkycoinAddress* msg, ResponseSkycoinAddress *resp);
-ErrCode_t msgSkycoinCheckMessageSignature(SkycoinCheckMessageSignature* msg, Success *resp);
-ErrCode_t msgApplySettings(ApplySettings *msg);
+ErrCode_t msgSkycoinAddressImpl(SkycoinAddress* msg, ResponseSkycoinAddress *resp);
+ErrCode_t msgSkycoinCheckMessageSignatureImpl(SkycoinCheckMessageSignature* msg, Success *successResp, Failure *failureResp);
+ErrCode_t msgApplySettingsImpl(ApplySettings *msg);
 ErrCode_t msgGetFeaturesImpl(Features *resp);
-ErrCode_t msgTransactionSign(TransactionSign *msg);
-ErrCode_t msgPing(Ping *msg);
+ErrCode_t msgTransactionSignImpl(TransactionSign *msg);
+ErrCode_t msgPingImpl(Ping *msg);
 ErrCode_t msgChangePinImpl(ChangePin *msg);
 ErrCode_t msgWipeDeviceImpl(WipeDevice *msg);
 ErrCode_t msgSetMnemonicImpl(SetMnemonic *msg);

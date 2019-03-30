@@ -47,6 +47,13 @@
 #include "droplet.h"
 #include "skyparams.h"
 
+// Utils
+
+#define GEN_CASE(type, fail, msg) \
+  case type: \
+    fsm_sendFailure(fail, msg); \
+    break;
+
 extern uint8_t msg_resp[MSG_OUT_SIZE] __attribute__ ((aligned));
 
 void fsm_sendSuccess(const char *text)
@@ -144,10 +151,10 @@ void fsm_msgInitialize(Initialize *msg)
 void fsm_msgApplySettings(ApplySettings *msg)
 {
 	CHECK_PIN
-	if (msgApplySettings(msg) != ErrOk) {
-		fsm_sendFailure(FailureType_Failure_DataError, _("Action cancelled by user"));
-	} else {
-		fsm_sendSuccess(_("Settings applied"));
+	switch (msgApplySettingsImpl(msg)) {
+		GEN_CASE(ErrActionCancelled, FailureType_Failure_DataError, _("Action cancelled by user"))
+		default:
+			fsm_sendSuccess(_("Settings applied"));
 	}
 	layoutHome();
 }
@@ -163,10 +170,12 @@ void fsm_msgGetFeatures(GetFeatures *msg)
 void fsm_msgSkycoinCheckMessageSignature(SkycoinCheckMessageSignature* msg)
 {
 	GET_MSG_POINTER(Success, successResp);
-	if ( msgSkycoinCheckMessageSignature(msg, successResp) == ErrOk) {
+	GET_MSG_POINTER(Failure, failureResp);
+	if ( msgSkycoinCheckMessageSignatureImpl(msg, successResp, failureResp) == ErrOk ) {
 		msg_write(MessageType_MessageType_Success, successResp);
 	} else {
-		fsm_sendFailure(FailureType_Failure_InvalidSignature, _("Invalid signature"));
+		failureResp->code = FailureType_Failure_InvalidSignature;
+		msg_write(MessageType_MessageType_Failure, failureResp);
 	}
 	layoutHome();
 }
@@ -206,67 +215,89 @@ void fsm_msgTransactionSign(TransactionSign* msg) {
 	CHECK_MNEMONIC
 	CHECK_INPUTS(msg)
 	CHECK_OUTPUTS(msg)
-
-	if ( msgTransactionSign(msg) == ErrPinRequired ) {
-		fsm_sendFailure(FailureType_Failure_PinExpected, _("Expected pin"));
-		layoutHome();
+	switch (msgTransactionSignImpl(msg)) {
+		GEN_CASE(ErrAddressGeneration, FailureType_Failure_AddressGeneration, _("Wrong return address"))
+		GEN_CASE(ErrActionCancelled, FailureType_Failure_ActionCancelled, NULL)
+		GEN_CASE(ErrPinRequired, FailureType_Failure_PinExpected, _("Expected pin"))
+		GEN_CASE(ErrInvalidSignature, FailureType_Failure_InvalidSignature, NULL);
+		default:
+			break;
 	}
-
+	layoutHome();
 }
 
 void fsm_msgSkycoinSignMessage(SkycoinSignMessage *msg)
 {
 	RESP_INIT(ResponseSkycoinSignMessage);
-	msgSkycoinSignMessageImpl(msg, resp);
+	switch (msgSkycoinSignMessageImpl(msg, resp)) {
+		GEN_CASE(ErrMnemonicRequired, FailureType_Failure_AddressGeneration, "Mnemonic not set")
+		GEN_CASE(ErrPinRequired, FailureType_Failure_PinExpected, _("Expected pin"))
+		default:
+			break;
+	}
 	layoutHome();
 }
 
 void fsm_msgSkycoinAddress(SkycoinAddress* msg)
 {
 	RESP_INIT(ResponseSkycoinAddress);
-	if (msgSkycoinAddress(msg, resp) == ErrOk) {
-		msg_write(MessageType_MessageType_ResponseSkycoinAddress, resp);
+	switch (msgSkycoinAddressImpl(msg, resp)) {
+		GEN_CASE(ErrPinRequired, FailureType_Failure_PinExpected, _("Expected pin"))
+		GEN_CASE(ErrTooManyAddresses, FailureType_Failure_AddressGeneration, "Asking for too much addresses")
+		GEN_CASE(ErrMnemonicRequired, FailureType_Failure_AddressGeneration, "Mnemonic required")
+		GEN_CASE(ErrAddressGeneration, FailureType_Failure_AddressGeneration, "Key pair generation failed")
+		GEN_CASE(ErrActionCancelled, FailureType_Failure_ActionCancelled, NULL)
+		default:
+			msg_write(MessageType_MessageType_ResponseSkycoinAddress, resp);
 	}
 	layoutHome();
 }
 
 void fsm_msgPing(Ping *msg)
 {
-	msgPing(msg);
+	switch (msgPingImpl(msg)) {
+		GEN_CASE(ErrActionCancelled, FailureType_Failure_ActionCancelled, NULL)
+		GEN_CASE(ErrPinRequired, FailureType_Failure_PinExpected, _("Expected pin"))
+		default:
+			break;
+	}
 	layoutHome();
 }
 
 void fsm_msgChangePin(ChangePin *msg)
 {
-	msgChangePinImpl(msg);
+	bool removal = msg->has_remove && msg->remove;
+	switch (msgChangePinImpl(msg)) {
+		GEN_CASE(ErrActionCancelled, FailureType_Failure_ActionCancelled, NULL)
+		GEN_CASE(ErrPinRequired, FailureType_Failure_PinExpected, _("Expected pin"))
+		GEN_CASE(ErrPinMismatch, FailureType_Failure_PinMismatch, _("Pin mismatch"))
+		default:
+			fsm_sendSuccess( (removal) ? _("PIN removed") : _("PIN changed"));
+	}
 	layoutHome();
 }
 
 void fsm_msgWipeDevice(WipeDevice *msg)
 {
-	msgWipeDeviceImpl(msg);
+	switch (msgWipeDeviceImpl(msg)) {
+		GEN_CASE(ErrActionCancelled, FailureType_Failure_ActionCancelled, NULL)
+		default:
+			fsm_sendSuccess(_("Device wiped"));
+	}
 	layoutHome();
 }
 
 void fsm_msgGenerateMnemonic(GenerateMnemonic* msg) {
 	GET_MSG_POINTER(EntropyRequest, entropy_request);
 	switch (msgGenerateMnemonicImpl(msg, &random_buffer)) {
-		case ErrOk:
-			fsm_sendSuccess(_("Mnemonic successfully configured"));
-			break;
-		case ErrInvalidArg:
-			fsm_sendFailure(
-						FailureType_Failure_DataError,
-						_("Invalid word count expecified, the valid options are"
-						" 12 or 24."));
-			break;
+		GEN_CASE(ErrNotInitialized, FailureType_Failure_UnexpectedMessage, _("Device is already initialized. Use Wipe first."))
+		GEN_CASE(ErrInvalidArg, FailureType_Failure_DataError, _("Invalid word count expecified, the valid options are 12 or 24."))
+		GEN_CASE(ErrInvalidValue, FailureType_Failure_ProcessError, _("Device could not generate a valid Mnemonic"))
 		case ErrLowEntropy:
 			msg_write(MessageType_MessageType_EntropyRequest, entropy_request);
 			break;
-		case ErrInvalidValue:
-			fsm_sendFailure(
-						FailureType_Failure_ProcessError,
-						_("Device could not generate a valid Mnemonic"));
+		case ErrOk:
+			fsm_sendSuccess(_("Mnemonic successfully configured"));
 			break;
 		default:
 			fsm_sendFailure(FailureType_Failure_FirmwareError,
@@ -279,20 +310,34 @@ void fsm_msgGenerateMnemonic(GenerateMnemonic* msg) {
 void fsm_msgSetMnemonic(SetMnemonic* msg)
 {
 	CHECK_NOT_INITIALIZED
-	msgSetMnemonicImpl(msg);
+	switch (msgSetMnemonicImpl(msg)) {
+		GEN_CASE(ErrActionCancelled, FailureType_Failure_ActionCancelled, NULL)
+		GEN_CASE(ErrInvalidValue, FailureType_Failure_DataError, _("Mnemonic with wrong checksum provided"))
+		default:
+			fsm_sendSuccess(_(msg->mnemonic));
+	}
 	layoutHome();
 }
 
 void fsm_msgGetEntropy(GetEntropy *msg)
 {
-	msgGetEntropyImpl(msg);
+	switch (msgGetEntropyImpl(msg)) {
+		GEN_CASE(ErrActionCancelled, FailureType_Failure_ActionCancelled, NULL)
+		default:
+			break;
+	}
 	layoutHome();
 }
 
 void fsm_msgLoadDevice(LoadDevice *msg)
 {
 	CHECK_NOT_INITIALIZED
-	msgLoadDeviceImpl(msg);
+	switch (msgLoadDeviceImpl(msg)) {
+		GEN_CASE(ErrActionCancelled, FailureType_Failure_ActionCancelled, NULL)
+		GEN_CASE(ErrInvalidValue, FailureType_Failure_DataError, _("Mnemonic with wrong checksum provided"))
+		default:
+			fsm_sendSuccess(_("Device loaded"));
+	}
 	layoutHome();
 }
 
@@ -317,13 +362,26 @@ void fsm_msgBackupDevice(BackupDevice *msg)
 {
 	CHECK_INITIALIZED
 	CHECK_PIN_UNCACHED
-	msgBackupDeviceImpl(msg);
+	switch (msgBackupDeviceImpl(msg)) {
+		GEN_CASE(ErrUnexpectedMessage, FailureType_Failure_UnexpectedMessage, _("Seed already backed up"))
+		GEN_CASE(ErrActionCancelled, FailureType_Failure_ActionCancelled, NULL)
+		GEN_CASE(ErrUnfinishedBackup, FailureType_Failure_ActionCancelled, _("Backup operation did not finish properly."))
+		default:
+			fsm_sendSuccess(_("Device backed up!"));
+	}
 	layoutHome();
 }
 
 void fsm_msgRecoveryDevice(RecoveryDevice *msg)
 {
-	msgRecoveryDeviceImpl(msg);
+	switch (msgRecoveryDeviceImpl(msg)) {
+		GEN_CASE(ErrPinRequired, FailureType_Failure_PinExpected, _("Expected pin"))
+		GEN_CASE(ErrNotInitialized, FailureType_Failure_UnexpectedMessage, _("Device is already initialized. Use Wipe first."))
+		GEN_CASE(ErrInvalidArg, FailureType_Failure_DataError, _("Invalid word count"))
+		GEN_CASE(ErrActionCancelled, FailureType_Failure_ActionCancelled, NULL)
+		default:
+			break;
+	}
 	layoutHome();
 }
 
@@ -342,17 +400,10 @@ void fsm_msgCancel(Cancel *msg)
 void fsm_msgEntropyAck(EntropyAck *msg)
 {
 	switch (msgEntropyAckImpl(msg)) {
+		GEN_CASE(ErrInvalidValue, FailureType_Failure_ProcessError, _("Device could not generate a valid Mnemonic"))
+		GEN_CASE(ErrUnexpectedMessage, FailureType_Failure_UnexpectedMessage, _("Unexpected entropy ack msg."))
 		case ErrOk:
 			fsm_sendSuccess(_("Recived entropy"));
-			break;
-		case ErrInvalidValue:
-			fsm_sendFailure(
-						FailureType_Failure_ProcessError,
-						_("Device could not generate a valid Mnemonic"));
-			break;
-		case ErrUnexpectedMessage:
-			fsm_sendFailure(FailureType_Failure_UnexpectedMessage,
-							_("Unexpected entropy ack msg."));
 			break;
 		default:
 			fsm_sendFailure(FailureType_Failure_UnexpectedMessage,
