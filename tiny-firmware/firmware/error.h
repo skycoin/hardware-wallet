@@ -40,10 +40,10 @@ enum ErrMode
  * @brief The ErrCategory enum
  */
 enum ErrCategory {
-	PkgGeneric = 0, /*!< Generic error codes */
-	PkgEntropy = 1, /*!< Entropy error codes */
-	PkgServer = 2, /*! < Server schema related errors */
-	PkgSign = 3, /*!   < Signing errors */
+	PkgGeneric = 1, /*!< Generic error codes */
+	PkgEntropy = 2, /*!< Entropy error codes */
+	PkgServer = 3, /*! < Server schema related errors */
+	PkgSign = 4, /*!   < Signing errors */
 } __attribute__ ((__packed__));
 _Static_assert(sizeof (enum ErrCategory) == 1, "One byte as max for package");
 
