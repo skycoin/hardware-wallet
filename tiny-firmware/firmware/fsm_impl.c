@@ -133,10 +133,7 @@ ErrCode_t msgGenerateMnemonicImpl(
 ErrCode_t msgSkycoinSignMessageImpl(SkycoinSignMessage* msg,
 								   ResponseSkycoinSignMessage *resp)
 {
-	if (storage_hasMnemonic() == false) {
-		fsm_sendFailure(FailureType_Failure_AddressGeneration, "Mnemonic not set");
-		return ErrFailed;
-	}
+	CHECK_MNEMONIC_RET_ERR_CODE
 	CHECK_PIN_UNCACHED_RET_ERR_CODE
 	uint8_t pubkey[33] = {0};
 	uint8_t seckey[32] = {0};
@@ -185,19 +182,14 @@ ErrCode_t msgSkycoinAddressImpl(SkycoinAddress* msg, ResponseSkycoinAddress *res
 	uint32_t start_index = !msg->has_start_index ? 0 : msg->start_index;
 	CHECK_PIN_RET_ERR_CODE
 	if (msg->address_n > 99) {
-		fsm_sendFailure(FailureType_Failure_AddressGeneration, "Asking for too much addresses");
-		return ErrFailed;
+		return ErrTooManyAddresses;
 	}
 
-	if (storage_hasMnemonic() == false) {
-		fsm_sendFailure(FailureType_Failure_AddressGeneration, "Mnemonic not set");
-		return ErrFailed;
-	}
+	CHECK_MNEMONIC_RET_ERR_CODE
 
 	if (fsm_getKeyPairAtIndex(msg->address_n, pubkey, seckey, resp, start_index) != 0)
 	{
-		fsm_sendFailure(FailureType_Failure_AddressGeneration, "Key pair generation failed");
-		return ErrFailed;
+		return ErrAddressGeneration;
 	}
 	if (msg->address_n == 1 && msg->has_confirm_address && msg->confirm_address) {
 		char * addr = resp->addresses[0];
@@ -207,7 +199,7 @@ ErrCode_t msgSkycoinAddressImpl(SkycoinAddress* msg, ResponseSkycoinAddress *res
 	return ErrOk;
 }
 
-ErrCode_t msgSkycoinCheckMessageSignatureImpl(SkycoinCheckMessageSignature* msg, Success *resp)
+ErrCode_t msgSkycoinCheckMessageSignatureImpl(SkycoinCheckMessageSignature* msg, Success *successResp, Failure *failureResp)
 {
 	// NOTE(denisacostaq@gmail.com): -1 because the end of string ('\0')
 	// /2 because the hex to buff conversion.
@@ -225,18 +217,27 @@ ErrCode_t msgSkycoinCheckMessageSignatureImpl(SkycoinCheckMessageSignature* msg,
 		tobuff(msg->message, digest, MIN(sizeof(digest), sizeof(msg->message)));
 	}
 	tobuff(msg->signature, sign, sizeof(sign));
-	recover_pubkey_from_signed_message((char*)digest, sign, pubkey);
-	size_t pubkeybase58_size = sizeof(pubkeybase58);
-	generate_base58_address_from_pubkey(pubkey, pubkeybase58, &pubkeybase58_size);
-	if (memcmp(pubkeybase58, msg->address, pubkeybase58_size) == 0) {
-		layoutRawMessage("Verification success");
+
+	ErrCode_t ret = recover_pubkey_from_signed_message((char*)digest, sign, pubkey) == 0 ? ErrOk : ErrFailed;
+
+	if (ret == ErrOk) {
+		size_t pubkeybase58_size = sizeof(pubkeybase58);
+		generate_base58_address_from_pubkey(pubkey, pubkeybase58, &pubkeybase58_size);
+		if (memcmp(pubkeybase58, msg->address, pubkeybase58_size)) {
+			strncpy(failureResp->message, _("Address does not match"), sizeof (failureResp->message));
+			failureResp->has_message = true;
+			layoutRawMessage("Wrong signature");
+			ret = ErrFailed;
+		} else {
+			layoutRawMessage("Verification success");
+			memcpy(successResp->message, pubkeybase58, pubkeybase58_size);
+			successResp->has_message = true;
+		}
 	} else {
-		layoutRawMessage("Wrong signature");
+		strncpy(failureResp->message, _("Unable to get pub key from signed message"), sizeof (failureResp->message));
+		failureResp->has_message = true;
 	}
-	memcpy(resp->message, pubkeybase58, pubkeybase58_size);
-	resp->has_message = true;
-	msg_write(MessageType_MessageType_Success, resp);
-	return ErrOk;
+	return ret;
 }
 
 ErrCode_t msgApplySettingsImpl(ApplySettings *msg)
@@ -358,12 +359,12 @@ ErrCode_t msgTransactionSignImpl(TransactionSign *msg) {
 			fsm_getKeyPairAtIndex(1, pubkey, seckey, NULL, msg->transactionOut[i].address_index);
 			generate_base58_address_from_pubkey(pubkey, address, &size_address);
 			if (strcmp(msg->transactionOut[i].address, address) != 0) {
-					fsm_sendFailure(FailureType_Failure_AddressGeneration, _("Wrong return address"));
+					// fsm_sendFailure(FailureType_Failure_AddressGeneration, _("Wrong return address"));
 					#if EMULATOR
 					printf("Internal address: %s, message address: %s\n", address, msg->transactionOut[i].address);
 					printf("Comparaison size %ld\n", size_address);
 					#endif
-					return ErrFailed;
+					return ErrAddressGeneration;
 			}
 		} else {
 			layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Next"), NULL, _("Do you really want to"), strCoin, strHour, _("to address"), _("..."), NULL);
@@ -381,9 +382,9 @@ ErrCode_t msgTransactionSignImpl(TransactionSign *msg) {
 		uint8_t digest[32];
     	transaction_msgToSign(&transaction, i, digest);
     	if (msgSignTransactionMessageImpl(digest, msg->transactionIn[i].index, resp->signatures[resp->signatures_count]) != ErrOk) {
-				fsm_sendFailure(FailureType_Failure_InvalidSignature, NULL);
-				layoutHome();
-    		return ErrFailed;
+				//fsm_sendFailure(FailureType_Failure_InvalidSignature, NULL);
+				//layoutHome();
+    		return ErrInvalidSignature;
     	}
 		resp->signatures_count++;
 	#if EMULATOR
@@ -402,7 +403,7 @@ ErrCode_t msgTransactionSignImpl(TransactionSign *msg) {
 		printf("Nb signatures: %d\n", resp->signatures_count);
 	#endif
   msg_write(MessageType_MessageType_ResponseTransactionSign, resp);
-	layoutHome();
+	//layoutHome();
 	return ErrOk;
 }
 
@@ -420,8 +421,7 @@ ErrCode_t msgPingImpl(Ping *msg) {
 
 	if (msg->has_passphrase_protection && msg->passphrase_protection) {
 		if (!protectPassphrase()) {
-			fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
-			return ErrFailed;
+			return ErrActionCancelled;
 		}
 	}
 
@@ -429,7 +429,6 @@ ErrCode_t msgPingImpl(Ping *msg) {
 		resp->has_message = true;
 		memcpy(&(resp->message), &(msg->message), sizeof(resp->message));
 	}
-
 	msg_write(MessageType_MessageType_Success, resp);
 	return ErrOk;
 
@@ -441,7 +440,7 @@ ErrCode_t msgChangePinImpl(ChangePin *msg) {
 		if (storage_hasPin()) {
 			layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"), _("remove current PIN?"), NULL, NULL, NULL, NULL);
 		} else {
-			fsm_sendSuccess(_("PIN removed"));
+			//fsm_sendSuccess(_("PIN removed"));
 			return ErrOk;
 		}
 	} else {
@@ -458,13 +457,13 @@ ErrCode_t msgChangePinImpl(ChangePin *msg) {
 	if (removal) {
 		storage_setPin("");
 		storage_update();
-		fsm_sendSuccess(_("PIN removed"));
+		//fsm_sendSuccess(_("PIN removed"));
 	} else {
 		if (protectChangePin()) {
-			fsm_sendSuccess(_("PIN changed"));
+			//fsm_sendSuccess(_("PIN changed"));
 		} else {
-			fsm_sendFailure(FailureType_Failure_PinMismatch, NULL);
-			return ErrPinRequired;
+			//fsm_sendFailure(FailureType_Failure_PinMismatch, NULL);
+			return ErrPinMismatch;
 		}
 	}
 	return ErrOk;
@@ -474,13 +473,12 @@ ErrCode_t msgWipeDeviceImpl(WipeDevice *msg) {
 	(void)msg;
 	layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"), _("wipe the device?"), NULL, _("All data will be lost."), NULL, NULL);
 	if (!protectButton(ButtonRequestType_ButtonRequest_WipeDevice, false)) {
-		fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
-		return ErrFailed;
+		return ErrActionCancelled;
 	}
 	storage_wipe();
 	// the following does not work on Mac anyway :-/ Linux/Windows are fine, so it is not needed
 	// usbReconnect(); // force re-enumeration because of the serial number change
-	fsm_sendSuccess(_("Device wiped"));
+	// fsm_sendSuccess(_("Device wiped"));
 	return ErrOk;
 }
 
@@ -492,7 +490,7 @@ ErrCode_t msgSetMnemonicImpl(SetMnemonic *msg) {
 	storage_setMnemonic(msg->mnemonic);
 	storage_setNeedsBackup(true);
 	storage_update();
-	fsm_sendSuccess(_(msg->mnemonic));
+	//fsm_sendSuccess(_(msg->mnemonic));
 	return ErrOk;
 }
 
@@ -516,14 +514,14 @@ ErrCode_t msgLoadDeviceImpl(LoadDevice *msg) {
 	}
 
 	storage_loadDevice(msg);
-	fsm_sendSuccess(_("Device loaded"));
+	//fsm_sendSuccess(_("Device loaded"));
 	return ErrOk;
 }
 
 ErrCode_t msgBackupDeviceImpl(BackupDevice *msg) {
 	(void)msg;
 	if (!storage_needsBackup()) {
-		fsm_sendFailure(FailureType_Failure_UnexpectedMessage, _("Seed already backed up"));
+		//fsm_sendFailure(FailureType_Failure_UnexpectedMessage, _("Seed already backed up"));
 		return ErrUnexpectedMessage;
 	}
 	reset_backup(true);
@@ -531,13 +529,13 @@ ErrCode_t msgBackupDeviceImpl(BackupDevice *msg) {
 	layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you confirm you"), _("backed up your seed."), _("This will never be"), _("possible again."), NULL, NULL);
 	CHECK_BUTTON_PROTECT_RET_ERR_CODE
 	if (storage_unfinishedBackup()) {
-		fsm_sendFailure(FailureType_Failure_ActionCancelled, _("Backup operation did not finish properly."));
-		layoutHome();
-		return ErrFailed;
+		// fsm_sendFailure(FailureType_Failure_ActionCancelled, _("Backup operation did not finish properly."));
+		// layoutHome();
+		return ErrUnfinishedBackup;
 	}
 	storage_setNeedsBackup(false);
 	storage_update();
-	fsm_sendSuccess(_("Device backed up!"));
+	// fsm_sendSuccess(_("Device backed up!"));
 	return ErrOk;
 }
 
