@@ -38,8 +38,8 @@ script:
   - make -C tiny-firmware/protob install-deps-nanopb
   - make -C tiny-firmware/protob install-protoc
   - make -C tiny-firmware/protob/nanopb/vendor/nanopb/generator/proto
-  - make -C skycoin-api test
-  - make -C skycoin-api clean
+  - make test
+  - make clean
   - find tiny-firmware/protob/nanopb/vendor/nanopb
   - make emulator
   - make clean
