@@ -49,7 +49,7 @@
 
 // Utils
 
-#define GEN_CASE(type, fail, msg) \
+#define CASE_SEND_FAILURE(type, fail, msg) \
 	case type: \
 		fsm_sendFailure(fail, msg); \
 		break;
@@ -389,9 +389,9 @@ void fsm_msgWipeDevice(WipeDevice *msg)
 void fsm_msgGenerateMnemonic(GenerateMnemonic* msg) {
 	GET_MSG_POINTER(EntropyRequest, entropy_request);
 	switch (msgGenerateMnemonicImpl(msg, &random_buffer)) {
-		GEN_CASE(ErrNotInitialized, FailureType_Failure_UnexpectedMessage, _("Device is already initialized. Use Wipe first."))
-		GEN_CASE(ErrInvalidArg, FailureType_Failure_DataError, _("Invalid word count expecified, the valid options are 12 or 24."))
-		GEN_CASE(ErrInvalidValue, FailureType_Failure_ProcessError, _("Device could not generate a valid Mnemonic"))
+		CASE_SEND_FAILURE(ErrNotInitialized, FailureType_Failure_UnexpectedMessage, _("Device is already initialized. Use Wipe first."))
+		CASE_SEND_FAILURE(ErrInvalidArg, FailureType_Failure_DataError, _("Invalid word count expecified, the valid options are 12 or 24."))
+		CASE_SEND_FAILURE(ErrInvalidValue, FailureType_Failure_ProcessError, _("Device could not generate a valid Mnemonic"))
 		case ErrLowEntropy:
 			msg_write(MessageType_MessageType_EntropyRequest, entropy_request);
 			break;
@@ -454,9 +454,10 @@ void fsm_msgBackupDevice(BackupDevice *msg)
 	switch (msgBackupDeviceImpl(msg)) {
 		case ErrOk:
 			fsm_sendSuccess(_("Device backed up!"));
-		GEN_CASE(ErrUnexpectedMessage, FailureType_Failure_UnexpectedMessage, _("Seed already backed up"))
-		GEN_CASE(ErrActionCancelled, FailureType_Failure_ActionCancelled, NULL)
-		GEN_CASE(ErrUnfinishedBackup, FailureType_Failure_ActionCancelled, _("Backup operation did not finish properly."))
+      break;
+		CASE_SEND_FAILURE(ErrUnexpectedMessage, FailureType_Failure_UnexpectedMessage, _("Seed already backed up"))
+		CASE_SEND_FAILURE(ErrActionCancelled, FailureType_Failure_ActionCancelled, NULL)
+		CASE_SEND_FAILURE(ErrUnfinishedBackup, FailureType_Failure_ActionCancelled, _("Backup operation did not finish properly."))
 		default:
 			fsm_sendFailure(FailureType_Failure_FirmwareError, _("Unexpected failure"));
 			break;
@@ -467,10 +468,10 @@ void fsm_msgBackupDevice(BackupDevice *msg)
 void fsm_msgRecoveryDevice(RecoveryDevice *msg)
 {
 	switch (msgRecoveryDeviceImpl(msg)) {
-		GEN_CASE(ErrPinRequired, FailureType_Failure_PinExpected, _("Expected pin"))
-		GEN_CASE(ErrNotInitialized, FailureType_Failure_UnexpectedMessage, _("Device is already initialized. Use Wipe first."))
-		GEN_CASE(ErrInvalidArg, FailureType_Failure_DataError, _("Invalid word count"))
-		GEN_CASE(ErrActionCancelled, FailureType_Failure_ActionCancelled, NULL)
+		CASE_SEND_FAILURE(ErrPinRequired, FailureType_Failure_PinExpected, _("Expected pin"))
+		CASE_SEND_FAILURE(ErrNotInitialized, FailureType_Failure_UnexpectedMessage, _("Device is already initialized. Use Wipe first."))
+		CASE_SEND_FAILURE(ErrInvalidArg, FailureType_Failure_DataError, _("Invalid word count"))
+		CASE_SEND_FAILURE(ErrActionCancelled, FailureType_Failure_ActionCancelled, NULL)
 		default:
 			break;
 	}
@@ -492,8 +493,8 @@ void fsm_msgCancel(Cancel *msg)
 void fsm_msgEntropyAck(EntropyAck *msg)
 {
 	switch (msgEntropyAckImpl(msg)) {
-		GEN_CASE(ErrInvalidValue, FailureType_Failure_ProcessError, _("Device could not generate a valid Mnemonic"))
-		GEN_CASE(ErrUnexpectedMessage, FailureType_Failure_UnexpectedMessage, _("Unexpected entropy ack msg."))
+		CASE_SEND_FAILURE(ErrInvalidValue, FailureType_Failure_ProcessError, _("Device could not generate a valid Mnemonic"))
+		CASE_SEND_FAILURE(ErrUnexpectedMessage, FailureType_Failure_UnexpectedMessage, _("Unexpected entropy ack msg."))
 		case ErrOk:
 			fsm_sendSuccess(_("Recived entropy"));
 			break;
