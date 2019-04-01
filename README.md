@@ -24,6 +24,7 @@
     - [Versioning libraries](#versioning-libraries)
   - [Running tests](#running-tests)
   - [Validate the TRNG](#Validate-the-TRNG)
+    - [Files description](#Files-description)
   - [Releases](#releases)
     - [Update the version](#update-the-version)
     - [Pre-release testing](#pre-release-testing)
@@ -174,7 +175,7 @@ For example, in a debian based system you can run `apt install dieharder ent rng
 To generate rando buffers run:
 `make validate-trng`
 
-#### [Files description](trng-test/Files-description#Files-description)
+##### [Files description](trng-test/README.md#Files-description)
 
 ### Releases
 
