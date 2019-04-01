@@ -50,9 +50,94 @@
 // Utils
 
 #define GEN_CASE(type, fail, msg) \
-  case type: \
-    fsm_sendFailure(fail, msg); \
-    break;
+	case type: \
+		fsm_sendFailure(fail, msg); \
+		break;
+
+void fsm_sendResponseFromErrCode(ErrCode_t err, const char *successMsg, const char *failMsg) {
+	FailureType failure;
+	switch (err) {
+		case ErrOk:
+			if (successMsg == NULL) {
+				successMsg = "Success";
+			}
+			fsm_sendSuccess(successMsg);
+			return;
+		case ErrFailed:
+			failure = FailureType_Failure_FirmwareError;
+			break;
+		case ErrInvalidArg:
+			failure = FailureType_Failure_DataError;
+			if (failMsg == NULL) {
+				failMsg = _("Invalid argument");
+			}
+			break;
+		case ErrIndexValue:
+			failure = FailureType_Failure_DataError;
+			if (failMsg == NULL) {
+				failMsg = _("Index out of bounds");
+			}
+			break;
+		case ErrInvalidValue:
+			failure = FailureType_Failure_ProcessError;
+			break;
+		case ErrNotImplemented:
+			failure = FailureType_Failure_FirmwareError;
+			if (failMsg == NULL) {
+				failMsg = _("Not Implemented");
+			}
+			break;
+		case ErrPinRequired:
+			failure = FailureType_Failure_PinExpected;
+			break;
+		case ErrPinMismatch:
+			failure = FailureType_Failure_PinMismatch;
+			break;
+		case ErrPinCancelled:
+			failure = FailureType_Failure_PinCancelled;
+			break;
+		case ErrActionCancelled:
+			failure = FailureType_Failure_ActionCancelled;
+			break;
+		case ErrNotInitialized:
+			failure = FailureType_Failure_NotInitialized;
+			break;
+		case ErrMnemonicRequired:
+			failure = FailureType_Failure_AddressGeneration;
+			if (failMsg == NULL) {
+				failMsg = _("Mnemonic required");
+			}
+			break;
+		case ErrAddressGeneration:
+			failure = FailureType_Failure_AddressGeneration;
+			break;
+		case ErrTooManyAddresses:
+			failure = FailureType_Failure_AddressGeneration;
+			if (failMsg == NULL) {
+				failMsg = _("Too many addresses requested");
+			}
+			break;
+		case ErrUnfinishedBackup:
+			// FIXME: FailureType_Failure_ProcessError ?
+			failure = FailureType_Failure_ActionCancelled;
+			if (failMsg == NULL) {
+				failMsg = _("Backup operation did not finish properly.");
+			}
+			break;
+		case ErrUnexpectedMessage:
+			failure = FailureType_Failure_UnexpectedMessage;
+			break;
+		case ErrSignPreconditionFailed:
+		case ErrInvalidSignature:
+			failure = FailureType_Failure_InvalidSignature;
+			break;
+		default:
+			failure = FailureType_Failure_FirmwareError;
+			failMsg = _("Unexpected failure");
+			break;
+	} 
+	fsm_sendFailure(failure, failMsg);
+}
 
 extern uint8_t msg_resp[MSG_OUT_SIZE] __attribute__ ((aligned));
 
@@ -76,7 +161,7 @@ void fsm_sendFailure(FailureType code, const char *text)
 	RESP_INIT(Failure);
 	resp->has_code = true;
 	resp->code = code;
-	if (!text) {
+	if (text == NULL) {
 		switch (code) {
 			case FailureType_Failure_UnexpectedMessage:
 				text = _("Unexpected message");
@@ -131,7 +216,7 @@ void fsm_sendFailure(FailureType code, const char *text)
 
 void fsm_msgInitialize(Initialize *msg)
 {
-    recovery_abort();
+		recovery_abort();
 	if (msg && msg->has_state && msg->state.size == 64) {
 		uint8_t i_state[64];
 		if (!session_getState(msg->state.bytes, i_state, NULL)) {
@@ -151,11 +236,7 @@ void fsm_msgInitialize(Initialize *msg)
 void fsm_msgApplySettings(ApplySettings *msg)
 {
 	CHECK_PIN
-	switch (msgApplySettingsImpl(msg)) {
-		GEN_CASE(ErrActionCancelled, FailureType_Failure_DataError, _("Action cancelled by user"))
-		default:
-			fsm_sendSuccess(_("Settings applied"));
-	}
+	fsm_sendResponseFromErrCode(msgApplySettingsImpl(msg), _("Settings applied"), NULL);
 	layoutHome();
 }
 
@@ -182,14 +263,14 @@ void fsm_msgSkycoinCheckMessageSignature(SkycoinCheckMessageSignature* msg)
 
 int fsm_getKeyPairAtIndex(uint32_t nbAddress, uint8_t* pubkey, uint8_t* seckey, ResponseSkycoinAddress* respSkycoinAddress, uint32_t start_index)
 {
-    const char* mnemo = storage_getFullSeed();
-    uint8_t seed[33] = {0};
-    uint8_t nextSeed[SHA256_DIGEST_LENGTH] = {0};
+		const char* mnemo = storage_getFullSeed();
+		uint8_t seed[33] = {0};
+		uint8_t nextSeed[SHA256_DIGEST_LENGTH] = {0};
 	size_t size_address = 36;
-    if (mnemo == NULL || nbAddress == 0)
-    {
-        return -1;
-    }
+		if (mnemo == NULL || nbAddress == 0)
+		{
+				return -1;
+		}
 	generate_deterministic_key_pair_iterator((const uint8_t *)mnemo, strlen(mnemo), nextSeed, seckey, pubkey);
 	if (respSkycoinAddress != NULL && start_index == 0) {
 		generate_base58_address_from_pubkey(pubkey, respSkycoinAddress->addresses[0], &size_address);
@@ -207,7 +288,7 @@ int fsm_getKeyPairAtIndex(uint32_t nbAddress, uint8_t* pubkey, uint8_t* seckey, 
 			respSkycoinAddress->addresses_count++;
 		}
 	}
-    return 0;
+		return 0;
 }
 
 void fsm_msgTransactionSign(TransactionSign* msg) {
@@ -215,51 +296,61 @@ void fsm_msgTransactionSign(TransactionSign* msg) {
 	CHECK_MNEMONIC
 	CHECK_INPUTS(msg)
 	CHECK_OUTPUTS(msg)
-	switch (msgTransactionSignImpl(msg)) {
-		GEN_CASE(ErrAddressGeneration, FailureType_Failure_AddressGeneration, _("Wrong return address"))
-		GEN_CASE(ErrActionCancelled, FailureType_Failure_ActionCancelled, NULL)
-		GEN_CASE(ErrPinRequired, FailureType_Failure_PinExpected, _("Expected pin"))
-		GEN_CASE(ErrInvalidSignature, FailureType_Failure_InvalidSignature, NULL);
-		default:
-			break;
+	ErrCode_t err = msgTransactionSignImpl(msg);
+	char* failMsg = NULL;
+	if (err == ErrAddressGeneration) {
+		failMsg = _("Wrong return address");
 	}
+	fsm_sendResponseFromErrCode(err, NULL, failMsg);
 	layoutHome();
 }
 
 void fsm_msgSkycoinSignMessage(SkycoinSignMessage *msg)
 {
 	RESP_INIT(ResponseSkycoinSignMessage);
-	switch (msgSkycoinSignMessageImpl(msg, resp)) {
-		GEN_CASE(ErrMnemonicRequired, FailureType_Failure_AddressGeneration, "Mnemonic not set")
-		GEN_CASE(ErrPinRequired, FailureType_Failure_PinExpected, _("Expected pin"))
-		default:
-			break;
+	ErrCode_t err = msgSkycoinSignMessageImpl(msg, resp);
+	char* failMsg = NULL;
+	if (err == ErrMnemonicRequired) {
+		failMsg = _("Mnemonic not set");
 	}
+	fsm_sendResponseFromErrCode(err, NULL, failMsg);
 	layoutHome();
 }
 
 void fsm_msgSkycoinAddress(SkycoinAddress* msg)
 {
 	RESP_INIT(ResponseSkycoinAddress);
-	switch (msgSkycoinAddressImpl(msg, resp)) {
-		GEN_CASE(ErrPinRequired, FailureType_Failure_PinExpected, _("Expected pin"))
-		GEN_CASE(ErrTooManyAddresses, FailureType_Failure_AddressGeneration, "Asking for too much addresses")
-		GEN_CASE(ErrMnemonicRequired, FailureType_Failure_AddressGeneration, "Mnemonic required")
-		GEN_CASE(ErrAddressGeneration, FailureType_Failure_AddressGeneration, "Key pair generation failed")
-		GEN_CASE(ErrActionCancelled, FailureType_Failure_ActionCancelled, NULL)
-		default:
-			msg_write(MessageType_MessageType_ResponseSkycoinAddress, resp);
+	char *failMsg = NULL;
+	ErrCode_t err = msgSkycoinAddressImpl(msg, resp);
+	if (err == ErrOk) {
+		msg_write(MessageType_MessageType_ResponseSkycoinAddress, resp);
+	} else {
+		switch (err) {
+			case ErrPinRequired:
+				failMsg = _("Expected pin");
+				break;
+			case ErrTooManyAddresses:
+				failMsg = _("Asking for too much addresses");
+				break;
+			case ErrMnemonicRequired:
+				failMsg = _("Mnemonic required");
+				break;
+			case ErrAddressGeneration:
+				failMsg = _("Key pair generation failed");
+				break;
+			default:
+				break;
+		}
+		fsm_sendResponseFromErrCode(err, NULL, failMsg);
 	}
 	layoutHome();
 }
 
 void fsm_msgPing(Ping *msg)
 {
-	switch (msgPingImpl(msg)) {
-		GEN_CASE(ErrActionCancelled, FailureType_Failure_ActionCancelled, NULL)
-		GEN_CASE(ErrPinRequired, FailureType_Failure_PinExpected, _("Expected pin"))
-		default:
-			break;
+	ErrCode_t err = msgPingImpl(msg);
+	if (err != ErrOk) {
+		fsm_sendResponseFromErrCode(err, NULL, NULL);
 	}
 	layoutHome();
 }
@@ -267,23 +358,13 @@ void fsm_msgPing(Ping *msg)
 void fsm_msgChangePin(ChangePin *msg)
 {
 	bool removal = msg->has_remove && msg->remove;
-	switch (msgChangePinImpl(msg)) {
-		GEN_CASE(ErrActionCancelled, FailureType_Failure_ActionCancelled, NULL)
-		GEN_CASE(ErrPinRequired, FailureType_Failure_PinExpected, _("Expected pin"))
-		GEN_CASE(ErrPinMismatch, FailureType_Failure_PinMismatch, _("Pin mismatch"))
-		default:
-			fsm_sendSuccess( (removal) ? _("PIN removed") : _("PIN changed"));
-	}
+	fsm_sendResponseFromErrCode(msgChangePinImpl(msg), (removal) ? _("PIN removed") : _("PIN changed"), NULL);
 	layoutHome();
 }
 
 void fsm_msgWipeDevice(WipeDevice *msg)
 {
-	switch (msgWipeDeviceImpl(msg)) {
-		GEN_CASE(ErrActionCancelled, FailureType_Failure_ActionCancelled, NULL)
-		default:
-			fsm_sendSuccess(_("Device wiped"));
-	}
+	fsm_sendResponseFromErrCode(msgWipeDeviceImpl(msg), _("Device wiped"), NULL);
 	layoutHome();
 }
 
@@ -310,34 +391,24 @@ void fsm_msgGenerateMnemonic(GenerateMnemonic* msg) {
 void fsm_msgSetMnemonic(SetMnemonic* msg)
 {
 	CHECK_NOT_INITIALIZED
-	switch (msgSetMnemonicImpl(msg)) {
-		GEN_CASE(ErrActionCancelled, FailureType_Failure_ActionCancelled, NULL)
-		GEN_CASE(ErrInvalidValue, FailureType_Failure_DataError, _("Mnemonic with wrong checksum provided"))
-		default:
-			fsm_sendSuccess(_(msg->mnemonic));
-	}
+	ErrCode_t err = msgSetMnemonicImpl(msg);
+	char *failMsg = (err == ErrInvalidValue)? _("Mnemonic with wrong checksum provided") : NULL;
+	fsm_sendResponseFromErrCode(err, msg->mnemonic, failMsg);
 	layoutHome();
 }
 
 void fsm_msgGetEntropy(GetEntropy *msg)
 {
-	switch (msgGetEntropyImpl(msg)) {
-		GEN_CASE(ErrActionCancelled, FailureType_Failure_ActionCancelled, NULL)
-		default:
-			break;
-	}
+	fsm_sendResponseFromErrCode(msgGetEntropyImpl(msg), NULL, NULL);
 	layoutHome();
 }
 
 void fsm_msgLoadDevice(LoadDevice *msg)
 {
 	CHECK_NOT_INITIALIZED
-	switch (msgLoadDeviceImpl(msg)) {
-		GEN_CASE(ErrActionCancelled, FailureType_Failure_ActionCancelled, NULL)
-		GEN_CASE(ErrInvalidValue, FailureType_Failure_DataError, _("Mnemonic with wrong checksum provided"))
-		default:
-			fsm_sendSuccess(_("Device loaded"));
-	}
+	ErrCode_t err = msgLoadDeviceImpl(msg);
+	char *failMsg = (err == ErrInvalidValue)? _("Mnemonic with wrong checksum provided") : NULL;
+	fsm_sendResponseFromErrCode(err, _("Device loaded"), failMsg);
 	layoutHome();
 }
 
@@ -363,11 +434,14 @@ void fsm_msgBackupDevice(BackupDevice *msg)
 	CHECK_INITIALIZED
 	CHECK_PIN_UNCACHED
 	switch (msgBackupDeviceImpl(msg)) {
+		case ErrOk:
+			fsm_sendSuccess(_("Device backed up!"));
 		GEN_CASE(ErrUnexpectedMessage, FailureType_Failure_UnexpectedMessage, _("Seed already backed up"))
 		GEN_CASE(ErrActionCancelled, FailureType_Failure_ActionCancelled, NULL)
 		GEN_CASE(ErrUnfinishedBackup, FailureType_Failure_ActionCancelled, _("Backup operation did not finish properly."))
 		default:
-			fsm_sendSuccess(_("Device backed up!"));
+			fsm_sendFailure(FailureType_Failure_FirmwareError, _("Unexpected failure"));
+			break;
 	}
 	layoutHome();
 }
