@@ -44,7 +44,6 @@
 	if (storage_isInitialized()) { \
 		return ErrNotInitialized; \
 	}
-// fsm_sendFailure(FailureType_Failure_UnexpectedMessage, _("Device is already initialized. Use Wipe first."));
 
 #define CHECK_PIN \
 	if (!protectPin(true)) { \
@@ -79,7 +78,6 @@
 	if (!(cond)) { \
 		return ErrInvalidArg; \
 	}
-//fsm_sendFailure(FailureType_Failure_DataError, (errormsg));
 
 #define CHECK_BUTTON_PROTECT \
 	if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) { \
@@ -92,7 +90,6 @@
 	if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) { \
 		return ErrActionCancelled; \
 	}
-//fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
 
 #define CHECK_MNEMONIC \
 	if (storage_hasMnemonic() == false) { \
@@ -105,7 +102,6 @@
 	if (storage_hasMnemonic() == false) { \
 		return ErrMnemonicRequired; \
 	}
-//fsm_sendFailure(FailureType_Failure_AddressGeneration, "Mnemonic not set");
 
 #define CHECK_INPUTS(msg) \
 	if ((msg)->nbIn > 8) { \
@@ -132,7 +128,6 @@
 	if (!mnemonic_check(msg->mnemonic)) { \
 		return ErrInvalidValue; \
 	}
-// fsm_sendFailure(FailureType_Failure_DataError, _("Mnemonic with wrong checksum provided"));
 
 ErrCode_t msgGenerateMnemonicImpl(
 		GenerateMnemonic* msg,
