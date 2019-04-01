@@ -157,6 +157,10 @@ In order to identify at first sight the features supported by a particular relea
 
 The project includes a test suite. In order to run it just execute the following command
 
+```
+make test
+```
+
 ### Validate the TRNG
 
 To be able to validate the device trng you need to install the following tools:
@@ -169,10 +173,6 @@ For example, in a debian based system you can run `apt install dieharder ent rng
 
 To generate rando buffers run:
 `make validate-trng`
-
-```
-make test
-```
 
 #### [Files description](trng-test/Files-description#Files-description)
 
