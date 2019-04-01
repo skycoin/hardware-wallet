@@ -55,20 +55,6 @@ extern uint8_t  int_entropy[INTERNAL_ENTROPY_SIZE];
 static bool has_passphrase_protection;
 static bool passphrase_protection;
 
-void verifyLanguage(char *lang) {
-	int len = strlen(lang);
-	int spaces = 0, i;
-	for (i = 0; i < len; ++i) {
-		if ( ('a' <= lang[i] && lang[i] <= 'z') || ('A' <= lang[i] && lang[i] <= 'Z') ) {
-			break;
-		}
-		++spaces;
-	}
-	if ( spaces == len ) {
-		strcpy(lang, "English");
-	}
-}
-
 ErrCode_t msgEntropyAckImpl(EntropyAck* msg) {
 	_Static_assert(EXTERNAL_ENTROPY_MAX_SIZE == sizeof(msg->entropy.bytes),
 					"External entropy size does not match.");
@@ -242,19 +228,6 @@ ErrCode_t msgSkycoinCheckMessageSignatureImpl(SkycoinCheckMessageSignature* msg,
 
 ErrCode_t msgApplySettingsImpl(ApplySettings *msg)
 {
-	if (msg->has_label && strlen(msg->label)) {
-		layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"), _("change name to"), msg->label, "?", NULL, NULL);
-		CHECK_BUTTON_PROTECT_RET_ERR_CODE
-	}
-	if (msg->has_language && strlen(msg->label)) {
-		verifyLanguage(msg->language);
-		layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"), _("change language to"), msg->language, "?", NULL, NULL);
-		CHECK_BUTTON_PROTECT_RET_ERR_CODE
-	}
-	if (msg->has_use_passphrase) {
-		layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"), msg->use_passphrase ? _("enable passphrase") : _("disable passphrase"), _("protection?"), NULL, NULL, NULL);
-		CHECK_BUTTON_PROTECT_RET_ERR_CODE
-	}
 	if (msg->has_homescreen) {
 		layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"), _("change the home"), _("screen?"), NULL, NULL, NULL);
 		CHECK_BUTTON_PROTECT_RET_ERR_CODE
