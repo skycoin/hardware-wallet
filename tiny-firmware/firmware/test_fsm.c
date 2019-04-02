@@ -71,7 +71,7 @@ START_TEST(test_msgGenerateMnemonicImplShouldFailIfItWasDone)
 	msg.has_word_count = true;
 	msgGenerateMnemonicImpl(&msg, &random_buffer);
 	ErrCode_t ret = msgGenerateMnemonicImpl(&msg, &random_buffer);
-	ck_assert_int_eq(ErrFailed, ret);
+	ck_assert_int_eq(ErrNotInitialized, ret);
 }
 END_TEST
 
