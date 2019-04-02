@@ -234,19 +234,21 @@ void fsm_msgInitialize(Initialize *msg)
 }
 
 ErrCode_t verifyLanguage(char *lang) {
-  // FIXME: Check for supported language name. Only english atm.
-  return (!strcmp(lang, "english"))? ErrOk : ErrInvalidValue;
+	// FIXME: Check for supported language name. Only english atm.
+	return (!strcmp(lang, "english"))? ErrOk : ErrInvalidValue;
 }
 
 void fsm_msgApplySettings(ApplySettings *msg)
 {
 	CHECK_PIN
-	if (msg->has_label && strlen(msg->label)) {
+	msg->has_label = msg->has_label && strlen(msg->label);
+	msg->has_language = msg->has_language && strlen(msg->language);
+	if (msg->has_label) {
 		layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"), _("change name to"), msg->label, "?", NULL, NULL);
 		CHECK_BUTTON_PROTECT
 	}
-	if (msg->has_language && strlen(msg->label)) {
-	  CHECK_PARAM(verifyLanguage(msg->language) == ErrOk, NULL);
+	if (msg->has_language) {
+		CHECK_PARAM(verifyLanguage(msg->language) == ErrOk, NULL);
 		layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"), _("change language to"), msg->language, "?", NULL, NULL);
 		CHECK_BUTTON_PROTECT
 	}
@@ -454,7 +456,7 @@ void fsm_msgBackupDevice(BackupDevice *msg)
 	switch (msgBackupDeviceImpl(msg)) {
 		case ErrOk:
 			fsm_sendSuccess(_("Device backed up!"));
-      break;
+			break;
 		CASE_SEND_FAILURE(ErrUnexpectedMessage, FailureType_Failure_UnexpectedMessage, _("Seed already backed up"))
 		CASE_SEND_FAILURE(ErrActionCancelled, FailureType_Failure_ActionCancelled, NULL)
 		CASE_SEND_FAILURE(ErrUnfinishedBackup, FailureType_Failure_ActionCancelled, _("Backup operation did not finish properly."))

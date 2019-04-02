@@ -240,13 +240,6 @@ ErrCode_t msgApplySettingsImpl(ApplySettings *msg)
 				_("No setting provided"));
 	if (msg->has_label) {
 		storage_setLabel(msg->label);
-	} else {
-		char label[DEVICE_LABEL_SIZE];
-		_Static_assert(sizeof(label) >= sizeof(storage_uuid_str),
-						"Label can be truncated");
-		strncpy(label, storage_uuid_str,
-				MIN(sizeof(storage_uuid_str), sizeof(label)));
-		storage_setLabel(label);
 	}
 	if (msg->has_language) {
 		storage_setLanguage(msg->language);
