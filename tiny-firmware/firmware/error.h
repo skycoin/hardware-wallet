@@ -19,14 +19,15 @@
  */
 enum ErrMode
 {
-	ReasonSuccess = 0,		/*!< Success */
-	ReasonUnknown = 0xFFF,		/*!< Reason unknown */
-	ReasonArgumentError = 1,	/*!< Unexpected or invalid argument */
-	ReasonOutOfBounds = 2,		/*!< Value out of bounds */
-	ReasonInvalidState = 3,		/*!< The system get in an invalid state, for example a syc problem in server implementation */
-	ReasonValueError = 4,		/*!< Unexpected or invalid value */
-	ReasonNotImplemented = 5,	/*!< Not implemented code */
-	ReasonActionCancelled = 6, /*!< Action cancelled by user*/
+	ReasonSuccess = 0, /*!         < Success */
+	ReasonUnknown = 0xFFF, /*!     < Reason unknown */
+	ReasonArgumentError = 1, /*!   < Unexpected or invalid argument */
+	ReasonOutOfBounds = 2, /*!     < Value out of bounds */
+	ReasonInvalidState = 3,	/*!    < The system get in an invalid state, for example a syc problem in server implementation */
+	ReasonValueError = 4, /*!      < Unexpected or invalid value */
+	ReasonNotImplemented = 5, /*!  < Not implemented code */
+	ReasonActionCancelled = 6, /*! < Action cancelled by user */
+	ReasonUserConfirmation = 7, /*!< User confirmation needed to complete action */
 };
 
 // 32-bits error constants are structured as folows:
@@ -63,6 +64,7 @@ enum ErrCode
 	ErrIndexValue = ERROR_CODE(PkgGeneric, ReasonOutOfBounds),	     /*!< Index out of bounds */
 	ErrInvalidValue = ERROR_CODE(PkgGeneric, ReasonValueError),	     /*!< Invalid value */
 	ErrNotImplemented = ERROR_CODE(PkgGeneric, ReasonNotImplemented),    /*!< Feature not implemented */
+	ErrUserConfirmation = ERROR_CODE(PkgGeneric, ReasonUserConfirmation), /*!< User confirmation required to complete action */
 	ErrPinRequired = ERROR_CODE(PkgPinChk, ReasonInvalidState),          /*!< Action requires PIN and is not configured */
 	ErrPinMismatch = ERROR_CODE(PkgPinChk, ReasonValueError),          /*!< Action requires PIN and it didn't match */
 	ErrPinCancelled = ERROR_CODE(PkgPinChk, ReasonActionCancelled), /*!< Action requires PIN and was cancelled by user */

@@ -342,9 +342,17 @@ void fsm_msgSkycoinAddress(SkycoinAddress* msg)
 	char *failMsg = NULL;
 	ErrCode_t err = msgSkycoinAddressImpl(msg, resp);
 	if (err == ErrOk) {
-		msg_write(MessageType_MessageType_ResponseSkycoinAddress, resp);
 	} else {
 		switch (err) {
+			case ErrUserConfirmation:
+				layoutAddress(resp->addresses[0]);
+				if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) {
+					err = ErrActionCancelled;
+					break;
+				}
+			case ErrOk:
+				msg_write(MessageType_MessageType_ResponseSkycoinAddress, resp);
+				break;
 			case ErrPinRequired:
 				failMsg = _("Expected pin");
 				break;

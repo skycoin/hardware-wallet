@@ -178,9 +178,7 @@ ErrCode_t msgSkycoinAddressImpl(SkycoinAddress* msg, ResponseSkycoinAddress *res
 		return ErrAddressGeneration;
 	}
 	if (msg->address_n == 1 && msg->has_confirm_address && msg->confirm_address) {
-		char * addr = resp->addresses[0];
-		layoutAddress(addr);
-		CHECK_BUTTON_PROTECT_RET_ERR_CODE
+		return ErrUserConfirmation;
 	}
 	return ErrOk;
 }
@@ -346,12 +344,12 @@ ErrCode_t msgTransactionSignImpl(TransactionSign *msg) {
 	RESP_INIT(ResponseTransactionSign);
 	for (uint32_t i = 0; i < msg->nbIn; ++i) {
 		uint8_t digest[32];
-    	transaction_msgToSign(&transaction, i, digest);
-    	if (msgSignTransactionMessageImpl(digest, msg->transactionIn[i].index, resp->signatures[resp->signatures_count]) != ErrOk) {
-				//fsm_sendFailure(FailureType_Failure_InvalidSignature, NULL);
-				//layoutHome();
-    		return ErrInvalidSignature;
-    	}
+		transaction_msgToSign(&transaction, i, digest);
+		if (msgSignTransactionMessageImpl(digest, msg->transactionIn[i].index, resp->signatures[resp->signatures_count]) != ErrOk) {
+			//fsm_sendFailure(FailureType_Failure_InvalidSignature, NULL);
+			//layoutHome();
+			return ErrInvalidSignature;
+		}
 		resp->signatures_count++;
 	#if EMULATOR
 		char str[64];
@@ -368,7 +366,7 @@ ErrCode_t msgTransactionSignImpl(TransactionSign *msg) {
 		printf("Signed message:  %s\n", resp->signatures[0]);
 		printf("Nb signatures: %d\n", resp->signatures_count);
 	#endif
-  msg_write(MessageType_MessageType_ResponseTransactionSign, resp);
+	msg_write(MessageType_MessageType_ResponseTransactionSign, resp);
 	//layoutHome();
 	return ErrOk;
 }
