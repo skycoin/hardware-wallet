@@ -467,6 +467,8 @@ void fsm_msgGetEntropy(GetEntropy *msg)
 	CHECK_BUTTON_PROTECT
 	fsm_sendResponseFromErrCode(msgGetEntropyImpl(msg), NULL, NULL);
 	layoutHome();
+#else
+	(void)msg;
 #endif  // ENABLE_BUTTON_CONFIRMATION_TO_GET_ENTROPY
 }
 
