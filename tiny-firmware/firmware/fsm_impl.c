@@ -81,6 +81,7 @@ ErrCode_t msgGenerateMnemonicImpl(GenerateMnemonic* msg, void (*random_buffer_fu
   uint8_t data[sizeof(int_entropy)];
   random_buffer_func(data, sizeof(data));
   entropy_salt_mix_256(data, sizeof(data), int_entropy);
+  memset(data, 0, sizeof(data));
 	const char* mnemonic = mnemonic_from_data(int_entropy, strength / 8);
 	if (!mnemonic) {
     return ErrInvalidValue;
