@@ -58,7 +58,7 @@ OBJS += firmware/usb.o
 else
 OBJS += firmware/udp.o
 endif
-OBJS += firmware/trezor.o
+OBJS += firmware/skywallet.o
 OBJS += firmware/layout2.o
 OBJS += firmware/storage.o
 OBJS += firmware/messages.o
