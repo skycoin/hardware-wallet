@@ -25,6 +25,7 @@
 #include "protob/c/messages.pb.h"
 #include "setup.h"
 #include "rng.h"
+#include "rand.h"
 
 #include "test_fsm.h"
 
@@ -43,7 +44,7 @@ void forceGenerateMnemonic(void) {
 	GenerateMnemonic msg = GenerateMnemonic_init_zero;
 	msg.word_count = MNEMONIC_WORD_COUNT_12;
 	msg.has_word_count = true;
-	ck_assert_int_eq(ErrOk, msgGenerateMnemonicImpl(&msg));
+	ck_assert_int_eq(ErrOk, msgGenerateMnemonicImpl(&msg, &random_buffer));
 }
 
 bool is_a_base16_caharacter(char c) {
@@ -59,7 +60,7 @@ START_TEST(test_msgGenerateMnemonicImplOk)
 	GenerateMnemonic msg = GenerateMnemonic_init_zero;
 	msg.word_count = MNEMONIC_WORD_COUNT_12;
 	msg.has_word_count = true;
-	ErrCode_t ret = msgGenerateMnemonicImpl(&msg);
+	ErrCode_t ret = msgGenerateMnemonicImpl(&msg, &random_buffer);
 	ck_assert_int_eq(ErrOk, ret);
 }
 END_TEST
@@ -70,8 +71,8 @@ START_TEST(test_msgGenerateMnemonicImplShouldFailIfItWasDone)
 	GenerateMnemonic msg = GenerateMnemonic_init_zero;
 	msg.word_count = MNEMONIC_WORD_COUNT_12;
 	msg.has_word_count = true;
-	msgGenerateMnemonicImpl(&msg);
-	ErrCode_t ret = msgGenerateMnemonicImpl(&msg);
+	msgGenerateMnemonicImpl(&msg, &random_buffer);
+	ErrCode_t ret = msgGenerateMnemonicImpl(&msg, &random_buffer);
 	ck_assert_int_eq(ErrNotInitialized, ret);
 }
 END_TEST
@@ -82,7 +83,7 @@ START_TEST(test_msgGenerateMnemonicImplShouldFailForWrongSeedCount)
 	GenerateMnemonic msg = GenerateMnemonic_init_zero;
 	msg.has_word_count = true;
 	msg.word_count = MNEMONIC_WORD_COUNT_12 + 1;
-	ErrCode_t ret = msgGenerateMnemonicImpl(&msg);
+	ErrCode_t ret = msgGenerateMnemonicImpl(&msg, random_buffer);
 	ck_assert_int_eq(ErrInvalidArg, ret);
 }
 END_TEST
@@ -105,7 +106,7 @@ START_TEST(test_msgGenerateMnemonicEntropyAckSequenceShouldBeOk)
 	GenerateMnemonic gnMsg = GenerateMnemonic_init_zero;
 	ck_assert_int_eq(
 		ErrOk, 
-		msgGenerateMnemonicImpl(&gnMsg));
+		msgGenerateMnemonicImpl(&gnMsg, &random_buffer));
 	EntropyAck eaMsg = EntropyAck_init_zero;
 	eaMsg.has_entropy = true;
 	random_buffer(eaMsg.entropy.bytes, 32);

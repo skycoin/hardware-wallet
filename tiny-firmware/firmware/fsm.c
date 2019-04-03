@@ -87,6 +87,12 @@ void fsm_sendResponseFromErrCode(ErrCode_t err, const char *successMsg, const ch
 				failMsg = _("Not Implemented");
 			}
 			break;
+    case ErrInvalidChecksum:
+      failure = FailureType_Failure_DataError;
+			if (failMsg == NULL) {
+				failMsg = _("Invalid checksum");
+			}
+      break;
 		case ErrPinRequired:
 			failure = FailureType_Failure_PinExpected;
 			break;
@@ -431,10 +437,11 @@ void fsm_msgWipeDevice(WipeDevice *msg) {
 
 void fsm_msgGenerateMnemonic(GenerateMnemonic* msg) {
 	GET_MSG_POINTER(EntropyRequest, entropy_request);
-	switch (msgGenerateMnemonicImpl(msg)) {
+	switch (msgGenerateMnemonicImpl(msg, &random_buffer)) {
 		CASE_SEND_FAILURE(ErrNotInitialized, FailureType_Failure_UnexpectedMessage, _("Device is already initialized. Use Wipe first."))
 		CASE_SEND_FAILURE(ErrInvalidArg, FailureType_Failure_DataError, _("Invalid word count expecified, the valid options are 12 or 24."))
 		CASE_SEND_FAILURE(ErrInvalidValue, FailureType_Failure_ProcessError, _("Device could not generate a valid Mnemonic"))
+		CASE_SEND_FAILURE(ErrInvalidChecksum, FailureType_Failure_DataError, _("Mnemonic with wrong checksum provided"))
 		case ErrEntropyRequired:
 			msg_write(MessageType_MessageType_EntropyRequest, entropy_request);
 			break;
@@ -442,8 +449,7 @@ void fsm_msgGenerateMnemonic(GenerateMnemonic* msg) {
 			fsm_sendSuccess(_("Mnemonic successfully configured"));
 			break;
 		default:
-			fsm_sendFailure(FailureType_Failure_FirmwareError,
-							_("Mnemonic generation failed"));
+			fsm_sendFailure(FailureType_Failure_FirmwareError, _("Mnemonic generation failed"));
 			break;
 	}
 	layoutHome();

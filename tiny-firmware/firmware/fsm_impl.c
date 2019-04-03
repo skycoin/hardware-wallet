@@ -56,13 +56,13 @@ ErrCode_t msgEntropyAckImpl(EntropyAck* msg) {
 	_Static_assert(EXTERNAL_ENTROPY_MAX_SIZE == sizeof(msg->entropy.bytes),
 					"External entropy size does not match.");
 	if (!msg->has_entropy) {
-    return ErrEntropyNotNeeded;
-  }
-  set_external_entropy(msg->entropy.bytes, msg->entropy.size);
+		return ErrEntropyNotNeeded;
+	}
+	set_external_entropy(msg->entropy.bytes, msg->entropy.size);
 	return ErrOk;
 }
 
-ErrCode_t msgGenerateMnemonicImpl(GenerateMnemonic* msg) {
+ErrCode_t msgGenerateMnemonicImpl(GenerateMnemonic* msg, void (*random_buffer_func)(uint8_t *buf, size_t len)) {
 	CHECK_NOT_INITIALIZED_RET_ERR_CODE
 	strength = MNEMONIC_STRENGTH_12;
 	if (msg->has_word_count) {
@@ -77,19 +77,28 @@ ErrCode_t msgGenerateMnemonicImpl(GenerateMnemonic* msg) {
 				return ErrInvalidArg;
 		}
 	}
-	const bool skip_backup_saved = skip_backup;
-	skip_backup = true;
-	ErrCode_t ret = reset_entropy();
-	skip_backup = skip_backup_saved;
-	if (msg->has_passphrase_protection) {
-		storage_setPassphraseProtection(msg->passphrase_protection);
-		storage_update();
-	}
-	return ret;
+  // random buffer + entropy pool => mix256 => internal entropy
+  uint8_t data[sizeof(int_entropy)];
+  random_buffer_func(data, sizeof(data));
+  entropy_salt_mix_256(data, sizeof(data), int_entropy);
+	const char* mnemonic = mnemonic_from_data(int_entropy, strength / 8);
+	if (!mnemonic) {
+    return ErrInvalidValue;
+  }
+  if (!mnemonic_check(mnemonic)) {
+    return ErrInvalidChecksum;
+  }
+	storage_setMnemonic(mnemonic);
+	storage_setNeedsBackup(true);
+	storage_setPassphraseProtection(
+				msg->has_passphrase_protection
+				&& msg->passphrase_protection);
+	storage_update();
+	return ErrOk;
 }
 
 
-void msgSkycoinSignMessageImpl(SkycoinSignMessage* msg, ResponseSkycoinSignMessage *resp)
+ErrCode_t msgSkycoinSignMessageImpl(SkycoinSignMessage* msg, ResponseSkycoinSignMessage *resp)
 {
 	CHECK_MNEMONIC_RET_ERR_CODE
 	CHECK_PIN_UNCACHED_RET_ERR_CODE
@@ -298,9 +307,9 @@ ErrCode_t msgTransactionSignImpl(TransactionSign *msg, ErrCode_t (*funcConfirmTx
 					return ErrAddressGeneration;
 			}
 		} else {
-      ErrCode_t err = funcConfirmTxn(strCoin, strHour, msg, i);
-      if (err != ErrOk)
-        return err;
+			ErrCode_t err = funcConfirmTxn(strCoin, strHour, msg, i);
+			if (err != ErrOk)
+				return err;
 		}
 		transaction_addOutput(&transaction, msg->transactionOut[i].coin, msg->transactionOut[i].hour, msg->transactionOut[i].address);
 	}
@@ -422,10 +431,10 @@ ErrCode_t msgBackupDeviceImpl(BackupDevice *msg, ErrCode_t (*funcConfirmBackup)(
 	}
 	reset_backup(true);
 
-  ErrCode_t err = funcConfirmBackup();
-  if (err != ErrOk) {
-    return err;
-  }
+	ErrCode_t err = funcConfirmBackup();
+	if (err != ErrOk) {
+		return err;
+	}
 	if (storage_unfinishedBackup()) {
 		// fsm_sendFailure(FailureType_Failure_ActionCancelled, _("Backup operation did not finish properly."));
 		// layoutHome();
@@ -449,10 +458,10 @@ ErrCode_t msgRecoveryDeviceImpl(RecoveryDevice *msg, ErrCode_t (*funcConfirmReco
 			|| msg->word_count == 24, _("Invalid word count"));
 
 	if (!dry_run) {
-    ErrCode_t err = funcConfirmRecovery();
-    if (err != ErrOk) {
-      return err;
-    }
+		ErrCode_t err = funcConfirmRecovery();
+		if (err != ErrOk) {
+			return err;
+		}
 	}
 	recovery_init(
 		msg->has_word_count ? msg->word_count : 12,
