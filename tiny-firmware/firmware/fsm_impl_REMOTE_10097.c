@@ -14,9 +14,9 @@
 #include <libopencm3/stm32/flash.h>
 
 
-#include "skywallet.h"
 #include <stdio.h>
 #include <inttypes.h>
+#include "trezor.h"
 #include "fsm.h"
 #include "messages.h"
 #include "bip32.h"
