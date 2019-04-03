@@ -60,10 +60,7 @@ Update submodules:
 
 ```
 git submodule update --init --recursive
-```
 
-
-```
 make clean && make run-emulator
 ```
 
