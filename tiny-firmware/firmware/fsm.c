@@ -523,7 +523,7 @@ void fsm_msgBackupDevice(BackupDevice *msg)
 	layoutHome();
 }
 
-ErrCode_t confirmRecovery() {
+ErrCode_t confirmRecovery(void) {
 	layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"), _("recover the device?"), NULL, NULL, NULL, NULL);
 	CHECK_BUTTON_PROTECT_RET_ERR_CODE
   return ErrOk;
