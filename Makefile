@@ -173,6 +173,6 @@ st-flash: ## Deploy (flash) firmware on physical wallet
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
-validate-trng: ## Run tests over random buffers
+check-trng: ## Run test tools over random buffers
 	make -C trng-test trng-generate-buffers
 	make -C trng-test run-tests
