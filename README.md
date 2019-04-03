@@ -175,7 +175,7 @@ For example, in a debian based system you can run `apt install dieharder ent rng
 To generate rando buffers run:
 `make check-trng`
 
-After running the tools [some files](#Files-description) are generated and need to be analyzed by a human. Some of the are easy(because have a `Assessment` column) at a first look like for example:
+After running the tools [some files](#Files-description) are generated and need to be analyzed by a human. Some of they are easy(because have an `Assessment` column) at a first look like for example:
 ```
 #=============================================================================#
 #            dieharder version 3.31.1 Copyright 2003 Robert G. Brown          #
