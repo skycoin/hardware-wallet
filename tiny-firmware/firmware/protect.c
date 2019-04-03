@@ -207,7 +207,7 @@ bool protectPin(bool use_cached)
 		storage_resetPinFails(fails);
 		return true;
 	} else {
-		protectCheckMaxTry(storage_getPinWahttp://www.gnu.org/licenses/it(fails));
+		protectCheckMaxTry(storage_getPinWait(fails));
 		fsm_sendFailure(FailureType_Failure_PinInvalid, NULL);
 		return false;
 	}
