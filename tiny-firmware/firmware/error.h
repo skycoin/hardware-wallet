@@ -17,14 +17,17 @@
 /**
  * @brief The ErrMode enum represents the error modes.
  */
-enum ErrMode {
-	ReasonSuccess = 0, /*!< Success */
-	ReasonUnknown = 0xFFF, /*!< Reason unknown */
-	ReasonArgumentError = 1, /*!< Unexpected or invalid argument */
-	ReasonOutOfBounds = 2, /*!< Value out of bounds */
-	ReasonInvalidState = 3, /*!< The system get in an invalid state, for example a syc problem in server implementation */
-	ReasonNotUefulResult = 4, /*!< The result value is not useful */
-	ReasonValueError = 5, /*!< Unexpected or invalid value */
+enum ErrMode
+{
+	ReasonSuccess = 0, /*!         < Success */
+	ReasonUnknown = 0xFFF, /*!     < Reason unknown */
+	ReasonArgumentError = 1, /*!   < Unexpected or invalid argument */
+	ReasonOutOfBounds = 2, /*!     < Value out of bounds */
+	ReasonInvalidState = 3,	/*!    < The system get in an invalid state, for example a syc problem in server implementation */
+	ReasonValueError = 4, /*!      < Unexpected or invalid value */
+	ReasonNotImplemented = 5, /*!  < Not implemented code */
+	ReasonActionCancelled = 6, /*! < Action cancelled by user */
+	ReasonUserConfirmation = 7, /*!< User confirmation needed to complete action */
 };
 
 // 32-bits error constants are structured as folows:
@@ -38,23 +41,43 @@ enum ErrMode {
  * @brief The ErrCategory enum
  */
 enum ErrCategory {
-	PkgGeneric = 0, /*!< Byte prefix for generic error codes */
-	PkgEntropy = 1, /*!< Byte prefix for entropy error codes */
-	PkgServer = 2, /*! < Server schema related errors */
+	PkgGeneric = 1, /*! < Generic error codes */
+	PkgEntropy = 2, /*! < Entropy error codes */
+	PkgServer = 3, /*!  < Server schema related errors */
+	PkgSign = 4, /*!    < Signing errors */
+	PkgPinChk = 5, /*!  < Pin errors */
+	PkgStorage = 6, /*! < Storage errors */
+	PkgMnemonic = 7, /*!< Mnemonic errors */
+	PkgAddress = 8, /*! < Address errors */
+	PkgBackup = 9, /*!  < Backup errors */
 } __attribute__ ((__packed__));
 _Static_assert(sizeof (enum ErrCategory) == 1, "One byte as max for package");
 
 /**
  * @brief The ErrCode enum
  */
-enum ErrCode {
-	ErrOk =						ERROR_CODE(PkgGeneric, ReasonSuccess),  /*!< Operation completed successfully */
-	ErrFailed =					ERROR_CODE(PkgGeneric, ReasonUnknown),  /*!< Generic failure */
-	ErrInvalidArg =				ERROR_CODE(PkgGeneric, ReasonArgumentError),  /*!< Invalid argument */
-	ErrIndexValue =				ERROR_CODE(PkgGeneric, ReasonOutOfBounds),  /*!< Index out of bounds */
-	ErrInvalidValue =			ERROR_CODE(PkgGeneric, ReasonValueError),  /*!< Invalid value */
-	ErrLowEntropy =				ERROR_CODE(PkgEntropy, ReasonArgumentError),  /*!< Buffer entropy under 4.0 bits/symbol */
-	ErrUnexpectedMessage =		ERROR_CODE(PkgServer, ReasonInvalidState),  /*! < Server state loses path */
+enum ErrCode
+{
+	ErrOk = ERROR_CODE(PkgGeneric, ReasonSuccess),			     /*!< Operation completed successfully */
+	ErrFailed = ERROR_CODE(PkgGeneric, ReasonUnknown),		     /*!< Generic failure */
+	ErrInvalidArg = ERROR_CODE(PkgGeneric, ReasonArgumentError),	     /*!< Invalid argument */
+	ErrIndexValue = ERROR_CODE(PkgGeneric, ReasonOutOfBounds),	     /*!< Index out of bounds */
+	ErrInvalidValue = ERROR_CODE(PkgGeneric, ReasonValueError),	     /*!< Invalid value */
+	ErrNotImplemented = ERROR_CODE(PkgGeneric, ReasonNotImplemented),    /*!< Feature not implemented */
+	ErrUserConfirmation = ERROR_CODE(PkgGeneric, ReasonUserConfirmation), /*!< User confirmation required to complete action */
+	ErrPinRequired = ERROR_CODE(PkgPinChk, ReasonInvalidState),          /*!< Action requires PIN and is not configured */
+	ErrPinMismatch = ERROR_CODE(PkgPinChk, ReasonValueError),          /*!< Action requires PIN and it didn't match */
+	ErrPinCancelled = ERROR_CODE(PkgPinChk, ReasonActionCancelled), /*!< Action requires PIN and was cancelled by user */
+	ErrActionCancelled = ERROR_CODE(PkgGeneric, ReasonActionCancelled), /*!< Action cancelled by user */
+	ErrNotInitialized = ERROR_CODE(PkgStorage, ReasonInvalidState), /*!< Storage not initialized */
+	ErrMnemonicRequired = ERROR_CODE(PkgMnemonic, ReasonInvalidState), /*!< Mnemonic required */
+	ErrAddressGeneration = ERROR_CODE(PkgAddress, ErrInvalidValue), /*!< Failed address generation */
+	ErrTooManyAddresses = ERROR_CODE(PkgAddress, ReasonOutOfBounds), /*!< Too many addresses to generate */
+	ErrUnfinishedBackup = ERROR_CODE(PkgBackup, ReasonInvalidState), /*!< Backup operation did not finish properly */
+	ErrLowEntropy = ERROR_CODE(PkgEntropy, ReasonArgumentError),	     /*!< Buffer entropy under 4.0 bits/symbol */
+	ErrUnexpectedMessage = ERROR_CODE(PkgServer, ReasonInvalidState),    /*!< Server state loses path */
+	ErrSignPreconditionFailed = ERROR_CODE(PkgSign, ReasonInvalidState), /*!< Signing precondition failed */
+	ErrInvalidSignature = ERROR_CODE(PkgSign, ReasonValueError), /*!< Invalid Message Signature */
 };
 typedef enum ErrCode ErrCode_t;
 _Static_assert(sizeof (ErrCode_t) == 4, "One byte as max for package");

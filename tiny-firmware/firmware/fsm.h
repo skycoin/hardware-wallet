@@ -1,5 +1,5 @@
 /*
- * This file is part of the Skycoin project, https://skycoin.net/ 
+ * This file is part of the Skycoin project, https://skycoin.net/
  *
  * Copyright (C) 2014 Pavol Rusnak <stick@satoshilabs.com>
  * Copyright (C) 2018-2019 Skycoin Project
