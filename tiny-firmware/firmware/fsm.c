@@ -47,6 +47,98 @@
 #include "droplet.h"
 #include "skyparams.h"
 
+// Utils
+
+#define CASE_SEND_FAILURE(type, fail, msg) \
+	case type: \
+		fsm_sendFailure(fail, msg); \
+		break;
+
+void fsm_sendResponseFromErrCode(ErrCode_t err, const char *successMsg, const char *failMsg) {
+	FailureType failure;
+	switch (err) {
+		case ErrOk:
+			if (successMsg == NULL) {
+				successMsg = "Success";
+			}
+			fsm_sendSuccess(successMsg);
+			return;
+		case ErrFailed:
+			failure = FailureType_Failure_FirmwareError;
+			break;
+		case ErrInvalidArg:
+			failure = FailureType_Failure_DataError;
+			if (failMsg == NULL) {
+				failMsg = _("Invalid argument");
+			}
+			break;
+		case ErrIndexValue:
+			failure = FailureType_Failure_DataError;
+			if (failMsg == NULL) {
+				failMsg = _("Index out of bounds");
+			}
+			break;
+		case ErrInvalidValue:
+			failure = FailureType_Failure_ProcessError;
+			break;
+		case ErrNotImplemented:
+			failure = FailureType_Failure_FirmwareError;
+			if (failMsg == NULL) {
+				failMsg = _("Not Implemented");
+			}
+			break;
+		case ErrPinRequired:
+			failure = FailureType_Failure_PinExpected;
+			break;
+		case ErrPinMismatch:
+			failure = FailureType_Failure_PinMismatch;
+			break;
+		case ErrPinCancelled:
+			failure = FailureType_Failure_PinCancelled;
+			break;
+		case ErrActionCancelled:
+			failure = FailureType_Failure_ActionCancelled;
+			break;
+		case ErrNotInitialized:
+			failure = FailureType_Failure_NotInitialized;
+			break;
+		case ErrMnemonicRequired:
+			failure = FailureType_Failure_AddressGeneration;
+			if (failMsg == NULL) {
+				failMsg = _("Mnemonic required");
+			}
+			break;
+		case ErrAddressGeneration:
+			failure = FailureType_Failure_AddressGeneration;
+			break;
+		case ErrTooManyAddresses:
+			failure = FailureType_Failure_AddressGeneration;
+			if (failMsg == NULL) {
+				failMsg = _("Too many addresses requested");
+			}
+			break;
+		case ErrUnfinishedBackup:
+			// FIXME: FailureType_Failure_ProcessError ?
+			failure = FailureType_Failure_ActionCancelled;
+			if (failMsg == NULL) {
+				failMsg = _("Backup operation did not finish properly.");
+			}
+			break;
+		case ErrUnexpectedMessage:
+			failure = FailureType_Failure_UnexpectedMessage;
+			break;
+		case ErrSignPreconditionFailed:
+		case ErrInvalidSignature:
+			failure = FailureType_Failure_InvalidSignature;
+			break;
+		default:
+			failure = FailureType_Failure_FirmwareError;
+			failMsg = _("Unexpected failure");
+			break;
+	} 
+	fsm_sendFailure(failure, failMsg);
+}
+
 extern uint8_t msg_resp[MSG_OUT_SIZE] __attribute__ ((aligned));
 
 void fsm_sendSuccess(const char *text)
@@ -69,7 +161,7 @@ void fsm_sendFailure(FailureType code, const char *text)
 	RESP_INIT(Failure);
 	resp->has_code = true;
 	resp->code = code;
-	if (!text) {
+	if (text == NULL) {
 		switch (code) {
 			case FailureType_Failure_UnexpectedMessage:
 				text = _("Unexpected message");
@@ -124,7 +216,7 @@ void fsm_sendFailure(FailureType code, const char *text)
 
 void fsm_msgInitialize(Initialize *msg)
 {
-    recovery_abort();
+		recovery_abort();
 	if (msg && msg->has_state && msg->state.size == 64) {
 		uint8_t i_state[64];
 		if (!session_getState(msg->state.bytes, i_state, NULL)) {
@@ -141,47 +233,35 @@ void fsm_msgInitialize(Initialize *msg)
 	fsm_msgGetFeatures(0);
 }
 
+ErrCode_t verifyLanguage(char *lang) {
+	// FIXME: Check for supported language name. Only english atm.
+	return (!strcmp(lang, "english"))? ErrOk : ErrInvalidValue;
+}
+
 void fsm_msgApplySettings(ApplySettings *msg)
 {
 	CHECK_PIN
-	if (msg->has_label && strlen(msg->label)) {
+	msg->has_label = msg->has_label && strlen(msg->label);
+	msg->has_language = msg->has_language && strlen(msg->language);
+	if (msg->has_label) {
 		layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"), _("change name to"), msg->label, "?", NULL, NULL);
-		if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) {
-			fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
-			layoutHome();
-			return;
-		}
-	} else {
-		msg->has_label = false;
+		CHECK_BUTTON_PROTECT
 	}
-	if (msg->has_language && strlen(msg->language)) {
+	if (msg->has_language) {
+		CHECK_PARAM(verifyLanguage(msg->language) == ErrOk, NULL);
 		layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"), _("change language to"), msg->language, "?", NULL, NULL);
-		if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) {
-			fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
-			layoutHome();
-			return;
-		}
-	} else {
-		msg->has_language = false;
+		CHECK_BUTTON_PROTECT
 	}
 	if (msg->has_use_passphrase) {
 		layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"), msg->use_passphrase ? _("enable passphrase") : _("disable passphrase"), _("protection?"), NULL, NULL, NULL);
-		if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) {
-			fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
-			layoutHome();
-			return;
-		}
+		CHECK_BUTTON_PROTECT
 	}
 	if (msg->has_homescreen) {
 		layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"), _("change the home"), _("screen?"), NULL, NULL, NULL);
-		if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) {
-			fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
-			layoutHome();
-			return;
-		}
+		CHECK_BUTTON_PROTECT
 	}
-	msgApplySettings(msg);
-	fsm_sendSuccess(_("Settings applied"));
+
+	fsm_sendResponseFromErrCode(msgApplySettingsImpl(msg), _("Settings applied"), NULL);
 	layoutHome();
 }
 
@@ -197,8 +277,7 @@ void fsm_msgSkycoinCheckMessageSignature(SkycoinCheckMessageSignature* msg)
 {
 	GET_MSG_POINTER(Success, successResp);
 	GET_MSG_POINTER(Failure, failureResp);
-	if (msgSkycoinCheckMessageSignatureImpl(msg, successResp, failureResp)
-			== ErrOk) {
+	if ( msgSkycoinCheckMessageSignatureImpl(msg, successResp, failureResp) == ErrOk ) {
 		msg_write(MessageType_MessageType_Success, successResp);
 	} else {
 		failureResp->code = FailureType_Failure_InvalidSignature;
@@ -209,14 +288,13 @@ void fsm_msgSkycoinCheckMessageSignature(SkycoinCheckMessageSignature* msg)
 
 int fsm_getKeyPairAtIndex(uint32_t nbAddress, uint8_t* pubkey, uint8_t* seckey, ResponseSkycoinAddress* respSkycoinAddress, uint32_t start_index)
 {
-    const char* mnemo = storage_getFullSeed();
-    uint8_t seed[33] = {0};
-    uint8_t nextSeed[SHA256_DIGEST_LENGTH] = {0};
+	const char* mnemo = storage_getFullSeed();
+	uint8_t seed[33] = {0};
+	uint8_t nextSeed[SHA256_DIGEST_LENGTH] = {0};
 	size_t size_address = 36;
-    if (mnemo == NULL || nbAddress == 0)
-    {
-        return -1;
-    }
+	if (mnemo == NULL || nbAddress == 0) {
+			return -1;
+	}
 	generate_deterministic_key_pair_iterator((const uint8_t *)mnemo, strlen(mnemo), nextSeed, seckey, pubkey);
 	if (respSkycoinAddress != NULL && start_index == 0) {
 		generate_base58_address_from_pubkey(pubkey, respSkycoinAddress->addresses[0], &size_address);
@@ -234,166 +312,89 @@ int fsm_getKeyPairAtIndex(uint32_t nbAddress, uint8_t* pubkey, uint8_t* seckey, 
 			respSkycoinAddress->addresses_count++;
 		}
 	}
-    return 0;
+	return 0;
+}
+
+ErrCode_t requestConfirmTransaction(char* strCoin, char *strHour, TransactionSign* msg, uint32_t i) {
+	layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Next"), NULL, _("Do you really want to"), strCoin, strHour, _("to address"), _("..."), NULL);
+	CHECK_BUTTON_PROTECT_RET_ERR_CODE
+	layoutAddress(msg->transactionOut[i].address);
+	CHECK_BUTTON_PROTECT_RET_ERR_CODE
+    return ErrOk;
 }
 
 void fsm_msgTransactionSign(TransactionSign* msg) {
-
-	if (storage_hasMnemonic() == false) {
-		fsm_sendFailure(FailureType_Failure_AddressGeneration, "Mnemonic not set");
-		return;
+	CHECK_PIN
+	CHECK_MNEMONIC
+	CHECK_INPUTS(msg)
+	CHECK_OUTPUTS(msg)
+	ErrCode_t err = msgTransactionSignImpl(msg, requestConfirmTransaction);
+	char* failMsg = NULL;
+	if (err == ErrAddressGeneration) {
+		failMsg = _("Wrong return address");
 	}
-
-	if (msg->nbIn > 8) {
-		fsm_sendFailure(FailureType_Failure_InvalidSignature, _("Cannot have more than 8 inputs"));
-		return;
-	}
-	if (msg->nbOut > 8) {
-		fsm_sendFailure(FailureType_Failure_InvalidSignature, _("Cannot have more than 8 outputs"));
-		return;
-	}
-#if EMULATOR
-	printf("%s: %d. nbOut: %d\n",
-		_("Transaction signed nbIn"),
-		msg->nbIn, msg->nbOut);
-
-	for (uint32_t i = 0; i < msg->nbIn; ++i) {
-		printf("Input: addressIn: %s, index: %d\n",
-			msg->transactionIn[i].hashIn, msg->transactionIn[i].index);
-	}
-	for (uint32_t i = 0; i < msg->nbOut; ++i) {
-		printf("Output: coin: %" PRIu64 ", hour: %" PRIu64 " address: %s address_index: %d\n",
-			msg->transactionOut[i].coin, msg->transactionOut[i].hour,
-			msg->transactionOut[i].address, msg->transactionOut[i].address_index);
-	}
-#endif
-	Transaction transaction;
-	transaction_initZeroTransaction(&transaction);
-	for (uint32_t i = 0; i < msg->nbIn; ++i) {
-		uint8_t hashIn[32];
-		writebuf_fromhexstr(msg->transactionIn[i].hashIn, hashIn);
-		transaction_addInput(&transaction, hashIn);
-	}
-	for (uint32_t i = 0; i < msg->nbOut; ++i) {
-		char strHour[30];
-		char strCoin[30];
-		char strValue[20];
-		char *coinString = msg->transactionOut[i].coin == 1000000 ? _("coin") : _("coins");
-		char *hourString = (msg->transactionOut[i].hour == 1 || msg->transactionOut[i].hour == 0) ? _("hour") : _("hours");
-		char *strValueMsg = sprint_coins(msg->transactionOut[i].coin, SKYPARAM_DROPLET_PRECISION_EXP, sizeof(strValue), strValue);
-		if (strValueMsg == NULL) {
-			// FIXME: For Skycoin coin supply and precision buffer size should be enough
-			strcpy(strCoin, "too many coins");
-		}
-		sprintf(strCoin, "%s %s %s", _("send"), strValueMsg, coinString);
-		sprintf(strHour, "%" PRIu64 " %s", msg->transactionOut[i].hour, hourString);
-
-		if (msg->transactionOut[i].has_address_index) {
-			uint8_t pubkey[33] = {0};
-			uint8_t seckey[32] = {0};
-			size_t size_address = 36;
-			char address[36] = {0};
-			fsm_getKeyPairAtIndex(1, pubkey, seckey, NULL, msg->transactionOut[i].address_index);
-			generate_base58_address_from_pubkey(pubkey, address, &size_address);
-			if (strcmp(msg->transactionOut[i].address, address) != 0)
-			{
-					fsm_sendFailure(FailureType_Failure_AddressGeneration, _("Wrong return address"));
-					#if EMULATOR
-					printf("Internal address: %s, message address: %s\n", address, msg->transactionOut[i].address);
-					printf("Comparaison size %ld\n", size_address);
-					#endif
-					return;
-			}
-		} else {
-			layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Next"), NULL, _("Do you really want to"), strCoin, strHour, _("to address"), _("..."), NULL);
-			if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) {
-				fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
-				layoutHome();
-				return;
-			}
-			layoutAddress(msg->transactionOut[i].address);
-			if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) {
-				fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
-				layoutHome();
-				return;
-			}
-		}
-		transaction_addOutput(&transaction, msg->transactionOut[i].coin, msg->transactionOut[i].hour, msg->transactionOut[i].address);
-	}
-
-	CHECK_PIN_UNCACHED
-	RESP_INIT(ResponseTransactionSign);
-	for (uint32_t i = 0; i < msg->nbIn; ++i) {
-		uint8_t digest[32];
-    	transaction_msgToSign(&transaction, i, digest);
-    	if (msgSignTransactionMessageImpl(digest, msg->transactionIn[i].index, resp->signatures[resp->signatures_count]) != ErrOk) {
-			fsm_sendFailure(FailureType_Failure_InvalidSignature, NULL);
-    		return;
-    	}
-		resp->signatures_count++;
-#if EMULATOR
-		char str[64];
-		tohex(str, (uint8_t*)digest, 32);
-		printf("Signing message:  %s\n", str);
-		printf("Signed message:  %s\n", resp->signatures[i]);
-		printf("Nb signatures: %d\n", resp->signatures_count);
-#endif
-	}
-#if EMULATOR
-	char str[64];
-	tohex(str, transaction.innerHash, 32);
-	printf("InnerHash %s\n", str);
-	printf("Signed message:  %s\n", resp->signatures[0]);
-	printf("Nb signatures: %d\n", resp->signatures_count);
-#endif
-    msg_write(MessageType_MessageType_ResponseTransactionSign, resp);
+	fsm_sendResponseFromErrCode(err, NULL, failMsg);
 	layoutHome();
 }
 
 void fsm_msgSkycoinSignMessage(SkycoinSignMessage *msg)
 {
 	RESP_INIT(ResponseSkycoinSignMessage);
-	msgSkycoinSignMessageImpl(msg, resp);
+	ErrCode_t err = msgSkycoinSignMessageImpl(msg, resp);
+	char* failMsg = NULL;
+	if (err == ErrMnemonicRequired) {
+		failMsg = _("Mnemonic not set");
+	}
+	fsm_sendResponseFromErrCode(err, NULL, failMsg);
+	layoutHome();
 }
 
 void fsm_msgSkycoinAddress(SkycoinAddress* msg)
 {
 	RESP_INIT(ResponseSkycoinAddress);
-	if (msgSkycoinAddress(msg, resp) == ErrOk) {
-		msg_write(MessageType_MessageType_ResponseSkycoinAddress, resp);
+	char *failMsg = NULL;
+	ErrCode_t err = msgSkycoinAddressImpl(msg, resp);
+	switch (err) {
+		case ErrUserConfirmation:
+			layoutAddress(resp->addresses[0]);
+			if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) {
+				err = ErrActionCancelled;
+				break;
+			}
+      // fall through
+		case ErrOk:
+			msg_write(MessageType_MessageType_ResponseSkycoinAddress, resp);
+			break;
+		case ErrPinRequired:
+			failMsg = _("Expected pin");
+			break;
+		case ErrTooManyAddresses:
+			failMsg = _("Asking for too much addresses");
+			break;
+		case ErrMnemonicRequired:
+			failMsg = _("Mnemonic required");
+			break;
+		case ErrAddressGeneration:
+			failMsg = _("Key pair generation failed");
+			break;
+		default:
+			break;
 	}
+	fsm_sendResponseFromErrCode(err, NULL, failMsg);
 	layoutHome();
 }
 
 void fsm_msgPing(Ping *msg)
 {
-	RESP_INIT(Success);
-
 	if (msg->has_button_protection && msg->button_protection) {
 		layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"), _("answer to ping?"), NULL, NULL, NULL, NULL);
-		if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) {
-			fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
-			layoutHome();
-			return;
-		}
+		CHECK_BUTTON_PROTECT
 	}
 
-	if (msg->has_pin_protection && msg->pin_protection) {
-		CHECK_PIN
+	ErrCode_t err = msgPingImpl(msg);
+	if (err != ErrOk) {
+		fsm_sendResponseFromErrCode(err, NULL, NULL);
 	}
-
-	if (msg->has_passphrase_protection && msg->passphrase_protection) {
-		if (!protectPassphrase()) {
-			fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
-			return;
-		}
-	}
-
-	if (msg->has_message) {
-		resp->has_message = true;
-		memcpy(&(resp->message), &(msg->message), sizeof(resp->message));
-	}
-	msg_write(MessageType_MessageType_Success, resp);
 	layoutHome();
 }
 
@@ -405,7 +406,6 @@ void fsm_msgChangePin(ChangePin *msg)
 			layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"), _("remove current PIN?"), NULL, NULL, NULL, NULL);
 		} else {
 			fsm_sendSuccess(_("PIN removed"));
-			return;
 		}
 	} else {
 		if (storage_hasPin()) {
@@ -414,58 +414,32 @@ void fsm_msgChangePin(ChangePin *msg)
 			layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"), _("set new PIN?"), NULL, NULL, NULL, NULL);
 		}
 	}
-	if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) {
-		fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
-		layoutHome();
-		return;
-	}
 
+	CHECK_BUTTON_PROTECT
 	CHECK_PIN_UNCACHED
 
-	if (removal) {
-		storage_setPin("");
-		storage_update();
-		fsm_sendSuccess(_("PIN removed"));
-	} else {
-		if (protectChangePin()) {
-			fsm_sendSuccess(_("PIN changed"));
-		} else {
-			fsm_sendFailure(FailureType_Failure_PinMismatch, NULL);
-		}
-	}
+	fsm_sendResponseFromErrCode(msgChangePinImpl(msg, &protectChangePin), (removal) ? _("PIN removed") : _("PIN changed"), NULL);
 	layoutHome();
 }
 
-void fsm_msgWipeDevice(WipeDevice *msg)
-{
-	(void)msg;
+void fsm_msgWipeDevice(WipeDevice *msg) {
 	layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"), _("wipe the device?"), NULL, _("All data will be lost."), NULL, NULL);
-	if (!protectButton(ButtonRequestType_ButtonRequest_WipeDevice, false)) {
-		fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
-		layoutHome();
-		return;
-	}
-	storage_wipe();
-	// the following does not work on Mac anyway :-/ Linux/Windows are fine, so it is not needed
-	// usbReconnect(); // force re-enumeration because of the serial number change
-	fsm_sendSuccess(_("Device wiped"));
+  ErrCode_t err = protectButton(ButtonRequestType_ButtonRequest_WipeDevice, false)? msgWipeDeviceImpl(msg) : ErrActionCancelled;
+	fsm_sendResponseFromErrCode(err, _("Device wiped"), NULL);
 	layoutHome();
 }
 
 void fsm_msgGenerateMnemonic(GenerateMnemonic* msg) {
 	GET_MSG_POINTER(EntropyRequest, entropy_request);
 	switch (msgGenerateMnemonicImpl(msg)) {
-		case ErrOk:
-			fsm_sendSuccess(_("Seed generated"));
-			break;
+		CASE_SEND_FAILURE(ErrNotInitialized, FailureType_Failure_UnexpectedMessage, _("Device is already initialized. Use Wipe first."))
+		CASE_SEND_FAILURE(ErrInvalidArg, FailureType_Failure_DataError, _("Invalid word count expecified, the valid options are 12 or 24."))
+		CASE_SEND_FAILURE(ErrInvalidValue, FailureType_Failure_ProcessError, _("Device could not generate a valid Mnemonic"))
 		case ErrEntropyRequired:
 			msg_write(MessageType_MessageType_EntropyRequest, entropy_request);
 			break;
-		case ErrInvalidArg:
-			fsm_sendFailure(
-						FailureType_Failure_DataError,
-						_("Invalid word count expecified, the valid options are"
-						" 12 or 24."));
+		case ErrOk:
+			fsm_sendSuccess(_("Mnemonic successfully configured"));
 			break;
 		default:
 			fsm_sendFailure(FailureType_Failure_FirmwareError,
@@ -478,67 +452,31 @@ void fsm_msgGenerateMnemonic(GenerateMnemonic* msg) {
 void fsm_msgSetMnemonic(SetMnemonic* msg)
 {
 	CHECK_NOT_INITIALIZED
-
-	RESP_INIT(Success);
 	layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("I take the risk"), NULL, _("Writing seed"), _("is not recommended."), _("Continue only if you"), _("know what you are"), _("doing!"), NULL);
-	if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) {
-		fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
-		layoutHome();
-		return;
-	}
-	if (!mnemonic_check(msg->mnemonic)) {
-		fsm_sendFailure(FailureType_Failure_DataError, _("Mnemonic with wrong checksum provided"));
-		layoutHome();
-		return;
-	}
-	storage_setMnemonic(msg->mnemonic);
-	storage_setNeedsBackup(true);
-	storage_update();
-	fsm_sendSuccess(_(msg->mnemonic));
+	CHECK_BUTTON_PROTECT
+	ErrCode_t err = msgSetMnemonicImpl(msg);
+	char *failMsg = (err == ErrInvalidValue)? _("Mnemonic with wrong checksum provided") : NULL;
+	fsm_sendResponseFromErrCode(err, msg->mnemonic, failMsg);
 	layoutHome();
 }
 
 void fsm_msgGetEntropy(GetEntropy *msg)
 {
 	layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"), _("send entropy?"), NULL, NULL, NULL, NULL);
-	if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) {
-		fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
-		layoutHome();
-		return;
-	}
-
-	RESP_INIT(Entropy);
-	uint32_t len = msg->size;
-	if (len > 1024) {
-		len = 1024;
-	}
-	resp->entropy.size = len;
-	random_buffer(resp->entropy.bytes, len);
-	msg_write(MessageType_MessageType_Entropy, resp);
+	CHECK_BUTTON_PROTECT
+	fsm_sendResponseFromErrCode(msgGetEntropyImpl(msg), NULL, NULL);
 	layoutHome();
 }
 
 void fsm_msgLoadDevice(LoadDevice *msg)
 {
 	CHECK_NOT_INITIALIZED
-
 	layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("I take the risk"), NULL, _("Loading private seed"), _("is not recommended."), _("Continue only if you"), _("know what you are"), _("doing!"), NULL);
-	if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) {
-		fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
-		layoutHome();
-		return;
-	}
+	CHECK_BUTTON_PROTECT
 
-	if (msg->has_mnemonic && !(msg->has_skip_checksum && msg->skip_checksum) ) {
-		if (!mnemonic_check(msg->mnemonic)) {
-			fsm_sendFailure(FailureType_Failure_DataError, _("Mnemonic with wrong checksum provided"));
-			layoutHome();
-			return;
-		}
-	}
-
-	storage_loadDevice(msg);
-	fsm_sendSuccess(_("Device loaded"));
+	ErrCode_t err = msgLoadDeviceImpl(msg);
+	char *failMsg = (err == ErrInvalidValue)? _("Mnemonic with wrong checksum provided") : NULL;
+	fsm_sendResponseFromErrCode(err, _("Device loaded"), failMsg);
 	layoutHome();
 }
 
@@ -559,64 +497,48 @@ void fsm_msgResetDevice(ResetDevice *msg)
 	);
 }
 
+ErrCode_t confirmBackup(void) {
+	layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you confirm you"), _("backed up your seed."), _("This will never be"), _("possible again."), NULL, NULL);
+	CHECK_BUTTON_PROTECT_RET_ERR_CODE
+  return ErrOk;
+}
+
 void fsm_msgBackupDevice(BackupDevice *msg)
 {
 	CHECK_INITIALIZED
-
 	CHECK_PIN_UNCACHED
-
-	(void)msg;
-	if (!storage_needsBackup()) {
-		fsm_sendFailure(FailureType_Failure_UnexpectedMessage, _("Seed already backed up"));
-		return;
+	switch (msgBackupDeviceImpl(msg, confirmBackup)) {
+		case ErrOk:
+			fsm_sendSuccess(_("Device backed up!"));
+			break;
+		CASE_SEND_FAILURE(ErrUnexpectedMessage, FailureType_Failure_UnexpectedMessage, _("Seed already backed up"))
+		CASE_SEND_FAILURE(ErrActionCancelled, FailureType_Failure_ActionCancelled, NULL)
+		CASE_SEND_FAILURE(ErrUnfinishedBackup, FailureType_Failure_ActionCancelled, _("Backup operation did not finish properly."))
+		default:
+			fsm_sendFailure(FailureType_Failure_FirmwareError, _("Unexpected failure"));
+			break;
 	}
-	reset_backup(true);
-
-	layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you confirm you"), _("backed up your seed."), _("This will never be"), _("possible again."), NULL, NULL);
-	if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) {
-		fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
-		layoutHome();
-		return;
-	}
-	if (storage_unfinishedBackup()) {
-		fsm_sendFailure(FailureType_Failure_ActionCancelled, _("Backup operation did not finish properly."));
-		layoutHome();
-		return;
-	}
-	storage_setNeedsBackup(false);
-	storage_update();
-	fsm_sendSuccess(_("Device backed up!"));
 	layoutHome();
+}
+
+ErrCode_t confirmRecovery(void) {
+	layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"), _("recover the device?"), NULL, NULL, NULL, NULL);
+	CHECK_BUTTON_PROTECT_RET_ERR_CODE
+  return ErrOk;
 }
 
 void fsm_msgRecoveryDevice(RecoveryDevice *msg)
 {
-	const bool dry_run = msg->has_dry_run ? msg->dry_run : false;
-	if (dry_run) {
-		CHECK_PIN
-	} else {
-		CHECK_NOT_INITIALIZED
+	switch (msgRecoveryDeviceImpl(msg, confirmRecovery)) {
+		CASE_SEND_FAILURE(ErrPinRequired, FailureType_Failure_PinExpected, _("Expected pin"))
+		CASE_SEND_FAILURE(ErrNotInitialized, FailureType_Failure_UnexpectedMessage, _("Device is already initialized. Use Wipe first."))
+		CASE_SEND_FAILURE(ErrInvalidArg, FailureType_Failure_DataError, _("Invalid word count"))
+		CASE_SEND_FAILURE(ErrActionCancelled, FailureType_Failure_ActionCancelled, NULL)
+		default:
+			fsm_sendFailure(FailureType_Failure_FirmwareError, _("Unexpected failure"));
+			break;
 	}
-
-	CHECK_PARAM(!msg->has_word_count || msg->word_count == 12
-			|| msg->word_count == 24, _("Invalid word count"));
-
-	if (!dry_run) {
-		layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"), _("recover the device?"), NULL, NULL, NULL, NULL);
-		if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) {
-			fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
-			layoutHome();
-			return;
-		}
-	}
-	recovery_init(
-		msg->has_word_count ? msg->word_count : 12,
-		msg->has_passphrase_protection && msg->passphrase_protection,
-		msg->has_pin_protection && msg->pin_protection,
-		msg->has_language ? msg->language : 0,
-		msg->has_label ? msg->label : 0,
-		dry_run
-	);
+	layoutHome();
 }
 
 void fsm_msgWordAck(WordAck *msg)
@@ -634,6 +556,8 @@ void fsm_msgCancel(Cancel *msg)
 void fsm_msgEntropyAck(EntropyAck *msg)
 {
 	switch (msgEntropyAckImpl(msg)) {
+		CASE_SEND_FAILURE(ErrInvalidValue, FailureType_Failure_ProcessError, _("Device could not generate a valid Mnemonic"))
+		CASE_SEND_FAILURE(ErrUnexpectedMessage, FailureType_Failure_UnexpectedMessage, _("Unexpected entropy ack msg."))
 		case ErrOk:
 			fsm_sendSuccess(_("Recived entropy"));
 			break;

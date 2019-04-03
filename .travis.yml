@@ -38,10 +38,9 @@ script:
   - make -C tiny-firmware/protob install-deps-nanopb
   - make -C tiny-firmware/protob install-protoc
   - make -C tiny-firmware/protob/nanopb/vendor/nanopb/generator/proto
-  - find tiny-firmware/protob/nanopb/vendor/nanopb
-  - make clean
   - make test
   - make clean
+  - find tiny-firmware/protob/nanopb/vendor/nanopb
   - make emulator
   - make clean
   - make full-firmware
