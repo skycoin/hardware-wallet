@@ -211,7 +211,7 @@ ErrCode_t msgSkycoinCheckMessageSignatureImpl(SkycoinCheckMessageSignature* msg,
 			strncpy(failureResp->message, _("Address does not match"), sizeof (failureResp->message));
 			failureResp->has_message = true;
 			layoutRawMessage("Wrong signature");
-			ret = ErrFailed;
+			ret = ErrInvalidSignature;
 		} else {
 			layoutRawMessage("Verification success");
 			memcpy(successResp->message, pubkeybase58, pubkeybase58_size);
@@ -226,11 +226,6 @@ ErrCode_t msgSkycoinCheckMessageSignatureImpl(SkycoinCheckMessageSignature* msg,
 
 ErrCode_t msgApplySettingsImpl(ApplySettings *msg)
 {
-	if (msg->has_homescreen) {
-		layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"), _("change the home"), _("screen?"), NULL, NULL, NULL);
-		CHECK_BUTTON_PROTECT_RET_ERR_CODE
-	}
-
 	_Static_assert(
 		sizeof(msg->label) == DEVICE_LABEL_SIZE,
 		"device label size inconsitent betwen protocol and final storage");
@@ -255,9 +250,9 @@ ErrCode_t msgApplySettingsImpl(ApplySettings *msg)
 ErrCode_t msgGetFeaturesImpl(Features *resp)
 {
 	resp->has_vendor = true;         strlcpy(resp->vendor, "Skycoin Foundation", sizeof(resp->vendor));
-	resp->has_fw_major = true;  resp->fw_major = VERSION_MAJOR;
-	resp->has_fw_minor = true;  resp->fw_minor = VERSION_MINOR;
-	resp->has_fw_patch = true;  resp->fw_patch = VERSION_PATCH;
+	resp->has_fw_major = true;       resp->fw_major = VERSION_MAJOR;
+	resp->has_fw_minor = true;       resp->fw_minor = VERSION_MINOR;
+	resp->has_fw_patch = true;       resp->fw_patch = VERSION_PATCH;
 	resp->has_device_id = true;      strlcpy(resp->device_id, storage_uuid_str, sizeof(resp->device_id));
 	resp->has_pin_protection = true; resp->pin_protection = storage_hasPin();
 	resp->has_passphrase_protection = true; resp->passphrase_protection = storage_hasPassphraseProtection();
@@ -278,7 +273,7 @@ ErrCode_t msgGetFeaturesImpl(Features *resp)
 	return ErrOk;
 }
 
-ErrCode_t msgTransactionSignImpl(TransactionSign *msg) {
+ErrCode_t msgTransactionSignImpl(TransactionSign *msg, ErrCode_t (*funcConfirmTxn)(char*, char *, TransactionSign*, uint32_t)) {
 	#if EMULATOR
 		printf("%s: %d. nbOut: %d\n",
 			_("Transaction signed nbIn"),
@@ -331,10 +326,9 @@ ErrCode_t msgTransactionSignImpl(TransactionSign *msg) {
 					return ErrAddressGeneration;
 			}
 		} else {
-			layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Next"), NULL, _("Do you really want to"), strCoin, strHour, _("to address"), _("..."), NULL);
-			CHECK_BUTTON_PROTECT_RET_ERR_CODE
-			layoutAddress(msg->transactionOut[i].address);
-			CHECK_BUTTON_PROTECT_RET_ERR_CODE
+      ErrCode_t err = funcConfirmTxn(strCoin, strHour, msg, i);
+      if (err != ErrOk)
+        return err;
 		}
 		transaction_addOutput(&transaction, msg->transactionOut[i].coin, msg->transactionOut[i].hour, msg->transactionOut[i].address);
 	}
@@ -374,11 +368,6 @@ ErrCode_t msgTransactionSignImpl(TransactionSign *msg) {
 ErrCode_t msgPingImpl(Ping *msg) {
 	RESP_INIT(Success);
 
-	if (msg->has_button_protection && msg->button_protection) {
-		layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"), _("answer to ping?"), NULL, NULL, NULL, NULL);
-		CHECK_BUTTON_PROTECT_RET_ERR_CODE
-	}
-
 	if (msg->has_pin_protection && msg->pin_protection) {
 		CHECK_PIN_RET_ERR_CODE
 	}
@@ -398,32 +387,14 @@ ErrCode_t msgPingImpl(Ping *msg) {
 
 }
 
-ErrCode_t msgChangePinImpl(ChangePin *msg) {
+ErrCode_t msgChangePinImpl(ChangePin *msg, bool (*funcProtectChangePin)(void)) {
 	bool removal = msg->has_remove && msg->remove;
-	if (removal) {
-		if (storage_hasPin()) {
-			layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"), _("remove current PIN?"), NULL, NULL, NULL, NULL);
-		} else {
-			//fsm_sendSuccess(_("PIN removed"));
-			return ErrOk;
-		}
-	} else {
-		if (storage_hasPin()) {
-			layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"), _("change current PIN?"), NULL, NULL, NULL, NULL);
-		} else {
-			layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"), _("set new PIN?"), NULL, NULL, NULL, NULL);
-		}
-	}
-
-	CHECK_BUTTON_PROTECT_RET_ERR_CODE
-	CHECK_PIN_UNCACHED_RET_ERR_CODE
-
 	if (removal) {
 		storage_setPin("");
 		storage_update();
 		//fsm_sendSuccess(_("PIN removed"));
 	} else {
-		if (protectChangePin()) {
+		if (!funcProtectChangePin()) {
 			//fsm_sendSuccess(_("PIN changed"));
 		} else {
 			//fsm_sendFailure(FailureType_Failure_PinMismatch, NULL);
@@ -435,10 +406,6 @@ ErrCode_t msgChangePinImpl(ChangePin *msg) {
 
 ErrCode_t msgWipeDeviceImpl(WipeDevice *msg) {
 	(void)msg;
-	layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"), _("wipe the device?"), NULL, _("All data will be lost."), NULL, NULL);
-	if (!protectButton(ButtonRequestType_ButtonRequest_WipeDevice, false)) {
-		return ErrActionCancelled;
-	}
 	storage_wipe();
 	// the following does not work on Mac anyway :-/ Linux/Windows are fine, so it is not needed
 	// usbReconnect(); // force re-enumeration because of the serial number change
@@ -448,8 +415,6 @@ ErrCode_t msgWipeDeviceImpl(WipeDevice *msg) {
 
 ErrCode_t msgSetMnemonicImpl(SetMnemonic *msg) {
 	RESP_INIT(Success);
-	layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("I take the risk"), NULL, _("Writing seed"), _("is not recommended."), _("Continue only if you"), _("know what you are"), _("doing!"), NULL);
-	CHECK_BUTTON_PROTECT_RET_ERR_CODE;
 	CHECK_MNEMONIC_CHECKSUM_RET_ERR_CODE
 	storage_setMnemonic(msg->mnemonic);
 	storage_setNeedsBackup(true);
@@ -459,8 +424,6 @@ ErrCode_t msgSetMnemonicImpl(SetMnemonic *msg) {
 }
 
 ErrCode_t msgGetEntropyImpl(GetEntropy *msg) {
-	layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"), _("send entropy?"), NULL, NULL, NULL, NULL);
-	CHECK_BUTTON_PROTECT_RET_ERR_CODE
 	RESP_INIT(Entropy);
 	uint32_t len = ( msg->size > 1024 ) ? 1024 : msg->size ;
 	resp->entropy.size = len;
@@ -470,9 +433,6 @@ ErrCode_t msgGetEntropyImpl(GetEntropy *msg) {
 }
 
 ErrCode_t msgLoadDeviceImpl(LoadDevice *msg) {
-	layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("I take the risk"), NULL, _("Loading private seed"), _("is not recommended."), _("Continue only if you"), _("know what you are"), _("doing!"), NULL);
-	CHECK_BUTTON_PROTECT_RET_ERR_CODE
-
 	if (msg->has_mnemonic && !(msg->has_skip_checksum && msg->skip_checksum) ) {
 		CHECK_MNEMONIC_CHECKSUM_RET_ERR_CODE
 	}
@@ -482,7 +442,7 @@ ErrCode_t msgLoadDeviceImpl(LoadDevice *msg) {
 	return ErrOk;
 }
 
-ErrCode_t msgBackupDeviceImpl(BackupDevice *msg) {
+ErrCode_t msgBackupDeviceImpl(BackupDevice *msg, ErrCode_t (*funcConfirmBackup)(void)) {
 	(void)msg;
 	if (!storage_needsBackup()) {
 		//fsm_sendFailure(FailureType_Failure_UnexpectedMessage, _("Seed already backed up"));
@@ -490,8 +450,10 @@ ErrCode_t msgBackupDeviceImpl(BackupDevice *msg) {
 	}
 	reset_backup(true);
 
-	layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you confirm you"), _("backed up your seed."), _("This will never be"), _("possible again."), NULL, NULL);
-	CHECK_BUTTON_PROTECT_RET_ERR_CODE
+  ErrCode_t err = funcConfirmBackup();
+  if (err != ErrOk) {
+    return err;
+  }
 	if (storage_unfinishedBackup()) {
 		// fsm_sendFailure(FailureType_Failure_ActionCancelled, _("Backup operation did not finish properly."));
 		// layoutHome();
@@ -503,7 +465,7 @@ ErrCode_t msgBackupDeviceImpl(BackupDevice *msg) {
 	return ErrOk;
 }
 
-ErrCode_t msgRecoveryDeviceImpl(RecoveryDevice *msg) {
+ErrCode_t msgRecoveryDeviceImpl(RecoveryDevice *msg, ErrCode_t (*funcConfirmRecovery)(void)) {
 	const bool dry_run = msg->has_dry_run ? msg->dry_run : false;
 	if (dry_run) {
 		CHECK_PIN_RET_ERR_CODE
@@ -515,8 +477,10 @@ ErrCode_t msgRecoveryDeviceImpl(RecoveryDevice *msg) {
 			|| msg->word_count == 24, _("Invalid word count"));
 
 	if (!dry_run) {
-		layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"), _("recover the device?"), NULL, NULL, NULL, NULL);
-		CHECK_BUTTON_PROTECT_RET_ERR_CODE
+    ErrCode_t err = funcConfirmRecovery();
+    if (err != ErrOk) {
+      return err;
+    }
 	}
 	recovery_init(
 		msg->has_word_count ? msg->word_count : 12,
