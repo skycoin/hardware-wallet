@@ -465,11 +465,9 @@ void fsm_msgGetEntropy(GetEntropy *msg)
 #if ENABLE_BUTTON_CONFIRMATION_TO_GET_ENTROPY == 1
 	layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"), _("send entropy?"), NULL, NULL, NULL, NULL);
 	CHECK_BUTTON_PROTECT
+#endif  // ENABLE_BUTTON_CONFIRMATION_TO_GET_ENTROPY
 	fsm_sendResponseFromErrCode(msgGetEntropyImpl(msg), NULL, NULL);
 	layoutHome();
-#else
-	(void)msg;
-#endif  // ENABLE_BUTTON_CONFIRMATION_TO_GET_ENTROPY
 }
 
 void fsm_msgLoadDevice(LoadDevice *msg)
