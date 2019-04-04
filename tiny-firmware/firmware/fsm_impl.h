@@ -146,7 +146,7 @@ ErrCode_t msgPingImpl(Ping *msg);
 ErrCode_t msgChangePinImpl(ChangePin *msg, bool (*)(void));
 ErrCode_t msgWipeDeviceImpl(WipeDevice *msg);
 ErrCode_t msgSetMnemonicImpl(SetMnemonic *msg);
-ErrCode_t msgGetEntropyImpl(GetEntropy *msg);
+ErrCode_t msgGetEntropyImpl(GetEntropy *msg, Entropy *resp);
 ErrCode_t msgLoadDeviceImpl(LoadDevice *msg);
 ErrCode_t msgBackupDeviceImpl(BackupDevice *msg, ErrCode_t (*)(void));
 ErrCode_t msgRecoveryDeviceImpl(RecoveryDevice *msg, ErrCode_t (*)(void));
