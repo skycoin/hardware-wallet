@@ -562,7 +562,6 @@ void fsm_msgCancel(Cancel *msg)
 void fsm_msgEntropyAck(EntropyAck *msg)
 {
 	switch (msgEntropyAckImpl(msg)) {
-		CASE_SEND_FAILURE(ErrInvalidValue, FailureType_Failure_ProcessError, _("Device could not generate a valid Mnemonic"))
 		CASE_SEND_FAILURE(ErrUnexpectedMessage, FailureType_Failure_UnexpectedMessage, _("Unexpected entropy ack msg."))
 		case ErrOk:
 			fsm_sendSuccess(_("Recived entropy"));
