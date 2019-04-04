@@ -466,7 +466,14 @@ void fsm_msgGetEntropy(GetEntropy *msg)
 	layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"), _("send entropy?"), NULL, NULL, NULL, NULL);
 	CHECK_BUTTON_PROTECT
 #endif  // ENABLE_BUTTON_CONFIRMATION_TO_GET_ENTROPY
-	fsm_sendResponseFromErrCode(msgGetEntropyImpl(msg), NULL, NULL);
+	RESP_INIT(Entropy);
+	if (msgGetEntropyImpl(msg, resp) == ErrOk) {
+		msg_write(MessageType_MessageType_Entropy, resp);
+	} else {
+		fsm_sendFailure(
+					FailureType_Failure_FirmwareError, 
+					"Unable to get internal entropy");
+	}
 	layoutHome();
 }
 

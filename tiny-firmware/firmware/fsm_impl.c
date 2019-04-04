@@ -423,12 +423,10 @@ ErrCode_t msgSetMnemonicImpl(SetMnemonic *msg) {
 	return ErrOk;
 }
 
-ErrCode_t msgGetEntropyImpl(GetEntropy *msg) {
-	RESP_INIT(Entropy);
+ErrCode_t msgGetEntropyImpl(GetEntropy *msg, Entropy *resp) {
 	uint32_t len = ( msg->size > 1024 ) ? 1024 : msg->size ;
 	resp->entropy.size = len;
 	random_buffer(resp->entropy.bytes, len);
-	msg_write(MessageType_MessageType_Entropy, resp);
 	return ErrOk;
 }
 
