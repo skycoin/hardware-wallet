@@ -59,7 +59,7 @@ void fsm_sendResponseFromErrCode(ErrCode_t err, const char *successMsg, const ch
 	switch (err) {
 		case ErrOk:
 			if (successMsg == NULL) {
-				successMsg = "Success";
+				successMsg = _("Success");
 			}
 			fsm_sendSuccess(successMsg);
 			return;
@@ -467,12 +467,12 @@ void fsm_msgGetEntropy(GetEntropy *msg)
 	CHECK_BUTTON_PROTECT
 #endif  // DISABLE_BUTTON_CONFIRMATION_TO_GET_ENTROPY
 	RESP_INIT(Entropy);
-	if (msgGetEntropyImpl(msg, resp) == ErrOk) {
+	ErrCode_t ret = msgGetEntropyImpl(msg, resp);
+	if (ret == ErrOk) {
 		msg_write(MessageType_MessageType_Entropy, resp);
 	} else {
-		fsm_sendFailure(
-					FailureType_Failure_FirmwareError, 
-					"Unable to get internal entropy");
+		fsm_sendResponseFromErrCode(
+				ret, NULL, _("Get entropy does not works in emulator mode"));
 	}
 	layoutHome();
 }

@@ -424,6 +424,9 @@ ErrCode_t msgSetMnemonicImpl(SetMnemonic *msg) {
 }
 
 ErrCode_t msgGetEntropyImpl(GetEntropy *msg, Entropy *resp) {
+#ifdef EMULATOR
+	return ErrNotImplemented;
+#endif
 	uint32_t len = ( msg->size > 1024 ) ? 1024 : msg->size ;
 	resp->entropy.size = len;
 	random_buffer(resp->entropy.bytes, len);
