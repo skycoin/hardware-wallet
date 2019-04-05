@@ -462,7 +462,7 @@ void fsm_msgSetMnemonic(SetMnemonic* msg)
 
 void fsm_msgGetEntropy(GetEntropy *msg)
 {
-#if DISABLE_BUTTON_CONFIRMATION_TO_GET_ENTROPY == 0
+#if !DISABLE_BUTTON_CONFIRMATION_TO_GET_ENTROPY
 	layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"), _("send entropy?"), NULL, NULL, NULL, NULL);
 	CHECK_BUTTON_PROTECT
 #endif  // DISABLE_BUTTON_CONFIRMATION_TO_GET_ENTROPY
