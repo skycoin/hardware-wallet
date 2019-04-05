@@ -142,10 +142,12 @@ void set_external_entropy(uint8_t *entropy, size_t len) {
 }
 
 void check_entropy(void) {
+#ifndef EMULATOR
+	GET_MSG_POINTER(EntropyRequest, entropy_request);
 	if (is_external_entropy_needed() == ErrEntropyRequired) {
-		EntropyRequest resp;
 		memset(&resp, 0, sizeof(EntropyRequest));
-		msg_write(MessageType_MessageType_EntropyRequest, &resp);
+		msg_write(MessageType_MessageType_EntropyRequest, entropy_request);
 		stopwatch_reset(entropy_timeout);
 	}
+#endif
 }
