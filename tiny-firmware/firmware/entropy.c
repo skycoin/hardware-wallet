@@ -93,7 +93,7 @@ void entropy_mix_256(const uint8_t *in, size_t in_len, uint8_t *out_mixed_entrop
 }
 
 void entropy_mix_n(const uint8_t *in, size_t in_len, uint8_t *out_mixed_entropy) {
-	uint8_t* iptr = in;
+	uint8_t* iptr = (uint8_t *) in;
 	uint8_t* optr;
 	size_t i;
 	for (i = in_len, optr = out_mixed_entropy;
@@ -114,18 +114,18 @@ void __attribute__((weak)) random_salted_buffer(uint8_t *buf, size_t len) {
 	random_buffer(buf, len);
 
 	uint8_t tmp[SHA256_DIGEST_LENGTH] = {0};
-	uint8_t* bptr, tptr;
+	uint8_t *bptr, *tptr;
 	size_t i, j;
-	for (i = in_len, bptr = buf; i >= SHA256_DIGEST_LENGTH; i -= SHA256_DIGEST_LENGTH) {
+	for (i = len, bptr = buf; i >= SHA256_DIGEST_LENGTH; i -= SHA256_DIGEST_LENGTH) {
 		entropy_mix_256(bptr, SHA256_DIGEST_LENGTH, tmp);
-		for (j = SHA256_DIGEST_LENGTH, tptr = &tmp; j; --j, ++tptr, ++bptr) {
+		for (j = SHA256_DIGEST_LENGTH, tptr = tmp; j; --j, ++tptr, ++bptr) {
 			// FIXME: XOR the whole architecture-specific word
 			*bptr = *bptr ^ *tptr;
 		}
 	}
 	if (i > 0) {
 		entropy_mix_256(bptr, i, tmp);
-		for (tptr = &tmp; i; --i, ++tptr, ++bptr) {
+		for (tptr = tmp; i; --i, ++tptr, ++bptr) {
 			// FIXME: XOR the whole architecture-specific word
 			*bptr = *bptr ^ *tptr;
 		}
