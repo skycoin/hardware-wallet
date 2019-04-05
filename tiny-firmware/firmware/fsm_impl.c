@@ -77,18 +77,18 @@ ErrCode_t msgGenerateMnemonicImpl(GenerateMnemonic* msg, void (*random_buffer_fu
 				return ErrInvalidArg;
 		}
 	}
-  // random buffer + entropy pool => mix256 => internal entropy
-  uint8_t data[sizeof(int_entropy)];
-  random_buffer_func(data, sizeof(data));
-  entropy_salt_mix_256(data, sizeof(data), int_entropy);
-  memset(data, 0, sizeof(data));
+	// random buffer + entropy pool => mix256 => internal entropy
+	uint8_t data[sizeof(int_entropy)];
+	random_buffer_func(data, sizeof(data));
+	entropy_salt_mix_256(data, sizeof(data), int_entropy);
+	memset(data, 0, sizeof(data));
 	const char* mnemonic = mnemonic_from_data(int_entropy, strength / 8);
 	if (!mnemonic) {
-    return ErrInvalidValue;
-  }
-  if (!mnemonic_check(mnemonic)) {
-    return ErrInvalidChecksum;
-  }
+		return ErrInvalidValue;
+	}
+	if (!mnemonic_check(mnemonic)) {
+		return ErrInvalidChecksum;
+	}
 	storage_setMnemonic(mnemonic);
 	storage_setNeedsBackup(true);
 	storage_setPassphraseProtection(
@@ -405,11 +405,11 @@ ErrCode_t msgSetMnemonicImpl(SetMnemonic *msg) {
 	return ErrOk;
 }
 
-ErrCode_t msgGetEntropyImpl(GetEntropy *msg) {
+ErrCode_t msgGetEntropyImpl(GetEntropy *msg, void (*random_buffer_func)(uint8_t *buf, size_t len)) {
 	RESP_INIT(Entropy);
 	uint32_t len = ( msg->size > 1024 ) ? 1024 : msg->size ;
 	resp->entropy.size = len;
-	random_buffer(resp->entropy.bytes, len);
+	random_buffer_func(resp->entropy.bytes, len);
 	msg_write(MessageType_MessageType_Entropy, resp);
 	return ErrOk;
 }
