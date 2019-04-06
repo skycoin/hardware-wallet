@@ -473,7 +473,7 @@ void fsm_msgGetRawEntropy(GetRawEntropy *msg) {
 	CHECK_BUTTON_PROTECT
 #endif  // DISABLE_BUTTON_CONFIRMATION_TO_GET_ENTROPY
 	RESP_INIT(Entropy);
-	ErrCode_t ret = msgGetRawEntropyImpl(msg, resp, random_salted_buffer);
+	ErrCode_t ret = msgGetRawEntropyImpl(msg, resp, &random_buffer);
 	if (ret == ErrOk) {
 		msg_write(MessageType_MessageType_Entropy, resp);
 	} else {
@@ -489,7 +489,7 @@ void fsm_msgGetMixedEntropy(GetMixedEntropy *msg) {
 	CHECK_BUTTON_PROTECT
 #endif  // DISABLE_BUTTON_CONFIRMATION_TO_GET_ENTROPY
 	RESP_INIT(Entropy);
-	ErrCode_t ret = msgGetMixedEntropyImpl(msg, resp, random_salted_buffer);
+	ErrCode_t ret = msgGetMixedEntropyImpl(msg, resp, &random_salted_buffer);
 	if (ret == ErrOk) {
 		msg_write(MessageType_MessageType_Entropy, resp);
 	} else {
