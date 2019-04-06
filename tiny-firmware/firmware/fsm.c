@@ -460,21 +460,38 @@ void fsm_msgSetMnemonic(SetMnemonic* msg)
 	layoutHome();
 }
 
-void fsm_msgGetEntropy(GetEntropy *msg)
-{
+void fsm_msgGetRawEntropy(GetRawEntropy *msg) {
 #if !DISABLE_BUTTON_CONFIRMATION_TO_GET_ENTROPY
 	layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"), _("send entropy?"), NULL, NULL, NULL, NULL);
 	CHECK_BUTTON_PROTECT
 #endif  // DISABLE_BUTTON_CONFIRMATION_TO_GET_ENTROPY
 	RESP_INIT(Entropy);
-	ErrCode_t ret = msgGetEntropyImpl(msg, resp);
+	ErrCode_t ret = msgGetRawEntropyImpl(msg, resp);
 	if (ret == ErrOk) {
 		msg_write(MessageType_MessageType_Entropy, resp);
 	} else {
 		fsm_sendResponseFromErrCode(
-				ret, NULL, _("Get entropy does not works in emulator mode"));
+				ret, NULL, _("Get raw entropy does not works in emulator mode"));
 	}
 	layoutHome();
+}
+
+void fsm_msgGetMixedEntropy(GetMixedEntropy *msg) {
+#if !DISABLE_BUTTON_CONFIRMATION_TO_GET_ENTROPY
+	layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"), _("send entropy?"), NULL, NULL, NULL, NULL);
+	CHECK_BUTTON_PROTECT
+#endif  // DISABLE_BUTTON_CONFIRMATION_TO_GET_ENTROPY
+	RESP_INIT(Entropy);
+	ErrCode_t ret = msgGetMixedEntropyImpl(msg, resp);
+	if (ret == ErrOk) {
+		msg_write(MessageType_MessageType_Entropy, resp);
+	} else {
+		fsm_sendResponseFromErrCode(
+				ret, NULL, _("Get mixed entropy does not works in emulator mode"));
+	}
+	layoutHome();
+	(void)msg;
+	msg_write(MessageType_MessageType_Failure, _(""));
 }
 
 void fsm_msgLoadDevice(LoadDevice *msg)

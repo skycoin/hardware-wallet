@@ -423,7 +423,7 @@ ErrCode_t msgSetMnemonicImpl(SetMnemonic *msg) {
 	return ErrOk;
 }
 
-ErrCode_t msgGetEntropyImpl(GetEntropy *msg, Entropy *resp) {
+ErrCode_t msgGetRawEntropyImpl(GetRawEntropy *msg, Entropy *resp) {
 #ifdef EMULATOR
 #if EMULATOR
 	return ErrNotImplemented;
@@ -433,6 +433,20 @@ ErrCode_t msgGetEntropyImpl(GetEntropy *msg, Entropy *resp) {
 	resp->entropy.size = len;
 	random_buffer(resp->entropy.bytes, len);
 	return ErrOk;
+}
+
+ErrCode_t msgGetMixedEntropyImpl(GetMixedEntropy *msg, Entropy *resp) {
+//#ifdef EMULATOR
+//#if EMULATOR
+	(void)msg;
+	(void)resp;
+	return ErrNotImplemented;
+//#endif  // if EMULATOR
+//#endif  // ifdef EMULATOR
+//	uint32_t len = ( msg->size > 1024 ) ? 1024 : msg->size ;
+//	resp->entropy.size = len;
+//	random_buffer(resp->entropy.bytes, len);
+//	return ErrOk;
 }
 
 ErrCode_t msgLoadDeviceImpl(LoadDevice *msg) {
