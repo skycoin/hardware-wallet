@@ -92,8 +92,7 @@ CFLAGS   += $(OPTFLAGS) \
             -I$(TOP_DIR)gen \
             -I$(TOP_DIR)vendor/skycoin-crypto \
             -I$(TOP_DIR)vendor/skycoin-crypto/tools \
-            -I$(TOP_DIR)vendor/skycoin-crypto/trezor-tools \
-            -I$(TOP_DIR)vendor/skycoin-crypto/trezor-tools/aes
+            -I$(TOP_DIR)vendor/skycoin-crypto/tools/aes
 
 LDFLAGS  += -L$(TOP_DIR) \
             $(DBGFLAGS) \

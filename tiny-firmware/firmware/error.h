@@ -28,6 +28,9 @@ enum ErrMode
 	ReasonNotImplemented = 5, /*!  < Not implemented code */
 	ReasonActionCancelled = 6, /*! < Action cancelled by user */
 	ReasonUserConfirmation = 7, /*!< User confirmation needed to complete action */
+	ReasonExpired = 8, /*!         < User confirmation needed to complete action */
+	ReasonSkip = 9, /*!            < User confirmation needed to complete action */
+	ReasonInvalidChecksum = 9, /*! < User confirmation needed to complete action */
 };
 
 // 32-bits error constants are structured as folows:
@@ -65,6 +68,7 @@ enum ErrCode
 	ErrInvalidValue = ERROR_CODE(PkgGeneric, ReasonValueError),	     /*!< Invalid value */
 	ErrNotImplemented = ERROR_CODE(PkgGeneric, ReasonNotImplemented),    /*!< Feature not implemented */
 	ErrUserConfirmation = ERROR_CODE(PkgGeneric, ReasonUserConfirmation), /*!< User confirmation required to complete action */
+	ErrInvalidChecksum = ERROR_CODE(PkgGeneric, ReasonInvalidChecksum), /*!< Checksum verification failed */
 	ErrPinRequired = ERROR_CODE(PkgPinChk, ReasonInvalidState),          /*!< Action requires PIN and is not configured */
 	ErrPinMismatch = ERROR_CODE(PkgPinChk, ReasonValueError),          /*!< Action requires PIN and it didn't match */
 	ErrPinCancelled = ERROR_CODE(PkgPinChk, ReasonActionCancelled), /*!< Action requires PIN and was cancelled by user */
@@ -74,7 +78,10 @@ enum ErrCode
 	ErrAddressGeneration = ERROR_CODE(PkgAddress, ErrInvalidValue), /*!< Failed address generation */
 	ErrTooManyAddresses = ERROR_CODE(PkgAddress, ReasonOutOfBounds), /*!< Too many addresses to generate */
 	ErrUnfinishedBackup = ERROR_CODE(PkgBackup, ReasonInvalidState), /*!< Backup operation did not finish properly */
-	ErrLowEntropy = ERROR_CODE(PkgEntropy, ReasonArgumentError),	     /*!< Buffer entropy under 4.0 bits/symbol */
+	ErrEntropyRequired = ERROR_CODE(PkgEntropy, ReasonExpired),	/*!< External entropy required */
+	ErrEntropyAvailable = ERROR_CODE(PkgEntropy, ReasonSuccess),	/*!< External entropy available */
+	ErrEntropyNotNeeded = ERROR_CODE(PkgEntropy, ReasonSkip),	/*!< External entropy not needed */
+	ErrLowEntropy = ERROR_CODE(PkgEntropy, ReasonOutOfBounds),	     /*!< Buffer entropy under 4.0 bits/symbol */
 	ErrUnexpectedMessage = ERROR_CODE(PkgServer, ReasonInvalidState),    /*!< Server state loses path */
 	ErrSignPreconditionFailed = ERROR_CODE(PkgSign, ReasonInvalidState), /*!< Signing precondition failed */
 	ErrInvalidSignature = ERROR_CODE(PkgSign, ReasonValueError), /*!< Invalid Message Signature */

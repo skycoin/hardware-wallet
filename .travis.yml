@@ -11,6 +11,7 @@ matrix:
     - os: osx
 
 before_script:
+  - export PYTHON_VERSION=3.6.5
   - sh "./tiny-firmware/protob/ci-scripts/install-${TRAVIS_OS_NAME}.sh" ;
   # Define env vars for Linux builds
   - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then

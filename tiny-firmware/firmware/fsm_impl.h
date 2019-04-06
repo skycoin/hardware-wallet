@@ -15,7 +15,6 @@
 #include "messages.pb.h"
 #include "firmware/error.h"
 
-#define EXTERNAL_ENTROPY_MAX_SIZE 128
 #define MNEMONIC_WORD_COUNT_12 12
 #define MNEMONIC_WORD_COUNT_24 24
 
@@ -146,8 +145,12 @@ ErrCode_t msgPingImpl(Ping *msg);
 ErrCode_t msgChangePinImpl(ChangePin *msg, bool (*)(void));
 ErrCode_t msgWipeDeviceImpl(WipeDevice *msg);
 ErrCode_t msgSetMnemonicImpl(SetMnemonic *msg);
-ErrCode_t msgGetRawEntropyImpl(GetRawEntropy *msg, Entropy *resp);
-ErrCode_t msgGetMixedEntropyImpl(GetMixedEntropy *msg, Entropy *resp);
+ErrCode_t msgGetRawEntropyImpl(
+		GetRawEntropy *msg, Entropy *resp,
+		void (*random_buffer_func)(uint8_t *buf, size_t len));
+ErrCode_t msgGetMixedEntropyImpl(
+		GetMixedEntropy *msg, Entropy *resp,
+		void (*random_buffer_func)(uint8_t *buf, size_t len));
 ErrCode_t msgLoadDeviceImpl(LoadDevice *msg);
 ErrCode_t msgBackupDeviceImpl(BackupDevice *msg, ErrCode_t (*)(void));
 ErrCode_t msgRecoveryDeviceImpl(RecoveryDevice *msg, ErrCode_t (*)(void));

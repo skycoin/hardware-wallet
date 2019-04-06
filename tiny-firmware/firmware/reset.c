@@ -30,15 +30,17 @@
 #include "bip39.h"
 #include "util.h"
 #include "gettext.h"
+#include "entropy.h"
 
 uint32_t strength;
 uint8_t  int_entropy[32];
-bool     awaiting_entropy = false;
 bool     skip_backup = false;
 
 void reset_init(bool display_random, uint32_t _strength, bool passphrase_protection, bool pin_protection, const char *language, const char *label, bool _skip_backup)
 {
-	if (_strength != 128 && _strength != 192 && _strength != 256) return;
+	if (_strength != 128 && _strength != 192 && _strength != 256) {
+		return;
+	}
 
 	strength = _strength;
 	skip_backup = _skip_backup;
@@ -46,8 +48,8 @@ void reset_init(bool display_random, uint32_t _strength, bool passphrase_protect
 	random_buffer(int_entropy, 32);
 
 	char ent_str[4][17];
-	data2hex(int_entropy     , 8, ent_str[0]);
-	data2hex(int_entropy +  8, 8, ent_str[1]);
+	data2hex(int_entropy		 , 8, ent_str[0]);
+	data2hex(int_entropy +	8, 8, ent_str[1]);
 	data2hex(int_entropy + 16, 8, ent_str[2]);
 	data2hex(int_entropy + 24, 8, ent_str[3]);
 
@@ -74,27 +76,17 @@ void reset_init(bool display_random, uint32_t _strength, bool passphrase_protect
 	EntropyRequest resp;
 	memset(&resp, 0, sizeof(EntropyRequest));
 	msg_write(MessageType_MessageType_EntropyRequest, &resp);
-	awaiting_entropy = true;
 }
 
-ErrCode_t reset_entropy(const uint8_t *ext_entropy, uint32_t len)
+ErrCode_t reset_entropy(void)
 {
-	if (!awaiting_entropy) {
-		return ErrUnexpectedMessage;
-	}
-	SHA256_CTX ctx;
-	sha256_Init(&ctx);
-	sha256_Update(&ctx, int_entropy, 32);
-	sha256_Update(&ctx, ext_entropy, len);
-	sha256_Final(&ctx, int_entropy);
 	storage_setNeedsBackup(true);
 	const char *mnemonic = mnemonic_from_data(int_entropy, strength / 8);
 	if (!mnemonic_check(mnemonic)) {
 		return ErrInvalidValue;
 	}
 	storage_setMnemonic(mnemonic);
-	memset(int_entropy, 0, 32);
-	awaiting_entropy = false;
+	memset(int_entropy, 0, sizeof (int_entropy));
 
 	if (skip_backup) {
 		storage_update();
