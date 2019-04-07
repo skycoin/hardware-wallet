@@ -1,7 +1,7 @@
 EMULATOR := 1
 UNAME_S := $(shell uname -s)
 
-SDL_INCLUDE := $(shell sdl2-config --cflags)
+SDL_INCLUDE ?= $(shell sdl2-config --cflags)
 
 TOOLCHAIN_DIR ?= $(TOP_DIR)vendor/libopencm3
 
@@ -18,7 +18,7 @@ ifeq ($(HEADLESS),1)
 CFLAGS   += -DHEADLESS=1
 else
 CFLAGS   += -DHEADLESS=0
-CFLAGS   += $(SDL_INCLUDE)
+CFLAGS   += $(SDL_INCLUDE) -D_REENTRANT
 CFLAGS   += -I$(TOOLCHAIN_DIR)/include
 LDLIBS   += -lSDL2
 endif

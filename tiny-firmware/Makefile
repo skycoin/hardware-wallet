@@ -1,6 +1,6 @@
 APPVER = 1.0.0
 
-SDL_INCLUDE := $(shell sdl2-config --cflags)
+SDL_INCLUDE ?= $(shell sdl2-config --cflags)
 
 #libtrezor.a
 ifneq ($(EMULATOR),1)
@@ -117,7 +117,7 @@ CFLAGS   += -DHEADLESS=1
 else
 CFLAGS   += -DHEADLESS=0
 
-CFLAGS   += $(SDL_INCLUDE)
+CFLAGS   += $(SDL_INCLUDE) -D_REENTRANT
 LDLIBS   += -lSDL2
 endif
 endif
