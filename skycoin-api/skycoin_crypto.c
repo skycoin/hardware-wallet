@@ -130,12 +130,34 @@ void generate_deterministic_key_pair_iterator(const uint8_t* seed, const size_t 
     generate_deterministic_key_pair(seed2, SHA256_DIGEST_LENGTH, seckey, pubkey);
 }
 
-void compute_sha256sum(const uint8_t *seed, uint8_t* digest /*size SHA256_DIGEST_LENGTH*/, size_t seed_lenght)
+/**
+ * @brief compute_sha256sum hash over buffer
+ * @param buffer in data
+ * @param buffer_len in data len
+ * @param out_digest out sha256 data
+ */
+void compute_sha256sum(const uint8_t *data, uint8_t* digest /*size SHA256_DIGEST_LENGTH*/, size_t data_length)
 {
     SHA256_CTX ctx;
     sha256_Init(&ctx);
-    sha256_Update(&ctx, seed, seed_lenght);
+    sha256_Update(&ctx, data, data_length);
     sha256_Final(&ctx, digest);
+}
+
+/**
+ * @brief add_sha256 make the sum of msg2 and to msg1
+ * @param msg1 buffer content
+ * @param msg1_len buffer conttn len
+ * @param msg2 buffer content
+ * @param msg2_len buffer content len
+ * @param out_digest sum_sha256 of msg1 appened to mag2
+ */
+void add_sha256(const uint8_t *msg1,size_t msg1_len,const uint8_t *msg2,size_t msg2_len,uint8_t *out_digest) {
+	SHA256_CTX ctx;
+	sha256_Init(&ctx);
+	sha256_Update(&ctx, msg1, msg1_len);
+	sha256_Update(&ctx, msg2, msg2_len);
+	sha256_Final(&ctx, out_digest);
 }
 
 // address_size is the size of the allocated address buffer, it will be overwritten by the computed address size
