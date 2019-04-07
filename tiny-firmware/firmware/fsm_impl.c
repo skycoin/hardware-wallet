@@ -424,8 +424,6 @@ ErrCode_t msgGetMixedEntropyImpl(
 		void (*random_buffer_func)(uint8_t *buf, size_t len)) {
 #ifdef EMULATOR
 #if EMULATOR
-	(void)msg;
-	(void)resp;
 	return ErrNotImplemented;
 #endif  // if EMULATOR
 #endif  // ifdef EMULATOR

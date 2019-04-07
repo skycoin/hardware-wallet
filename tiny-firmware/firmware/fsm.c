@@ -497,8 +497,6 @@ void fsm_msgGetMixedEntropy(GetMixedEntropy *msg) {
 				ret, NULL, _("Get mixed entropy does not works in emulator mode"));
 	}
 	layoutHome();
-	(void)msg;
-	msg_write(MessageType_MessageType_Failure, _(""));
 }
 
 void fsm_msgLoadDevice(LoadDevice *msg)
