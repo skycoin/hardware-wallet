@@ -306,7 +306,25 @@ START_TEST(test_msgApplySettingsLabelSuccess)
 }
 END_TEST
 
-START_TEST(test_msgApplySettingsLabelShouldNotBeRemovable)
+START_TEST(test_msgApplySettingsLabelGetFeaturesSuccess)
+{
+	storage_wipe();
+	char raw_label[] = {
+		"my custom device label"};
+	ApplySettings msg = ApplySettings_init_zero;
+	msg.has_label = true;
+	strncpy(msg.label, raw_label, sizeof(msg.label));
+	msgApplySettingsImpl(&msg);
+	ck_assert_int_eq(storage_hasLabel(), true);
+	ck_assert_str_eq(storage_getLabel(), raw_label);
+  Features features = Features_init_zero;
+  msgGetFeaturesImpl(&features);
+	ck_assert_int_eq((int) features.has_label, (int) true);
+	ck_assert_str_eq(features.label, raw_label);
+}
+END_TEST
+
+START_TEST(test_msgApplySettingsLabelShouldNotBeReset)
 {
 	storage_wipe();
 	char raw_label[] = {
@@ -372,21 +390,16 @@ TCase *add_fsm_tests(TCase *tc)
 	tcase_add_test(tc, test_msgGenerateMnemonicImplShouldFailIfItWasDone);
 	tcase_add_test(tc, test_msgSkycoinCheckMessageSignatureOk);
 	tcase_add_test(tc, test_msgGenerateMnemonicImplShouldFailForWrongSeedCount);
-	tcase_add_test(
-		tc,
-		test_msgSkycoinCheckMessageSignatureFailedAsExpectedForInvalidSignedMessage);
-	tcase_add_test(
-		tc, 
-		test_msgSkycoinCheckMessageSignatureFailedAsExpectedForInvalidMessage);
+	tcase_add_test(tc, test_msgSkycoinCheckMessageSignatureFailedAsExpectedForInvalidSignedMessage);
+	tcase_add_test(tc, test_msgSkycoinCheckMessageSignatureFailedAsExpectedForInvalidMessage);
 	tcase_add_test(tc, test_msgApplySettingsLabelSuccess);
 	tcase_add_test(tc, test_msgFeaturesLabelDefaultsToDeviceId);
 	tcase_add_test(tc, test_msgGetFeatures);
 	tcase_add_test(tc, test_msgApplySettingsLabelSuccessCheck);
-	tcase_add_test(tc, test_msgApplySettingsLabelShouldNotBeRemovable);
+	tcase_add_test(tc, test_msgApplySettingsLabelShouldNotBeReset);
+	tcase_add_test(tc, test_msgApplySettingsLabelGetFeaturesSuccess);
 	tcase_add_test(tc, test_msgFeaturesLabelDefaultsToDeviceId);
-	tcase_add_test(
-		tc, 
-		test_msgEntropyAckImplFailAsExpectedForSyncProblemInProtocol);
+	tcase_add_test(tc, test_msgEntropyAckImplFailAsExpectedForSyncProblemInProtocol);
 	tcase_add_test(tc, test_msgGenerateMnemonicEntropyAckSequenceShouldBeOk);
 	return tc;
 }
