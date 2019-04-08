@@ -411,7 +411,7 @@ ErrCode_t msgGetRawEntropyImpl(
 #if defined(EMULATOR) && EMULATOR
 	return ErrNotImplemented;
 #endif  // EMULATOR
-#if defined(ENABLE_GET_DEVICE_ENTROPY) && !ENABLE_GET_DEVICE_ENTROPY
+#if !defined(ENABLE_GET_DEVICE_ENTROPY) || !ENABLE_GET_DEVICE_ENTROPY
 	return ErrNotImplemented;
 #endif  // ENABLE_GET_DEVICE_ENTROPY
 	uint32_t len = ( msg->size > 1024 ) ? 1024 : msg->size ;
@@ -426,7 +426,7 @@ ErrCode_t msgGetMixedEntropyImpl(
 #if defined(EMULATOR) && EMULATOR
 	return ErrNotImplemented;
 #endif  // EMULATOR
-#if defined(ENABLE_GET_DEVICE_ENTROPY) && !ENABLE_GET_DEVICE_ENTROPY
+#if !defined(ENABLE_GET_DEVICE_ENTROPY) || !ENABLE_GET_DEVICE_ENTROPY
 	return ErrNotImplemented;
 #endif  // ENABLE_GET_DEVICE_ENTROPY
 	uint32_t len = ( msg->size > 1024 ) ? 1024 : msg->size ;
