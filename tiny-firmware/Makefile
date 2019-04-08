@@ -1,6 +1,6 @@
 APPVER = 1.0.0
 
-SDL_INCLUDE ?= $(shell sdl2-config --cflags)
+SDL_INCLUDE ?= $(shell sdl2-config --cflags | sed 's/-D_THREAD_SAFE//g')
 
 #libtrezor.a
 ifneq ($(EMULATOR),1)

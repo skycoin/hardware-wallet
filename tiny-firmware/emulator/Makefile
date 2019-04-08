@@ -1,7 +1,7 @@
 EMULATOR := 1
 UNAME_S := $(shell uname -s)
 
-SDL_INCLUDE ?= $(shell sdl2-config --cflags)
+SDL_INCLUDE ?= $(shell sdl2-config --cflags | sed 's/-D_THREAD_SAFE//g')
 
 TOOLCHAIN_DIR ?= $(TOP_DIR)vendor/libopencm3
 
