@@ -337,9 +337,13 @@ void fsm_msgTransactionSign(TransactionSign* msg) {
 	layoutHome();
 }
 
-void fsm_msgSkycoinSignMessage(SkycoinSignMessage *msg)
-{
+void fsm_msgSkycoinSignMessage(SkycoinSignMessage *msg) {
 	RESP_INIT(ResponseSkycoinSignMessage);
+	CHECK_PIN_UNCACHED
+	char strAddr[6];
+	snprintf(strAddr, sizeof(strAddr), "%d", msg->address_n);
+	layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"), _("sign message using"), strAddr, "-th address?", NULL, NULL);
+	CHECK_BUTTON_PROTECT
 	ErrCode_t err = msgSkycoinSignMessageImpl(msg, resp);
 	char* failMsg = NULL;
 	if (err == ErrMnemonicRequired) {
@@ -361,7 +365,7 @@ void fsm_msgSkycoinAddress(SkycoinAddress* msg)
 				err = ErrActionCancelled;
 				break;
 			}
-      // fall through
+		// fall through
 		case ErrOk:
 			msg_write(MessageType_MessageType_ResponseSkycoinAddress, resp);
 			break;
