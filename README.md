@@ -60,11 +60,13 @@ Follow the instructions written on [tiny-firware/README.md](https://github.com/s
 make clean && make run-emulator
 ```
 
-If SDL library was installed with brew on Mac OS X then try the following command instead
+In case of needing special compiler flags for the SDL library it is possible to provide them in `SDL_CFLAGS` variable. For instance , if SDL was installed with brew on Mac OS X then the following command execution would force searching for header files at the right location.
 
 ```
-make clean && make run-emulator SDL_INCLUDE=$(brew --prefix sdl2)/include/SDL2
+make clean && make run-emulator SDL_CFLAGS=-I$(brew --prefix sdl2)/include/SDL2
 ```
+
+However for the default `brew` installation in practice this should not be needed since the value of `SDL_CFLAGS` defaults to `$(shell sdl2-config --cflags | sed 's/-D_THREAD_SAFE//g')`.
 
 ### Build a bootloader
 
