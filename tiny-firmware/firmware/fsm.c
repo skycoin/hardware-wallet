@@ -478,7 +478,7 @@ void fsm_msgGetRawEntropy(GetRawEntropy *msg) {
 		msg_write(MessageType_MessageType_Entropy, resp);
 	} else {
 		fsm_sendResponseFromErrCode(
-				ret, NULL, _("Get raw entropy does not works in emulator mode"));
+					ret, NULL, _("Get raw entropy not implemented"));
 	}
 	layoutHome();
 }
@@ -494,7 +494,7 @@ void fsm_msgGetMixedEntropy(GetMixedEntropy *msg) {
 		msg_write(MessageType_MessageType_Entropy, resp);
 	} else {
 		fsm_sendResponseFromErrCode(
-				ret, NULL, _("Get mixed entropy does not works in emulator mode"));
+					ret, NULL, _("Get mixed entropy not implemented"));
 	}
 	layoutHome();
 }

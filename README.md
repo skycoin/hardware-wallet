@@ -166,16 +166,26 @@ make test
 
 To be able to validate the device trng you need to install the following tools:
 
-- dieharder (A testing and benchmarking tool for random number generators)
-- ent (pseudorandom number sequence test)
-- rng-tools (Check the randomness of data using FIPS 140-2 tests)
+- `dieharder` (A testing and benchmarking tool for random number generators)
+- `ent` (pseudorandom number sequence test)
+- `rng-tools` (Check the randomness of data using FIPS 140-2 tests)
 
 For example, in a debian based system you can run `apt install dieharder ent rng-tools`
 
-To generate rando buffers run:
-`make check-trng`
+In order to make the validation you need to build the firmware with `ENABLE_GET_DEVICE_ENTROPY` flag set o `1` and maybe you want to dissable button confirmation by seeting `DISABLE_BUTTON_CONFIRMATION_TO_GET_ENTROPY` to `1`, the following is an example:
+
+```bash
+make clean firmware ENABLE_GET_DEVICE_ENTROPY=1 DISABLE_BUTTON_CONFIRMATION_TO_GET_ENTROPY=1
+```
+
+After this just run the following command:
+
+```
+make check-trng
+```
 
 After running the tools [some files](#Files-description) are generated and need to be analyzed by a human. Some of they are easy(because have an `Assessment` column) at a first look like for example:
+
 ```
 #=============================================================================#
 #            dieharder version 3.31.1 Copyright 2003 Robert G. Brown          #
