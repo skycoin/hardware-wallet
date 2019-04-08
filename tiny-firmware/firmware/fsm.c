@@ -46,6 +46,7 @@
 #include "fsm_impl.h"
 #include "droplet.h"
 #include "skyparams.h"
+#include "entropy.h"
 
 // Utils
 
@@ -85,6 +86,12 @@ void fsm_sendResponseFromErrCode(ErrCode_t err, const char *successMsg, const ch
 			failure = FailureType_Failure_FirmwareError;
 			if (failMsg == NULL) {
 				failMsg = _("Not Implemented");
+			}
+			break;
+		case ErrInvalidChecksum:
+			failure = FailureType_Failure_DataError;
+			if (failMsg == NULL) {
+				failMsg = _("Invalid checksum");
 			}
 			break;
 		case ErrPinRequired:
@@ -320,7 +327,7 @@ ErrCode_t requestConfirmTransaction(char* strCoin, char *strHour, TransactionSig
 	CHECK_BUTTON_PROTECT_RET_ERR_CODE
 	layoutAddress(msg->transactionOut[i].address);
 	CHECK_BUTTON_PROTECT_RET_ERR_CODE
-    return ErrOk;
+		return ErrOk;
 }
 
 void fsm_msgTransactionSign(TransactionSign* msg) {
@@ -361,7 +368,7 @@ void fsm_msgSkycoinAddress(SkycoinAddress* msg)
 				err = ErrActionCancelled;
 				break;
 			}
-      // fall through
+			// fall through
 		case ErrOk:
 			msg_write(MessageType_MessageType_ResponseSkycoinAddress, resp);
 			break;
@@ -424,26 +431,26 @@ void fsm_msgChangePin(ChangePin *msg)
 
 void fsm_msgWipeDevice(WipeDevice *msg) {
 	layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"), _("wipe the device?"), NULL, _("All data will be lost."), NULL, NULL);
-  ErrCode_t err = protectButton(ButtonRequestType_ButtonRequest_WipeDevice, false)? msgWipeDeviceImpl(msg) : ErrActionCancelled;
+	ErrCode_t err = protectButton(ButtonRequestType_ButtonRequest_WipeDevice, false)? msgWipeDeviceImpl(msg) : ErrActionCancelled;
 	fsm_sendResponseFromErrCode(err, _("Device wiped"), NULL);
 	layoutHome();
 }
 
 void fsm_msgGenerateMnemonic(GenerateMnemonic* msg) {
 	GET_MSG_POINTER(EntropyRequest, entropy_request);
-	switch (msgGenerateMnemonicImpl(msg, &random_buffer)) {
+	switch (msgGenerateMnemonicImpl(msg, &random_salted_buffer)) {
 		CASE_SEND_FAILURE(ErrNotInitialized, FailureType_Failure_UnexpectedMessage, _("Device is already initialized. Use Wipe first."))
 		CASE_SEND_FAILURE(ErrInvalidArg, FailureType_Failure_DataError, _("Invalid word count expecified, the valid options are 12 or 24."))
 		CASE_SEND_FAILURE(ErrInvalidValue, FailureType_Failure_ProcessError, _("Device could not generate a valid Mnemonic"))
-		case ErrLowEntropy:
+		CASE_SEND_FAILURE(ErrInvalidChecksum, FailureType_Failure_DataError, _("Mnemonic with wrong checksum provided"))
+		case ErrEntropyRequired:
 			msg_write(MessageType_MessageType_EntropyRequest, entropy_request);
 			break;
 		case ErrOk:
 			fsm_sendSuccess(_("Mnemonic successfully configured"));
 			break;
 		default:
-			fsm_sendFailure(FailureType_Failure_FirmwareError,
-							_("Mnemonic generation failed"));
+			fsm_sendFailure(FailureType_Failure_FirmwareError, _("Mnemonic generation failed"));
 			break;
 	}
 	layoutHome();
@@ -464,7 +471,7 @@ void fsm_msgGetEntropy(GetEntropy *msg)
 {
 	layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"), _("send entropy?"), NULL, NULL, NULL, NULL);
 	CHECK_BUTTON_PROTECT
-	fsm_sendResponseFromErrCode(msgGetEntropyImpl(msg), NULL, NULL);
+	fsm_sendResponseFromErrCode(msgGetEntropyImpl(msg, random_salted_buffer), NULL, NULL);
 	layoutHome();
 }
 
@@ -500,7 +507,7 @@ void fsm_msgResetDevice(ResetDevice *msg)
 ErrCode_t confirmBackup(void) {
 	layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you confirm you"), _("backed up your seed."), _("This will never be"), _("possible again."), NULL, NULL);
 	CHECK_BUTTON_PROTECT_RET_ERR_CODE
-  return ErrOk;
+	return ErrOk;
 }
 
 void fsm_msgBackupDevice(BackupDevice *msg)
@@ -524,7 +531,7 @@ void fsm_msgBackupDevice(BackupDevice *msg)
 ErrCode_t confirmRecovery(void) {
 	layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"), _("recover the device?"), NULL, NULL, NULL, NULL);
 	CHECK_BUTTON_PROTECT_RET_ERR_CODE
-  return ErrOk;
+	return ErrOk;
 }
 
 void fsm_msgRecoveryDevice(RecoveryDevice *msg)
@@ -556,14 +563,14 @@ void fsm_msgCancel(Cancel *msg)
 void fsm_msgEntropyAck(EntropyAck *msg)
 {
 	switch (msgEntropyAckImpl(msg)) {
-		CASE_SEND_FAILURE(ErrInvalidValue, FailureType_Failure_ProcessError, _("Device could not generate a valid Mnemonic"))
 		CASE_SEND_FAILURE(ErrUnexpectedMessage, FailureType_Failure_UnexpectedMessage, _("Unexpected entropy ack msg."))
 		case ErrOk:
 			fsm_sendSuccess(_("Recived entropy"));
 			break;
 		default:
-			fsm_sendFailure(FailureType_Failure_UnexpectedMessage,
+			fsm_sendFailure(FailureType_Failure_FirmwareError, 
 							_("Entropy ack failed."));
+			break;
 	}
 	layoutHome();
 }

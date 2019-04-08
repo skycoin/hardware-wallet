@@ -137,9 +137,7 @@ bool msg_write_common(char type, uint16_t msg_id, const void *msg_ptr)
 	if (type == 'n') {
 		append = msg_out_append;
 		pb_callback = pb_callback_out;
-	} else
-
-	{
+	} else {
 		return false;
 	}
 

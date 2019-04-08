@@ -24,6 +24,7 @@
 #include "gettext.h"
 #include "fastflash.h"
 #include "factory_test.h"
+#include "entropy.h"
 
 int main(void)
 {
@@ -65,6 +66,7 @@ int main(void)
 		usbPoll();
 		check_lock_screen();
 		check_factory_test();
+		check_entropy();
 	}
 
 	return 0;
