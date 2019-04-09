@@ -26,6 +26,7 @@
 #include "setup.h"
 #include "rng.h"
 #include "rand.h"
+#include "error.h"
 
 #include "test_fsm.h"
 
@@ -260,7 +261,7 @@ START_TEST(test_msgSkycoinCheckMessageSignatureFailedAsExpectedForInvalidMessage
 	// NOTE(denisacostaq@gmail.com): `raw_msg` hash become from:
 	// https://github.com/skycoin/skycoin/blob/develop/src/cipher/testsuite/testdata/input-hashes.golden
 	char raw_msg[] = {
-	  "66687aadf862bd776c8fc18b8e9f8e20089714856ee233b3902a591d0d5f2925"};
+		"66687aadf862bd776c8fc18b8e9f8e20089714856ee233b3902a591d0d5f2925"};
 	SkycoinSignMessage msgSign = SkycoinSignMessage_init_zero;
 	strncpy(msgSign.message, raw_msg, sizeof(msgSign.message));
 	msgSign.address_n = 0;
@@ -300,7 +301,7 @@ START_TEST(test_msgApplySettingsLabelSuccess)
 	ApplySettings msg = ApplySettings_init_zero;
 	msg.has_label = true;
 	strncpy(msg.label, raw_label, sizeof(msg.label));
-	msgApplySettingsImpl(&msg);
+	ck_assert_int_eq(msgApplySettingsImpl(&msg), ErrOk);
 	ck_assert_int_eq(storage_hasLabel(), true);
 	ck_assert_str_eq(storage_getLabel(), raw_label);
 }
@@ -314,11 +315,11 @@ START_TEST(test_msgApplySettingsLabelGetFeaturesSuccess)
 	ApplySettings msg = ApplySettings_init_zero;
 	msg.has_label = true;
 	strncpy(msg.label, raw_label, sizeof(msg.label));
-	msgApplySettingsImpl(&msg);
+	ck_assert_int_eq(msgApplySettingsImpl(&msg), ErrOk);
 	ck_assert_int_eq(storage_hasLabel(), true);
 	ck_assert_str_eq(storage_getLabel(), raw_label);
-  Features features = Features_init_zero;
-  msgGetFeaturesImpl(&features);
+	Features features = Features_init_zero;
+	msgGetFeaturesImpl(&features);
 	ck_assert_int_eq((int) features.has_label, (int) true);
 	ck_assert_str_eq(features.label, raw_label);
 }
@@ -334,7 +335,7 @@ START_TEST(test_msgApplySettingsLabelShouldNotBeReset)
 	msg.use_passphrase = false;
 	msg.has_label = true;
 	strncpy(msg.label, raw_label, sizeof(msg.label));
-	msgApplySettingsImpl(&msg);
+	ck_assert_int_eq(msgApplySettingsImpl(&msg), ErrOk);
 	ck_assert(!storage_hasPassphraseProtection());
 	ck_assert_int_eq(storage_hasLabel(), true);
 	ck_assert_str_eq(storage_getLabel(), raw_label);
@@ -342,7 +343,7 @@ START_TEST(test_msgApplySettingsLabelShouldNotBeReset)
 	memset(msg.label, 0, sizeof(msg.label));
 	msg.has_use_passphrase = true;
 	msg.use_passphrase = true;
-	msgApplySettingsImpl(&msg);
+	ck_assert_int_eq(msgApplySettingsImpl(&msg), ErrOk);
 	ck_assert_str_eq(storage_getLabel(), raw_label);
 	ck_assert(storage_hasPassphraseProtection());
 }
@@ -355,8 +356,45 @@ START_TEST(test_msgApplySettingsLabelSuccessCheck)
 		"my custom device label"};
 	ApplySettings msg = ApplySettings_init_zero;
 	strncpy(msg.label, raw_label, sizeof(msg.label));
-	msgApplySettingsImpl(&msg);
+	msg.has_label = true;
+	ck_assert_int_eq(msgApplySettingsImpl(&msg), ErrOk);
 	ck_assert_int_eq(storage_hasLabel(), true);
+	ck_assert_str_eq(storage_getLabel(), raw_label);
+}
+END_TEST
+
+START_TEST(test_msgApplySettingsNoSettingsFailure)
+{
+	storage_wipe();
+
+	// No fields set
+	ApplySettings msg = ApplySettings_init_zero;
+	ck_assert_int_eq(msgApplySettingsImpl(&msg), ErrInvalidArg);
+
+	// label value set but all has_* unset
+	memset(&msg, 0, sizeof(msg));
+	char raw_label[] = {
+		"my custom device label"};
+	strncpy(msg.label, raw_label, sizeof(msg.label));
+	ck_assert_int_eq(msgApplySettingsImpl(&msg), ErrInvalidArg);
+
+	// use_passphrase value set but all has_* unset
+	memset(&msg, 0, sizeof(msg));
+	msg.use_passphrase = true;
+	ck_assert_int_eq(msgApplySettingsImpl(&msg), ErrInvalidArg);
+
+	// language value set but all has_* unset
+	memset(&msg, 0, sizeof(msg));
+	char language[] = {
+		"english"};
+	strncpy(msg.language, language, sizeof(msg.language));
+	ck_assert_int_eq(msgApplySettingsImpl(&msg), ErrInvalidArg);
+
+	// All values set but all has_* unset
+	memset(&msg, 0, sizeof(msg));
+	strncpy(msg.label, raw_label, sizeof(msg.label));
+	strncpy(msg.language, language, sizeof(msg.language));
+	ck_assert_int_eq(msgApplySettingsImpl(&msg), ErrInvalidArg);
 }
 END_TEST
 
@@ -398,6 +436,7 @@ TCase *add_fsm_tests(TCase *tc)
 	tcase_add_test(tc, test_msgApplySettingsLabelSuccessCheck);
 	tcase_add_test(tc, test_msgApplySettingsLabelShouldNotBeReset);
 	tcase_add_test(tc, test_msgApplySettingsLabelGetFeaturesSuccess);
+	tcase_add_test(tc, test_msgApplySettingsNoSettingsFailure);
 	tcase_add_test(tc, test_msgFeaturesLabelDefaultsToDeviceId);
 	tcase_add_test(tc, test_msgEntropyAckImplFailAsExpectedForSyncProblemInProtocol);
 	tcase_add_test(tc, test_msgGenerateMnemonicEntropyAckSequenceShouldBeOk);
