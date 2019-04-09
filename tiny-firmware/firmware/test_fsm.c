@@ -363,6 +363,17 @@ START_TEST(test_msgApplySettingsLabelSuccessCheck)
 }
 END_TEST
 
+START_TEST(test_msgApplySettingsUnsupportedLanguage)
+{
+	storage_wipe();
+	char language[] = {"chinese"};
+	ApplySettings msg = ApplySettings_init_zero;
+	strncpy(msg.language, language, sizeof(msg.language));
+	msg.has_language = true;
+	ck_assert_int_eq(msgApplySettingsImpl(&msg), ErrInvalidArg);
+}
+END_TEST
+
 START_TEST(test_msgApplySettingsNoSettingsFailure)
 {
 	storage_wipe();
@@ -436,6 +447,7 @@ TCase *add_fsm_tests(TCase *tc)
 	tcase_add_test(tc, test_msgApplySettingsLabelSuccessCheck);
 	tcase_add_test(tc, test_msgApplySettingsLabelShouldNotBeReset);
 	tcase_add_test(tc, test_msgApplySettingsLabelGetFeaturesSuccess);
+	tcase_add_test(tc, test_msgApplySettingsUnsupportedLanguage);
 	tcase_add_test(tc, test_msgApplySettingsNoSettingsFailure);
 	tcase_add_test(tc, test_msgFeaturesLabelDefaultsToDeviceId);
 	tcase_add_test(tc, test_msgEntropyAckImplFailAsExpectedForSyncProblemInProtocol);

@@ -240,11 +240,6 @@ void fsm_msgInitialize(Initialize *msg)
 	fsm_msgGetFeatures(0);
 }
 
-ErrCode_t verifyLanguage(char *lang) {
-	// FIXME: Check for supported language name. Only english atm.
-	return (!strcmp(lang, "english"))? ErrOk : ErrInvalidValue;
-}
-
 void fsm_msgApplySettings(ApplySettings *msg)
 {
 	CHECK_PIN
@@ -255,7 +250,6 @@ void fsm_msgApplySettings(ApplySettings *msg)
 		CHECK_BUTTON_PROTECT
 	}
 	if (msg->has_language) {
-		CHECK_PARAM(verifyLanguage(msg->language) == ErrOk, NULL);
 		layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"), _("change language to"), msg->language, "?", NULL, NULL);
 		CHECK_BUTTON_PROTECT
 	}
