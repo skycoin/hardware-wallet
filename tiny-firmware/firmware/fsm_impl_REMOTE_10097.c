@@ -14,9 +14,9 @@
 #include <libopencm3/stm32/flash.h>
 
 
-#include "skywallet.h"
 #include <stdio.h>
 #include <inttypes.h>
+#include "trezor.h"
 #include "fsm.h"
 #include "messages.h"
 #include "bip32.h"
@@ -44,25 +44,40 @@
 
 #define MNEMONIC_STRENGTH_12 128
 #define MNEMONIC_STRENGTH_24 256
-#define INTERNAL_ENTROPY_SIZE SHA256_DIGEST_LENGTH
+#define INTERNAL_ENTROPY_SIZE 32
 
 uint8_t msg_resp[MSG_OUT_SIZE] __attribute__ ((aligned));
 
+extern bool awaiting_entropy;
 extern uint32_t strength;
 extern bool     skip_backup;
 extern uint8_t  int_entropy[INTERNAL_ENTROPY_SIZE];
+static bool has_passphrase_protection;
+static bool passphrase_protection;
 
 ErrCode_t msgEntropyAckImpl(EntropyAck* msg) {
 	_Static_assert(EXTERNAL_ENTROPY_MAX_SIZE == sizeof(msg->entropy.bytes),
 					"External entropy size does not match.");
-	if (!msg->has_entropy) {
-		return ErrEntropyNotNeeded;
+	const bool skip_backup_saved = skip_backup;
+	skip_backup = true;
+	ErrCode_t ret;
+	if (msg->has_entropy) {
+		ret = reset_entropy(msg->entropy.bytes, msg->entropy.size);
+	} else {
+		ret = reset_entropy(0, 0);
 	}
-	set_external_entropy(msg->entropy.bytes, msg->entropy.size);
-	return ErrOk;
+	if (has_passphrase_protection) {
+		storage_setPassphraseProtection(passphrase_protection);
+		storage_update();
+	}
+	skip_backup = skip_backup_saved;
+	has_passphrase_protection = false;
+	return ret;
 }
 
-ErrCode_t msgGenerateMnemonicImpl(GenerateMnemonic* msg, void (*random_buffer_func)(uint8_t *buf, size_t len)) {
+ErrCode_t msgGenerateMnemonicImpl(
+		GenerateMnemonic* msg,
+		void (*random_buffer_func)(uint8_t *buf, size_t len)) {
 	CHECK_NOT_INITIALIZED_RET_ERR_CODE
 	strength = MNEMONIC_STRENGTH_12;
 	if (msg->has_word_count) {
@@ -77,29 +92,32 @@ ErrCode_t msgGenerateMnemonicImpl(GenerateMnemonic* msg, void (*random_buffer_fu
 				return ErrInvalidArg;
 		}
 	}
-	// random buffer + entropy pool => mix256 => internal entropy
-	uint8_t data[sizeof(int_entropy)];
-	random_buffer_func(data, sizeof(data));
-	entropy_salt_mix_256(data, sizeof(data), int_entropy);
-	memset(data, 0, sizeof(data));
+	random_buffer_func(int_entropy, sizeof(int_entropy));
+	if (verify_entropy(int_entropy, sizeof(int_entropy)) != ErrOk) {
+		awaiting_entropy = true;
+		if (msg->has_passphrase_protection) {
+			has_passphrase_protection = msg->has_passphrase_protection;
+			passphrase_protection = msg->passphrase_protection;
+		}
+		return ErrLowEntropy;
+	}
 	const char* mnemonic = mnemonic_from_data(int_entropy, strength / 8);
-	if (!mnemonic) {
-		return ErrInvalidValue;
+	if (mnemonic && mnemonic_check(mnemonic)) {
+		storage_setMnemonic(mnemonic);
+		storage_setNeedsBackup(true);
+		storage_setPassphraseProtection(
+					msg->has_passphrase_protection
+					&& msg->passphrase_protection);
+		memset(int_entropy, 0, sizeof(int_entropy));
+		storage_update();
+		return ErrOk;
 	}
-	if (!mnemonic_check(mnemonic)) {
-		return ErrInvalidChecksum;
-	}
-	storage_setMnemonic(mnemonic);
-	storage_setNeedsBackup(true);
-	storage_setPassphraseProtection(
-				msg->has_passphrase_protection
-				&& msg->passphrase_protection);
-	storage_update();
-	return ErrOk;
+	return ErrInvalidValue;
 }
 
 
-ErrCode_t msgSkycoinSignMessageImpl(SkycoinSignMessage* msg, ResponseSkycoinSignMessage *resp)
+ErrCode_t msgSkycoinSignMessageImpl(SkycoinSignMessage* msg,
+								   ResponseSkycoinSignMessage *resp)
 {
 	CHECK_MNEMONIC_RET_ERR_CODE
 	CHECK_PIN_UNCACHED_RET_ERR_CODE
@@ -206,11 +224,6 @@ ErrCode_t msgSkycoinCheckMessageSignatureImpl(SkycoinCheckMessageSignature* msg,
 	return ret;
 }
 
-ErrCode_t verifyLanguage(char *lang) {
-	// FIXME: Check for supported language name. Only english atm.
-	return (!strcmp(lang, "english"))? ErrOk : ErrInvalidValue;
-}
-
 ErrCode_t msgApplySettingsImpl(ApplySettings *msg)
 {
 	_Static_assert(
@@ -222,7 +235,6 @@ ErrCode_t msgApplySettingsImpl(ApplySettings *msg)
 		storage_setLabel(msg->label);
 	}
 	if (msg->has_language) {
-		CHECK_PARAM_RET_ERR_CODE(verifyLanguage(msg->language) == ErrOk, NULL);
 		storage_setLanguage(msg->language);
 	}
 	if (msg->has_use_passphrase) {
@@ -314,9 +326,9 @@ ErrCode_t msgTransactionSignImpl(TransactionSign *msg, ErrCode_t (*funcConfirmTx
 					return ErrAddressGeneration;
 			}
 		} else {
-			ErrCode_t err = funcConfirmTxn(strCoin, strHour, msg, i);
-			if (err != ErrOk)
-				return err;
+      ErrCode_t err = funcConfirmTxn(strCoin, strHour, msg, i);
+      if (err != ErrOk)
+        return err;
 		}
 		transaction_addOutput(&transaction, msg->transactionOut[i].coin, msg->transactionOut[i].hour, msg->transactionOut[i].address);
 	}
@@ -375,13 +387,17 @@ ErrCode_t msgPingImpl(Ping *msg) {
 
 }
 
-ErrCode_t msgChangePinImpl(ChangePin *msg, const char* (*funcRequestPin)(PinMatrixRequestType, const char *)) {
+ErrCode_t msgChangePinImpl(ChangePin *msg, bool (*funcProtectChangePin)(void)) {
 	bool removal = msg->has_remove && msg->remove;
 	if (removal) {
 		storage_setPin("");
 		storage_update();
+		//fsm_sendSuccess(_("PIN removed"));
 	} else {
-		if (!protectChangePinEx(funcRequestPin)) {
+		if (!funcProtectChangePin()) {
+			//fsm_sendSuccess(_("PIN changed"));
+		} else {
+			//fsm_sendFailure(FailureType_Failure_PinMismatch, NULL);
 			return ErrPinMismatch;
 		}
 	}
@@ -407,11 +423,11 @@ ErrCode_t msgSetMnemonicImpl(SetMnemonic *msg) {
 	return ErrOk;
 }
 
-ErrCode_t msgGetEntropyImpl(GetEntropy *msg, void (*random_buffer_func)(uint8_t *buf, size_t len)) {
+ErrCode_t msgGetEntropyImpl(GetEntropy *msg) {
 	RESP_INIT(Entropy);
 	uint32_t len = ( msg->size > 1024 ) ? 1024 : msg->size ;
 	resp->entropy.size = len;
-	random_buffer_func(resp->entropy.bytes, len);
+	random_buffer(resp->entropy.bytes, len);
 	msg_write(MessageType_MessageType_Entropy, resp);
 	return ErrOk;
 }
@@ -434,10 +450,10 @@ ErrCode_t msgBackupDeviceImpl(BackupDevice *msg, ErrCode_t (*funcConfirmBackup)(
 	}
 	reset_backup(true);
 
-	ErrCode_t err = funcConfirmBackup();
-	if (err != ErrOk) {
-		return err;
-	}
+  ErrCode_t err = funcConfirmBackup();
+  if (err != ErrOk) {
+    return err;
+  }
 	if (storage_unfinishedBackup()) {
 		// fsm_sendFailure(FailureType_Failure_ActionCancelled, _("Backup operation did not finish properly."));
 		// layoutHome();
@@ -461,10 +477,10 @@ ErrCode_t msgRecoveryDeviceImpl(RecoveryDevice *msg, ErrCode_t (*funcConfirmReco
 			|| msg->word_count == 24, _("Invalid word count"));
 
 	if (!dry_run) {
-		ErrCode_t err = funcConfirmRecovery();
-		if (err != ErrOk) {
-			return err;
-		}
+    ErrCode_t err = funcConfirmRecovery();
+    if (err != ErrOk) {
+      return err;
+    }
 	}
 	recovery_init(
 		msg->has_word_count ? msg->word_count : 12,
