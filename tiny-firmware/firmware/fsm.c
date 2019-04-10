@@ -419,7 +419,7 @@ void fsm_msgChangePin(ChangePin *msg)
 	CHECK_BUTTON_PROTECT
 	CHECK_PIN_UNCACHED
 
-	fsm_sendResponseFromErrCode(msgChangePinImpl(msg, &protectChangePin), (removal) ? _("PIN removed") : _("PIN changed"), NULL);
+	fsm_sendResponseFromErrCode(msgChangePinImpl(msg, &requestPin), (removal) ? _("PIN removed") : _("PIN changed"), NULL);
 	layoutHome();
 }
 

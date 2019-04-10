@@ -375,17 +375,13 @@ ErrCode_t msgPingImpl(Ping *msg) {
 
 }
 
-ErrCode_t msgChangePinImpl(ChangePin *msg, bool (*funcProtectChangePin)(void)) {
+ErrCode_t msgChangePinImpl(ChangePin *msg, const char* (*funcRequestPin)(PinMatrixRequestType, const char *)) {
 	bool removal = msg->has_remove && msg->remove;
 	if (removal) {
 		storage_setPin("");
 		storage_update();
-		//fsm_sendSuccess(_("PIN removed"));
 	} else {
-		if (!funcProtectChangePin()) {
-			//fsm_sendSuccess(_("PIN changed"));
-		} else {
-			//fsm_sendFailure(FailureType_Failure_PinMismatch, NULL);
+		if (!protectChangePinEx(funcRequestPin)) {
 			return ErrPinMismatch;
 		}
 	}

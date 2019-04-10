@@ -142,7 +142,7 @@ ErrCode_t msgApplySettingsImpl(ApplySettings *msg);
 ErrCode_t msgGetFeaturesImpl(Features *resp);
 ErrCode_t msgTransactionSignImpl(TransactionSign *msg, ErrCode_t (*)(char*, char *, TransactionSign*, uint32_t));
 ErrCode_t msgPingImpl(Ping *msg);
-ErrCode_t msgChangePinImpl(ChangePin *msg, bool (*)(void));
+ErrCode_t msgChangePinImpl(ChangePin *msg, const char* (*)(PinMatrixRequestType, const char *));
 ErrCode_t msgWipeDeviceImpl(WipeDevice *msg);
 ErrCode_t msgSetMnemonicImpl(SetMnemonic *msg);
 ErrCode_t msgGetEntropyImpl(GetEntropy *msg, void (*random_buffer_func)(uint8_t *, size_t ));
