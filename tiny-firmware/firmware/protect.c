@@ -215,14 +215,14 @@ bool protectPin(bool use_cached)
 }
 
 bool protectChangePin() {
-  return protectChangePinEx(NULL);
+	return protectChangePinEx(NULL);
 }
 
 bool protectChangePinEx(const char* (*funcRequestPin)(PinMatrixRequestType, const char *)) {
 	static CONFIDENTIAL char pin_compare[17];
-  if (funcRequestPin == NULL) {
-    funcRequestPin = requestPin;
-  }
+	if (funcRequestPin == NULL) {
+		funcRequestPin = requestPin;
+	}
 
 	const char *pin = funcRequestPin(PinMatrixRequestType_PinMatrixRequestType_NewFirst, _("Please enter new PIN:"));
 

@@ -407,6 +407,7 @@ void fsm_msgChangePin(ChangePin *msg)
 			layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"), _("remove current PIN?"), NULL, NULL, NULL, NULL);
 		} else {
 			fsm_sendSuccess(_("PIN removed"));
+			return;
 		}
 	} else {
 		if (storage_hasPin()) {
