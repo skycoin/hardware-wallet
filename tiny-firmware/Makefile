@@ -2,7 +2,7 @@ APPVER = 1.0.0
 
 SDL_INCLUDE ?= /usr/include/SDL2
 
-#libtrezor.a
+#libskywallet.a
 ifneq ($(EMULATOR),1)
 CFLAGS += -DAPPVER=$(APPVER)
 OBJS += startup.o
@@ -25,7 +25,7 @@ OBJS += memory.o
 OBJS += gen/bitmaps.o
 endif
 OBJS += gen/fonts.o
-#end libtrezor.a
+#end libskywallet.a
 
 #test_skyhw
 TEST_OBJS += firmware/test_timer.o
@@ -59,7 +59,7 @@ OBJS += firmware/usb.o
 else
 OBJS += firmware/udp.o
 endif
-OBJS += firmware/trezor.o
+OBJS += firmware/skywallet.o
 OBJS += firmware/layout2.o
 OBJS += firmware/storage.o
 OBJS += firmware/messages.o

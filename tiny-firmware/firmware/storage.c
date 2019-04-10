@@ -26,7 +26,7 @@
 
 #include "messages.pb.h"
 
-#include "trezor.h"
+#include "skywallet.h"
 #include "sha2.h"
 #include "hmac.h"
 #include "bip32.h"

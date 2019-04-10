@@ -22,7 +22,7 @@
 
 #include <stdio.h>
 #include <inttypes.h>
-#include "trezor.h"
+#include "skywallet.h"
 #include "fsm.h"
 #include "messages.h"
 #include "bip32.h"

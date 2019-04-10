@@ -25,7 +25,7 @@
 #include "types.pb.h"
 #include "bitmaps.h"
 #include "bignum.h"
-#include "trezor.h"
+#include "skywallet.h"
 
 extern void *layoutLast;
 

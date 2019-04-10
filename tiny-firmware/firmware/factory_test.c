@@ -11,7 +11,7 @@
 
 
 #include "factory_test.h"
-#include "trezor.h"
+#include "skywallet.h"
 #include "oled.h"
 #if EMULATOR
 #include "usb.h"
