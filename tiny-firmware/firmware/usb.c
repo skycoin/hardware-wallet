@@ -21,7 +21,7 @@
 #include <libopencm3/usb/usbd.h>
 #include <libopencm3/usb/hid.h>
 
-#include "trezor.h"
+#include "skywallet.h"
 #include "usb.h"
 #include "messages.h"
 #include "storage.h"

@@ -19,7 +19,7 @@
 
 #include <string.h>
 
-#include "trezor.h"
+#include "skywallet.h"
 #include "messages.h"
 #include "fsm.h"
 #include "util.h"

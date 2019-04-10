@@ -58,7 +58,11 @@ Follow the instructions written on [tiny-firware/README.md](https://github.com/s
 
 ### Build and run emulator
 
+Update submodules:
+
 ```
+git submodule update --init --recursive
+
 make clean && make run-emulator
 ```
 

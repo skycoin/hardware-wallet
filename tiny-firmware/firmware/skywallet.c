@@ -18,7 +18,7 @@
  * along with this library.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "trezor.h"
+#include "skywallet.h"
 #include "oled.h"
 #include "bitmaps.h"
 #include "util.h"
