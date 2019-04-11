@@ -145,7 +145,7 @@ ErrCode_t msgPingImpl(Ping *msg);
 ErrCode_t msgChangePinImpl(ChangePin *msg, const char* (*)(PinMatrixRequestType, const char *));
 ErrCode_t msgWipeDeviceImpl(WipeDevice *msg);
 ErrCode_t msgSetMnemonicImpl(SetMnemonic *msg);
-ErrCode_t msgGetEntropyImpl(GetEntropy *msg, void (*random_buffer_func)(uint8_t *, size_t ));
+ErrCode_t msgGetEntropyImpl(GetRawEntropy *msg, Entropy *resp, void (*random_buffer_func)(uint8_t *buf, size_t len));
 ErrCode_t msgLoadDeviceImpl(LoadDevice *msg);
 ErrCode_t msgBackupDeviceImpl(BackupDevice *msg, ErrCode_t (*)(void));
 ErrCode_t msgRecoveryDeviceImpl(RecoveryDevice *msg, ErrCode_t (*)(void));

@@ -1,6 +1,8 @@
 APPVER = 1.0.0
 
 SDL_CFLAGS ?= $(shell sdl2-config --cflags | sed 's/-D_THREAD_SAFE//g')
+ENABLE_GETENTROPY ?= 0
+DISABLE_GETENTROPY_CONFIRM ?= 0
 
 #libskywallet.a
 ifneq ($(EMULATOR),1)
