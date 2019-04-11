@@ -411,9 +411,9 @@ ErrCode_t msgGetRawEntropyImpl(
 #if defined(EMULATOR) && EMULATOR
 	return ErrNotImplemented;
 #endif  // EMULATOR
-#if !defined(ENABLE_GET_DEVICE_ENTROPY) || !ENABLE_GET_DEVICE_ENTROPY
+#if !defined(ENABLE_GETENTROPY) || !ENABLE_GETENTROPY
 	return ErrNotImplemented;
-#endif  // ENABLE_GET_DEVICE_ENTROPY
+#endif  // ENABLE_GETENTROPY
 	uint32_t len = ( msg->size > 1024 ) ? 1024 : msg->size ;
 	resp->entropy.size = len;
 	random_buffer_func(resp->entropy.bytes, len);
@@ -426,9 +426,9 @@ ErrCode_t msgGetMixedEntropyImpl(
 #if defined(EMULATOR) && EMULATOR
 	return ErrNotImplemented;
 #endif  // EMULATOR
-#if !defined(ENABLE_GET_DEVICE_ENTROPY) || !ENABLE_GET_DEVICE_ENTROPY
+#if !defined(ENABLE_GETENTROPY) || !ENABLE_GETENTROPY
 	return ErrNotImplemented;
-#endif  // ENABLE_GET_DEVICE_ENTROPY
+#endif  // ENABLE_GETENTROPY
 	uint32_t len = ( msg->size > 1024 ) ? 1024 : msg->size ;
 	resp->entropy.size = len;
 	random_buffer_func(resp->entropy.bytes, len);

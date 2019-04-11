@@ -176,11 +176,11 @@ To be able to validate the device trng you need to install the following tools:
 
 For example, in a debian based system you can run `apt install dieharder ent rng-tools`
 
-In order to make the validation you need to build the firmware with `ENABLE_GET_DEVICE_ENTROPY` flag set o `1` and maybe you want to dissable button confirmation by seeting `DISABLE_BUTTON_CONFIRMATION_TO_GET_ENTROPY` to `1`, the following is an example:
+In order to make the validation you need to build the firmware with `ENABLE_GETENTROPY` flag set o `1` and maybe you want to dissable button confirmation by seeting `DISABLE_GETENTROPY_CONFIRM` to `1`, the following is an example:
 
 ```bash
 make clean
-make firmware ENABLE_GET_DEVICE_ENTROPY=1 DISABLE_BUTTON_CONFIRMATION_TO_GET_ENTROPY=1
+make firmware ENABLE_GETENTROPY=1 DISABLE_GETENTROPY_CONFIRM=1
 ```
 
 After this , connect a Skywallet device and just run the following command:

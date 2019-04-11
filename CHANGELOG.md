@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
-- Add an options `DISABLE_BUTTON_CONFIRMATION_TO_GET_ENTROPY` to enable or disable at build time the button confirmation for get entropy msg.
+- Add an options `DISABLE_GETENTROPY_CONFIRM` to enable or disable at build time the button confirmation for get entropy msg.
 - Skycoin logo in bootloader mode
 - Enforce setting default device language to English
 - Use`protobuf` file definitions as a `git submodule` from http://github.com/skycoin/hardware-wallet-protob/

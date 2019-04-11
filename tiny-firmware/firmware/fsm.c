@@ -468,10 +468,10 @@ void fsm_msgSetMnemonic(SetMnemonic* msg)
 }
 
 void fsm_msgGetRawEntropy(GetRawEntropy *msg) {
-#if !DISABLE_BUTTON_CONFIRMATION_TO_GET_ENTROPY
+#if !DISABLE_GETENTROPY_CONFIRM
 	layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"), _("send entropy?"), NULL, NULL, NULL, NULL);
 	CHECK_BUTTON_PROTECT
-#endif  // DISABLE_BUTTON_CONFIRMATION_TO_GET_ENTROPY
+#endif  // DISABLE_GETENTROPY_CONFIRM
 	RESP_INIT(Entropy);
 	ErrCode_t ret = msgGetRawEntropyImpl(msg, resp, &random_buffer);
 	if (ret == ErrOk) {
@@ -484,10 +484,10 @@ void fsm_msgGetRawEntropy(GetRawEntropy *msg) {
 }
 
 void fsm_msgGetMixedEntropy(GetMixedEntropy *msg) {
-#if !DISABLE_BUTTON_CONFIRMATION_TO_GET_ENTROPY
+#if !DISABLE_GETENTROPY_CONFIRM
 	layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"), _("send entropy?"), NULL, NULL, NULL, NULL);
 	CHECK_BUTTON_PROTECT
-#endif  // DISABLE_BUTTON_CONFIRMATION_TO_GET_ENTROPY
+#endif  // DISABLE_GETENTROPY_CONFIRM
 	RESP_INIT(Entropy);
 	ErrCode_t ret = msgGetMixedEntropyImpl(msg, resp, &random_salted_buffer);
 	if (ret == ErrOk) {

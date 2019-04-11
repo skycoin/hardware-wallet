@@ -170,9 +170,9 @@ test: ## Run all project test suites.
 st-flash: ## Deploy (flash) firmware on physical wallet
 	cd tiny-firmware/bootloader/combine/; st-flash write combined.bin 0x08000000
 
-help:
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
-
 check-trng: ## Run test tools over random buffers
 	make -C trng-test trng-generate-buffers
 	make -C trng-test run-tests
+
+help:
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
