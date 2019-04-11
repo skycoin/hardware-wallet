@@ -22,11 +22,9 @@ before_script:
     echo "PIP=$PIP";
     fi
   # Define env vars for osx builds
-  # Include paths for brew packages e.g. SDL2
   - if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
     export CHECK_PATH="$(brew --prefix check)" ;
     export DYLD_LIBRARY_PATH="${DYLD_LIBRARY_PATH}:${CHECK_PATH}/lib" ;
-    export SDL_INCLUDE="$(brew --prefix sdl2)/include/SDL2" ;
     fi
   # Install OS-specific test and build dependencies
   - eval "./ci-scripts/install-${TRAVIS_OS_NAME}.sh"

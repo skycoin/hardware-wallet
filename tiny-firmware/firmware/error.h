@@ -44,6 +44,7 @@ enum ErrMode
  * @brief The ErrCategory enum
  */
 enum ErrCategory {
+	PkgSuccess = 0, /*! < Reserved for success */
 	PkgGeneric = 1, /*! < Generic error codes */
 	PkgEntropy = 2, /*! < Entropy error codes */
 	PkgServer = 3, /*!  < Server schema related errors */
@@ -61,7 +62,7 @@ _Static_assert(sizeof (enum ErrCategory) == 1, "One byte as max for package");
  */
 enum ErrCode
 {
-	ErrOk = ERROR_CODE(PkgGeneric, ReasonSuccess),			     /*!< Operation completed successfully */
+	ErrOk = ERROR_CODE(PkgSuccess, ReasonSuccess),			     /*!< Operation completed successfully */
 	ErrFailed = ERROR_CODE(PkgGeneric, ReasonUnknown),		     /*!< Generic failure */
 	ErrInvalidArg = ERROR_CODE(PkgGeneric, ReasonArgumentError),	     /*!< Invalid argument */
 	ErrIndexValue = ERROR_CODE(PkgGeneric, ReasonOutOfBounds),	     /*!< Index out of bounds */

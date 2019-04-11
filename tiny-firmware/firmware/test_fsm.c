@@ -26,6 +26,7 @@
 #include "setup.h"
 #include "rng.h"
 #include "rand.h"
+#include "error.h"
 
 #include "test_fsm.h"
 
@@ -260,7 +261,7 @@ START_TEST(test_msgSkycoinCheckMessageSignatureFailedAsExpectedForInvalidMessage
 	// NOTE(denisacostaq@gmail.com): `raw_msg` hash become from:
 	// https://github.com/skycoin/skycoin/blob/develop/src/cipher/testsuite/testdata/input-hashes.golden
 	char raw_msg[] = {
-	  "66687aadf862bd776c8fc18b8e9f8e20089714856ee233b3902a591d0d5f2925"};
+		"66687aadf862bd776c8fc18b8e9f8e20089714856ee233b3902a591d0d5f2925"};
 	SkycoinSignMessage msgSign = SkycoinSignMessage_init_zero;
 	strncpy(msgSign.message, raw_msg, sizeof(msgSign.message));
 	msgSign.address_n = 0;
@@ -300,13 +301,31 @@ START_TEST(test_msgApplySettingsLabelSuccess)
 	ApplySettings msg = ApplySettings_init_zero;
 	msg.has_label = true;
 	strncpy(msg.label, raw_label, sizeof(msg.label));
-	msgApplySettingsImpl(&msg);
+	ck_assert_int_eq(msgApplySettingsImpl(&msg), ErrOk);
 	ck_assert_int_eq(storage_hasLabel(), true);
 	ck_assert_str_eq(storage_getLabel(), raw_label);
 }
 END_TEST
 
-START_TEST(test_msgApplySettingsLabelShouldNotBeRemovable)
+START_TEST(test_msgApplySettingsLabelGetFeaturesSuccess)
+{
+	storage_wipe();
+	char raw_label[] = {
+		"my custom device label"};
+	ApplySettings msg = ApplySettings_init_zero;
+	msg.has_label = true;
+	strncpy(msg.label, raw_label, sizeof(msg.label));
+	ck_assert_int_eq(msgApplySettingsImpl(&msg), ErrOk);
+	ck_assert_int_eq(storage_hasLabel(), true);
+	ck_assert_str_eq(storage_getLabel(), raw_label);
+	Features features = Features_init_zero;
+	msgGetFeaturesImpl(&features);
+	ck_assert_int_eq((int) features.has_label, (int) true);
+	ck_assert_str_eq(features.label, raw_label);
+}
+END_TEST
+
+START_TEST(test_msgApplySettingsLabelShouldNotBeReset)
 {
 	storage_wipe();
 	char raw_label[] = {
@@ -316,7 +335,7 @@ START_TEST(test_msgApplySettingsLabelShouldNotBeRemovable)
 	msg.use_passphrase = false;
 	msg.has_label = true;
 	strncpy(msg.label, raw_label, sizeof(msg.label));
-	msgApplySettingsImpl(&msg);
+	ck_assert_int_eq(msgApplySettingsImpl(&msg), ErrOk);
 	ck_assert(!storage_hasPassphraseProtection());
 	ck_assert_int_eq(storage_hasLabel(), true);
 	ck_assert_str_eq(storage_getLabel(), raw_label);
@@ -324,7 +343,7 @@ START_TEST(test_msgApplySettingsLabelShouldNotBeRemovable)
 	memset(msg.label, 0, sizeof(msg.label));
 	msg.has_use_passphrase = true;
 	msg.use_passphrase = true;
-	msgApplySettingsImpl(&msg);
+	ck_assert_int_eq(msgApplySettingsImpl(&msg), ErrOk);
 	ck_assert_str_eq(storage_getLabel(), raw_label);
 	ck_assert(storage_hasPassphraseProtection());
 }
@@ -337,8 +356,56 @@ START_TEST(test_msgApplySettingsLabelSuccessCheck)
 		"my custom device label"};
 	ApplySettings msg = ApplySettings_init_zero;
 	strncpy(msg.label, raw_label, sizeof(msg.label));
-	msgApplySettingsImpl(&msg);
+	msg.has_label = true;
+	ck_assert_int_eq(msgApplySettingsImpl(&msg), ErrOk);
 	ck_assert_int_eq(storage_hasLabel(), true);
+	ck_assert_str_eq(storage_getLabel(), raw_label);
+}
+END_TEST
+
+START_TEST(test_msgApplySettingsUnsupportedLanguage)
+{
+	storage_wipe();
+	char language[] = {"chinese"};
+	ApplySettings msg = ApplySettings_init_zero;
+	strncpy(msg.language, language, sizeof(msg.language));
+	msg.has_language = true;
+	ck_assert_int_eq(msgApplySettingsImpl(&msg), ErrInvalidArg);
+}
+END_TEST
+
+START_TEST(test_msgApplySettingsNoSettingsFailure)
+{
+	storage_wipe();
+
+	// No fields set
+	ApplySettings msg = ApplySettings_init_zero;
+	ck_assert_int_eq(msgApplySettingsImpl(&msg), ErrInvalidArg);
+
+	// label value set but all has_* unset
+	memset(&msg, 0, sizeof(msg));
+	char raw_label[] = {
+		"my custom device label"};
+	strncpy(msg.label, raw_label, sizeof(msg.label));
+	ck_assert_int_eq(msgApplySettingsImpl(&msg), ErrInvalidArg);
+
+	// use_passphrase value set but all has_* unset
+	memset(&msg, 0, sizeof(msg));
+	msg.use_passphrase = true;
+	ck_assert_int_eq(msgApplySettingsImpl(&msg), ErrInvalidArg);
+
+	// language value set but all has_* unset
+	memset(&msg, 0, sizeof(msg));
+	char language[] = {
+		"english"};
+	strncpy(msg.language, language, sizeof(msg.language));
+	ck_assert_int_eq(msgApplySettingsImpl(&msg), ErrInvalidArg);
+
+	// All values set but all has_* unset
+	memset(&msg, 0, sizeof(msg));
+	strncpy(msg.label, raw_label, sizeof(msg.label));
+	strncpy(msg.language, language, sizeof(msg.language));
+	ck_assert_int_eq(msgApplySettingsImpl(&msg), ErrInvalidArg);
 }
 END_TEST
 
@@ -363,6 +430,103 @@ START_TEST(test_msgGetFeatures)
 }
 END_TEST
 
+char *TEST_PIN1 = "123";
+char *TEST_PIN2 = "246";
+
+const char *pin_reader_ok(PinMatrixRequestType pinReqType, const char *text) {
+	(void)text;
+	(void)pinReqType;
+	return TEST_PIN1;
+}
+
+const char *pin_reader_alt(PinMatrixRequestType pinReqType, const char *text) {
+	(void)text;
+	(void)pinReqType;
+	return TEST_PIN2;
+}
+
+const char *pin_reader_wrong(PinMatrixRequestType pinReqType, const char *text) {
+	(void)text;
+	switch (pinReqType) {
+		case PinMatrixRequestType_PinMatrixRequestType_NewFirst:
+			return TEST_PIN1;
+		case PinMatrixRequestType_PinMatrixRequestType_NewSecond:
+			return "456";
+		default:
+			break;
+	}
+	return "789";
+}
+
+START_TEST(testProtectChangePinSuccess)
+{
+	ChangePin msg = ChangePin_init_zero;
+	storage_wipe();
+
+	ck_assert_int_eq(msgChangePinImpl(&msg, &pin_reader_ok), ErrOk);
+	ck_assert_int_eq(storage_hasPin(), true);
+	ck_assert_str_eq(storage_getPin(), TEST_PIN1);
+}
+END_TEST
+
+START_TEST(testProtectChangePinEditSuccess)
+{
+	ChangePin msg = ChangePin_init_zero;
+	storage_wipe();
+
+	// Set pin
+	ck_assert_int_eq(msgChangePinImpl(&msg, &pin_reader_ok), ErrOk);
+	ck_assert_int_eq(storage_hasPin(), true);
+	ck_assert_str_eq(storage_getPin(), TEST_PIN1);
+	// Edit pin
+	ck_assert_int_eq(msgChangePinImpl(&msg, &pin_reader_alt), ErrOk);
+	ck_assert_int_eq(storage_hasPin(), true);
+	ck_assert_str_eq(storage_getPin(), TEST_PIN2);
+	// Edit if remove set to false
+	msg.has_remove = true;
+	msg.remove = false;
+	ck_assert_int_eq(msgChangePinImpl(&msg, &pin_reader_ok), ErrOk);
+	ck_assert_int_eq(storage_hasPin(), true);
+	ck_assert_str_eq(storage_getPin(), TEST_PIN1);
+}
+END_TEST
+
+START_TEST(testProtectChangePinRemoveSuccess)
+{
+	ChangePin msg = ChangePin_init_zero;
+	storage_wipe();
+
+	// Set pin
+	ck_assert_int_eq(msgChangePinImpl(&msg, &pin_reader_ok), ErrOk);
+	ck_assert_int_eq(storage_hasPin(), true);
+	ck_assert_str_eq(storage_getPin(), TEST_PIN1);
+	// Remove
+	msg.has_remove = true;
+	msg.remove = true;
+	ck_assert_int_eq(msgChangePinImpl(&msg, &pin_reader_alt), ErrOk);
+	ck_assert_int_eq(storage_hasPin(), false);
+}
+END_TEST
+
+START_TEST(testProtectChangePinSecondRejected)
+{
+	ChangePin msg = ChangePin_init_zero;
+	storage_wipe();
+
+	// Pin mismatch
+	ck_assert_int_eq(msgChangePinImpl(&msg, &pin_reader_wrong), ErrPinMismatch);
+	ck_assert_int_eq(storage_hasPin(), false);
+	// Retry and set it
+	ck_assert_int_eq(msgChangePinImpl(&msg, &pin_reader_ok), ErrOk);
+	ck_assert_int_eq(storage_hasPin(), true);
+	ck_assert_str_eq(storage_getPin(), TEST_PIN1);
+	// Do not change pin on mismatch
+	ck_assert_int_eq(msgChangePinImpl(&msg, &pin_reader_wrong), ErrPinMismatch);
+	ck_assert_int_eq(storage_hasPin(), true);
+	ck_assert_str_eq(storage_getPin(), TEST_PIN1);
+}
+END_TEST
+
 // define test cases
 TCase *add_fsm_tests(TCase *tc)
 {
@@ -372,21 +536,22 @@ TCase *add_fsm_tests(TCase *tc)
 	tcase_add_test(tc, test_msgGenerateMnemonicImplShouldFailIfItWasDone);
 	tcase_add_test(tc, test_msgSkycoinCheckMessageSignatureOk);
 	tcase_add_test(tc, test_msgGenerateMnemonicImplShouldFailForWrongSeedCount);
-	tcase_add_test(
-		tc,
-		test_msgSkycoinCheckMessageSignatureFailedAsExpectedForInvalidSignedMessage);
-	tcase_add_test(
-		tc, 
-		test_msgSkycoinCheckMessageSignatureFailedAsExpectedForInvalidMessage);
+	tcase_add_test(tc, test_msgSkycoinCheckMessageSignatureFailedAsExpectedForInvalidSignedMessage);
+	tcase_add_test(tc, test_msgSkycoinCheckMessageSignatureFailedAsExpectedForInvalidMessage);
 	tcase_add_test(tc, test_msgApplySettingsLabelSuccess);
 	tcase_add_test(tc, test_msgFeaturesLabelDefaultsToDeviceId);
 	tcase_add_test(tc, test_msgGetFeatures);
 	tcase_add_test(tc, test_msgApplySettingsLabelSuccessCheck);
-	tcase_add_test(tc, test_msgApplySettingsLabelShouldNotBeRemovable);
+	tcase_add_test(tc, test_msgApplySettingsLabelShouldNotBeReset);
+	tcase_add_test(tc, test_msgApplySettingsLabelGetFeaturesSuccess);
+	tcase_add_test(tc, test_msgApplySettingsUnsupportedLanguage);
+	tcase_add_test(tc, test_msgApplySettingsNoSettingsFailure);
 	tcase_add_test(tc, test_msgFeaturesLabelDefaultsToDeviceId);
-	tcase_add_test(
-		tc, 
-		test_msgEntropyAckImplFailAsExpectedForSyncProblemInProtocol);
+	tcase_add_test(tc, test_msgEntropyAckImplFailAsExpectedForSyncProblemInProtocol);
 	tcase_add_test(tc, test_msgGenerateMnemonicEntropyAckSequenceShouldBeOk);
+	tcase_add_test(tc, testProtectChangePinSuccess);
+	tcase_add_test(tc, testProtectChangePinSecondRejected);
+	tcase_add_test(tc, testProtectChangePinEditSuccess);
+	tcase_add_test(tc, testProtectChangePinRemoveSuccess);
 	return tc;
 }

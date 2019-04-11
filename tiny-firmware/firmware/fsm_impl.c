@@ -206,6 +206,11 @@ ErrCode_t msgSkycoinCheckMessageSignatureImpl(SkycoinCheckMessageSignature* msg,
 	return ret;
 }
 
+ErrCode_t verifyLanguage(char *lang) {
+	// FIXME: Check for supported language name. Only english atm.
+	return (!strcmp(lang, "english"))? ErrOk : ErrInvalidValue;
+}
+
 ErrCode_t msgApplySettingsImpl(ApplySettings *msg)
 {
 	_Static_assert(
@@ -217,6 +222,7 @@ ErrCode_t msgApplySettingsImpl(ApplySettings *msg)
 		storage_setLabel(msg->label);
 	}
 	if (msg->has_language) {
+		CHECK_PARAM_RET_ERR_CODE(verifyLanguage(msg->language) == ErrOk, NULL);
 		storage_setLanguage(msg->language);
 	}
 	if (msg->has_use_passphrase) {
@@ -369,17 +375,13 @@ ErrCode_t msgPingImpl(Ping *msg) {
 
 }
 
-ErrCode_t msgChangePinImpl(ChangePin *msg, bool (*funcProtectChangePin)(void)) {
+ErrCode_t msgChangePinImpl(ChangePin *msg, const char* (*funcRequestPin)(PinMatrixRequestType, const char *)) {
 	bool removal = msg->has_remove && msg->remove;
 	if (removal) {
 		storage_setPin("");
 		storage_update();
-		//fsm_sendSuccess(_("PIN removed"));
 	} else {
-		if (!funcProtectChangePin()) {
-			//fsm_sendSuccess(_("PIN changed"));
-		} else {
-			//fsm_sendFailure(FailureType_Failure_PinMismatch, NULL);
+		if (!protectChangePinEx(funcRequestPin)) {
 			return ErrPinMismatch;
 		}
 	}
