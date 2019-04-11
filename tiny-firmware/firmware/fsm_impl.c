@@ -405,12 +405,13 @@ ErrCode_t msgSetMnemonicImpl(SetMnemonic *msg) {
 	return ErrOk;
 }
 
-ErrCode_t msgGetRawEntropyImpl(
-		GetRawEntropy *msg, Entropy *resp,
-		void (*random_buffer_func)(uint8_t *buf, size_t len)) {
+ErrCode_t msgGetEntropyImpl(GetRawEntropy *msg, Entropy *resp, void (*random_buffer_func)(uint8_t *buf, size_t len)) {
+  (void)msg;
+  (void)resp;
+  (void)random_buffer_func;
 #if defined(EMULATOR) && EMULATOR
 	return ErrNotImplemented;
-#endif  // EMULATOR
+#else
 #if !defined(ENABLE_GETENTROPY) || !ENABLE_GETENTROPY
 	return ErrNotImplemented;
 #endif  // ENABLE_GETENTROPY
@@ -418,21 +419,7 @@ ErrCode_t msgGetRawEntropyImpl(
 	resp->entropy.size = len;
 	random_buffer_func(resp->entropy.bytes, len);
 	return ErrOk;
-}
-
-ErrCode_t msgGetMixedEntropyImpl(
-		GetMixedEntropy *msg, Entropy *resp, 
-		void (*random_buffer_func)(uint8_t *buf, size_t len)) {
-#if defined(EMULATOR) && EMULATOR
-	return ErrNotImplemented;
 #endif  // EMULATOR
-#if !defined(ENABLE_GETENTROPY) || !ENABLE_GETENTROPY
-	return ErrNotImplemented;
-#endif  // ENABLE_GETENTROPY
-	uint32_t len = ( msg->size > 1024 ) ? 1024 : msg->size ;
-	resp->entropy.size = len;
-	random_buffer_func(resp->entropy.bytes, len);
-	return ErrOk;
 }
 
 ErrCode_t msgLoadDeviceImpl(LoadDevice *msg) {

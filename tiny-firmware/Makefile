@@ -1,6 +1,6 @@
 APPVER = 1.0.0
 
-SDL_INCLUDE ?= /usr/include/SDL2
+SDL_CFLAGS ?= $(shell sdl2-config --cflags | sed 's/-D_THREAD_SAFE//g')
 ENABLE_GETENTROPY ?= 0
 DISABLE_GETENTROPY_CONFIRM ?= 0
 
@@ -121,7 +121,7 @@ CFLAGS   += -DHEADLESS=1
 else
 CFLAGS   += -DHEADLESS=0
 
-CFLAGS   += -I$(SDL_INCLUDE) -D_REENTRANT
+CFLAGS   += $(SDL_CFLAGS) -D_REENTRANT
 LDLIBS   += -lSDL2
 endif
 endif
