@@ -14,6 +14,7 @@
 #include "test_timer.h"
 #include "test_droplet.h"
 #include "test_fsm.h"
+#include "test_fsm_impl.h"
 
 // define test suite and cases
 Suite *test_suite(void)
@@ -21,6 +22,7 @@ Suite *test_suite(void)
 	Suite *s = suite_create("firmware");
 
 	suite_add_tcase(s, add_fsm_tests(tcase_create("fsm")));
+	suite_add_tcase(s, add_fsm_impl_tests(tcase_create("fsm_impl")));
 	suite_add_tcase(s, add_droplet_tests(tcase_create("droplet")));
 	suite_add_tcase(s, add_timer_tests(tcase_create("timer")));
 	return s;
