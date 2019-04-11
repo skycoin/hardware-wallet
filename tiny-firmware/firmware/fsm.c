@@ -60,7 +60,7 @@ void fsm_sendResponseFromErrCode(ErrCode_t err, const char *successMsg, const ch
 	switch (err) {
 		case ErrOk:
 			if (successMsg == NULL) {
-				successMsg = "Success";
+				successMsg = _("Success");
 			}
 			fsm_sendSuccess(successMsg);
 			return;
@@ -284,7 +284,7 @@ void fsm_msgSkycoinCheckMessageSignature(SkycoinCheckMessageSignature* msg)
 {
 	GET_MSG_POINTER(Success, successResp);
 	GET_MSG_POINTER(Failure, failureResp);
-	if ( msgSkycoinCheckMessageSignatureImpl(msg, successResp, failureResp) == ErrOk ) {
+	if (msgSkycoinCheckMessageSignatureImpl(msg, successResp, failureResp) == ErrOk ) {
 		msg_write(MessageType_MessageType_Success, successResp);
 	} else {
 		failureResp->code = FailureType_Failure_InvalidSignature;
@@ -467,11 +467,37 @@ void fsm_msgSetMnemonic(SetMnemonic* msg)
 	layoutHome();
 }
 
-void fsm_msgGetEntropy(GetEntropy *msg)
-{
+void fsm_msgGetRawEntropy(GetRawEntropy *msg) {
+#if !DISABLE_GETENTROPY_CONFIRM
 	layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"), _("send entropy?"), NULL, NULL, NULL, NULL);
 	CHECK_BUTTON_PROTECT
-	fsm_sendResponseFromErrCode(msgGetEntropyImpl(msg, random_salted_buffer), NULL, NULL);
+#endif  // DISABLE_GETENTROPY_CONFIRM
+	RESP_INIT(Entropy);
+	ErrCode_t ret = msgGetEntropyImpl(msg, resp, &random_buffer);
+	if (ret == ErrOk) {
+		msg_write(MessageType_MessageType_Entropy, resp);
+	} else {
+		fsm_sendResponseFromErrCode(
+					ret, NULL, _("Get raw entropy not implemented"));
+	}
+	layoutHome();
+}
+
+void fsm_msgGetMixedEntropy(GetMixedEntropy *_msg) {
+#if !DISABLE_GETENTROPY_CONFIRM
+	layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"), _("send entropy?"), NULL, NULL, NULL, NULL);
+	CHECK_BUTTON_PROTECT
+#endif  // DISABLE_GETENTROPY_CONFIRM
+	RESP_INIT(Entropy);
+  GetRawEntropy msg;
+  msg.size = _msg->size;
+	ErrCode_t ret = msgGetEntropyImpl(&msg, resp, &random_salted_buffer);
+	if (ret == ErrOk) {
+		msg_write(MessageType_MessageType_Entropy, resp);
+	} else {
+		fsm_sendResponseFromErrCode(
+					ret, NULL, _("Get mixed entropy not implemented"));
+	}
 	layoutHome();
 }
 

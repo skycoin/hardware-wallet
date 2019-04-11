@@ -405,13 +405,21 @@ ErrCode_t msgSetMnemonicImpl(SetMnemonic *msg) {
 	return ErrOk;
 }
 
-ErrCode_t msgGetEntropyImpl(GetEntropy *msg, void (*random_buffer_func)(uint8_t *buf, size_t len)) {
-	RESP_INIT(Entropy);
+ErrCode_t msgGetEntropyImpl(GetRawEntropy *msg, Entropy *resp, void (*random_buffer_func)(uint8_t *buf, size_t len)) {
+  (void)msg;
+  (void)resp;
+  (void)random_buffer_func;
+#if defined(EMULATOR) && EMULATOR
+	return ErrNotImplemented;
+#else
+#if !defined(ENABLE_GETENTROPY) || !ENABLE_GETENTROPY
+	return ErrNotImplemented;
+#endif  // ENABLE_GETENTROPY
 	uint32_t len = ( msg->size > 1024 ) ? 1024 : msg->size ;
 	resp->entropy.size = len;
 	random_buffer_func(resp->entropy.bytes, len);
-	msg_write(MessageType_MessageType_Entropy, resp);
 	return ErrOk;
+#endif  // EMULATOR
 }
 
 ErrCode_t msgLoadDeviceImpl(LoadDevice *msg) {

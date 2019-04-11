@@ -54,6 +54,9 @@ CFLAGS += -DCONFIDENTIAL='__attribute__((section("confidential")))'
 
 endif
 
+CFLAGS += -DDISABLE_GETENTROPY_CONFIRM=$(DISABLE_GETENTROPY_CONFIRM)
+CFLAGS += -DENABLE_GETENTROPY=$(ENABLE_GETENTROPY)
+
 CFLAGS   += $(OPTFLAGS) \
             $(DBGFLAGS) \
             -std=gnu99 \
