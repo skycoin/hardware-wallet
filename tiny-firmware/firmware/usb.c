@@ -1,7 +1,8 @@
 /*
- * This file is part of the TREZOR project, https://trezor.io/
+ * This file is part of the Skycoin project, https://skycoin.net/ 
  *
  * Copyright (C) 2014 Pavol Rusnak <stick@satoshilabs.com>
+ * Copyright (C) 2018-2019 Skycoin Project
  *
  * This library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -20,7 +21,7 @@
 #include <libopencm3/usb/usbd.h>
 #include <libopencm3/usb/hid.h>
 
-#include "trezor.h"
+#include "skywallet.h"
 #include "usb.h"
 #include "messages.h"
 #include "storage.h"

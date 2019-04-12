@@ -31,6 +31,14 @@ struct buttonState {
 };
 
 extern struct buttonState button;
+extern bool simulateButtonPress;
+extern int buttonPressType;
+
+enum button_press_enum {
+       BTN_LEFT,
+       BTN_RIGHT,
+       BTN_LEFT_RIGHT
+};
 
 uint16_t buttonRead(void);
 void buttonUpdate(void);

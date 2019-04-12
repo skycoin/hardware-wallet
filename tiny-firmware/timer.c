@@ -24,19 +24,22 @@
 #include <libopencm3/cm3/systick.h>
 #include <libopencm3/cm3/vector.h>
 
+#include "rng.h"
+#include "firmware/swtimer.h"
+
 /* 1 tick = 1 ms */
-volatile uint32_t system_millis;
+volatile uint64_t system_millis;
 
 /*
  * Initialise the Cortex-M3 SysTick timer
  */
 void timer_init(void) {
-	system_millis = 0;
+	random_buffer((uint8_t*)&system_millis, sizeof (system_millis));
 
 	/*
 	 * MCU clock (120 MHz) as source
 	 *
-	 *     (120 MHz / 8) = 15 clock pulses
+	 *		 (120 MHz / 8) = 15 clock pulses
 	 *
 	 */
 	systick_set_clocksource(STK_CSR_CLKSOURCE_AHB_DIV8);
@@ -45,7 +48,7 @@ void timer_init(void) {
 	/*
 	 * 1 tick = 1 ms @ 120 MHz
 	 *
-	 *     (15 clock pulses * 1000 ms) = 15000 clock pulses
+	 *		 (15 clock pulses * 1000 ms) = 15000 clock pulses
 	 *
 	 * Send an interrupt every (N - 1) clock pulses
 	 */
@@ -53,8 +56,9 @@ void timer_init(void) {
 
 	/* SysTick as interrupt */
 	systick_interrupt_enable();
-
 	systick_counter_enable();
+
+	timer_init_sw();
 }
 
 void sys_tick_handler(void) {

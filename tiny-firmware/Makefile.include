@@ -1,5 +1,6 @@
-TOP_DIR       := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+TOP_DIR       := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))/
 TOOLCHAIN_DIR ?= $(TOP_DIR)vendor/libopencm3
+UNAME_S ?= $(shell uname -s)
 
 ifeq ($(EMULATOR),1)
 
@@ -7,7 +8,9 @@ PYTHON ?= python
 
 CC       ?= gcc
 LD       := $(CC)
+ifneq ($(UNAME_S),Darwin)
 OBJCOPY  := objcopy
+endif
 OBJDUMP  := objdump
 AR       := ar
 AS       := as
@@ -16,6 +19,11 @@ OPTFLAGS ?= -O3
 DBGFLAGS ?= -g3 -ggdb3
 CPUFLAGS ?=
 FPUFLAGS ?=
+ifeq ($(UNAME_S),Darwin)
+	CFLAGS += -DCONFIDENTIAL=
+else
+	CFLAGS += -DCONFIDENTIAL='__attribute__((section("confidential")))'
+endif
 
 else
 PREFIX   ?= arm-none-eabi-
@@ -42,8 +50,12 @@ LDFLAGS  += --static \
             -T$(LDSCRIPT) \
             -nostartfiles \
             -Wl,--gc-sections
+CFLAGS += -DCONFIDENTIAL='__attribute__((section("confidential")))'
 
 endif
+
+CFLAGS += -DDISABLE_GETENTROPY_CONFIRM=$(DISABLE_GETENTROPY_CONFIRM)
+CFLAGS += -DENABLE_GETENTROPY=$(ENABLE_GETENTROPY)
 
 CFLAGS   += $(OPTFLAGS) \
             $(DBGFLAGS) \
@@ -75,15 +87,13 @@ CFLAGS   += $(OPTFLAGS) \
             $(CPUFLAGS) \
             $(FPUFLAGS) \
             -DSTM32F2 \
-            -DCONFIDENTIAL='__attribute__((section("confidential")))' \
             -DRAND_PLATFORM_INDEPENDENT=1 \
             -I$(TOOLCHAIN_DIR)/include \
             -I$(TOP_DIR) \
             -I$(TOP_DIR)gen \
             -I$(TOP_DIR)vendor/skycoin-crypto \
             -I$(TOP_DIR)vendor/skycoin-crypto/tools \
-            -I$(TOP_DIR)vendor/skycoin-crypto/trezor-tools \
-            -I$(TOP_DIR)vendor/skycoin-crypto/trezor-tools/aes
+            -I$(TOP_DIR)vendor/skycoin-crypto/tools/aes
 
 LDFLAGS  += -L$(TOP_DIR) \
             $(DBGFLAGS) \
@@ -133,11 +143,55 @@ endif
 
 CFLAGS += -DDEBUG_RNG=0
 
+ifneq ($(BOOTLOADER),1)
+lib$(NAME).a: $(OBJS) $(LIBDEPS)
+	$(AR) rcs lib$(NAME).a $(OBJS) $(LIBDEPS)
+endif
+ifeq ($(EMULATOR),1)
+$(NAME): $(OBJS) $(LDSCRIPT) $(LIBDEPS) firmware/main.o
+	$(LD) -o $(NAME) firmware/main.o $(OBJS) $(LDLIBS) $(LDFLAGS)
+
+ifneq ($(CHECK_PATH),)
+ifeq ($(UNAME_S), Linux)
+TESTINC += -isystem $(CHECK_PATH)/src
+TESTINC += -isystem $(CHECK_PATH)
+endif
+ifeq ($(UNAME_S), Darwin)
+TESTINC+=-isystem $(CHECK_PATH)/include
+endif
+CFLAGS += $(TESTINC)
+endif
+LIBS_DARWIN +=
+TESTLIBS_DARWIN += -L$(CHECK_PATH)/lib -lcheck
+LIBS_LINUX += -L/usr/local/lib/ -lm -lrt
+TESTLIBS_LINUX += -L$(CHECK_PATH)/src -lcheck
+
+ifeq ($(UNAME_S), Linux)
+	LIBS=$(LIBS_LINUX)
+	TESTLIBS=$(TESTLIBS_LINUX)
+endif
+ifeq ($(UNAME_S), Darwin)
+	LIBS=$(LIBS_DARWIN)
+	TESTLIBS=$(TESTLIBS_DARWIN)
+endif
+
+test_$(NAME): proto lib$(NAME).a $(TEST_OBJS)
+	$(LD) -o test_$(NAME) $(TEST_OBJS) $(OBJS) $(LDLIBS) $(LDFLAGS) $(TESTLIBS)
+
+test: test_$(NAME) ## Run test suite for tiny-firmware.
+	./test_$(NAME)
+
+else
 $(NAME).bin: $(NAME).elf
 	$(OBJCOPY) -Obinary $(NAME).elf $(NAME).bin
-
-$(NAME).elf: $(OBJS) $(LDSCRIPT) $(LIBDEPS)
+ifeq ($(BOOTLOADER),1)
+$(NAME).elf: $(OBJS) $(LDSCRIPT)
 	$(LD) -o $(NAME).elf $(OBJS) $(LDLIBS) $(LDFLAGS)
+else
+$(NAME).elf: lib$(NAME).a firmware/main.o $(LDSCRIPT) $(LIBDEPS)
+	$(LD) -o $(NAME).elf firmware/main.o -l$(NAME) $(LDLIBS) $(LDFLAGS)
+endif
+endif
 
 %.o: %.c Makefile
 	$(CC) $(CFLAGS) -MMD -MP -o $@ -c $<

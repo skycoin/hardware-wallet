@@ -1,4 +1,9 @@
 EMULATOR := 1
+UNAME_S := $(shell uname -s)
+
+SDL_CFLAGS ?= $(shell sdl2-config --cflags | sed 's/-D_THREAD_SAFE//g')
+
+TOOLCHAIN_DIR ?= $(TOP_DIR)vendor/libopencm3
 
 CFLAGS += -DEMULATOR=1
 CFLAGS += -Wno-pointer-to-int-cast
@@ -13,7 +18,8 @@ ifeq ($(HEADLESS),1)
 CFLAGS   += -DHEADLESS=1
 else
 CFLAGS   += -DHEADLESS=0
-CFLAGS   += -I/usr/include/SDL2 -D_REENTRANT
+CFLAGS   += $(SDL_CFLAGS) -D_REENTRANT
+CFLAGS   += -I$(TOOLCHAIN_DIR)/include
 LDLIBS   += -lSDL2
 endif
 
@@ -25,8 +31,9 @@ OBJS += oled.o
 OBJS += rng.o
 OBJS += timer.o
 OBJS += udp.o
-
+ifneq ($(UNAME_S),Darwin)
 OBJS += strl.o
+endif
 
 libemulator.a: $(OBJS)
 	$(AR) rcs $@ $(OBJS)

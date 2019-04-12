@@ -36,18 +36,40 @@ void usbInit(void) {
 #define _ISDBG ('n')
 #endif
 
+extern bool simulateButtonPress;
+extern int buttonPressType;
+
 void usbPoll(void) {
 	emulatorPoll();
 
 	static uint8_t buffer[64];
 
-	int iface = 0;
+	int iface = 0, i, j = 0;
+
 	if (emulatorSocketRead(&iface, buffer, sizeof(buffer)) > 0) {
-		if (!tiny) {
-			msg_read_common(_ISDBG, buffer, sizeof(buffer));
-		} else {
-			msg_read_tiny(buffer, sizeof(buffer));
-		}
+		#if EMULATOR
+			for (i = 0; i < 5; i++) {
+				if ( buffer[i] == i ) {
+					j++;
+				} else {
+					break;
+				}
+			}
+			if ( j == 5 ) {
+				simulateButtonPress = true;
+				buttonPressType = buffer[5];
+				return;
+			} else {
+				simulateButtonPress = false;
+		#endif
+			if (!tiny) {
+				msg_read_common(_ISDBG, buffer, sizeof(buffer));
+			} else {
+				msg_read_tiny(buffer, sizeof(buffer));
+			}
+		#if EMULATOR
+			}
+		#endif
 	}
 
 	const uint8_t *data = msg_out_data();

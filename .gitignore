@@ -35,7 +35,13 @@
 *.i*86
 *.x86_64
 *.hex
-
+emulator
+tiny-firmware/test_skycoin-emulator
+tiny-firmware/skycoin-emulator
+tiny-firmware/test_skycoin-emulator
+**/*.img
+**/*.bin
+!releases/**/*.bin
 # Debug files
 *.dSYM/
 *.su
@@ -57,3 +63,12 @@ test_skycoin_crypto
 
 # File to get version info when no git repository is present
 tiny-firmware/.version
+# Temporary files
+*.swp
+*.swo
+*.orig
+.DS_Store
+
+# IDE
+.vscode
+.idea
