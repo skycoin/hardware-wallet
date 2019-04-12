@@ -321,7 +321,7 @@ ErrCode_t requestConfirmTransaction(char* strCoin, char *strHour, TransactionSig
 	CHECK_BUTTON_PROTECT_RET_ERR_CODE
 	layoutAddress(msg->transactionOut[i].address);
 	CHECK_BUTTON_PROTECT_RET_ERR_CODE
-		return ErrOk;
+	return ErrOk;
 }
 
 void fsm_msgTransactionSign(TransactionSign* msg) {
@@ -329,13 +329,15 @@ void fsm_msgTransactionSign(TransactionSign* msg) {
 	CHECK_MNEMONIC
 	CHECK_INPUTS(msg)
 	CHECK_OUTPUTS(msg)
-	ErrCode_t err = msgTransactionSignImpl(msg, requestConfirmTransaction);
+	ErrCode_t err = msgTransactionSignImpl(msg, &requestConfirmTransaction);
 	char* failMsg = NULL;
 	if (err == ErrAddressGeneration) {
 		failMsg = _("Wrong return address");
 	}
 	fsm_sendResponseFromErrCode(err, NULL, failMsg);
-	layoutHome();
+	if (err != ErrActionCancelled) {
+		layoutHome();
+	}
 }
 
 void fsm_msgSkycoinSignMessage(SkycoinSignMessage *msg)
@@ -535,7 +537,8 @@ void fsm_msgBackupDevice(BackupDevice *msg)
 {
 	CHECK_INITIALIZED
 	CHECK_PIN_UNCACHED
-	switch (msgBackupDeviceImpl(msg, confirmBackup)) {
+	ErrCode_t err = msgBackupDeviceImpl(msg, &confirmBackup);
+	switch (err) {
 		case ErrOk:
 			fsm_sendSuccess(_("Device backed up!"));
 			break;
@@ -546,7 +549,9 @@ void fsm_msgBackupDevice(BackupDevice *msg)
 			fsm_sendFailure(FailureType_Failure_FirmwareError, _("Unexpected failure"));
 			break;
 	}
-	layoutHome();
+	if (err != ErrActionCancelled) {
+		layoutHome();
+	}
 }
 
 ErrCode_t confirmRecovery(void) {
@@ -557,7 +562,8 @@ ErrCode_t confirmRecovery(void) {
 
 void fsm_msgRecoveryDevice(RecoveryDevice *msg)
 {
-	switch (msgRecoveryDeviceImpl(msg, confirmRecovery)) {
+	ErrCode_t err = msgRecoveryDeviceImpl(msg, &confirmRecovery);
+	switch (err) {
 		CASE_SEND_FAILURE(ErrPinRequired, FailureType_Failure_PinExpected, _("Expected pin"))
 		CASE_SEND_FAILURE(ErrNotInitialized, FailureType_Failure_UnexpectedMessage, _("Device is already initialized. Use Wipe first."))
 		CASE_SEND_FAILURE(ErrInvalidArg, FailureType_Failure_DataError, _("Invalid word count"))
@@ -566,7 +572,9 @@ void fsm_msgRecoveryDevice(RecoveryDevice *msg)
 			fsm_sendFailure(FailureType_Failure_FirmwareError, _("Unexpected failure"));
 			break;
 	}
-	layoutHome();
+	if (err != ErrActionCancelled && err != ErrOk) {
+		layoutHome();
+	}
 }
 
 void fsm_msgWordAck(WordAck *msg)

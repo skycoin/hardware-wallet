@@ -87,6 +87,7 @@
 
 #define CHECK_BUTTON_PROTECT_RET_ERR_CODE \
 	if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) { \
+		layoutHome(); \
 		return ErrActionCancelled; \
 	}
 
