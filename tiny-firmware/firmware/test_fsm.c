@@ -458,7 +458,7 @@ const char *pin_reader_wrong(PinMatrixRequestType pinReqType, const char *text) 
 	return "789";
 }
 
-START_TEST(testProtectChangePinSuccess)
+START_TEST(test_msgChangePinSuccess)
 {
 	ChangePin msg = ChangePin_init_zero;
 	storage_wipe();
@@ -469,7 +469,7 @@ START_TEST(testProtectChangePinSuccess)
 }
 END_TEST
 
-START_TEST(testProtectChangePinEditSuccess)
+START_TEST(test_msgChangePinEditSuccess)
 {
 	ChangePin msg = ChangePin_init_zero;
 	storage_wipe();
@@ -491,7 +491,7 @@ START_TEST(testProtectChangePinEditSuccess)
 }
 END_TEST
 
-START_TEST(testProtectChangePinRemoveSuccess)
+START_TEST(test_msgChangePinRemoveSuccess)
 {
 	ChangePin msg = ChangePin_init_zero;
 	storage_wipe();
@@ -508,7 +508,7 @@ START_TEST(testProtectChangePinRemoveSuccess)
 }
 END_TEST
 
-START_TEST(testProtectChangePinSecondRejected)
+START_TEST(test_msgChangePinSecondRejected)
 {
 	ChangePin msg = ChangePin_init_zero;
 	storage_wipe();
@@ -549,9 +549,9 @@ TCase *add_fsm_tests(TCase *tc)
 	tcase_add_test(tc, test_msgFeaturesLabelDefaultsToDeviceId);
 	tcase_add_test(tc, test_msgEntropyAckImplFailAsExpectedForSyncProblemInProtocol);
 	tcase_add_test(tc, test_msgGenerateMnemonicEntropyAckSequenceShouldBeOk);
-	tcase_add_test(tc, testProtectChangePinSuccess);
-	tcase_add_test(tc, testProtectChangePinSecondRejected);
-	tcase_add_test(tc, testProtectChangePinEditSuccess);
-	tcase_add_test(tc, testProtectChangePinRemoveSuccess);
+	tcase_add_test(tc, test_msgChangePinSuccess);
+	tcase_add_test(tc, test_msgChangePinSecondRejected);
+	tcase_add_test(tc, test_msgChangePinEditSuccess);
+	tcase_add_test(tc, test_msgChangePinRemoveSuccess);
 	return tc;
 }
