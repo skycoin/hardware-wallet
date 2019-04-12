@@ -14,7 +14,6 @@
 #include "test_timer.h"
 #include "test_droplet.h"
 #include "test_fsm.h"
-//#include "test_fsm_impl.h"
 
 // define test suite and cases
 Suite *test_suite(void)

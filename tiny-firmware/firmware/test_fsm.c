@@ -23,6 +23,8 @@
 #include "firmware/storage.h"
 #include "firmware/entropy.h"
 #include "protob/c/messages.pb.h"
+#include "protob/c/types.pb.h"
+#include "skycoin_crypto.h"
 #include "setup.h"
 #include "rng.h"
 #include "rand.h"
@@ -106,7 +108,7 @@ START_TEST(test_msgGenerateMnemonicEntropyAckSequenceShouldBeOk)
 	storage_wipe();
 	GenerateMnemonic gnMsg = GenerateMnemonic_init_zero;
 	ck_assert_int_eq(
-		ErrOk, 
+		ErrOk,
 		msgGenerateMnemonicImpl(&gnMsg, &random_buffer));
 	EntropyAck eaMsg = EntropyAck_init_zero;
 	eaMsg.has_entropy = true;
@@ -151,7 +153,7 @@ START_TEST(test_msgSkycoinCheckMessageSignatureOk)
 	SkycoinSignMessage msgSign = SkycoinSignMessage_init_zero;
 	strncpy(msgSign.message, raw_msg, sizeof(msgSign.message));
 	msgSign.address_n = 0;
-	
+
 	// NOTE(denisacostaq@gmail.com): When
 	uint8_t msg_resp_sign[MSG_OUT_SIZE] __attribute__ ((aligned)) = {0};
 	ResponseSkycoinSignMessage *respSign = (ResponseSkycoinSignMessage *) (void *) msg_resp_sign;
@@ -240,7 +242,7 @@ START_TEST(test_msgSkycoinCheckMessageSignatureFailedAsExpectedForInvalidSignedM
 	ck_assert_int_ne(ErrOk, err);
 	ck_assert(failRespCheck->has_message);
 	int address_diff = strncmp(
-		respAddress->addresses[0], 
+		respAddress->addresses[0],
 		successRespCheck->message,
 		sizeof(respAddress->addresses[0]));
 	ck_assert_int_ne(0, address_diff);
@@ -286,7 +288,7 @@ START_TEST(test_msgSkycoinCheckMessageSignatureFailedAsExpectedForInvalidMessage
 	ck_assert_int_ne(ErrOk, err);
 	ck_assert(failRespCheck->has_message);
 	int address_diff = strncmp(
-		respAddress->addresses[0], 
+		respAddress->addresses[0],
 		successRespCheck->message,
 		sizeof(respAddress->addresses[0]));
 	ck_assert_int_ne(0, address_diff);
@@ -527,6 +529,44 @@ START_TEST(testProtectChangePinSecondRejected)
 }
 END_TEST
 
+START_TEST(transactionSign1)
+{
+    SkycoinTransactionInput transactionInput = {
+            .hashIn = "181bd5656115172fe81451fae4fb56498a97744d89702e73da75ba91ed5200f9",
+            .index = 0
+    };
+    printf("%d", transactionInput.index);
+
+//    SkycoinTransactionInput transactionInput[] = {
+//            transactionInput
+//    };
+
+    SkycoinTransactionOutput transactionOutput = {
+            .address = "K9TzLrgqz7uXn3QJHGxmzdRByAzH33J2ot",
+            .coin = 100000,
+            .hour = 2
+    };
+    printf("%ld", transactionOutput.coin);
+//    SkycoinTransactionOutput transactionOutputs[] = {
+//            transactionOutput
+//    };
+//    ChangePin msg = ChangePin_init_zero;
+//	storage_wipe();
+//
+//	// Pin mismatch
+//	ck_assert_int_eq(msgChangePinImpl(&msg, &pin_reader_wrong), ErrPinMismatch);
+//	ck_assert_int_eq(storage_hasPin(), false);
+//	// Retry and set it
+//	ck_assert_int_eq(msgChangePinImpl(&msg, &pin_reader_ok), ErrOk);
+//	ck_assert_int_eq(storage_hasPin(), true);
+//	ck_assert_str_eq(storage_getPin(), TEST_PIN1);
+//	// Do not change pin on mismatch
+//	ck_assert_int_eq(msgChangePinImpl(&msg, &pin_reader_wrong), ErrPinMismatch);
+//	ck_assert_int_eq(storage_hasPin(), true);
+//	ck_assert_str_eq(storage_getPin(), TEST_PIN1);
+}
+END_TEST
+
 // define test cases
 TCase *add_fsm_tests(TCase *tc)
 {
@@ -553,5 +593,6 @@ TCase *add_fsm_tests(TCase *tc)
 	tcase_add_test(tc, testProtectChangePinSecondRejected);
 	tcase_add_test(tc, testProtectChangePinEditSuccess);
 	tcase_add_test(tc, testProtectChangePinRemoveSuccess);
+	tcase_add_test(tc, transactionSign1);
 	return tc;
 }
