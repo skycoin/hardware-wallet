@@ -29,6 +29,7 @@
 #include "error.h"
 
 #include "test_fsm.h"
+#include "test_many_address_golden.h"
 
 static uint8_t msg_resp[MSG_OUT_SIZE] __attribute__ ((aligned));
 
@@ -527,6 +528,68 @@ START_TEST(test_msgChangePinSecondRejected)
 }
 END_TEST
 
+START_TEST(test_msgSkycoinAddressesAll)
+{
+  SetMnemonic msgSeed = SetMnemonic_init_zero;
+  SkycoinAddress msgAddr = SkycoinAddress_init_zero;
+	RESP_INIT(ResponseSkycoinAddress);
+
+  strncpy(msgSeed.mnemonic, TEST_MANY_ADDRESS_SEED, sizeof(msgSeed.mnemonic));
+  ck_assert_int_eq(msgSetMnemonicImpl(&msgSeed), ErrOk);
+
+  msgAddr.address_n = 99;
+  msgAddr.has_start_index = false;
+  msgAddr.has_confirm_address = false;
+
+  ck_assert_int_eq(msgSkycoinAddressImpl(&msgAddr, resp), ErrOk);
+  ck_assert_int_eq(resp->addresses_count, msgAddr.address_n);
+  int i;
+  for (i = 0; i < resp->addresses_count; ++i) {
+    ck_assert_str_eq(resp->addresses[i], TEST_MANY_ADDRESSES[i]);
+  }
+}
+END_TEST
+
+START_TEST(test_msgSkycoinAddressesStartIndex)
+{
+  SetMnemonic msgSeed = SetMnemonic_init_zero;
+  SkycoinAddress msgAddr = SkycoinAddress_init_zero;
+	RESP_INIT(ResponseSkycoinAddress);
+
+  strncpy(msgSeed.mnemonic, TEST_MANY_ADDRESS_SEED, sizeof(msgSeed.mnemonic));
+  ck_assert_int_eq(msgSetMnemonicImpl(&msgSeed), ErrOk);
+
+  msgAddr.has_start_index = true;
+  msgAddr.start_index = random32() % 100;
+  msgAddr.address_n = random32() % (100 - msgAddr.start_index);
+  msgAddr.has_confirm_address = false;
+
+  ck_assert_int_eq(msgSkycoinAddressImpl(&msgAddr, resp), ErrOk);
+  ck_assert_int_eq(resp->addresses_count, msgAddr.address_n);
+  int i, index;
+  for (i = 0, index = msgAddr.start_index; i < resp->addresses_count; ++i, ++index) {
+    ck_assert_str_eq(resp->addresses[i], TEST_MANY_ADDRESSES[index]);
+  }
+}
+END_TEST
+
+START_TEST(test_msgSkycoinAddressesTooMany)
+{
+  SetMnemonic msgSeed = SetMnemonic_init_zero;
+  SkycoinAddress msgAddr = SkycoinAddress_init_zero;
+	RESP_INIT(ResponseSkycoinAddress);
+
+  strncpy(msgSeed.mnemonic, TEST_MANY_ADDRESS_SEED, sizeof(msgSeed.mnemonic));
+  ck_assert_int_eq(msgSetMnemonicImpl(&msgSeed), ErrOk);
+
+  msgAddr.has_start_index = false;
+  msgAddr.address_n = 100;
+  msgAddr.has_confirm_address = false;
+
+  ck_assert_int_eq(msgSkycoinAddressImpl(&msgAddr, resp), ErrTooManyAddresses);
+}
+END_TEST
+
 // define test cases
 TCase *add_fsm_tests(TCase *tc)
 {
@@ -553,5 +616,8 @@ TCase *add_fsm_tests(TCase *tc)
 	tcase_add_test(tc, test_msgChangePinSecondRejected);
 	tcase_add_test(tc, test_msgChangePinEditSuccess);
 	tcase_add_test(tc, test_msgChangePinRemoveSuccess);
+	tcase_add_test(tc, test_msgSkycoinAddressesAll);
+	tcase_add_test(tc, test_msgSkycoinAddressesStartIndex);
+	tcase_add_test(tc, test_msgSkycoinAddressesTooMany);
 	return tc;
 }
