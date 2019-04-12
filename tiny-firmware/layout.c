@@ -74,16 +74,16 @@ void layoutProgressUpdate(bool refresh)
 	static uint8_t step = 0;
 	switch (step) {
 		case 0:
-			oledDrawBitmap(40, 0, &bmp_load_cloud_1);
+			oledDrawBitmap(40, 0, &bmp_gears0);
 			break;
 		case 1:
-			oledDrawBitmap(40, 0, &bmp_load_cloud_2);
+			oledDrawBitmap(40, 0, &bmp_gears1);
 			break;
 		case 2:
-			oledDrawBitmap(40, 0, &bmp_load_cloud_3);
+			oledDrawBitmap(40, 0, &bmp_gears2);
 			break;
 		case 3:
-			oledDrawBitmap(40, 0, &bmp_load_cloud_4);
+			oledDrawBitmap(40, 0, &bmp_gears3);
 			break;
 	}
 	step = (step + 1) % 4;
