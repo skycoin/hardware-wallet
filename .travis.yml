@@ -42,6 +42,8 @@ script:
   - md5sum full-firmware-no-mem-protect.bin
   - make clean
   - if [[ $TRAVIS_TAG != '' ]]; then
+    make version ;
+    git diff tiny-firmware/VERSION --exit-code ;
     make firmware ;
     cp -p tiny-firmware/skycoin.bin firmware-no-memory-protected.bin ;
     sha256sum firmware-no-memory-protected.bin > firmware-no-memory-protected.bin.sha256 ;
