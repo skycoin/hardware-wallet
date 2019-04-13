@@ -31,6 +31,9 @@ else
 	LD_VAR=LD_LIBRARY_PATH
 endif
 
+version:
+	`./ci-scripts/version/full_version.sh > tiny-firmware/VERSION`
+
 install-linters-Darwin:
 	brew install yamllint
 
