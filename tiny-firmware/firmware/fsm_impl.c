@@ -267,12 +267,17 @@ ErrCode_t msgGetFeaturesImpl(Features *resp)
 	resp->has_passphrase_cached = true; resp->passphrase_cached = session_isPassphraseCached();
 	resp->has_needs_backup = true; resp->needs_backup = storage_needsBackup();
 	resp->has_model = true; strlcpy(resp->model, "1", sizeof(resp->model));
+    #if defined(EMULATOR) && EMULATOR
+        return ErrOk;
+    #endif
 
     #if !DISABLE_GETENTROPY_CONFIRM
-        resp->entropy_options = updateFeatureEntropy(EntropyValues_GetEntropyConfirm, resp->entropy_options);
+        resp->has_entropy_options = true;
+        resp->entropy_options = updateFeatureEntropy(FirmwareFeatures_GetEntropyConfirm, resp->entropy_options);
     #endif
-    #if !defined(ENABLE_GETENTROPY) || !ENABLE_GETENTROPY
-        resp->entropy_options = updateFeatureEntropy(EntropyValues_GetEntropyEnabled, resp->entropy_options);
+    #if defined(ENABLE_GETENTROPY) && ENABLE_GETENTROPY
+        resp->has_entropy_options = true;
+        resp->entropy_options = updateFeatureEntropy(FirmwareFeatures_GetEntropyEnabled, resp->entropy_options);
     #endif
 
 	return ErrOk;
