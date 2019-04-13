@@ -287,35 +287,6 @@ void fsm_msgSkycoinCheckMessageSignature(SkycoinCheckMessageSignature* msg)
 	layoutHome();
 }
 
-int fsm_getKeyPairAtIndex(uint32_t nbAddress, uint8_t* pubkey, uint8_t* seckey, ResponseSkycoinAddress* respSkycoinAddress, uint32_t start_index)
-{
-	const char* mnemo = storage_getFullSeed();
-	uint8_t seed[33] = {0};
-	uint8_t nextSeed[SHA256_DIGEST_LENGTH] = {0};
-	size_t size_address = 36;
-	if (mnemo == NULL || nbAddress == 0) {
-			return -1;
-	}
-	generate_deterministic_key_pair_iterator((const uint8_t *)mnemo, strlen(mnemo), nextSeed, seckey, pubkey);
-	if (respSkycoinAddress != NULL && start_index == 0) {
-		generate_base58_address_from_pubkey(pubkey, respSkycoinAddress->addresses[0], &size_address);
-		respSkycoinAddress->addresses_count++;
-	}
-	memcpy(seed, nextSeed, 32);
-	for (uint32_t i = 0; i < nbAddress + start_index - 1; ++i)
-	{
-		generate_deterministic_key_pair_iterator(seed, 32, nextSeed, seckey, pubkey);
-		memcpy(seed, nextSeed, 32);
-		seed[32] = 0;
-		if (respSkycoinAddress != NULL && ((i + 1) >= start_index)) {
-			size_address = 36;
-			generate_base58_address_from_pubkey(pubkey, respSkycoinAddress->addresses[respSkycoinAddress->addresses_count], &size_address);
-			respSkycoinAddress->addresses_count++;
-		}
-	}
-	return 0;
-}
-
 ErrCode_t requestConfirmTransaction(char* strCoin, char *strHour, TransactionSign* msg, uint32_t i) {
 	layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Next"), NULL, _("Do you really want to"), strCoin, strHour, _("to address"), _("..."), NULL);
 	CHECK_BUTTON_PROTECT_RET_ERR_CODE
