@@ -229,7 +229,7 @@ But in general a bit of research should be done looking at the files content. Th
 
 The skycoin firmware is composed of two parts: the [bootloader](https://github.com/skycoin/hardware-wallet/tree/master/tiny-firmware/bootloader) and the [firmware](https://github.com/skycoin/hardware-wallet/tree/master/tiny-firmware/firmware).
 
-When pluggin the device in, the bootloader runs first. Its only purpose it to check firmware's validity using skycoin signature.
+When plugging the device in, the bootloader runs first. Its only purpose it to check firmware's validity using Skycoin signature.
 
 The firmware is expected to have a header with proper MAGIC number and three signature slots. 
 
@@ -237,11 +237,11 @@ If the firmware does not have a valid signature in its header it is considered "
 
 The "unofficial firmware warning", means that the firmware was not signed by Skycoin Foundation. 
 
-Skycoin firmware is open source and it is easy to fork or copy offical repository and create concurrent firmware for the device. Skycoin Foundation however will not put its signature on it.
+Skycoin firmware is open source and it is easy to fork or copy official repository and create concurrent firmware for the device. Skycoin Foundation however will not put its signature on it.
 
-The skycoin hardware will be shipped with an immutable bootloader written in a protected memory that is impossible to re-write.
+The Skycoin hardware will be shipped with an immutable bootloader written in a protected memory that is impossible to re-write.
 
-The firmware however can evolve over time and some solutions were developped to update an existing firmware (see [skycoin-cli](https://github.com/skycoin/hardware-wallet-go/)).
+The firmware however can evolve over time and some solutions were developed to update an existing firmware (see [skycoin-cli](https://github.com/skycoin/hardware-wallet-go/)).
 
 ##### Full-Firmware and bootloader folder
 
