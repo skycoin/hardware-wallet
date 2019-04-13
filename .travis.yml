@@ -46,11 +46,9 @@ script:
     git diff tiny-firmware/VERSION --exit-code ;
     make firmware ;
     cp -p tiny-firmware/skycoin.bin firmware-no-memory-protected.bin ;
-    sha256sum firmware-no-memory-protected.bin > firmware-no-memory-protected.bin.sha256 ;
     make clean ;
     make full-firmware-mem-protect ;
-    sha256sum full-firmware-memory-protected.bin  > full-firmware-memory-protected.bin.sha256 ;
-    sha256sum bootloader-memory-protected.bin > bootloader-memory-protected.bin.sha256 ;
+    md5sum bootloader-memory-protected.bin firmware-no-memory-protected.bin full-firmware-memory-protected.bin > release.md5 ;
     fi
 notifications:
   # https://github.com/kvld/travisci-telegram TravisCI Telegram Bot integration
@@ -62,11 +60,9 @@ deploy:
     secure: TODO(denisacostaq@gmail.com): install travis cli tool and run `travis login` to get an api key
   file:
    - bootloader-memory-protected.bin
-   - bootloader-memory-protected.bin.sha256
    - firmware-no-memory-protected.bin
-   - firmware-no-memory-protected.bin.sha256
    - full-firmware-memory-protected.bin
-   - full-firmware-memory-protected.bin.sha256
+   - release.md5
   skip_cleanup: true
   draft: true
   on:
