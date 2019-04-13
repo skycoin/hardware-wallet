@@ -40,6 +40,33 @@ script:
   - make full-firmware
   - md5sum tiny-firmware/bootloader/combine/*.bin
   - md5sum full-firmware-no-mem-protect.bin
+  - make clean
+  - if [[ $TRAVIS_TAG != '' ]]; then
+    make firmware ;
+    cp -p tiny-firmware/skycoin.bin firmware-no-memory-protected.bin ;
+    sha256sum firmware-no-memory-protected.bin > firmware-no-memory-protected.bin.sha256 ;
+    make clean ;
+    make full-firmware-mem-protect ;
+    sha256sum full-firmware-memory-protected.bin  > full-firmware-memory-protected.bin.sha256 ;
+    sha256sum bootloader-memory-protected.bin > bootloader-memory-protected.bin.sha256 ;
+    fi
 notifications:
   # https://github.com/kvld/travisci-telegram TravisCI Telegram Bot integration
   webhooks: https://fathomless-fjord-24024.herokuapp.com/notify
+
+deploy:
+  provider: releases
+  api_key:
+    secure: TODO(denisacostaq@gmail.com): install travis cli tool and run `travis login` to get an api key
+  file:
+   - bootloader-memory-protected.bin
+   - bootloader-memory-protected.bin.sha256
+   - firmware-no-memory-protected.bin
+   - firmware-no-memory-protected.bin.sha256
+   - full-firmware-memory-protected.bin
+   - full-firmware-memory-protected.bin.sha256
+  skip_cleanup: true
+  draft: true
+  on:
+    repo: skycoin/hardware-wallet
+    tags: true
