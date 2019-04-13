@@ -1,9 +1,3 @@
-SDL_CFLAGS ?= $(shell sdl2-config --cflags | sed 's/-D_THREAD_SAFE//g')
-ENABLE_GETENTROPY ?= 0
-DISABLE_GETENTROPY_CONFIRM ?= 0
-
-#libskywallet.a
-ifneq ($(EMULATOR),1)
 APPVER=$(shell ./firmware_version.sh)
 ifeq ($(APPVER),)
 APPVER="unknow"
@@ -13,6 +7,13 @@ $(warning firmware version $(APPVER)...)
 else
 $(info firmware version $(APPVER)...)
 endif
+
+SDL_CFLAGS ?= $(shell sdl2-config --cflags | sed 's/-D_THREAD_SAFE//g')
+ENABLE_GETENTROPY ?= 0
+DISABLE_GETENTROPY_CONFIRM ?= 0
+
+#libskywallet.a
+ifneq ($(EMULATOR),1)
 CFLAGS += -DAPPVER=$(APPVER)
 OBJS += startup.o
 OBJS += timer.o

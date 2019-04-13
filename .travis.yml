@@ -31,14 +31,10 @@ before_script:
   # Install linters
   - make install-linters
 script:
-  - find tiny-firmware/protob/nanopb/vendor/nanopb
   - make lint
-  - make -C tiny-firmware/protob install-deps-nanopb
-  - make -C tiny-firmware/protob install-protoc
-  - make -C tiny-firmware/protob/nanopb/vendor/nanopb/generator/proto
+  - make -C tiny-firmware/protob/nanopb/vendor/nanopb/generator/proto build-c
   - make test
   - make clean
-  - find tiny-firmware/protob/nanopb/vendor/nanopb
   - make emulator
   - make clean
   - make full-firmware
