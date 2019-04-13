@@ -40,7 +40,7 @@ The firmware had been copied and modified from [this repository](https://github.
 
 The [skycoin-api](https://github.com/skycoin/hardware-wallet/tree/master/skycoin-api) folder contains the definition of the functions implementing the skycoin features.
 
-The [skycoin-cli](https://github.com/skycoin/hardware-wallet-go/) defines golang functions that communicate with the firmware.
+The [skycoin-hw-cli](https://github.com/skycoin/hardware-wallet-go/releases) defines golang functions that communicate with the firmware.
 
 There is also a [javascript API](https://github.com/skycoin/hardware-wallet-js/).
 
@@ -241,19 +241,19 @@ Skycoin firmware is open source and it is easy to fork or copy official reposito
 
 The Skycoin hardware will be shipped with an immutable bootloader written in a protected memory that is impossible to re-write.
 
-The firmware however can evolve over time and some solutions were developed to update an existing firmware (see [skycoin-cli](https://github.com/skycoin/hardware-wallet-go/)).
+The firmware however can evolve over time and some solutions were developed to update an existing firmware (see [skycoin-hw-cli](https://github.com/skycoin/hardware-wallet-go/releases)).
 
 ##### Full-Firmware and bootloader folder
 
-The [full-firmware](https://github.com/skycoin/hardware-wallet/tree/master/tiny-firmware/full-firmware) and [bootloader](https://github.com/skycoin/hardware-wallet/tree/master/tiny-firmware/bootloader) folders are here for developpement purpose. They are meant to be [flashed with st-link](https://github.com/skycoin/hardware-wallet/blob/master/tiny-firmware/README.md#3-how-to-burn-the-firmware-in-the-device) on a STM32 device in which the memory protection was not enabled yet.
+The [full-firmware](https://github.com/skycoin/hardware-wallet/tree/master/tiny-firmware/full-firmware) and [bootloader](https://github.com/skycoin/hardware-wallet/tree/master/tiny-firmware/bootloader) folders are here for development purpose. They are meant to be [flashed with st-link](https://github.com/skycoin/hardware-wallet/blob/master/tiny-firmware/README.md#3-how-to-burn-the-firmware-in-the-device) on a STM32 device in which the memory protection was not enabled yet.
 
 You can check [here](https://github.com/skycoin/hardware-wallet/blob/master/tiny-firmware/README.md#3-how-to-burn-the-firmware-in-the-device) for instructions about how to burn a full firmware on a device.
 
 ##### Firmware folder
 
- If you are a user of the skycoin electronic wallet and want to update your firmware. You can pick-up official and test releases from [this folder](https://github.com/skycoin/hardware-wallet/tree/master/tiny-firmware/firmware).
+If you are a user of the skycoin electronic wallet and want to update your firmware. You can pick-up [official and tested releases](https://github.com/skycoin/hardware-wallet/releases).
 
- To update firmware the device must be in "bootloader mode". Press both buttons, unplug your device and plug it back in. Then you can use [skycoin-cli](https://github.com/skycoin/hardware-wallet-go/) deviceFirmwareUpdate message to update the firmware.
+To update firmware the device must be in "bootloader mode". Press both buttons, unplug your device and plug it back in. Then you can use [skycoin-cli](https://github.com/skycoin/hardware-wallet/releases) `firmwareUpdate` message to update the firmware.
 
 #### Update the version
 
