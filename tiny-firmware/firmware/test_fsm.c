@@ -29,6 +29,7 @@
 #include "error.h"
 
 #include "test_fsm.h"
+#include "test_many_address_golden.h"
 
 static uint8_t msg_resp[MSG_OUT_SIZE] __attribute__ ((aligned));
 
@@ -460,7 +461,7 @@ const char *pin_reader_wrong(PinMatrixRequestType pinReqType, const char *text) 
 	return "789";
 }
 
-START_TEST(testProtectChangePinSuccess)
+START_TEST(test_msgChangePinSuccess)
 {
 	ChangePin msg = ChangePin_init_zero;
 	storage_wipe();
@@ -471,7 +472,7 @@ START_TEST(testProtectChangePinSuccess)
 }
 END_TEST
 
-START_TEST(testProtectChangePinEditSuccess)
+START_TEST(test_msgChangePinEditSuccess)
 {
 	ChangePin msg = ChangePin_init_zero;
 	storage_wipe();
@@ -493,7 +494,7 @@ START_TEST(testProtectChangePinEditSuccess)
 }
 END_TEST
 
-START_TEST(testProtectChangePinRemoveSuccess)
+START_TEST(test_msgChangePinRemoveSuccess)
 {
 	ChangePin msg = ChangePin_init_zero;
 	storage_wipe();
@@ -510,7 +511,7 @@ START_TEST(testProtectChangePinRemoveSuccess)
 }
 END_TEST
 
-START_TEST(testProtectChangePinSecondRejected)
+START_TEST(test_msgChangePinSecondRejected)
 {
 	ChangePin msg = ChangePin_init_zero;
 	storage_wipe();
@@ -526,6 +527,68 @@ START_TEST(testProtectChangePinSecondRejected)
 	ck_assert_int_eq(msgChangePinImpl(&msg, &pin_reader_wrong), ErrPinMismatch);
 	ck_assert_int_eq(storage_hasPin(), true);
 	ck_assert_str_eq(storage_getPin(), TEST_PIN1);
+}
+END_TEST
+
+START_TEST(test_msgSkycoinAddressesAll)
+{
+  SetMnemonic msgSeed = SetMnemonic_init_zero;
+  SkycoinAddress msgAddr = SkycoinAddress_init_zero;
+	RESP_INIT(ResponseSkycoinAddress);
+
+  strncpy(msgSeed.mnemonic, TEST_MANY_ADDRESS_SEED, sizeof(msgSeed.mnemonic));
+  ck_assert_int_eq(msgSetMnemonicImpl(&msgSeed), ErrOk);
+
+  msgAddr.address_n = 99;
+  msgAddr.has_start_index = false;
+  msgAddr.has_confirm_address = false;
+
+  ck_assert_int_eq(msgSkycoinAddressImpl(&msgAddr, resp), ErrOk);
+  ck_assert_int_eq(resp->addresses_count, msgAddr.address_n);
+  int i;
+  for (i = 0; i < resp->addresses_count; ++i) {
+    ck_assert_str_eq(resp->addresses[i], TEST_MANY_ADDRESSES[i]);
+  }
+}
+END_TEST
+
+START_TEST(test_msgSkycoinAddressesStartIndex)
+{
+  SetMnemonic msgSeed = SetMnemonic_init_zero;
+  SkycoinAddress msgAddr = SkycoinAddress_init_zero;
+	RESP_INIT(ResponseSkycoinAddress);
+
+  strncpy(msgSeed.mnemonic, TEST_MANY_ADDRESS_SEED, sizeof(msgSeed.mnemonic));
+  ck_assert_int_eq(msgSetMnemonicImpl(&msgSeed), ErrOk);
+
+  msgAddr.has_start_index = true;
+  msgAddr.start_index = random32() % 100;
+  msgAddr.address_n = random32() % (100 - msgAddr.start_index);
+  msgAddr.has_confirm_address = false;
+
+  ck_assert_int_eq(msgSkycoinAddressImpl(&msgAddr, resp), ErrOk);
+  ck_assert_int_eq(resp->addresses_count, msgAddr.address_n);
+  int i, index;
+  for (i = 0, index = msgAddr.start_index; i < resp->addresses_count; ++i, ++index) {
+    ck_assert_str_eq(resp->addresses[i], TEST_MANY_ADDRESSES[index]);
+  }
+}
+END_TEST
+
+START_TEST(test_msgSkycoinAddressesTooMany)
+{
+  SetMnemonic msgSeed = SetMnemonic_init_zero;
+  SkycoinAddress msgAddr = SkycoinAddress_init_zero;
+	RESP_INIT(ResponseSkycoinAddress);
+
+  strncpy(msgSeed.mnemonic, TEST_MANY_ADDRESS_SEED, sizeof(msgSeed.mnemonic));
+  ck_assert_int_eq(msgSetMnemonicImpl(&msgSeed), ErrOk);
+
+  msgAddr.has_start_index = false;
+  msgAddr.address_n = 100;
+  msgAddr.has_confirm_address = false;
+
+  ck_assert_int_eq(msgSkycoinAddressImpl(&msgAddr, resp), ErrTooManyAddresses);
 }
 END_TEST
 
@@ -551,9 +614,12 @@ TCase *add_fsm_tests(TCase *tc)
 	tcase_add_test(tc, test_msgFeaturesLabelDefaultsToDeviceId);
 	tcase_add_test(tc, test_msgEntropyAckImplFailAsExpectedForSyncProblemInProtocol);
 	tcase_add_test(tc, test_msgGenerateMnemonicEntropyAckSequenceShouldBeOk);
-	tcase_add_test(tc, testProtectChangePinSuccess);
-	tcase_add_test(tc, testProtectChangePinSecondRejected);
-	tcase_add_test(tc, testProtectChangePinEditSuccess);
-	tcase_add_test(tc, testProtectChangePinRemoveSuccess);
+	tcase_add_test(tc, test_msgChangePinSuccess);
+	tcase_add_test(tc, test_msgChangePinSecondRejected);
+	tcase_add_test(tc, test_msgChangePinEditSuccess);
+	tcase_add_test(tc, test_msgChangePinRemoveSuccess);
+	tcase_add_test(tc, test_msgSkycoinAddressesAll);
+	tcase_add_test(tc, test_msgSkycoinAddressesStartIndex);
+	tcase_add_test(tc, test_msgSkycoinAddressesTooMany);
 	return tc;
 }
