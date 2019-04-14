@@ -289,7 +289,7 @@ ErrCode_t msgGetFeaturesImpl(Features *resp)
 	resp->has_model = true; strlcpy(resp->model, "1", sizeof(resp->model));
 	resp->has_firmware_features = true;
     #if defined(EMULATOR) && EMULATOR
-        resp->firmware_features |= IsEmulator;
+        resp->firmware_features |= FirmwareFeatures_IsEmulator;
 	#endif
 
     #if !DISABLE_GETENTROPY_CONFIRM
