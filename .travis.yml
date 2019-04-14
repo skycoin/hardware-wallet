@@ -42,13 +42,8 @@ script:
   - md5sum full-firmware-no-mem-protect.bin
   - make clean
   - if [[ $TRAVIS_TAG != '' ]]; then
-    make version ;
-    git diff tiny-firmware/VERSION --exit-code ;
-    make firmware ;
-    cp -p tiny-firmware/skycoin.bin firmware-no-memory-protected.bin ;
-    make clean ;
-    make full-firmware-mem-protect ;
-    md5sum bootloader-memory-protected.bin firmware-no-memory-protected.bin full-firmware-memory-protected.bin > release.md5 ;
+    make release;
+    VERSION_BOOTLOADER=$(cat tiny-firmware/bootloader/VERSION);
     fi
 notifications:
   # https://github.com/kvld/travisci-telegram TravisCI Telegram Bot integration
@@ -59,9 +54,11 @@ deploy:
   api_key:
     secure: TODO(denisacostaq@gmail.com): install travis cli tool and run `travis login` to get an api key
   file:
-   - bootloader-memory-protected.bin
-   - firmware-no-memory-protected.bin
-   - full-firmware-memory-protected.bin
+   - skycoin-${TRAVIS_TAG}.bin
+   - bootloader-no-memory-protect-${VERSION_BOOTLOADER}.bin
+   - bootloader-mem-protect-${VERSION_BOOTLOADER}.bin
+   - combined_bootloader-no-memory-protect-${VERSION_BOOTLOADER}-firmware-${TRAVIS_TAG}.bin
+   - combined_bootloader-mem-protect-${VERSION_BOOTLOADER}_firmware-${TRAVIS_TAG}.bin
    - release.md5
   skip_cleanup: true
   draft: true
