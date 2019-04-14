@@ -272,12 +272,12 @@ ErrCode_t msgGetFeaturesImpl(Features *resp)
     #endif
 
     #if !DISABLE_GETENTROPY_CONFIRM
-        resp->has_entropy_options = true;
-        resp->entropy_options = updateFeatureEntropy(FirmwareFeatures_GetEntropyConfirm, resp->entropy_options);
+        resp->has_firmware_features = true;
+        resp->firmware_features = updateFeatureEntropy(FirmwareFeatures_RequireGetEntropyConfirm, resp->firmware_features);
     #endif
     #if defined(ENABLE_GETENTROPY) && ENABLE_GETENTROPY
-        resp->has_entropy_options = true;
-        resp->entropy_options = updateFeatureEntropy(FirmwareFeatures_GetEntropyEnabled, resp->entropy_options);
+        resp->has_firmware_features = true;
+        resp->firmware_features = updateFeatureEntropy(FirmwareFeatures_IsGetEntropyEnabled, resp->firmware_features);
     #endif
 
 	return ErrOk;

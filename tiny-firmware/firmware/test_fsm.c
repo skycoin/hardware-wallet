@@ -320,7 +320,7 @@ START_TEST(test_msgApplySettingsLabelGetFeaturesSuccess)
 	ck_assert_str_eq(storage_getLabel(), raw_label);
 	Features features = Features_init_zero;
 	msgGetFeaturesImpl(&features);
-    ck_assert_int_eq(features.has_entropy_options, (int) false);
+    ck_assert_int_eq(features.has_firmware_features, (int) false);
 	ck_assert_int_eq((int) features.has_label, (int) true);
 	ck_assert_str_eq(features.label, raw_label);
 }
@@ -422,7 +422,7 @@ START_TEST(test_msgGetFeatures)
 {
 	RESP_INIT(Features);
 	msgGetFeaturesImpl(resp);
-    ck_assert_int_eq(resp->has_entropy_options, (int) false);
+	ck_assert_int_eq(resp->has_firmware_features, (int) false);
 	ck_assert_int_eq(resp->has_fw_major, 1);
 	ck_assert_int_eq(resp->has_fw_minor, 1);
 	ck_assert_int_eq(resp->has_fw_patch, 1);
