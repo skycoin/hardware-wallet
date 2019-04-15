@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+- Get firmware version from `git`, use `tiny-firmware/VERSION` if it's not possible.
+- Add deploy satge for travis.
+- A makefile target for `release`.
+- Some ci related bash scrips.
 - Add an options `DISABLE_GETENTROPY_CONFIRM` to enable or disable at build time the button confirmation for get entropy msg.
 - Skycoin logo in bootloader mode
 - Enforce setting default device language to English
@@ -34,6 +38,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Removed
 
+- Releases folder.
 - Installation instructions for `protobuf` related tools, use this from `hardware-wallet-protob` submodule.
 - Remove support to recover device from words matrix. The only support method is scrambled words.
 - Not possible to enforce BIP-39 wordlist during recovery process.
