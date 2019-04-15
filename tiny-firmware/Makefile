@@ -1,4 +1,3 @@
-APPVER=$(shell ./firmware_version.sh)
 ifeq ($(APPVER),)
 APPVER="unknow"
 endif
