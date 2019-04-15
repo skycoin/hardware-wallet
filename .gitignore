@@ -62,8 +62,6 @@ dkms.conf
 test_skycoin_crypto
 *.pyc
 
-# File to get version info when no git repository is present
-tiny-firmware/.version
 # Temporary files
 *.swp
 *.swo
