@@ -292,7 +292,7 @@ ErrCode_t msgGetFeaturesImpl(Features *resp)
         resp->firmware_features |= FirmwareFeatures_IsEmulator;
 	#endif
 
-    #if !DISABLE_GETENTROPY_CONFIRM
+    #if DISABLE_GETENTROPY_CONFIRM
         resp->firmware_features |= FirmwareFeatures_RequireGetEntropyConfirm;
     #endif
     #if defined(ENABLE_GETENTROPY) && ENABLE_GETENTROPY
