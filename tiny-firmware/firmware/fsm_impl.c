@@ -196,13 +196,13 @@ ErrCode_t msgSkycoinAddressImpl(SkycoinAddress* msg, ResponseSkycoinAddress *res
 
 ErrCode_t msgSkycoinCheckMessageSignatureImpl(SkycoinCheckMessageSignature* msg, Success *successResp, Failure *failureResp)
 {
-	// NOTE(denisacostaq@gmail.com): -1 because the end of string ('\0')
+	// NOTE(): -1 because the end of string ('\0')
 	// /2 because the hex to buff conversion.
 	uint8_t sign[(sizeof(msg->signature) - 1)/2];
-	// NOTE(denisacostaq@gmail.com): -1 because the end of string ('\0')
+	// NOTE(): -1 because the end of string ('\0')
 	char pubkeybase58[sizeof(msg->address) - 1];
 	uint8_t pubkey[33] = {0};
-	// NOTE(denisacostaq@gmail.com): -1 because the end of string ('\0')
+	// NOTE(): -1 because the end of string ('\0')
 	// /2 because the hex to buff conversion.
 	uint8_t digest[(sizeof(msg->message) - 1) / 2] = {0};
 	//     RESP_INIT(Success);
