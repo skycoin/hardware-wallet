@@ -343,6 +343,7 @@ ErrCode_t msgTransactionSignImpl(TransactionSign *msg, ErrCode_t (*funcConfirmTx
 					return ErrAddressGeneration;
 			}
 		} else {
+      // NOTICE: A single output per address is assumed
 			ErrCode_t err = funcConfirmTxn(strCoin, strHour, msg, i);
 			if (err != ErrOk)
 				return err;
@@ -356,11 +357,14 @@ ErrCode_t msgTransactionSignImpl(TransactionSign *msg, ErrCode_t (*funcConfirmTx
 	for (uint32_t i = 0; i < msg->nbIn; ++i) {
 		uint8_t digest[32];
 		transaction_msgToSign(&transaction, i, digest);
-		if (msgSignTransactionMessageImpl(digest, msg->transactionIn[i].index, resp->signatures[resp->signatures_count]) != ErrOk) {
-			//fsm_sendFailure(FailureType_Failure_InvalidSignature, NULL);
-			//layoutHome();
-			return ErrInvalidSignature;
-		}
+    // Only sign inputs owned by Skywallet device
+    if (msg->transactionIn[i].has_index) {
+			if (msgSignTransactionMessageImpl(digest, msg->transactionIn[i].index, resp->signatures[resp->signatures_count]) != ErrOk) {
+				//fsm_sendFailure(FailureType_Failure_InvalidSignature, NULL);
+				//layoutHome();
+				return ErrInvalidSignature;
+			}
+    }
 		resp->signatures_count++;
 	#if EMULATOR
 		char str[64];
@@ -370,6 +374,10 @@ ErrCode_t msgTransactionSignImpl(TransactionSign *msg, ErrCode_t (*funcConfirmTx
 		printf("Nb signatures: %d\n", resp->signatures_count);
 	#endif
 	}
+  if (resp->signatures_count != msg->nbIn) {
+    // Ensure number of sigs and inputs is the same. Mismatch should never happen.
+    return ErrFailed;
+  }
 	#if EMULATOR
 		char str[64];
 		tohex(str, transaction.innerHash, 32);
