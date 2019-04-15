@@ -33,6 +33,11 @@
 		return; \
 	}
 
+#define CHECK_INITIALIZED_RET_ERR_CODE \
+	if (!storage_isInitialized()) { \
+		return ErrInitialized; \
+	}
+
 #define CHECK_NOT_INITIALIZED \
 	if (storage_isInitialized()) { \
 		fsm_sendFailure(FailureType_Failure_UnexpectedMessage, _("Device is already initialized. Use Wipe first.")); \
@@ -87,6 +92,7 @@
 
 #define CHECK_BUTTON_PROTECT_RET_ERR_CODE \
 	if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) { \
+		layoutHome(); \
 		return ErrActionCancelled; \
 	}
 
@@ -128,14 +134,12 @@
 		return ErrInvalidValue; \
 	}
 
-ErrCode_t msgGenerateMnemonicImpl(
-		GenerateMnemonic* msg,
-		void (*random_buffer_func)(uint8_t *buf, size_t len));
+int fsm_getKeyPairAtIndex(uint32_t nbAddress, uint8_t* pubkey, uint8_t* seckey, ResponseSkycoinAddress* respSkycoinAddress, uint32_t start_index);
+
+ErrCode_t msgGenerateMnemonicImpl(GenerateMnemonic* msg, void (*random_buffer_func)(uint8_t *buf, size_t len));
 ErrCode_t msgEntropyAckImpl(EntropyAck* msg);
-ErrCode_t msgSkycoinSignMessageImpl(SkycoinSignMessage* msg,
-							ResponseSkycoinSignMessage *msg_resp);
-ErrCode_t msgSignTransactionMessageImpl(uint8_t* message_digest, uint32_t index,
-										char* signed_message);
+ErrCode_t msgSkycoinSignMessageImpl(SkycoinSignMessage* msg, ResponseSkycoinSignMessage *msg_resp);
+ErrCode_t msgSignTransactionMessageImpl(uint8_t* message_digest, uint32_t index, char* signed_message);
 ErrCode_t msgSkycoinAddressImpl(SkycoinAddress* msg, ResponseSkycoinAddress *resp);
 ErrCode_t msgSkycoinCheckMessageSignatureImpl(SkycoinCheckMessageSignature* msg, Success *successResp, Failure *failureResp);
 ErrCode_t msgApplySettingsImpl(ApplySettings *msg);

@@ -1,5 +1,5 @@
 /*
- * This file is part of the Skycoin project, https://skycoin.net/ 
+ * This file is part of the Skycoin project, https://skycoin.net/
  *
  * Copyright (C) 2014 Pavol Rusnak <stick@satoshilabs.com>
  * Copyright (C) 2018-2019 Skycoin Project
@@ -50,7 +50,7 @@ void check_lock_screen(void)
 	// button held for long enough (2 seconds)
 	if (layoutLast == layoutHome && button.NoDown >= 285000 * 2 && !button.YesDown) {
 
-		layoutDialog(&bmp_icon_question, _("Cancel"), _("Lock Device"), NULL, _("Do you really want to"), _("lock your"), _("Skycoin wallet?"), NULL, NULL, NULL);
+		layoutDialog(&bmp_icon_question, _("Cancel"), _("Lock Device"), NULL, _("Do you really want to"), _("lock your"), _("Skywallet?"), NULL, NULL, NULL);
 
 		// wait until NoButton is released
 		usbTiny(1);
@@ -81,7 +81,7 @@ void check_lock_screen(void)
 		layoutHome();
 		return;
 	}
-	
+
 	// if homescreen is shown for longer than 10 minutes, lock too
 	if (layoutLast == layoutHome) {
 		if ((timer_ms() - system_millis_lock_start) >= 600000) {
