@@ -529,28 +529,33 @@ START_TEST(testProtectChangePinSecondRejected)
 }
 END_TEST
 
+ErrCode_t funcConfirmTxn(char* a, char* b, TransactionSign* sign, uint32_t t){
+    printf("%s %s %s %d", a, b, sign, t);
+    return ErrOk;
+}
+
 START_TEST(transactionSign1)
 {
-    SkycoinTransactionInput transactionInput = {
-            .hashIn = "181bd5656115172fe81451fae4fb56498a97744d89702e73da75ba91ed5200f9",
-            .index = 0
+    SkycoinTransactionInput transactionInputs[1] = {
+    {.hashIn = "181bd5656115172fe81451fae4fb56498a97744d89702e73da75ba91ed5200f9",
+            .index = 0}
     };
-    printf("%d", transactionInput.index);
 
-//    SkycoinTransactionInput transactionInput[] = {
-//            transactionInput
-//    };
-
-    SkycoinTransactionOutput transactionOutput = {
+    SkycoinTransactionOutput transactionOutputs[1] = { {
             .address = "K9TzLrgqz7uXn3QJHGxmzdRByAzH33J2ot",
             .coin = 100000,
             .hour = 2
+        }
     };
-    printf("%ld", transactionOutput.coin);
-//    SkycoinTransactionOutput transactionOutputs[] = {
-//            transactionOutput
-//    };
-//    ChangePin msg = ChangePin_init_zero;
+
+    TransactionSign txnSign;
+    txnSign.nbIn = 1;
+    txnSign.nbOut = 1;
+    memcpy(&txnSign.transactionIn, &transactionInputs, sizeof(transactionInputs));
+    memcpy(&txnSign.transactionOut, &transactionOutputs, sizeof(transactionOutputs));
+    ErrCode_t errCode = msgTransactionSignImpl(&txnSign, funcConfirmTxn);
+    ck_assert_int_eq(errCode, ErrOk);
+    //    ChangePin msg = ChangePin_init_zero;
 //	storage_wipe();
 //
 //	// Pin mismatch
