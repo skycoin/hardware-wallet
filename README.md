@@ -233,9 +233,9 @@ When plugging the device in, the bootloader runs first. Its only purpose it to c
 
 The firmware is expected to have a header with proper MAGIC number and three signature slots. 
 
-If the firmware does not have a valid signature in its header it is considered "not official". A warning will be displayed but the user can still skip it and use it anyway.
+If the firmware does not have a valid signature in its header it is considered **"not official"**. A warning will be displayed but the user can still skip it and use it anyway.
 
-The "unofficial firmware warning", means that the firmware was not signed by Skycoin Foundation. 
+The "unofficial firmware warning", **means that the firmware was not signed by Skycoin Foundation**.
 
 Skycoin firmware is open source and it is easy to fork or copy official repository and create concurrent firmware for the device. Skycoin Foundation however will not put its signature on it.
 
@@ -245,7 +245,7 @@ The firmware however can evolve over time and some solutions were developed to u
 
 ##### Full-Firmware and bootloader folder
 
-The [full-firmware](https://github.com/skycoin/hardware-wallet/tree/master/tiny-firmware/full-firmware) and [bootloader](https://github.com/skycoin/hardware-wallet/tree/master/tiny-firmware/bootloader) folders are here for development purpose. They are meant to be [flashed with st-link](https://github.com/skycoin/hardware-wallet/blob/master/tiny-firmware/README.md#3-how-to-burn-the-firmware-in-the-device) on a STM32 device in which the memory protection was not enabled yet.
+The [firmware](https://github.com/skycoin/hardware-wallet/tree/master/tiny-firmware/firmware) and [bootloader](https://github.com/skycoin/hardware-wallet/tree/master/tiny-firmware/bootloader) folders are here for development purpose. They are meant to be [flashed with st-link](https://github.com/skycoin/hardware-wallet/blob/master/tiny-firmware/README.md#3-how-to-burn-the-firmware-in-the-device) on a STM32 device in which the memory protection was not enabled yet.
 
 You can check [here](https://github.com/skycoin/hardware-wallet/blob/master/tiny-firmware/README.md#3-how-to-burn-the-firmware-in-the-device) for instructions about how to burn a full firmware on a device.
 
@@ -294,13 +294,9 @@ Once the candidate release build artifacts have been downloaded it is necessary 
 
 #### Creating release builds
 
-The following instruction creates a full firmware with:
-* firmware version: 1.1.0
-* bootloader version: 1.2.0
+The following instruction creates a full release:
 
 ```bash
-make combined-release-mem-protect VERSION_FIRMWARE=1.1.0 VERSION_BOOTLOADER=1.2.0
+make release
 ```
-
-Variables `VERSION_FIRMWARE` and `VERSION_BOOTLOADER` are optional and default to the contents of `tiny-firmware/VERSION` and `tiny-firmware/bootloader/VERSION` respectively.
-
+Firmware version will be retrieved automatically from `git`, and bootloader version will be take from `tiny-firmware/VERSION`.
