@@ -16,6 +16,8 @@ PIPARGS  ?=
 MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 MKFILE_DIR  := $(dir $(MKFILE_PATH))
 
+FULL_FIRMWARE_PATH ?= full-firmware-no-mem-protect.bin
+
 VERSION_FIRMWARE         ?= $(shell cat tiny-firmware/VERSION)
 VERSION_FIRMWARE_MAJOR   ?= $(shell cat tiny-firmware/VERSION | cut -d. -f1)
 VERSION_FIRMWARE_MINOR   ?= $(shell cat tiny-firmware/VERSION | cut -d. -f2)
@@ -168,7 +170,7 @@ test: ## Run all project test suites.
 	EMULATOR=1 make -C tiny-firmware/ test
 
 st-flash: ## Deploy (flash) firmware on physical wallet
-	cd tiny-firmware/bootloader/combine/; st-flash write combined.bin 0x08000000
+	st-flash write $(FULL_FIRMWARE_PATH) 0x08000000
 
 check-trng: ## Run test tools over random buffers
 	make -C trng-test trng-generate-buffers
