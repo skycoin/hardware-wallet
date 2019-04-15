@@ -137,8 +137,6 @@ release-combined-mem-protect: release-bootloader-mem-protect release-firmware
 release: release-combined release-combined-mem-protect ## Create a release for production
 	md5sum \
 	skycoin-v$(VERSION_FIRMWARE).bin \
-	bootloader-no-memory-protect-v$(VERSION_BOOTLOADER).bin \
-	bootloader-mem-protect-v$(VERSION_BOOTLOADER).bin \
 	combined_bootloader-no-memory-protect-v$(VERSION_BOOTLOADER)-firmware-v$(VERSION_FIRMWARE).bin \
 	combined_bootloader-mem-protect-v$(VERSION_BOOTLOADER)_firmware-v$(VERSION_FIRMWARE).bin > release.md5
 

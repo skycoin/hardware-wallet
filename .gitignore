@@ -41,7 +41,7 @@ tiny-firmware/skycoin-emulator
 tiny-firmware/test_skycoin-emulator
 **/*.img
 **/*.bin
-releases.md5
+release.md5
 
 # Debug files
 *.dSYM/

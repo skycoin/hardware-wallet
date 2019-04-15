@@ -55,8 +55,6 @@ deploy:
     secure: TODO(denisacostaq@gmail.com): install travis cli tool and run `travis login` to get an api key
   file:
    - skycoin-${TRAVIS_TAG}.bin
-   - bootloader-no-memory-protect-${VERSION_BOOTLOADER}.bin
-   - bootloader-mem-protect-${VERSION_BOOTLOADER}.bin
    - combined_bootloader-no-memory-protect-${VERSION_BOOTLOADER}-firmware-${TRAVIS_TAG}.bin
    - combined_bootloader-mem-protect-${VERSION_BOOTLOADER}_firmware-${TRAVIS_TAG}.bin
    - release.md5
