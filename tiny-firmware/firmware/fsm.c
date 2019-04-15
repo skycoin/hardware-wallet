@@ -287,41 +287,12 @@ void fsm_msgSkycoinCheckMessageSignature(SkycoinCheckMessageSignature* msg)
 	layoutHome();
 }
 
-int fsm_getKeyPairAtIndex(uint32_t nbAddress, uint8_t* pubkey, uint8_t* seckey, ResponseSkycoinAddress* respSkycoinAddress, uint32_t start_index)
-{
-	const char* mnemo = storage_getFullSeed();
-	uint8_t seed[33] = {0};
-	uint8_t nextSeed[SHA256_DIGEST_LENGTH] = {0};
-	size_t size_address = 36;
-	if (mnemo == NULL || nbAddress == 0) {
-			return -1;
-	}
-	generate_deterministic_key_pair_iterator((const uint8_t *)mnemo, strlen(mnemo), nextSeed, seckey, pubkey);
-	if (respSkycoinAddress != NULL && start_index == 0) {
-		generate_base58_address_from_pubkey(pubkey, respSkycoinAddress->addresses[0], &size_address);
-		respSkycoinAddress->addresses_count++;
-	}
-	memcpy(seed, nextSeed, 32);
-	for (uint32_t i = 0; i < nbAddress + start_index - 1; ++i)
-	{
-		generate_deterministic_key_pair_iterator(seed, 32, nextSeed, seckey, pubkey);
-		memcpy(seed, nextSeed, 32);
-		seed[32] = 0;
-		if (respSkycoinAddress != NULL && ((i + 1) >= start_index)) {
-			size_address = 36;
-			generate_base58_address_from_pubkey(pubkey, respSkycoinAddress->addresses[respSkycoinAddress->addresses_count], &size_address);
-			respSkycoinAddress->addresses_count++;
-		}
-	}
-	return 0;
-}
-
 ErrCode_t requestConfirmTransaction(char* strCoin, char *strHour, TransactionSign* msg, uint32_t i) {
 	layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Next"), NULL, _("Do you really want to"), strCoin, strHour, _("to address"), _("..."), NULL);
 	CHECK_BUTTON_PROTECT_RET_ERR_CODE
 	layoutAddress(msg->transactionOut[i].address);
 	CHECK_BUTTON_PROTECT_RET_ERR_CODE
-		return ErrOk;
+	return ErrOk;
 }
 
 void fsm_msgTransactionSign(TransactionSign* msg) {
@@ -329,12 +300,21 @@ void fsm_msgTransactionSign(TransactionSign* msg) {
 	CHECK_MNEMONIC
 	CHECK_INPUTS(msg)
 	CHECK_OUTPUTS(msg)
-	ErrCode_t err = msgTransactionSignImpl(msg, requestConfirmTransaction);
+
+	RESP_INIT(ResponseTransactionSign);
+	ErrCode_t err = msgTransactionSignImpl(msg, &requestConfirmTransaction, resp);
 	char* failMsg = NULL;
-	if (err == ErrAddressGeneration) {
-		failMsg = _("Wrong return address");
+  switch (err) {
+    case ErrOk:
+	    msg_write(MessageType_MessageType_ResponseTransactionSign, resp);
+      break;
+    case ErrAddressGeneration:
+		  failMsg = _("Wrong return address");
+      // fall through
+    default:
+	    fsm_sendResponseFromErrCode(err, NULL, failMsg);
+      break;
 	}
-	fsm_sendResponseFromErrCode(err, NULL, failMsg);
 	layoutHome();
 }
 
@@ -535,7 +515,8 @@ void fsm_msgBackupDevice(BackupDevice *msg)
 {
 	CHECK_INITIALIZED
 	CHECK_PIN_UNCACHED
-	switch (msgBackupDeviceImpl(msg, confirmBackup)) {
+	ErrCode_t err = msgBackupDeviceImpl(msg, &confirmBackup);
+	switch (err) {
 		case ErrOk:
 			fsm_sendSuccess(_("Device backed up!"));
 			break;
@@ -546,7 +527,9 @@ void fsm_msgBackupDevice(BackupDevice *msg)
 			fsm_sendFailure(FailureType_Failure_FirmwareError, _("Unexpected failure"));
 			break;
 	}
-	layoutHome();
+	if (err != ErrActionCancelled) {
+		layoutHome();
+	}
 }
 
 ErrCode_t confirmRecovery(void) {
@@ -557,16 +540,20 @@ ErrCode_t confirmRecovery(void) {
 
 void fsm_msgRecoveryDevice(RecoveryDevice *msg)
 {
-	switch (msgRecoveryDeviceImpl(msg, confirmRecovery)) {
+	ErrCode_t err = msgRecoveryDeviceImpl(msg, &confirmRecovery);
+	switch (err) {
 		CASE_SEND_FAILURE(ErrPinRequired, FailureType_Failure_PinExpected, _("Expected pin"))
 		CASE_SEND_FAILURE(ErrNotInitialized, FailureType_Failure_UnexpectedMessage, _("Device is already initialized. Use Wipe first."))
+		CASE_SEND_FAILURE(ErrInitialized, FailureType_Failure_UnexpectedMessage, _("Device it's not inizialized"))
 		CASE_SEND_FAILURE(ErrInvalidArg, FailureType_Failure_DataError, _("Invalid word count"))
 		CASE_SEND_FAILURE(ErrActionCancelled, FailureType_Failure_ActionCancelled, NULL)
 		default:
 			fsm_sendFailure(FailureType_Failure_FirmwareError, _("Unexpected failure"));
 			break;
 	}
-	layoutHome();
+	if (err != ErrActionCancelled && err != ErrOk) {
+		layoutHome();
+	}
 }
 
 void fsm_msgWordAck(WordAck *msg)

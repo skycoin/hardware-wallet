@@ -129,7 +129,7 @@ void layoutHome(void)
 			oledBox(0, 0, 127, 8, false);
 			oledDrawStringCenter(0, "NEEDS BACKUP!", FONT_STANDARD);
 		} else {
-				// NOTE(denisacostaq@gmail.com): The screen is not long enough
+				// NOTE(): The screen is not long enough
 				// so clip the device label string.
 				char devLabel[MAX(sizeof (storageUpdate.label), 
 								sizeof (storage_uuid_str))];

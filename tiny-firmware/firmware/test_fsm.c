@@ -23,40 +23,13 @@
 #include "firmware/storage.h"
 #include "firmware/entropy.h"
 #include "protob/c/messages.pb.h"
-#include "protob/c/types.pb.h"
-#include "skycoin_crypto.h"
 #include "setup.h"
 #include "rng.h"
 #include "rand.h"
 #include "error.h"
-#include "skywallet.h"
-#include "fsm.h"
-#include "messages.h"
-#include "bip32.h"
-#include "storage.h"
-#include "rng.h"
-#include "oled.h"
-#include "protect.h"
-#include "pinmatrix.h"
-#include "layout2.h"
-#include "reset.h"
-#include "recovery.h"
-#include "bip39.h"
-#include "memory.h"
-#include "usb.h"
-#include "util.h"
-#include "base58.h"
-#include "gettext.h"
-#include "skycoin_crypto.h"
-#include "skycoin_check_signature.h"
-#include "check_digest.h"
-#include "fsm_impl.h"
-#include "droplet.h"
-#include "skyparams.h"
-#include "entropy.h"
-
 
 #include "test_fsm.h"
+#include "test_many_address_golden.h"
 
 static uint8_t msg_resp[MSG_OUT_SIZE] __attribute__ ((aligned));
 
@@ -134,7 +107,7 @@ START_TEST(test_msgGenerateMnemonicEntropyAckSequenceShouldBeOk)
 	storage_wipe();
 	GenerateMnemonic gnMsg = GenerateMnemonic_init_zero;
 	ck_assert_int_eq(
-		ErrOk,
+		ErrOk, 
 		msgGenerateMnemonicImpl(&gnMsg, &random_buffer));
 	EntropyAck eaMsg = EntropyAck_init_zero;
 	eaMsg.has_entropy = true;
@@ -152,9 +125,9 @@ START_TEST(test_msgSkycoinSignMessageReturnIsInHex)
 	strncpy(msg.message, raw_msg, sizeof(msg.message));
 	RESP_INIT(ResponseSkycoinSignMessage);
 	msgSkycoinSignMessageImpl(&msg, resp);
-	// NOTE(denisacostaq@gmail.com): ecdsa signature have 65 bytes,
+	// NOTE(): ecdsa signature have 65 bytes,
 	// 2 for each one in hex = 130
-	// TODO(denisacostaq@gmail.com): this kind of "dependency" is not maintainable.
+	// TODO(): this kind of "dependency" is not maintainable.
 	for (size_t i = 0; i < sizeof(resp->signed_message); ++i) {
 		ck_assert(is_a_base16_caharacter(resp->signed_message[i]));
 	}
@@ -163,7 +136,7 @@ END_TEST
 
 START_TEST(test_msgSkycoinCheckMessageSignatureOk)
 {
-	// NOTE(denisacostaq@gmail.com): Given
+	// NOTE(): Given
 	forceGenerateMnemonic();
 	SkycoinAddress msgSkyAddress = SkycoinAddress_init_zero;
 	msgSkyAddress.address_n = 1;
@@ -172,15 +145,15 @@ START_TEST(test_msgSkycoinCheckMessageSignatureOk)
 	ErrCode_t err = msgSkycoinAddressImpl(&msgSkyAddress, respAddress);
 	ck_assert_int_eq(ErrOk, err);
 	ck_assert_int_eq(respAddress->addresses_count, 1);
-	// NOTE(denisacostaq@gmail.com): `raw_msg` hash become from:
+	// NOTE(): `raw_msg` hash become from:
 	// https://github.com/skycoin/skycoin/blob/develop/src/cipher/testsuite/testdata/input-hashes.golden
 	char raw_msg[] = {
 		"66687aadf862bd776c8fc18b8e9f8e20089714856ee233b3902a591d0d5f2925"};
 	SkycoinSignMessage msgSign = SkycoinSignMessage_init_zero;
 	strncpy(msgSign.message, raw_msg, sizeof(msgSign.message));
 	msgSign.address_n = 0;
-
-	// NOTE(denisacostaq@gmail.com): When
+	
+	// NOTE(): When
 	uint8_t msg_resp_sign[MSG_OUT_SIZE] __attribute__ ((aligned)) = {0};
 	ResponseSkycoinSignMessage *respSign = (ResponseSkycoinSignMessage *) (void *) msg_resp_sign;
 	msgSkycoinSignMessageImpl(&msgSign, respSign);
@@ -194,7 +167,7 @@ START_TEST(test_msgSkycoinCheckMessageSignatureOk)
 	Failure *failRespCheck = (Failure *) (void *) msg_fail_resp_check;
 	err = msgSkycoinCheckMessageSignatureImpl(&checkMsg, successRespCheck, failRespCheck);
 
-	// NOTE(denisacostaq@gmail.com): Then
+	// NOTE(): Then
 	ck_assert_int_eq(ErrOk, err);
 	ck_assert(successRespCheck->has_message);
 	int address_diff = strncmp(
@@ -232,7 +205,7 @@ static void random_shuffle(char *buffer, size_t len) {
 
 START_TEST(test_msgSkycoinCheckMessageSignatureFailedAsExpectedForInvalidSignedMessage)
 {
-	// NOTE(denisacostaq@gmail.com): Given
+	// NOTE(): Given
 	forceGenerateMnemonic();
 	SkycoinAddress msgSkyAddress = SkycoinAddress_init_zero;
 	msgSkyAddress.address_n = 1;
@@ -241,14 +214,14 @@ START_TEST(test_msgSkycoinCheckMessageSignatureFailedAsExpectedForInvalidSignedM
 	ErrCode_t err = msgSkycoinAddressImpl(&msgSkyAddress, respAddress);
 	ck_assert_int_eq(ErrOk, err);
 	ck_assert_int_eq(respAddress->addresses_count, 1);
-	// NOTE(denisacostaq@gmail.com): `raw_msg` hash become from:
+	// NOTE(): `raw_msg` hash become from:
 	// https://github.com/skycoin/skycoin/blob/develop/src/cipher/testsuite/testdata/input-hashes.golden
 	char raw_msg[] = {"66687aadf862bd776c8fc18b8e9f8e20089714856ee233b3902a591d0d5f2925"};
 	SkycoinSignMessage msgSign = SkycoinSignMessage_init_zero;
 	strncpy(msgSign.message, raw_msg, sizeof(msgSign.message));
 	msgSign.address_n = 0;
 
-	// NOTE(denisacostaq@gmail.com): When
+	// NOTE(): When
 	uint8_t msg_resp_sign[MSG_OUT_SIZE] __attribute__ ((aligned)) = {0};
 	ResponseSkycoinSignMessage *respSign = (ResponseSkycoinSignMessage *) (void *) msg_resp_sign;
 	msgSkycoinSignMessageImpl(&msgSign, respSign);
@@ -264,11 +237,11 @@ START_TEST(test_msgSkycoinCheckMessageSignatureFailedAsExpectedForInvalidSignedM
 	Failure *failRespCheck = (Failure *) (void *) msg_fail_resp_check;
 	err = msgSkycoinCheckMessageSignatureImpl(&checkMsg, successRespCheck, failRespCheck);
 
-	// NOTE(denisacostaq@gmail.com): Then
+	// NOTE(): Then
 	ck_assert_int_ne(ErrOk, err);
 	ck_assert(failRespCheck->has_message);
 	int address_diff = strncmp(
-		respAddress->addresses[0],
+		respAddress->addresses[0], 
 		successRespCheck->message,
 		sizeof(respAddress->addresses[0]));
 	ck_assert_int_ne(0, address_diff);
@@ -277,7 +250,7 @@ END_TEST
 
 START_TEST(test_msgSkycoinCheckMessageSignatureFailedAsExpectedForInvalidMessage)
 {
-	// NOTE(denisacostaq@gmail.com): Given
+	// NOTE(): Given
 	forceGenerateMnemonic();
 	SkycoinAddress msgSkyAddress = SkycoinAddress_init_zero;
 	msgSkyAddress.address_n = 1;
@@ -286,7 +259,7 @@ START_TEST(test_msgSkycoinCheckMessageSignatureFailedAsExpectedForInvalidMessage
 	ErrCode_t err = msgSkycoinAddressImpl(&msgSkyAddress, respAddress);
 	ck_assert_int_eq(ErrOk, err);
 	ck_assert_int_eq(respAddress->addresses_count, 1);
-	// NOTE(denisacostaq@gmail.com): `raw_msg` hash become from:
+	// NOTE(): `raw_msg` hash become from:
 	// https://github.com/skycoin/skycoin/blob/develop/src/cipher/testsuite/testdata/input-hashes.golden
 	char raw_msg[] = {
 		"66687aadf862bd776c8fc18b8e9f8e20089714856ee233b3902a591d0d5f2925"};
@@ -294,7 +267,7 @@ START_TEST(test_msgSkycoinCheckMessageSignatureFailedAsExpectedForInvalidMessage
 	strncpy(msgSign.message, raw_msg, sizeof(msgSign.message));
 	msgSign.address_n = 0;
 
-	// NOTE(denisacostaq@gmail.com): When
+	// NOTE(): When
 	uint8_t msg_resp_sign[MSG_OUT_SIZE] __attribute__ ((aligned)) = {0};
 	ResponseSkycoinSignMessage *respSign = (ResponseSkycoinSignMessage *) (void *) msg_resp_sign;
 	msgSkycoinSignMessageImpl(&msgSign, respSign);
@@ -310,11 +283,11 @@ START_TEST(test_msgSkycoinCheckMessageSignatureFailedAsExpectedForInvalidMessage
 	Failure *failRespCheck = (Failure *) (void *) msg_fail_resp_check;
 	err = msgSkycoinCheckMessageSignatureImpl(&checkMsg, successRespCheck, failRespCheck);
 
-	// NOTE(denisacostaq@gmail.com): Then
+	// NOTE(): Then
 	ck_assert_int_ne(ErrOk, err);
 	ck_assert(failRespCheck->has_message);
 	int address_diff = strncmp(
-		respAddress->addresses[0],
+		respAddress->addresses[0], 
 		successRespCheck->message,
 		sizeof(respAddress->addresses[0]));
 	ck_assert_int_ne(0, address_diff);
@@ -486,7 +459,7 @@ const char *pin_reader_wrong(PinMatrixRequestType pinReqType, const char *text) 
 	return "789";
 }
 
-START_TEST(testProtectChangePinSuccess)
+START_TEST(test_msgChangePinSuccess)
 {
 	ChangePin msg = ChangePin_init_zero;
 	storage_wipe();
@@ -497,7 +470,7 @@ START_TEST(testProtectChangePinSuccess)
 }
 END_TEST
 
-START_TEST(testProtectChangePinEditSuccess)
+START_TEST(test_msgChangePinEditSuccess)
 {
 	ChangePin msg = ChangePin_init_zero;
 	storage_wipe();
@@ -519,7 +492,7 @@ START_TEST(testProtectChangePinEditSuccess)
 }
 END_TEST
 
-START_TEST(testProtectChangePinRemoveSuccess)
+START_TEST(test_msgChangePinRemoveSuccess)
 {
 	ChangePin msg = ChangePin_init_zero;
 	storage_wipe();
@@ -536,7 +509,7 @@ START_TEST(testProtectChangePinRemoveSuccess)
 }
 END_TEST
 
-START_TEST(testProtectChangePinSecondRejected)
+START_TEST(test_msgChangePinSecondRejected)
 {
 	ChangePin msg = ChangePin_init_zero;
 	storage_wipe();
@@ -555,39 +528,65 @@ START_TEST(testProtectChangePinSecondRejected)
 }
 END_TEST
 
-ErrCode_t funcConfirmTxn(char* a, char* b, TransactionSign* sign, uint32_t t){
-    (void) a;
-    (void) b;
-    (void) sign;
-    (void) t;
-    return ErrOk;
-}
-
-START_TEST(transactionSign1)
+START_TEST(test_msgSkycoinAddressesAll)
 {
-    SkycoinTransactionInput transactionInputs[1] = {
-        {
-            .hashIn = "181bd5656115172fe81451fae4fb56498a97744d89702e73da75ba91ed5200f9",
-            .index = 0
-        }
-    };
+  SetMnemonic msgSeed = SetMnemonic_init_zero;
+  SkycoinAddress msgAddr = SkycoinAddress_init_zero;
+	RESP_INIT(ResponseSkycoinAddress);
 
-    SkycoinTransactionOutput transactionOutputs[1] = {
-            {
-            .address = "K9TzLrgqz7uXn3QJHGxmzdRByAzH33J2ot",
-            .coin = 100000,
-            .hour = 2
-        }
-    };
+  strncpy(msgSeed.mnemonic, TEST_MANY_ADDRESS_SEED, sizeof(msgSeed.mnemonic));
+  ck_assert_int_eq(msgSetMnemonicImpl(&msgSeed), ErrOk);
 
-    TransactionSign* msg = malloc(sizeof(TransactionSign));
-    memcpy(msg->transactionIn, &transactionInputs, sizeof(transactionInputs));
-    memcpy(msg->transactionOut, &transactionOutputs, sizeof(transactionOutputs));
-    CHECK_INPUTS(msg)
-    CHECK_OUTPUTS(msg)
+  msgAddr.address_n = 99;
+  msgAddr.has_start_index = false;
+  msgAddr.has_confirm_address = false;
 
-    ErrCode_t errCode = msgTransactionSignImpl(msg, funcConfirmTxn);
-    ck_assert_int_eq(errCode, ErrOk);
+  ck_assert_int_eq(msgSkycoinAddressImpl(&msgAddr, resp), ErrOk);
+  ck_assert_int_eq(resp->addresses_count, msgAddr.address_n);
+  int i;
+  for (i = 0; i < resp->addresses_count; ++i) {
+    ck_assert_str_eq(resp->addresses[i], TEST_MANY_ADDRESSES[i]);
+  }
+}
+END_TEST
+
+START_TEST(test_msgSkycoinAddressesStartIndex)
+{
+  SetMnemonic msgSeed = SetMnemonic_init_zero;
+  SkycoinAddress msgAddr = SkycoinAddress_init_zero;
+	RESP_INIT(ResponseSkycoinAddress);
+
+  strncpy(msgSeed.mnemonic, TEST_MANY_ADDRESS_SEED, sizeof(msgSeed.mnemonic));
+  ck_assert_int_eq(msgSetMnemonicImpl(&msgSeed), ErrOk);
+
+  msgAddr.has_start_index = true;
+  msgAddr.start_index = random32() % 100;
+  msgAddr.address_n = random32() % (100 - msgAddr.start_index);
+  msgAddr.has_confirm_address = false;
+
+  ck_assert_int_eq(msgSkycoinAddressImpl(&msgAddr, resp), ErrOk);
+  ck_assert_int_eq(resp->addresses_count, msgAddr.address_n);
+  int i, index;
+  for (i = 0, index = msgAddr.start_index; i < resp->addresses_count; ++i, ++index) {
+    ck_assert_str_eq(resp->addresses[i], TEST_MANY_ADDRESSES[index]);
+  }
+}
+END_TEST
+
+START_TEST(test_msgSkycoinAddressesTooMany)
+{
+  SetMnemonic msgSeed = SetMnemonic_init_zero;
+  SkycoinAddress msgAddr = SkycoinAddress_init_zero;
+	RESP_INIT(ResponseSkycoinAddress);
+
+  strncpy(msgSeed.mnemonic, TEST_MANY_ADDRESS_SEED, sizeof(msgSeed.mnemonic));
+  ck_assert_int_eq(msgSetMnemonicImpl(&msgSeed), ErrOk);
+
+  msgAddr.has_start_index = false;
+  msgAddr.address_n = 100;
+  msgAddr.has_confirm_address = false;
+
+  ck_assert_int_eq(msgSkycoinAddressImpl(&msgAddr, resp), ErrTooManyAddresses);
 }
 END_TEST
 
@@ -613,10 +612,12 @@ TCase *add_fsm_tests(TCase *tc)
 	tcase_add_test(tc, test_msgFeaturesLabelDefaultsToDeviceId);
 	tcase_add_test(tc, test_msgEntropyAckImplFailAsExpectedForSyncProblemInProtocol);
 	tcase_add_test(tc, test_msgGenerateMnemonicEntropyAckSequenceShouldBeOk);
-	tcase_add_test(tc, testProtectChangePinSuccess);
-	tcase_add_test(tc, testProtectChangePinSecondRejected);
-	tcase_add_test(tc, testProtectChangePinEditSuccess);
-	tcase_add_test(tc, testProtectChangePinRemoveSuccess);
-	tcase_add_test(tc, transactionSign1);
+	tcase_add_test(tc, test_msgChangePinSuccess);
+	tcase_add_test(tc, test_msgChangePinSecondRejected);
+	tcase_add_test(tc, test_msgChangePinEditSuccess);
+	tcase_add_test(tc, test_msgChangePinRemoveSuccess);
+	tcase_add_test(tc, test_msgSkycoinAddressesAll);
+	tcase_add_test(tc, test_msgSkycoinAddressesStartIndex);
+	tcase_add_test(tc, test_msgSkycoinAddressesTooMany);
 	return tc;
 }
