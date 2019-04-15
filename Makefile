@@ -16,16 +16,18 @@ PIPARGS  ?=
 MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 MKFILE_DIR  := $(dir $(MKFILE_PATH))
 
-VERSION_FIRMWARE_MAJOR  =$(shell ./ci-scripts/version/version_major.sh)
-VERSION_FIRMWARE_MINOR  =$(shell ./ci-scripts/version/version_minor.sh)
-VERSION_FIRMWARE_PATCH  =$(shell ./ci-scripts/version/version_patch.sh)
-VERSION_FIRMWARE        =$(VERSION_FIRMWARE_MAJOR).$(VERSION_FIRMWARE_MINOR).$(VERSION_FIRMWARE_PATCH)
-APPVER                  =v$(VERSION_FIRMWARE)
-
 VERSION_BOOTLOADER_MAJOR=$(shell cat tiny-firmware/bootloader/VERSION | cut -d. -f1 | cut -c 1 --complement)
 VERSION_BOOTLOADER_MINOR=$(shell cat tiny-firmware/bootloader/VERSION | cut -d. -f2)
 VERSION_BOOTLOADER_PATCH=$(shell cat tiny-firmware/bootloader/VERSION | cut -d. -f3)
 VERSION_BOOTLOADER      =$(VERSION_BOOTLOADER_MAJOR).$(VERSION_BOOTLOADER_MINOR).$(VERSION_BOOTLOADER_PATCH)
+VERSION_FIRMWARE_MAJOR  =$(shell ./ci-scripts/version/version_major.sh)
+VERSION_FIRMWARE_MINOR  =$(shell ./ci-scripts/version/version_minor.sh)
+VERSION_FIRMWARE_PATCH  =$(shell ./ci-scripts/version/version_patch.sh)
+VERSION_FIRMWARE        =$(VERSION_FIRMWARE_MAJOR).$(VERSION_FIRMWARE_MINOR).$(VERSION_FIRMWARE_PATCH)
+ifeq ($(VERSION_FIRMWARE),..)
+	VERSION_FIRMWARE    =$(shell cat tiny-firmware/VERSION | cut -c 1 --complement)
+endif
+APPVER                  =v$(VERSION_FIRMWARE)
 
 ifeq ($(UNAME_S), Darwin)
 	LD_VAR=DYLD_LIBRARY_PATH
