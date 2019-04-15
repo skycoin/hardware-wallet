@@ -32,7 +32,7 @@ before_script:
   - make install-linters
 script:
   - make lint
-  - make -C tiny-firmware/protob/nanopb/vendor/nanopb/generator/proto build-c
+  - make -C tiny-firmware/protob build-c
   - make test
   - make clean
   - make emulator
