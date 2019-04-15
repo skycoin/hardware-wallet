@@ -1,5 +1,5 @@
 /*
- * This file is part of the Skycoin project, https://skycoin.net/ 
+ * This file is part of the Skycoin project, https://skycoin.net/
  *
  * Copyright (C) 2014 Pavol Rusnak <stick@satoshilabs.com>
  * Copyright (C) 2018-2019 Skycoin Project
@@ -62,7 +62,7 @@ void layout32bits(const uint8_t *buffer, const char* message)
 
 void show_halt(void)
 {
-	layoutDialog(&bmp_icon_error, NULL, NULL, NULL, "Unofficial firmware", "aborted.", NULL, "Unplug your Skycoin wallet", "contact our support.", NULL);
+	layoutDialog(&bmp_icon_error, NULL, NULL, NULL, "Unofficial firmware", "aborted.", NULL, "Unplug your Skywallet", "contact our support.", NULL);
 	shutdown();
 }
 
