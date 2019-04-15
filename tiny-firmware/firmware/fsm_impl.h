@@ -144,7 +144,7 @@ ErrCode_t msgSkycoinAddressImpl(SkycoinAddress* msg, ResponseSkycoinAddress *res
 ErrCode_t msgSkycoinCheckMessageSignatureImpl(SkycoinCheckMessageSignature* msg, Success *successResp, Failure *failureResp);
 ErrCode_t msgApplySettingsImpl(ApplySettings *msg);
 ErrCode_t msgGetFeaturesImpl(Features *resp);
-ErrCode_t msgTransactionSignImpl(TransactionSign *msg, ErrCode_t (*)(char*, char *, TransactionSign*, uint32_t));
+ErrCode_t msgTransactionSignImpl(TransactionSign *msg, ErrCode_t (*)(char*, char *, TransactionSign*, uint32_t), ResponseTransactionSign*);
 ErrCode_t msgPingImpl(Ping *msg);
 ErrCode_t msgChangePinImpl(ChangePin *msg, const char* (*)(PinMatrixRequestType, const char *));
 ErrCode_t msgWipeDeviceImpl(WipeDevice *msg);

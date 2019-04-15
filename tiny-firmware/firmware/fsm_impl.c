@@ -290,7 +290,7 @@ ErrCode_t msgGetFeaturesImpl(Features *resp)
 	return ErrOk;
 }
 
-ErrCode_t msgTransactionSignImpl(TransactionSign *msg, ErrCode_t (*funcConfirmTxn)(char*, char *, TransactionSign*, uint32_t)) {
+ErrCode_t msgTransactionSignImpl(TransactionSign *msg, ErrCode_t (*funcConfirmTxn)(char*, char *, TransactionSign*, uint32_t), ResponseTransactionSign *resp) {
 	#if EMULATOR
 		printf("%s: %d. nbOut: %d\n",
 			_("Transaction signed nbIn"),
@@ -353,7 +353,6 @@ ErrCode_t msgTransactionSignImpl(TransactionSign *msg, ErrCode_t (*funcConfirmTx
 
 	CHECK_PIN_UNCACHED_RET_ERR_CODE
 
-	RESP_INIT(ResponseTransactionSign);
 	for (uint32_t i = 0; i < msg->nbIn; ++i) {
 		uint8_t digest[32];
 		transaction_msgToSign(&transaction, i, digest);
@@ -385,7 +384,6 @@ ErrCode_t msgTransactionSignImpl(TransactionSign *msg, ErrCode_t (*funcConfirmTx
 		printf("Signed message:  %s\n", resp->signatures[0]);
 		printf("Nb signatures: %d\n", resp->signatures_count);
 	#endif
-	msg_write(MessageType_MessageType_ResponseTransactionSign, resp);
 	//layoutHome();
 	return ErrOk;
 }

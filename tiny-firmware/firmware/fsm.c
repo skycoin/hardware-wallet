@@ -300,15 +300,22 @@ void fsm_msgTransactionSign(TransactionSign* msg) {
 	CHECK_MNEMONIC
 	CHECK_INPUTS(msg)
 	CHECK_OUTPUTS(msg)
-	ErrCode_t err = msgTransactionSignImpl(msg, &requestConfirmTransaction);
+
+	RESP_INIT(ResponseTransactionSign);
+	ErrCode_t err = msgTransactionSignImpl(msg, &requestConfirmTransaction, resp);
 	char* failMsg = NULL;
-	if (err == ErrAddressGeneration) {
-		failMsg = _("Wrong return address");
+  switch (err) {
+    case ErrOk:
+	    msg_write(MessageType_MessageType_ResponseTransactionSign, resp);
+      break;
+    case ErrAddressGeneration:
+		  failMsg = _("Wrong return address");
+      // fall through
+    default:
+	    fsm_sendResponseFromErrCode(err, NULL, failMsg);
+      break;
 	}
-	fsm_sendResponseFromErrCode(err, NULL, failMsg);
-	if (err != ErrActionCancelled) {
-		layoutHome();
-	}
+	layoutHome();
 }
 
 void fsm_msgSkycoinSignMessage(SkycoinSignMessage *msg)
