@@ -489,6 +489,7 @@ ErrCode_t msgRecoveryDeviceImpl(RecoveryDevice *msg, ErrCode_t (*funcConfirmReco
 	const bool dry_run = msg->has_dry_run ? msg->dry_run : false;
 	if (dry_run) {
 		CHECK_PIN_RET_ERR_CODE
+		CHECK_INITIALIZED_RET_ERR_CODE
 	} else {
 		CHECK_NOT_INITIALIZED_RET_ERR_CODE
 	}

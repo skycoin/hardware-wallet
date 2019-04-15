@@ -33,6 +33,11 @@
 		return; \
 	}
 
+#define CHECK_INITIALIZED_RET_ERR_CODE \
+	if (!storage_isInitialized()) { \
+		return ErrInitialized; \
+	}
+
 #define CHECK_NOT_INITIALIZED \
 	if (storage_isInitialized()) { \
 		fsm_sendFailure(FailureType_Failure_UnexpectedMessage, _("Device is already initialized. Use Wipe first.")); \
@@ -87,6 +92,7 @@
 
 #define CHECK_BUTTON_PROTECT_RET_ERR_CODE \
 	if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) { \
+		layoutHome(); \
 		return ErrActionCancelled; \
 	}
 

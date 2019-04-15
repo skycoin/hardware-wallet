@@ -23,7 +23,7 @@ enum ErrMode
 	ReasonUnknown = 0xFFF, /*!     < Reason unknown */
 	ReasonArgumentError = 1, /*!   < Unexpected or invalid argument */
 	ReasonOutOfBounds = 2, /*!     < Value out of bounds */
-	ReasonInvalidState = 3,	/*!    < The system get in an invalid state, for example a syc problem in server implementation */
+	ReasonInvalidState = 3,	/*!    < The system is in an invalid state, for example a firmware sync problem */
 	ReasonValueError = 4, /*!      < Unexpected or invalid value */
 	ReasonNotImplemented = 5, /*!  < Not implemented code */
 	ReasonActionCancelled = 6, /*! < Action cancelled by user */
@@ -70,11 +70,13 @@ enum ErrCode
 	ErrNotImplemented = ERROR_CODE(PkgGeneric, ReasonNotImplemented),    /*!< Feature not implemented */
 	ErrUserConfirmation = ERROR_CODE(PkgGeneric, ReasonUserConfirmation), /*!< User confirmation required to complete action */
 	ErrInvalidChecksum = ERROR_CODE(PkgGeneric, ReasonInvalidChecksum), /*!< Checksum verification failed */
+	ErrActionCancelled = ERROR_CODE(PkgGeneric, ReasonActionCancelled), /*!< Action cancelled by user */
 	ErrPinRequired = ERROR_CODE(PkgPinChk, ReasonInvalidState),          /*!< Action requires PIN and is not configured */
 	ErrPinMismatch = ERROR_CODE(PkgPinChk, ReasonValueError),          /*!< Action requires PIN and it didn't match */
 	ErrPinCancelled = ERROR_CODE(PkgPinChk, ReasonActionCancelled), /*!< Action requires PIN and was cancelled by user */
-	ErrActionCancelled = ERROR_CODE(PkgGeneric, ReasonActionCancelled), /*!< Action cancelled by user */
 	ErrNotInitialized = ERROR_CODE(PkgStorage, ReasonInvalidState), /*!< Storage not initialized */
+	// FIXME: Find a better reason
+	ErrInitialized = ERROR_CODE(PkgStorage, ReasonUnknown), /*!< Storage initialized */
 	ErrMnemonicRequired = ERROR_CODE(PkgMnemonic, ReasonInvalidState), /*!< Mnemonic required */
 	ErrAddressGeneration = ERROR_CODE(PkgAddress, ErrInvalidValue), /*!< Failed address generation */
 	ErrTooManyAddresses = ERROR_CODE(PkgAddress, ReasonOutOfBounds), /*!< Too many addresses to generate */
