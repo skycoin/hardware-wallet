@@ -16,6 +16,8 @@ PIPARGS  ?=
 MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 MKFILE_DIR  := $(dir $(MKFILE_PATH))
 
+FULL_FIRMWARE_PATH ?= full-firmware-no-mem-protect.bin
+
 VERSION_BOOTLOADER_MAJOR=$(shell cat tiny-firmware/bootloader/VERSION | cut -d. -f1 | cut -c 1 --complement)
 VERSION_BOOTLOADER_MINOR=$(shell cat tiny-firmware/bootloader/VERSION | cut -d. -f2)
 VERSION_BOOTLOADER_PATCH=$(shell cat tiny-firmware/bootloader/VERSION | cut -d. -f3)
