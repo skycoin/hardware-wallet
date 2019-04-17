@@ -121,27 +121,27 @@ bootloader-clean:
 firmware-clean:
 	make -C tiny-firmware/ clean
 
-release-bootloader:
+release-bootloader: ## Build bootloader.
 	if [ -z "$(shell echo $(VERSION_BOOTLOADER) | egrep '^[0-9]+\.[0-9]+\.[0-9]+$$' )" ]; then echo "Wrong bootloader version format"; exit 1; fi
 	DEBUG=0 VERSION_MAJOR=$(VERSION_BOOTLOADER_MAJOR) VERSION_MINOR=$(VERSION_BOOTLOADER_MINOR) VERSION_PATCH=$(VERSION_BOOTLOADER_PATCH) make bootloader
 	mv bootloader-no-memory-protect.bin bootloader-no-memory-protect-v$(VERSION_BOOTLOADER).bin
 
-release-bootloader-mem-protect:
+release-bootloader-mem-protect: ## Build bootloader(with memory protect enbled, make sure you know what you are doing).
 	if [ -z "$(shell echo $(VERSION_BOOTLOADER) | egrep '^[0-9]+\.[0-9]+\.[0-9]+$$' )" ]; then echo "Wrong bootloader version format"; exit 1; fi
 	DEBUG=0 VERSION_MAJOR=$(VERSION_BOOTLOADER_MAJOR) VERSION_MINOR=$(VERSION_BOOTLOADER_MINOR) VERSION_PATCH=$(VERSION_BOOTLOADER_PATCH) make bootloader-mem-protect
 	mv bootloader-memory-protected.bin bootloader-mem-protect-v$(VERSION_BOOTLOADER).bin
 
-release-firmware: check-version
+release-firmware: check-version ## Build firmware in release mode.
 	DEBUG=0 VERSION_MAJOR=$(VERSION_FIRMWARE_MAJOR) VERSION_MINOR=$(VERSION_FIRMWARE_MINOR) VERSION_PATCH=$(VERSION_FIRMWARE_PATCH) make firmware
 	mv tiny-firmware/skycoin.bin skycoin-v$(VERSION_FIRMWARE).bin
 
-release-combined: release-bootloader release-firmware
+release-combined: release-bootloader release-firmware ## Build bootloader and firmware together in a combined file in released mode.
 	cp bootloader-no-memory-protect-v$(VERSION_BOOTLOADER).bin tiny-firmware/bootloader/combine/bl.bin
 	cp skycoin-v$(VERSION_FIRMWARE).bin tiny-firmware/bootloader/combine/fw.bin
 	cd tiny-firmware/bootloader/combine/ ; $(PYTHON) prepare.py
 	mv tiny-firmware/bootloader/combine/combined.bin combined_bootloader-no-memory-protect-v$(VERSION_BOOTLOADER)-firmware-v$(VERSION_FIRMWARE).bin
 
-release-combined-mem-protect: release-bootloader-mem-protect release-firmware
+release-combined-mem-protect: release-bootloader-mem-protect release-firmware ## Build bootloader(with memory protect enbled, make sure you know what you are doing) and firmware together in a combined file in released mode.
 	cp bootloader-mem-protect-v$(VERSION_BOOTLOADER).bin tiny-firmware/bootloader/combine/bl.bin
 	cp skycoin-v$(VERSION_FIRMWARE).bin tiny-firmware/bootloader/combine/fw.bin
 	cd tiny-firmware/bootloader/combine/ ; $(PYTHON) prepare.py
