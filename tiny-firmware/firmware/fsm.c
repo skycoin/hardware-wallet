@@ -262,7 +262,16 @@ void fsm_msgApplySettings(ApplySettings *msg)
 		CHECK_BUTTON_PROTECT
 	}
 
-	fsm_sendResponseFromErrCode(msgApplySettingsImpl(msg), _("Settings applied"), NULL);
+	ErrCode_t err = msgApplySettingsImpl(msg);
+	char *failMsg = NULL;
+	switch (err) {
+		case ErrInvalidArg:
+			failMsg = _("No setting provided");
+			break;
+		default:
+			break;
+	}
+	fsm_sendResponseFromErrCode(err, _("Settings applied"), failMsg);
 	layoutHome();
 }
 
@@ -304,16 +313,16 @@ void fsm_msgTransactionSign(TransactionSign* msg) {
 	RESP_INIT(ResponseTransactionSign);
 	ErrCode_t err = msgTransactionSignImpl(msg, &requestConfirmTransaction, resp);
 	char* failMsg = NULL;
-  switch (err) {
-    case ErrOk:
-	    msg_write(MessageType_MessageType_ResponseTransactionSign, resp);
-      break;
-    case ErrAddressGeneration:
-		  failMsg = _("Wrong return address");
-      // fall through
-    default:
-	    fsm_sendResponseFromErrCode(err, NULL, failMsg);
-      break;
+	switch (err) {
+		case ErrOk:
+			msg_write(MessageType_MessageType_ResponseTransactionSign, resp);
+			break;
+		case ErrAddressGeneration:
+			failMsg = _("Wrong return address");
+			// fall through
+		default:
+			fsm_sendResponseFromErrCode(err, NULL, failMsg);
+			break;
 	}
 	layoutHome();
 }
@@ -464,8 +473,8 @@ void fsm_msgGetMixedEntropy(GetMixedEntropy *_msg) {
 	CHECK_BUTTON_PROTECT
 #endif  // DISABLE_GETENTROPY_CONFIRM
 	RESP_INIT(Entropy);
-  GetRawEntropy msg;
-  msg.size = _msg->size;
+	GetRawEntropy msg;
+	msg.size = _msg->size;
 	ErrCode_t ret = msgGetEntropyImpl(&msg, resp, &random_salted_buffer);
 	if (ret == ErrOk) {
 		msg_write(MessageType_MessageType_Entropy, resp);
