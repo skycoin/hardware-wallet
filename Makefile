@@ -29,7 +29,7 @@ VERSION_FIRMWARE        =$(VERSION_FIRMWARE_MAJOR).$(VERSION_FIRMWARE_MINOR).$(V
 # https://semver.org/
 VERSION_IS_SEMANTIC_COMPLIANT=0
 ifeq ($(shell echo $(VERSION_FIRMWARE) | egrep '^[0-9]+\.[0-9]+\.[0-9]+$$'),)
-	VERSION_FIRMWARE    =(shell ./ci-scripts/version/full_version.sh)
+	VERSION_FIRMWARE    =$(shell ./ci-scripts/version/full_version.sh)
 	ifeq ($(shell echo $(VERSION_FIRMWARE) | egrep '^[0-9]+\.[0-9]+\.[0-9]+$$'),) # empty result from egrep
 		VERSION_IS_SEMANTIC_COMPLIANT=0
 		export VERSION_FIRMWARE=$(shell ./ci-scripts/version/full_version.sh)
