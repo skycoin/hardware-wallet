@@ -26,10 +26,20 @@ VERSION_FIRMWARE_MAJOR  =$(shell ./ci-scripts/version/version_major.sh)
 VERSION_FIRMWARE_MINOR  =$(shell ./ci-scripts/version/version_minor.sh)
 VERSION_FIRMWARE_PATCH  =$(shell ./ci-scripts/version/version_patch.sh)
 VERSION_FIRMWARE        =$(VERSION_FIRMWARE_MAJOR).$(VERSION_FIRMWARE_MINOR).$(VERSION_FIRMWARE_PATCH)
-ifeq ($(VERSION_FIRMWARE),..)
-	VERSION_FIRMWARE    =$(shell cat tiny-firmware/VERSION | cut -c 1 --complement)
+# https://semver.org/
+VERSION_IS_SEMANTIC_COMPILANT=0
+ifeq ($(shell echo $(VERSION_FIRMWARE) | egrep '^[0-9]+\.[0-9]+\.[0-9]+$$'),)
+	VERSION_FIRMWARE    =(shell ./ci-scripts/version/full_version.sh)
+	ifeq ($(shell echo $(VERSION_FIRMWARE) | egrep '^[0-9]+\.[0-9]+\.[0-9]+$$'),) # empty result from egrep
+		VERSION_IS_SEMANTIC_COMPILANT=0
+		export VERSION_FIRMWARE=$(shell ./ci-scripts/version/full_version.sh)
+	else
+		VERSION_IS_SEMANTIC_COMPILANT=1
+	endif
+else
+	VERSION_IS_SEMANTIC_COMPILANT=1
 endif
-APPVER                  =v$(VERSION_FIRMWARE)
+export VERSION_IS_SEMANTIC_COMPILANT
 
 ifeq ($(UNAME_S), Darwin)
 	LD_VAR=DYLD_LIBRARY_PATH
@@ -93,12 +103,12 @@ generate-bitmaps:
 
 bootloader: firmware-deps ## Build bootloader (RDP level 0)
 	rm -f tiny-firmware/memory.o tiny-firmware/gen/bitmaps.o # Force rebuild of these two files
-	MEMORY_PROTECT=0 SIGNATURE_PROTECT=1 REVERSE_BUTTONS=1 make -C tiny-firmware/bootloader/ align
+	MEMORY_PROTECT=0 SIGNATURE_PROTECT=1 REVERSE_BUTTONS=1 VERSION_MAJOR=$(VERSION_BOOTLOADER_MAJOR) VERSION_MINOR=$(VERSION_BOOTLOADER_MINOR) VERSION_PATCH=$(VERSION_BOOTLOADER_PATCH) make -C tiny-firmware/bootloader/ align
 	mv tiny-firmware/bootloader/bootloader.bin bootloader-no-memory-protect.bin
 
 bootloader-mem-protect: firmware-deps ## Build bootloader (RDP level 2)
 	rm -f tiny-firmware/memory.o tiny-firmware/gen/bitmaps.o # Force rebuild of these two files
-	MEMORY_PROTECT=1 SIGNATURE_PROTECT=1 REVERSE_BUTTONS=1 make -C tiny-firmware/bootloader/ align
+	MEMORY_PROTECT=1 SIGNATURE_PROTECT=1 REVERSE_BUTTONS=1 VERSION_MAJOR=$(VERSION_BOOTLOADER_MAJOR) VERSION_MINOR=$(VERSION_BOOTLOADER_MINOR) VERSION_PATCH=$(VERSION_BOOTLOADER_PATCH) make -C tiny-firmware/bootloader/ align
 	mv tiny-firmware/bootloader/bootloader.bin bootloader-memory-protected.bin
 
 firmware: tiny-firmware/skycoin.bin ## Build wallet firmware
@@ -122,7 +132,6 @@ release-bootloader-mem-protect:
 	mv bootloader-memory-protected.bin bootloader-mem-protect-v$(VERSION_BOOTLOADER).bin
 
 release-firmware: check-version
-	if [ -z "$(shell echo $(VERSION_FIRMWARE) | egrep '^[0-9]+\.[0-9]+\.[0-9]+$$' )" ]; then echo "Wrong firmware version format"; exit 1; fi
 	DEBUG=0 VERSION_MAJOR=$(VERSION_FIRMWARE_MAJOR) VERSION_MINOR=$(VERSION_FIRMWARE_MINOR) VERSION_PATCH=$(VERSION_FIRMWARE_PATCH) make firmware
 	mv tiny-firmware/skycoin.bin skycoin-v$(VERSION_FIRMWARE).bin
 
@@ -152,7 +161,7 @@ tiny-firmware/bootloader/libskycoin-crypto.so:
 
 tiny-firmware/skycoin.bin: firmware-deps
 	rm -f tiny-firmware/memory.o tiny-firmware/gen/bitmaps.o # Force rebuild of these two files
-	REVERSE_BUTTONS=1 make -C tiny-firmware/ sign
+	REVERSE_BUTTONS=1 VERSION_MAJOR=$(VERSION_FIRMWARE_MAJOR) VERSION_MINOR=$(VERSION_FIRMWARE_MINOR) VERSION_PATCH=$(VERSION_FIRMWARE_PATCH) make -C tiny-firmware/ sign
 
 sign: tiny-firmware/bootloader/libskycoin-crypto.so tiny-firmware/skycoin.bin ## Sign wallet firmware
 	tiny-firmware/bootloader/firmware_sign.py -s -f tiny-firmware/skycoin.bin
