@@ -142,7 +142,7 @@ void fsm_sendResponseFromErrCode(ErrCode_t err, const char *successMsg, const ch
 			failure = FailureType_Failure_FirmwareError;
 			failMsg = _("Unexpected failure");
 			break;
-	} 
+	}
 	fsm_sendFailure(failure, failMsg);
 }
 
@@ -576,7 +576,7 @@ void fsm_msgEntropyAck(EntropyAck *msg)
 			fsm_sendSuccess(_("Recived entropy"));
 			break;
 		default:
-			fsm_sendFailure(FailureType_Failure_FirmwareError, 
+			fsm_sendFailure(FailureType_Failure_FirmwareError,
 							_("Entropy ack failed."));
 			break;
 	}
