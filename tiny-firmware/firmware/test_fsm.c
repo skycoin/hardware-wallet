@@ -648,6 +648,7 @@ START_TEST(test_transactionSign1)
     msg->nbOut = 1;
     ResponseTransactionSign resp = ResponseTransactionSign_init_default;
     ErrCode_t errCode = msgTransactionSignImpl(msg, funcConfirmTxn, &resp);
+    ck_assert_int_eq(errCode, ErrOk);
 
     SkycoinCheckMessageSignature message_signature = {
             .address = "2EU3JbveHdkxW6z5tdhbbB2kRAWvXC2pLzw",
@@ -658,16 +659,13 @@ START_TEST(test_transactionSign1)
     Failure failure_resp = Failure_init_default;
     Success success_resp = Success_init_default;
     ErrCode_t check_sign = msgSkycoinCheckMessageSignatureImpl(&message_signature, &success_resp, &failure_resp);
-
-    printf("EROOOOORRRRRR  => %s \n", failure_resp.message);
-    printf("TODO ESTA RICO  => %s \n", success_resp.message);
-    ck_assert_int_eq(errCode, ErrOk);
     ck_assert_int_eq(check_sign, ErrOk);
 
-//    ck_assert_int_eq(resp.signatures_count, 1);
-//    ck_assert_str_eq(resp.signatures[0], "d11c62b1e0e9abf629b1f5f4699cef9fbc504b45ceedf0047ead686979498218");
-    // TODO Address emitting that signature
-    //  ck_assert_str_eq(address_emitting_that_signature, "2EU3JbveHdkxW6z5tdhbbB2kRAWvXC2pLzw");
+    if (failure_resp.has_message)
+        printf("Error message  => %s \n", failure_resp.message);
+    if (success_resp.has_message)
+        printf("Success message  => %s \n", success_resp.message);
+
 }
 END_TEST
 //
