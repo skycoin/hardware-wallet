@@ -46,11 +46,10 @@ ifeq ($(UNAME_S), Darwin)
 else
 	LD_VAR=LD_LIBRARY_PATH
 endif
-
 check-version: ## Check that the tiny-firmware/VERSION match the current tag
-	./ci-scripts/version/full_version.sh > tiny-firmware/VERSION
-	git diff --exit-code tiny-firmware/VERSION
-	git checkout tiny-firmware/VERSION
+	@./ci-scripts/version/full_version.sh > tiny-firmware/VERSION
+	@if [ $$VERSION_IS_SEMANTIC_COMPLIANT -eq 1 ]; then git diff --exit-code tiny-firmware/VERSION; exit 1; fi
+	@git checkout tiny-firmware/VERSION
 
 install-linters-Darwin:
 	brew install yamllint
