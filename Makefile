@@ -48,7 +48,7 @@ else
 endif
 check-version: ## Check that the tiny-firmware/VERSION match the current tag
 	@./ci-scripts/version/full_version.sh > tiny-firmware/VERSION
-	@if [ $$VERSION_IS_SEMANTIC_COMPLIANT -eq 1 ]; then git diff --exit-code tiny-firmware/VERSION; exit 1; fi
+	@if [ $$VERSION_IS_SEMANTIC_COMPLIANT -eq 1 ]; then git diff --exit-code tiny-firmware/VERSION; fi
 	@git checkout tiny-firmware/VERSION
 
 install-linters-Darwin:
@@ -178,8 +178,8 @@ full-firmware: bootloader firmware ## Build full firmware (RDP level 0)
 	mv tiny-firmware/bootloader/combine/combined.bin full-firmware-no-mem-protect.bin
 
 emulator: build-deps ## Build emulator
-	EMULATOR=1 make -C tiny-firmware/emulator/
-	EMULATOR=1 make -C tiny-firmware/
+	EMULATOR=1 VERSION_MAJOR=$(VERSION_FIRMWARE_MAJOR) VERSION_MINOR=$(VERSION_FIRMWARE_MINOR) VERSION_PATCH=$(VERSION_FIRMWARE_PATCH) make -C tiny-firmware/emulator/
+	EMULATOR=1 VERSION_MAJOR=$(VERSION_FIRMWARE_MAJOR) VERSION_MINOR=$(VERSION_FIRMWARE_MINOR) VERSION_PATCH=$(VERSION_FIRMWARE_PATCH) make -C tiny-firmware/
 	mv tiny-firmware/skycoin-emulator emulator
 
 run-emulator: emulator ## Run wallet emulator
