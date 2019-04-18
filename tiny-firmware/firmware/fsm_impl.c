@@ -272,7 +272,7 @@ ErrCode_t msgGetFeaturesImpl(Features *resp)
 	resp->has_fw_minor = true;       resp->fw_minor = VERSION_MINOR;
 	resp->has_fw_patch = true;       resp->fw_patch = VERSION_PATCH;
 #else  // VERSION_IS_SEMANTIC_COMPLIANT == 1
-	resp->has_fw_version_head = true; strcpy(resp->fw_version_head, STR(APPVER));
+	resp->has_fw_version_head = true; sprintf(resp->fw_version_head, "%x", APPVER);
 #endif  // VERSION_IS_SEMANTIC_COMPLIANT == 1
 	resp->has_device_id = true;      strlcpy(resp->device_id, storage_uuid_str, sizeof(resp->device_id));
 	resp->has_pin_protection = true; resp->pin_protection = storage_hasPin();
