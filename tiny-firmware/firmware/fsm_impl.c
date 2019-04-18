@@ -245,7 +245,7 @@ ErrCode_t msgApplySettingsImpl(ApplySettings *msg)
 	_Static_assert(
 		sizeof(msg->label) == DEVICE_LABEL_SIZE,
 		"device label size inconsitent betwen protocol and final storage");
-	CHECK_PARAM_RET_ERR_CODE(msg->has_label || msg->has_language || msg->has_use_passphrase || msg->has_homescreen,
+	CHECK_PRECONDITION_RET_ERR_CODE(msg->has_label || msg->has_language || msg->has_use_passphrase || msg->has_homescreen,
 				_("No setting provided"));
 	if (msg->has_label) {
 		storage_setLabel(msg->label);

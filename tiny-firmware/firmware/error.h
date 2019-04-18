@@ -71,6 +71,7 @@ enum ErrCode
 	ErrUserConfirmation = ERROR_CODE(PkgGeneric, ReasonUserConfirmation), /*!< User confirmation required to complete action */
 	ErrInvalidChecksum = ERROR_CODE(PkgGeneric, ReasonInvalidChecksum), /*!< Checksum verification failed */
 	ErrActionCancelled = ERROR_CODE(PkgGeneric, ReasonActionCancelled), /*!< Action cancelled by user */
+	ErrPreconditionFailed = ERROR_CODE(PkgGeneric, ReasonInvalidState), /*!< Message precondition failed */
 	ErrPinRequired = ERROR_CODE(PkgPinChk, ReasonInvalidState),          /*!< Action requires PIN and is not configured */
 	ErrPinMismatch = ERROR_CODE(PkgPinChk, ReasonValueError),          /*!< Action requires PIN and it didn't match */
 	ErrPinCancelled = ERROR_CODE(PkgPinChk, ReasonActionCancelled), /*!< Action requires PIN and was cancelled by user */

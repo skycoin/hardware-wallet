@@ -381,32 +381,32 @@ START_TEST(test_msgApplySettingsNoSettingsFailure)
 
 	// No fields set
 	ApplySettings msg = ApplySettings_init_zero;
-	ck_assert_int_eq(msgApplySettingsImpl(&msg), ErrInvalidArg);
+	ck_assert_int_eq(msgApplySettingsImpl(&msg), ErrPreconditionFailed);
 
 	// label value set but all has_* unset
 	memset(&msg, 0, sizeof(msg));
 	char raw_label[] = {
 		"my custom device label"};
 	strncpy(msg.label, raw_label, sizeof(msg.label));
-	ck_assert_int_eq(msgApplySettingsImpl(&msg), ErrInvalidArg);
+	ck_assert_int_eq(msgApplySettingsImpl(&msg), ErrPreconditionFailed);
 
 	// use_passphrase value set but all has_* unset
 	memset(&msg, 0, sizeof(msg));
 	msg.use_passphrase = true;
-	ck_assert_int_eq(msgApplySettingsImpl(&msg), ErrInvalidArg);
+	ck_assert_int_eq(msgApplySettingsImpl(&msg), ErrPreconditionFailed);
 
 	// language value set but all has_* unset
 	memset(&msg, 0, sizeof(msg));
 	char language[] = {
 		"english"};
 	strncpy(msg.language, language, sizeof(msg.language));
-	ck_assert_int_eq(msgApplySettingsImpl(&msg), ErrInvalidArg);
+	ck_assert_int_eq(msgApplySettingsImpl(&msg), ErrPreconditionFailed);
 
 	// All values set but all has_* unset
 	memset(&msg, 0, sizeof(msg));
 	strncpy(msg.label, raw_label, sizeof(msg.label));
 	strncpy(msg.language, language, sizeof(msg.language));
-	ck_assert_int_eq(msgApplySettingsImpl(&msg), ErrInvalidArg);
+	ck_assert_int_eq(msgApplySettingsImpl(&msg), ErrPreconditionFailed);
 }
 END_TEST
 
