@@ -143,6 +143,35 @@ ErrCode_t msgSignTransactionMessageImpl(uint8_t* message_digest, uint32_t index,
 	return res;
 }
 
+int fsm_getKeyPairAtIndex(uint32_t nbAddress, uint8_t* pubkey, uint8_t* seckey, ResponseSkycoinAddress* respSkycoinAddress, uint32_t start_index)
+{
+	const char* mnemo = storage_getFullSeed();
+	uint8_t seed[33] = {0};
+	uint8_t nextSeed[SHA256_DIGEST_LENGTH] = {0};
+	size_t size_address = 36;
+	if (mnemo == NULL || nbAddress == 0) {
+		return -1;
+	}
+	generate_deterministic_key_pair_iterator((const uint8_t *)mnemo, strlen(mnemo), nextSeed, seckey, pubkey);
+	if (respSkycoinAddress != NULL && start_index == 0) {
+		generate_base58_address_from_pubkey(pubkey, respSkycoinAddress->addresses[0], &size_address);
+		respSkycoinAddress->addresses_count++;
+	}
+	memcpy(seed, nextSeed, 32);
+	for (uint32_t i = 0; i < nbAddress + start_index - 1; ++i)
+	{
+		generate_deterministic_key_pair_iterator(seed, 32, nextSeed, seckey, pubkey);
+		memcpy(seed, nextSeed, 32);
+		seed[32] = 0;
+		if (respSkycoinAddress != NULL && ((i + 1) >= start_index)) {
+			size_address = 36;
+			generate_base58_address_from_pubkey(pubkey, respSkycoinAddress->addresses[respSkycoinAddress->addresses_count], &size_address);
+			respSkycoinAddress->addresses_count++;
+		}
+	}
+	return 0;
+}
+
 ErrCode_t msgSkycoinAddressImpl(SkycoinAddress* msg, ResponseSkycoinAddress *resp)
 {
 	uint8_t seckey[32] = {0};
@@ -167,13 +196,13 @@ ErrCode_t msgSkycoinAddressImpl(SkycoinAddress* msg, ResponseSkycoinAddress *res
 
 ErrCode_t msgSkycoinCheckMessageSignatureImpl(SkycoinCheckMessageSignature* msg, Success *successResp, Failure *failureResp)
 {
-	// NOTE(denisacostaq@gmail.com): -1 because the end of string ('\0')
+	// NOTE(): -1 because the end of string ('\0')
 	// /2 because the hex to buff conversion.
 	uint8_t sign[(sizeof(msg->signature) - 1)/2];
-	// NOTE(denisacostaq@gmail.com): -1 because the end of string ('\0')
+	// NOTE(): -1 because the end of string ('\0')
 	char pubkeybase58[sizeof(msg->address) - 1];
 	uint8_t pubkey[33] = {0};
-	// NOTE(denisacostaq@gmail.com): -1 because the end of string ('\0')
+	// NOTE(): -1 because the end of string ('\0')
 	// /2 because the hex to buff conversion.
 	uint8_t digest[(sizeof(msg->message) - 1) / 2] = {0};
 	//     RESP_INIT(Success);
@@ -216,7 +245,7 @@ ErrCode_t msgApplySettingsImpl(ApplySettings *msg)
 	_Static_assert(
 		sizeof(msg->label) == DEVICE_LABEL_SIZE,
 		"device label size inconsitent betwen protocol and final storage");
-	CHECK_PARAM_RET_ERR_CODE(msg->has_label || msg->has_language || msg->has_use_passphrase || msg->has_homescreen,
+	CHECK_PRECONDITION_RET_ERR_CODE(msg->has_label || msg->has_language || msg->has_use_passphrase || msg->has_homescreen,
 				_("No setting provided"));
 	if (msg->has_label) {
 		storage_setLabel(msg->label);
@@ -283,7 +312,7 @@ ErrCode_t msgGetFeaturesImpl(Features *resp)
 	return ErrOk;
 }
 
-ErrCode_t msgTransactionSignImpl(TransactionSign *msg, ErrCode_t (*funcConfirmTxn)(char*, char *, TransactionSign*, uint32_t)) {
+ErrCode_t msgTransactionSignImpl(TransactionSign *msg, ErrCode_t (*funcConfirmTxn)(char*, char *, TransactionSign*, uint32_t), ResponseTransactionSign *resp) {
 	#if EMULATOR
 		printf("%s: %d. nbOut: %d\n",
 			_("Transaction signed nbIn"),
@@ -336,6 +365,7 @@ ErrCode_t msgTransactionSignImpl(TransactionSign *msg, ErrCode_t (*funcConfirmTx
 					return ErrAddressGeneration;
 			}
 		} else {
+      // NOTICE: A single output per address is assumed
 			ErrCode_t err = funcConfirmTxn(strCoin, strHour, msg, i);
 			if (err != ErrOk)
 				return err;
@@ -345,15 +375,17 @@ ErrCode_t msgTransactionSignImpl(TransactionSign *msg, ErrCode_t (*funcConfirmTx
 
 	CHECK_PIN_UNCACHED_RET_ERR_CODE
 
-	RESP_INIT(ResponseTransactionSign);
 	for (uint32_t i = 0; i < msg->nbIn; ++i) {
 		uint8_t digest[32];
 		transaction_msgToSign(&transaction, i, digest);
-		if (msgSignTransactionMessageImpl(digest, msg->transactionIn[i].index, resp->signatures[resp->signatures_count]) != ErrOk) {
-			//fsm_sendFailure(FailureType_Failure_InvalidSignature, NULL);
-			//layoutHome();
-			return ErrInvalidSignature;
-		}
+    // Only sign inputs owned by Skywallet device
+    if (msg->transactionIn[i].has_index) {
+			if (msgSignTransactionMessageImpl(digest, msg->transactionIn[i].index, resp->signatures[resp->signatures_count]) != ErrOk) {
+				//fsm_sendFailure(FailureType_Failure_InvalidSignature, NULL);
+				//layoutHome();
+				return ErrInvalidSignature;
+			}
+    }
 		resp->signatures_count++;
 	#if EMULATOR
 		char str[64];
@@ -363,6 +395,10 @@ ErrCode_t msgTransactionSignImpl(TransactionSign *msg, ErrCode_t (*funcConfirmTx
 		printf("Nb signatures: %d\n", resp->signatures_count);
 	#endif
 	}
+  if (resp->signatures_count != msg->nbIn) {
+    // Ensure number of sigs and inputs is the same. Mismatch should never happen.
+    return ErrFailed;
+  }
 	#if EMULATOR
 		char str[64];
 		tohex(str, transaction.innerHash, 32);
@@ -370,7 +406,6 @@ ErrCode_t msgTransactionSignImpl(TransactionSign *msg, ErrCode_t (*funcConfirmTx
 		printf("Signed message:  %s\n", resp->signatures[0]);
 		printf("Nb signatures: %d\n", resp->signatures_count);
 	#endif
-	msg_write(MessageType_MessageType_ResponseTransactionSign, resp);
 	//layoutHome();
 	return ErrOk;
 }
@@ -420,7 +455,6 @@ ErrCode_t msgWipeDeviceImpl(WipeDevice *msg) {
 }
 
 ErrCode_t msgSetMnemonicImpl(SetMnemonic *msg) {
-	RESP_INIT(Success);
 	CHECK_MNEMONIC_CHECKSUM_RET_ERR_CODE
 	storage_setMnemonic(msg->mnemonic);
 	storage_setNeedsBackup(true);
@@ -483,6 +517,7 @@ ErrCode_t msgRecoveryDeviceImpl(RecoveryDevice *msg, ErrCode_t (*funcConfirmReco
 	const bool dry_run = msg->has_dry_run ? msg->dry_run : false;
 	if (dry_run) {
 		CHECK_PIN_RET_ERR_CODE
+		CHECK_INITIALIZED_RET_ERR_CODE
 	} else {
 		CHECK_NOT_INITIALIZED_RET_ERR_CODE
 	}

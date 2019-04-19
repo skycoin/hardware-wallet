@@ -33,6 +33,11 @@
 		return; \
 	}
 
+#define CHECK_INITIALIZED_RET_ERR_CODE \
+	if (!storage_isInitialized()) { \
+		return ErrInitialized; \
+	}
+
 #define CHECK_NOT_INITIALIZED \
 	if (storage_isInitialized()) { \
 		fsm_sendFailure(FailureType_Failure_UnexpectedMessage, _("Device is already initialized. Use Wipe first.")); \
@@ -78,6 +83,18 @@
 		return ErrInvalidArg; \
 	}
 
+#define CHECK_PRECONDITION(cond, errormsg) \
+	if (!(cond)) { \
+		fsm_sendFailure(FailureType_Failure_DataError, (errormsg)); \
+		layoutHome(); \
+		return; \
+	}
+
+#define CHECK_PRECONDITION_RET_ERR_CODE(cond, errormsg) \
+	if (!(cond)) { \
+		return ErrPreconditionFailed; \
+	}
+
 #define CHECK_BUTTON_PROTECT \
 	if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) { \
 		fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL); \
@@ -87,6 +104,7 @@
 
 #define CHECK_BUTTON_PROTECT_RET_ERR_CODE \
 	if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) { \
+		layoutHome(); \
 		return ErrActionCancelled; \
 	}
 
@@ -128,19 +146,17 @@
 		return ErrInvalidValue; \
 	}
 
-ErrCode_t msgGenerateMnemonicImpl(
-		GenerateMnemonic* msg,
-		void (*random_buffer_func)(uint8_t *buf, size_t len));
+int fsm_getKeyPairAtIndex(uint32_t nbAddress, uint8_t* pubkey, uint8_t* seckey, ResponseSkycoinAddress* respSkycoinAddress, uint32_t start_index);
+
+ErrCode_t msgGenerateMnemonicImpl(GenerateMnemonic* msg, void (*random_buffer_func)(uint8_t *buf, size_t len));
 ErrCode_t msgEntropyAckImpl(EntropyAck* msg);
-ErrCode_t msgSkycoinSignMessageImpl(SkycoinSignMessage* msg,
-							ResponseSkycoinSignMessage *msg_resp);
-ErrCode_t msgSignTransactionMessageImpl(uint8_t* message_digest, uint32_t index,
-										char* signed_message);
+ErrCode_t msgSkycoinSignMessageImpl(SkycoinSignMessage* msg, ResponseSkycoinSignMessage *msg_resp);
+ErrCode_t msgSignTransactionMessageImpl(uint8_t* message_digest, uint32_t index, char* signed_message);
 ErrCode_t msgSkycoinAddressImpl(SkycoinAddress* msg, ResponseSkycoinAddress *resp);
 ErrCode_t msgSkycoinCheckMessageSignatureImpl(SkycoinCheckMessageSignature* msg, Success *successResp, Failure *failureResp);
 ErrCode_t msgApplySettingsImpl(ApplySettings *msg);
 ErrCode_t msgGetFeaturesImpl(Features *resp);
-ErrCode_t msgTransactionSignImpl(TransactionSign *msg, ErrCode_t (*)(char*, char *, TransactionSign*, uint32_t));
+ErrCode_t msgTransactionSignImpl(TransactionSign *msg, ErrCode_t (*)(char*, char *, TransactionSign*, uint32_t), ResponseTransactionSign*);
 ErrCode_t msgPingImpl(Ping *msg);
 ErrCode_t msgChangePinImpl(ChangePin *msg, const char* (*)(PinMatrixRequestType, const char *));
 ErrCode_t msgWipeDeviceImpl(WipeDevice *msg);
