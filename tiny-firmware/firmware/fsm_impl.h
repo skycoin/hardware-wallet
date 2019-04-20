@@ -83,6 +83,18 @@
 		return ErrInvalidArg; \
 	}
 
+#define CHECK_PRECONDITION(cond, errormsg) \
+	if (!(cond)) { \
+		fsm_sendFailure(FailureType_Failure_DataError, (errormsg)); \
+		layoutHome(); \
+		return; \
+	}
+
+#define CHECK_PRECONDITION_RET_ERR_CODE(cond, errormsg) \
+	if (!(cond)) { \
+		return ErrPreconditionFailed; \
+	}
+
 #define CHECK_BUTTON_PROTECT \
 	if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) { \
 		fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL); \

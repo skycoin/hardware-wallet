@@ -73,6 +73,12 @@ void fsm_sendResponseFromErrCode(ErrCode_t err, const char *successMsg, const ch
 				failMsg = _("Invalid argument");
 			}
 			break;
+		case ErrPreconditionFailed:
+			failure = FailureType_Failure_DataError;
+			if (failMsg == NULL) {
+				failMsg = _("Precondition failed");
+			}
+			break;
 		case ErrIndexValue:
 			failure = FailureType_Failure_DataError;
 			if (failMsg == NULL) {
@@ -265,7 +271,7 @@ void fsm_msgApplySettings(ApplySettings *msg)
 	ErrCode_t err = msgApplySettingsImpl(msg);
 	char *failMsg = NULL;
 	switch (err) {
-		case ErrInvalidArg:
+		case ErrPreconditionFailed:
 			failMsg = _("No setting provided");
 			break;
 		default:
