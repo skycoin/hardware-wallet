@@ -650,21 +650,18 @@ START_TEST(test_transactionSign1)
     ErrCode_t errCode = msgTransactionSignImpl(msg, funcConfirmTxn, &resp);
     ck_assert_int_eq(errCode, ErrOk);
 
-    SkycoinCheckMessageSignature message_signature = {
-            .address = "2EU3JbveHdkxW6z5tdhbbB2kRAWvXC2pLzw",
-            .message = "457648543755580ad40ab461bbef2b0ffe19f2130f2f220cbb2f196b05d436b4"
-    };
-    strcpy(message_signature.signature, resp.signatures[0]);
+    SkycoinCheckMessageSignature message_signature = SkycoinCheckMessageSignature_init_zero;
+    memcpy(message_signature.address, "2EU3JbveHdkxW6z5tdhbbB2kRAWvXC2pLzw", sizeof(message_signature.address));
+    strncpy(message_signature.message, "d11c62b1e0e9abf629b1f5f4699cef9fbc504b45ceedf0047ead686979498218", sizeof(message_signature.message));
+    memcpy(message_signature.signature, resp.signatures[0], sizeof(message_signature.signature));
 
     Failure failure_resp = Failure_init_default;
     Success success_resp = Success_init_default;
     ErrCode_t check_sign = msgSkycoinCheckMessageSignatureImpl(&message_signature, &success_resp, &failure_resp);
-    ck_assert_int_eq(check_sign, ErrOk);
 
-    if (failure_resp.has_message)
-        printf("Error message  => %s \n", failure_resp.message);
-    if (success_resp.has_message)
-        printf("Success message  => %s \n", success_resp.message);
+    printf("Error message  => %s \n", failure_resp.message);
+    printf("Success message  => %s \n", success_resp.message);
+    ck_assert_int_eq(check_sign, ErrOk);
 
 }
 END_TEST
