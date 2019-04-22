@@ -176,5 +176,8 @@ check-trng: ## Run test tools over random buffers
 	make -C trng-test trng-generate-buffers
 	make -C trng-test run-tests
 
+verify-protob-hash: ## verify protob submodule hash
+	$(shell ./ci-scripts/verify_protob_hash.sh)
+
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'

@@ -28,10 +28,11 @@ before_script:
     fi
   # Install OS-specific test and build dependencies
   - eval "./ci-scripts/install-${TRAVIS_OS_NAME}.sh"
-  - eval "./ci-scripts/verify_protob_hash.sh"
   # Install linters
   - make install-linters
+
 script:
+  - make verify-protob-hash
   - find tiny-firmware/protob/nanopb/vendor/nanopb
   - make lint
   - make -C tiny-firmware/protob install-deps-nanopb
