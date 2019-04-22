@@ -44,9 +44,9 @@ script:
   - if [[ $TRAVIS_TAG != '' ]]; then
     make release;
     VERSION_BOOTLOADER=$(cat tiny-firmware/bootloader/VERSION);
-    ID_VENDOR=12602
-    ID_PRODUCT=1
-    export COMBINED_VERSION=${VERSION_BOOTLOADER}-${TRAVIS_TAG}-${ID_VENDOR}-${ID_PRODUCT}-${LANG}
+    ID_VENDOR=12602;
+    ID_PRODUCT=1;
+    export COMBINED_VERSION=${VERSION_BOOTLOADER}-${TRAVIS_TAG}-${ID_VENDOR}-${ID_PRODUCT}-${LANG};
     fi
 notifications:
   # https://github.com/kvld/travisci-telegram TravisCI Telegram Bot integration
