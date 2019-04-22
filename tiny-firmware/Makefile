@@ -125,7 +125,7 @@ endif
 endif
 
 ifneq ($(EMULATOR),1)
-NAME  = skycoin
+NAME  = skyfirmware
 else
 NAME = skycoin-emulator
 endif
