@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 
 # Get commit hash from submodule
-cd tiny-firmware/protob/
-PROTOB_HASH=$(git log --pretty=oneline | head -1 | cut -c 1-40)
+PROTOB_HASH=$(git -C tiny-firmware/protob/ rev-parse HEAD)
 
 # clone protob repository from git
 mkdir -p tmp/hardware-wallet-protob
