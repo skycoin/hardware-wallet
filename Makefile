@@ -152,10 +152,9 @@ release-combined-mem-protect: release-bootloader-mem-protect release-firmware ##
 	mv tiny-firmware/bootloader/combine/combined.bin skywallet-full-mem-protect-$(COMBINED_VERSION).bin
 
 release: release-combined release-combined-mem-protect ## Create a release for production
-	md5sum \
-	skyfirmware-v$(VERSION_FIRMWARE).bin \
-	skywallet-full-no-mem-protect-$(COMBINED_VERSION).bin \
-	skywallet-full-mem-protect-$(COMBINED_VERSION).bin > release.md5
+	gpg --armor --detach-sign skyfirmware-v$(VERSION_FIRMWARE).bin
+	gpg --armor --detach-sign skywallet-full-no-mem-protect-$(COMBINED_VERSION).bin
+	gpg --armor --detach-sign skywallet-full-mem-protect-$(COMBINED_VERSION).bin
 
 tiny-firmware/bootloader/libskycoin-crypto.so:
 	make -C skycoin-api clean
