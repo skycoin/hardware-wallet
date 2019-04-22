@@ -320,9 +320,9 @@ START_TEST(test_msgApplySettingsLabelGetFeaturesSuccess)
 	ck_assert_int_eq(storage_hasLabel(), true);
 	ck_assert_str_eq(storage_getLabel(), raw_label);
 	Features features = Features_init_zero;
-    msgGetFeaturesImpl(&features);
-    ck_assert_int_eq(features.has_firmware_features, (int) true);
-    ck_assert_int_eq(features.firmware_features, 4);
+	msgGetFeaturesImpl(&features);
+	ck_assert_int_eq(features.has_firmware_features, (int) true);
+	ck_assert_int_eq(features.firmware_features, 4);
 	ck_assert_int_eq((int) features.has_label, (int) true);
 	ck_assert_str_eq(features.label, raw_label);
 }
@@ -424,9 +424,9 @@ START_TEST(test_msgGetFeatures)
 {
 	RESP_INIT(Features);
 	msgGetFeaturesImpl(resp);
-    ck_assert_int_eq(resp->has_firmware_features, (int) true);
-    ck_assert_int_eq(resp->firmware_features, 4);
-    ck_assert_int_eq(resp->has_fw_major, 1);
+	ck_assert_int_eq(resp->has_firmware_features, (int) true);
+	ck_assert_int_eq(resp->firmware_features, 4);
+	ck_assert_int_eq(resp->has_fw_major, 1);
 	ck_assert_int_eq(resp->has_fw_minor, 1);
 	ck_assert_int_eq(resp->has_fw_patch, 1);
 	ck_assert_int_eq(VERSION_MAJOR, resp->fw_major);
@@ -549,7 +549,7 @@ START_TEST(test_msgSkycoinAddressesAll)
   ck_assert_int_eq(resp->addresses_count, msgAddr.address_n);
   int i;
   for (i = 0; i < resp->addresses_count; ++i) {
-    ck_assert_str_eq(resp->addresses[i], TEST_MANY_ADDRESSES[i]);
+	ck_assert_str_eq(resp->addresses[i], TEST_MANY_ADDRESSES[i]);
   }
 }
 END_TEST
@@ -572,7 +572,7 @@ START_TEST(test_msgSkycoinAddressesStartIndex)
   ck_assert_int_eq(resp->addresses_count, msgAddr.address_n);
   int i, index;
   for (i = 0, index = msgAddr.start_index; i < resp->addresses_count; ++i, ++index) {
-    ck_assert_str_eq(resp->addresses[i], TEST_MANY_ADDRESSES[index]);
+	ck_assert_str_eq(resp->addresses[i], TEST_MANY_ADDRESSES[index]);
   }
 }
 END_TEST
