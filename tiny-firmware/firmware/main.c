@@ -28,14 +28,14 @@
 
 int main(void)
 {
-#ifndef APPVER
+#if defined(EMULATOR) && EMULATOR == 1
 	setup();
 	__stack_chk_guard = random32(); // this supports compiler provided unpredictable stack protection checks
 	oledInit();
-#else
+#else  // defined(EMULATOR) && EMULATOR == 1
 	setupApp();
 	__stack_chk_guard = random32(); // this supports compiler provided unpredictable stack protection checks
-#endif
+#endif  // defined(EMULATOR) && EMULATOR == 1
 
 #if FASTFLASH
 	uint16_t state = gpio_port_read(BTN_PORT);
@@ -46,10 +46,10 @@ int main(void)
 
 	timer_init();
 
-#ifdef APPVER
+#if !defined(EMULATOR) || EMULATOR == 0
 	// enable MPU (Memory Protection Unit)
 	mpu_config();
-#endif
+#endif  // !defined(EMULATOR) || EMULATOR == 0
 
 #if DEBUG_LINK
 	oledSetDebugLink(1);

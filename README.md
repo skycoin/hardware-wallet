@@ -77,7 +77,7 @@ However for the default `brew` installation in practice this should not be neede
 ### Build a bootloader
 
 ```
-make bootloader # Your firmware is bootloader-no-memory-protect.bin
+make bootloader # Your firmware is skybootloader-no-memory-protect.bin
 ```
 
 ### Build a bootloader with memory protection enabled
@@ -93,13 +93,13 @@ make bootloader-mem-protect # Your firmware is bootloader-memory-protected.bin
 ### Build a firmware
 
 ```
-make firmware  # Your firmware is tiny-firmware/skycoin.bin
+make firmware  # Your firmware is tiny-firmware/skyfirmware.bin
 ```
 
 ### Sign firmware
 
 ```
-make sign # Your firmware is tiny-firmware/skycoin.bin
+make sign # Your firmware is tiny-firmware/skyfirmware.bin
 ```
 
 ### Combine bootloader and firmware
@@ -151,8 +151,8 @@ The project releases production-ready binaries combining firmware and bootloader
 
 - **Bootloader version**: Consecutive bootloader version identifier
 - **Firmware version**: Consecutive firmware version identifier
-- **SoC identifier**: for the MCU model and combination of peripherals considered for building the specific combined binary release. A value of `0` should be reserved to developer's local environment
-- **Country Exit Code**: to cope with i18n and locale specific features. At present only a value of `1` is supported for American English (i.e. `en_US`).
+- **SoC identifier**: With the `Manufacturer` and `product` identifiers reported in hidraw `USB` driver.
+- **Country Exit Code**: to cope with i18n and locale specific features. At present only a value of `en` is supported for English according to `ISO-639-1`.
 
 Version identifiers are strings including, in the same order, the numbers mentioned above separated by dots.
 

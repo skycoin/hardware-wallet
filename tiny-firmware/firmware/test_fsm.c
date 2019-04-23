@@ -426,12 +426,27 @@ START_TEST(test_msgGetFeatures)
 	msgGetFeaturesImpl(resp);
 	ck_assert_int_eq(resp->has_firmware_features, (int) true);
 	ck_assert_int_eq(resp->firmware_features, 4);
+#if VERSION_IS_SEMANTIC_COMPLIANT == 1
+#ifdef VERSION_MAJOR
 	ck_assert_int_eq(resp->has_fw_major, 1);
-	ck_assert_int_eq(resp->has_fw_minor, 1);
-	ck_assert_int_eq(resp->has_fw_patch, 1);
 	ck_assert_int_eq(VERSION_MAJOR, resp->fw_major);
+#endif  // VERSION_MAJOR
+#ifdef VERSION_MINOR
+	ck_assert_int_eq(resp->has_fw_minor, 1);
 	ck_assert_int_eq(VERSION_MINOR, resp->fw_minor);
+#endif  // VERSION_MINOR
+#ifdef VERSION_PATCH
+	ck_assert_int_eq(resp->has_fw_patch, 1);
 	ck_assert_int_eq(VERSION_PATCH, resp->fw_patch);
+#endif  // VERSION_PATCH
+#else  // VERSION_IS_SEMANTIC_COMPLIANT == 1
+#ifdef APPVER
+	char fw_version_head[sizeof(resp->fw_version_head)] = {0};
+	sprintf(fw_version_head, "%x", APPVER);
+	ck_assert_str_eq(fw_version_head, resp->fw_version_head);
+	resp->has_fw_version_head = true; 
+#endif  // APPVER
+#endif  // VERSION_IS_SEMANTIC_COMPLIANT == 1
 }
 END_TEST
 

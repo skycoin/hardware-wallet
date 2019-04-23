@@ -267,9 +267,21 @@ ErrCode_t msgApplySettingsImpl(ApplySettings *msg)
 ErrCode_t msgGetFeaturesImpl(Features *resp)
 {
 	resp->has_vendor = true;         strlcpy(resp->vendor, "Skycoin Foundation", sizeof(resp->vendor));
+#if VERSION_IS_SEMANTIC_COMPLIANT == 1
+#ifdef VERSION_MAJOR
 	resp->has_fw_major = true;       resp->fw_major = VERSION_MAJOR;
+#endif  // VERSION_MAJOR
+#ifdef VERSION_MINOR
 	resp->has_fw_minor = true;       resp->fw_minor = VERSION_MINOR;
+#endif  // VERSION_MINOR
+#ifdef VERSION_PATCH
 	resp->has_fw_patch = true;       resp->fw_patch = VERSION_PATCH;
+#endif  // VERSION_PATCH
+#else  // VERSION_IS_SEMANTIC_COMPLIANT == 1
+#ifdef APPVER
+	resp->has_fw_version_head = true; sprintf(resp->fw_version_head, "%x", APPVER);
+#endif  // APPVER
+#endif  // VERSION_IS_SEMANTIC_COMPLIANT == 1
 	resp->has_device_id = true;      strlcpy(resp->device_id, storage_uuid_str, sizeof(resp->device_id));
 	resp->has_pin_protection = true; resp->pin_protection = storage_hasPin();
 	resp->has_passphrase_protection = true; resp->passphrase_protection = storage_hasPassphraseProtection();
