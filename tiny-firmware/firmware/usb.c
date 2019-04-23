@@ -35,7 +35,7 @@
 
 #define USB_STRINGS \
 	X(MANUFACTURER, "SkycoinFoundation") \
-	X(PRODUCT, "SKYCOIN") \
+	X(PRODUCT, "SKYWALLET") \
 	X(SERIAL_NUMBER, storage_uuid_str) \
 	X(INTERFACE_MAIN,  "SKYCOIN Interface") 
 
