@@ -38,8 +38,6 @@ script:
   - make emulator
   - make clean
   - make full-firmware
-  - md5sum tiny-firmware/bootloader/combine/*.bin
-  - md5sum full-firmware-no-mem-protect.bin
   - make clean
   - if [[ $TRAVIS_TAG != '' ]]; then
     make release;
