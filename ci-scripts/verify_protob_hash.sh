@@ -11,6 +11,6 @@ if echo "$commits" | egrep "\"sha\": \"$PROTOB_HASH\"" > /dev/null
 then
     echo "success"
 else
-    echo "commit hash not present in recent 50 master commits"
+    echo "commit hash $PROTOB_HASH not present in recent 50 master commits"
     exit 1
 fi
