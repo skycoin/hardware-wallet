@@ -187,6 +187,9 @@ START_TEST(test_msgSkycoinCheckMessageSignatureOk)
 	strncpy(checkMsg.message, msgSign.message, sizeof(checkMsg.message));
 	memcpy(checkMsg.address, respAddress->addresses[0], sizeof(checkMsg.address));
 	memcpy(checkMsg.signature, respSign->signed_message, sizeof(checkMsg.signature));
+	printf("Message =>> %s\n", checkMsg.message);
+	printf("Address =>> %s\n", checkMsg.address);
+	printf("Signature =>> %s\n", checkMsg.signature);
 	uint8_t msg_success_resp_check[MSG_OUT_SIZE] __attribute__ ((aligned)) = {0};
 	uint8_t msg_fail_resp_check[MSG_OUT_SIZE] __attribute__ ((aligned)) = {0};
 	Success *successRespCheck = (Success *) (void *) msg_success_resp_check;
@@ -642,22 +645,24 @@ START_TEST(test_transactionSign1)
         }
     };
     TransactionSign* msg = malloc(sizeof(TransactionSign));
-    memcpy(msg->transactionIn, &transactionInputs, 8*sizeof(SkycoinTransactionInput));
-    memcpy(msg->transactionOut, &transactionOutputs, 8*sizeof(SkycoinTransactionOutput));
+    memcpy(msg->transactionIn, &transactionInputs, sizeof(SkycoinTransactionInput));
+    memcpy(msg->transactionOut, &transactionOutputs, sizeof(SkycoinTransactionOutput));
     msg->nbIn = 1;
     msg->nbOut = 1;
+    msg->transactionIn_count = 1;
+    msg->transactionOut_count = 1;
     ResponseTransactionSign resp = ResponseTransactionSign_init_default;
     ErrCode_t errCode = msgTransactionSignImpl(msg, funcConfirmTxn, &resp);
     ck_assert_int_eq(errCode, ErrOk);
 
-    SkycoinCheckMessageSignature message_signature = SkycoinCheckMessageSignature_init_zero;
-    memcpy(message_signature.address, "2EU3JbveHdkxW6z5tdhbbB2kRAWvXC2pLzw", sizeof(message_signature.address));
-    strncpy(message_signature.message, "d11c62b1e0e9abf629b1f5f4699cef9fbc504b45ceedf0047ead686979498218", sizeof(message_signature.message));
-    memcpy(message_signature.signature, resp.signatures[0], sizeof(message_signature.signature));
+    SkycoinCheckMessageSignature* msg_s = malloc(sizeof(SkycoinCheckMessageSignature));
+    memcpy(msg_s->address, "2EU3JbveHdkxW6z5tdhbbB2kRAWvXC2pLzw", sizeof(msg_s->address));
+    strncpy(msg_s->message, "d11c62b1e0e9abf629b1f5f4699cef9fbc504b45ceedf0047ead686979498218", sizeof(msg_s->message));
+    memcpy(msg_s->signature, resp.signatures[0], sizeof(msg_s->signature));
 
     Failure failure_resp = Failure_init_default;
     Success success_resp = Success_init_default;
-    ErrCode_t check_sign = msgSkycoinCheckMessageSignatureImpl(&message_signature, &success_resp, &failure_resp);
+    ErrCode_t check_sign = msgSkycoinCheckMessageSignatureImpl(msg_s, &success_resp, &failure_resp);
 
     printf("Error message  => %s \n", failure_resp.message);
     printf("Success message  => %s \n", success_resp.message);
