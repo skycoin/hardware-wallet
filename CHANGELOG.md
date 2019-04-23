@@ -12,7 +12,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Add deploy satge for travis.
 - A makefile target for `release`.
 - Some ci related bash scrips.
-- Add an options `DISABLE_GETENTROPY_CONFIRM` to enable or disable at build time the button confirmation for get entropy msg.
 - Skycoin logo in bootloader mode
 - Enforce setting default device language to English
 - Use`protobuf` file definitions as a `git submodule` from http://github.com/skycoin/hardware-wallet-protob/
@@ -29,6 +28,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Add some unit tests for `tiny-firmware` folder.
 - Add `word_count` in `RecoveryDevice` and `GenerateMnemonic` messages to specify recovery seeds of either 12 or 24 words (i.e. reject 18 words seeds).
 - Firmware and bootloader generation tested on linux and osx (travis-ci)
+- Add an options `DISABLE_GETENTROPY_CONFIRM` to enable or disable at build time the button confirmation for get entropy msg.
+- Firmware features in response to `GetFeatures` message including bit flags for emulator and entropy compile flags.
 
 ### Fixed
 

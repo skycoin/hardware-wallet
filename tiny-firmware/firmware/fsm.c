@@ -73,6 +73,12 @@ void fsm_sendResponseFromErrCode(ErrCode_t err, const char *successMsg, const ch
 				failMsg = _("Invalid argument");
 			}
 			break;
+		case ErrPreconditionFailed:
+			failure = FailureType_Failure_DataError;
+			if (failMsg == NULL) {
+				failMsg = _("Precondition failed");
+			}
+			break;
 		case ErrIndexValue:
 			failure = FailureType_Failure_DataError;
 			if (failMsg == NULL) {
@@ -262,7 +268,16 @@ void fsm_msgApplySettings(ApplySettings *msg)
 		CHECK_BUTTON_PROTECT
 	}
 
-	fsm_sendResponseFromErrCode(msgApplySettingsImpl(msg), _("Settings applied"), NULL);
+	ErrCode_t err = msgApplySettingsImpl(msg);
+	char *failMsg = NULL;
+	switch (err) {
+		case ErrPreconditionFailed:
+			failMsg = _("No setting provided");
+			break;
+		default:
+			break;
+	}
+	fsm_sendResponseFromErrCode(err, _("Settings applied"), failMsg);
 	layoutHome();
 }
 
@@ -300,15 +315,22 @@ void fsm_msgTransactionSign(TransactionSign* msg) {
 	CHECK_MNEMONIC
 	CHECK_INPUTS(msg)
 	CHECK_OUTPUTS(msg)
-	ErrCode_t err = msgTransactionSignImpl(msg, &requestConfirmTransaction);
+
+	RESP_INIT(ResponseTransactionSign);
+	ErrCode_t err = msgTransactionSignImpl(msg, &requestConfirmTransaction, resp);
 	char* failMsg = NULL;
-	if (err == ErrAddressGeneration) {
-		failMsg = _("Wrong return address");
+	switch (err) {
+		case ErrOk:
+			msg_write(MessageType_MessageType_ResponseTransactionSign, resp);
+			break;
+		case ErrAddressGeneration:
+			failMsg = _("Wrong return address");
+			// fall through
+		default:
+			fsm_sendResponseFromErrCode(err, NULL, failMsg);
+			break;
 	}
-	fsm_sendResponseFromErrCode(err, NULL, failMsg);
-	if (err != ErrActionCancelled) {
-		layoutHome();
-	}
+	layoutHome();
 }
 
 void fsm_msgSkycoinSignMessage(SkycoinSignMessage *msg)
@@ -457,8 +479,8 @@ void fsm_msgGetMixedEntropy(GetMixedEntropy *_msg) {
 	CHECK_BUTTON_PROTECT
 #endif  // DISABLE_GETENTROPY_CONFIRM
 	RESP_INIT(Entropy);
-  GetRawEntropy msg;
-  msg.size = _msg->size;
+	GetRawEntropy msg;
+	msg.size = _msg->size;
 	ErrCode_t ret = msgGetEntropyImpl(&msg, resp, &random_salted_buffer);
 	if (ret == ErrOk) {
 		msg_write(MessageType_MessageType_Entropy, resp);

@@ -165,7 +165,7 @@ In order to identify at first sight the features supported by a particular relea
 The project includes a test suite. In order to run it just execute the following command
 
 ```
-make test
+make clean && make test
 ```
 
 ### Validate the TRNG

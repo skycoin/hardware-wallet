@@ -83,6 +83,18 @@
 		return ErrInvalidArg; \
 	}
 
+#define CHECK_PRECONDITION(cond, errormsg) \
+	if (!(cond)) { \
+		fsm_sendFailure(FailureType_Failure_DataError, (errormsg)); \
+		layoutHome(); \
+		return; \
+	}
+
+#define CHECK_PRECONDITION_RET_ERR_CODE(cond, errormsg) \
+	if (!(cond)) { \
+		return ErrPreconditionFailed; \
+	}
+
 #define CHECK_BUTTON_PROTECT \
 	if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) { \
 		fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL); \
@@ -144,7 +156,7 @@ ErrCode_t msgSkycoinAddressImpl(SkycoinAddress* msg, ResponseSkycoinAddress *res
 ErrCode_t msgSkycoinCheckMessageSignatureImpl(SkycoinCheckMessageSignature* msg, Success *successResp, Failure *failureResp);
 ErrCode_t msgApplySettingsImpl(ApplySettings *msg);
 ErrCode_t msgGetFeaturesImpl(Features *resp);
-ErrCode_t msgTransactionSignImpl(TransactionSign *msg, ErrCode_t (*)(char*, char *, TransactionSign*, uint32_t));
+ErrCode_t msgTransactionSignImpl(TransactionSign *msg, ErrCode_t (*)(char*, char *, TransactionSign*, uint32_t), ResponseTransactionSign*);
 ErrCode_t msgPingImpl(Ping *msg);
 ErrCode_t msgChangePinImpl(ChangePin *msg, const char* (*)(PinMatrixRequestType, const char *));
 ErrCode_t msgWipeDeviceImpl(WipeDevice *msg);

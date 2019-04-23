@@ -196,13 +196,13 @@ ErrCode_t msgSkycoinAddressImpl(SkycoinAddress* msg, ResponseSkycoinAddress *res
 
 ErrCode_t msgSkycoinCheckMessageSignatureImpl(SkycoinCheckMessageSignature* msg, Success *successResp, Failure *failureResp)
 {
-	// NOTE(denisacostaq@gmail.com): -1 because the end of string ('\0')
+	// NOTE(): -1 because the end of string ('\0')
 	// /2 because the hex to buff conversion.
 	uint8_t sign[(sizeof(msg->signature) - 1)/2];
-	// NOTE(denisacostaq@gmail.com): -1 because the end of string ('\0')
+	// NOTE(): -1 because the end of string ('\0')
 	char pubkeybase58[sizeof(msg->address) - 1];
 	uint8_t pubkey[33] = {0};
-	// NOTE(denisacostaq@gmail.com): -1 because the end of string ('\0')
+	// NOTE(): -1 because the end of string ('\0')
 	// /2 because the hex to buff conversion.
 	uint8_t digest[(sizeof(msg->message) - 1) / 2] = {0};
 	//     RESP_INIT(Success);
@@ -245,7 +245,7 @@ ErrCode_t msgApplySettingsImpl(ApplySettings *msg)
 	_Static_assert(
 		sizeof(msg->label) == DEVICE_LABEL_SIZE,
 		"device label size inconsitent betwen protocol and final storage");
-	CHECK_PARAM_RET_ERR_CODE(msg->has_label || msg->has_language || msg->has_use_passphrase || msg->has_homescreen,
+	CHECK_PRECONDITION_RET_ERR_CODE(msg->has_label || msg->has_language || msg->has_use_passphrase || msg->has_homescreen,
 				_("No setting provided"));
 	if (msg->has_label) {
 		storage_setLabel(msg->label);
@@ -287,10 +287,22 @@ ErrCode_t msgGetFeaturesImpl(Features *resp)
 	resp->has_passphrase_cached = true; resp->passphrase_cached = session_isPassphraseCached();
 	resp->has_needs_backup = true; resp->needs_backup = storage_needsBackup();
 	resp->has_model = true; strlcpy(resp->model, "1", sizeof(resp->model));
+	resp->has_firmware_features = true;
+#if defined(EMULATOR) && EMULATOR
+	resp->firmware_features |= FirmwareFeatures_IsEmulator;
+#endif
+
+#if DISABLE_GETENTROPY_CONFIRM
+	resp->firmware_features |= FirmwareFeatures_RequireGetEntropyConfirm;
+#endif
+#if defined(ENABLE_GETENTROPY) && ENABLE_GETENTROPY
+	resp->firmware_features |= FirmwareFeatures_IsGetEntropyEnabled;
+#endif
+
 	return ErrOk;
 }
 
-ErrCode_t msgTransactionSignImpl(TransactionSign *msg, ErrCode_t (*funcConfirmTxn)(char*, char *, TransactionSign*, uint32_t)) {
+ErrCode_t msgTransactionSignImpl(TransactionSign *msg, ErrCode_t (*funcConfirmTxn)(char*, char *, TransactionSign*, uint32_t), ResponseTransactionSign *resp) {
 	#if EMULATOR
 		printf("%s: %d. nbOut: %d\n",
 			_("Transaction signed nbIn"),
@@ -343,6 +355,7 @@ ErrCode_t msgTransactionSignImpl(TransactionSign *msg, ErrCode_t (*funcConfirmTx
 					return ErrAddressGeneration;
 			}
 		} else {
+      // NOTICE: A single output per address is assumed
 			ErrCode_t err = funcConfirmTxn(strCoin, strHour, msg, i);
 			if (err != ErrOk)
 				return err;
@@ -352,15 +365,17 @@ ErrCode_t msgTransactionSignImpl(TransactionSign *msg, ErrCode_t (*funcConfirmTx
 
 	CHECK_PIN_UNCACHED_RET_ERR_CODE
 
-	RESP_INIT(ResponseTransactionSign);
 	for (uint32_t i = 0; i < msg->nbIn; ++i) {
 		uint8_t digest[32];
 		transaction_msgToSign(&transaction, i, digest);
-		if (msgSignTransactionMessageImpl(digest, msg->transactionIn[i].index, resp->signatures[resp->signatures_count]) != ErrOk) {
-			//fsm_sendFailure(FailureType_Failure_InvalidSignature, NULL);
-			//layoutHome();
-			return ErrInvalidSignature;
-		}
+    // Only sign inputs owned by Skywallet device
+    if (msg->transactionIn[i].has_index) {
+			if (msgSignTransactionMessageImpl(digest, msg->transactionIn[i].index, resp->signatures[resp->signatures_count]) != ErrOk) {
+				//fsm_sendFailure(FailureType_Failure_InvalidSignature, NULL);
+				//layoutHome();
+				return ErrInvalidSignature;
+			}
+    }
 		resp->signatures_count++;
 	#if EMULATOR
 		char str[64];
@@ -370,6 +385,10 @@ ErrCode_t msgTransactionSignImpl(TransactionSign *msg, ErrCode_t (*funcConfirmTx
 		printf("Nb signatures: %d\n", resp->signatures_count);
 	#endif
 	}
+  if (resp->signatures_count != msg->nbIn) {
+    // Ensure number of sigs and inputs is the same. Mismatch should never happen.
+    return ErrFailed;
+  }
 	#if EMULATOR
 		char str[64];
 		tohex(str, transaction.innerHash, 32);
@@ -377,7 +396,6 @@ ErrCode_t msgTransactionSignImpl(TransactionSign *msg, ErrCode_t (*funcConfirmTx
 		printf("Signed message:  %s\n", resp->signatures[0]);
 		printf("Nb signatures: %d\n", resp->signatures_count);
 	#endif
-	msg_write(MessageType_MessageType_ResponseTransactionSign, resp);
 	//layoutHome();
 	return ErrOk;
 }
