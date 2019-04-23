@@ -7,7 +7,8 @@ PROTOB_HASH=$(git -C tiny-firmware/protob/ rev-parse HEAD)
 # hardware wallet should not get too behind protob repository
 commits="$(curl https://api.github.com/repos/skycoin/hardware-wallet-protob/commits\?per_page\=50\&sha\=master)"
 
-if echo "$commits" | egrep "\"sha\": \"$PROTOB_HASH\"" > /dev/null
+echo "$commits"
+if echo "$commits" | egrep "\"sha\": \"$PROTOB_HASH\""
 then
     echo "success"
 else
