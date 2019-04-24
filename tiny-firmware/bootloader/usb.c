@@ -262,7 +262,7 @@ static void send_msg_features(usbd_device *dev)
 		
 	}
 	memcpy(&msg[47], &fetOpts, sizeof(fetOpts));
-	if (!brand_new_firmware) {
+	if (firmware_present()) {
 		uint8_t firmwarePresent = 1;
 		memcpy(&msg[32], &firmwarePresent, sizeof(firmwarePresent));
 	}

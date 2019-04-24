@@ -119,10 +119,52 @@ bool firmware_present(void)
 	return true;
 }
 
+static inline bool bit_status_in_byte(uint8_t data, uint8_t bit_pos) {
+	return (data & (uint8_t)(1 << bit_pos)) != 0;
+}
+
+static inline void set_bit_in_byte(uint8_t *data, bool val, uint8_t bit_pos) {
+	uint8_t mask = (uint8_t)(1 << bit_pos);
+	if (val) {
+		(*data) |= mask;
+	} else {
+		(*data) &= (mask ^ 255);
+	}
+}
+
+static inline void reverse_byte(uint8_t *data) {
+	uint8_t tmp_data = *data;
+	for (uint8_t i = 0; i < 8; ++i) {
+		set_bit_in_byte(data, bit_status_in_byte(tmp_data, i), 7 - i);
+	}
+}
+
+static uint8_t bmp_logo64_data_inverted[sizeof(bmp_logo64_dataa)] = {0};
+static inline BITMAP inver_bitmap(BITMAP bm) {
+	size_t data_len = (bm.width * bm.height) / 8;
+	for (size_t i = 0; i < data_len; ++i) {
+		uint8_t byte = 0;
+		memcpy(&byte, &(bm.data[data_len - 1 - i]), 1);
+		reverse_byte(&byte);
+		memcpy(&bmp_logo64_data_inverted[i], &byte, 1);
+	}
+	BITMAP inverted = {
+		.width = bm.width,
+		.height = bm.height,
+		.data = bmp_logo64_data_inverted
+	};
+	return inverted;
+}
+
 void bootloader_loop(void)
 {
 	oledClear();
-	oledDrawBitmap(0, 0, &bmp_logo64);
+	if (rdp_level() != 2) {
+		BITMAP bmp_logo64_inverted = inver_bitmap(bmp_logo64);
+		oledDrawBitmap(0, 0, &bmp_logo64_inverted);
+	} else {
+		oledDrawBitmap(0, 0, &bmp_logo64);
+	}
 	if (firmware_present()) {
 		oledDrawString(52, 0, "SKYCOIN", FONT_STANDARD);
 		// NOTE(): *2 due to the hex formad and +1 because of the trailing NUL char
