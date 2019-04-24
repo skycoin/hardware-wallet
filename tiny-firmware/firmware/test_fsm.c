@@ -107,7 +107,7 @@ START_TEST(test_msgGenerateMnemonicEntropyAckSequenceShouldBeOk)
 	storage_wipe();
 	GenerateMnemonic gnMsg = GenerateMnemonic_init_zero;
 	ck_assert_int_eq(
-		ErrOk, 
+		ErrOk,
 		msgGenerateMnemonicImpl(&gnMsg, &random_buffer));
 	EntropyAck eaMsg = EntropyAck_init_zero;
 	eaMsg.has_entropy = true;
@@ -153,7 +153,7 @@ START_TEST(test_msgSkycoinCheckMessageSignatureOk)
 	SkycoinSignMessage msgSign = SkycoinSignMessage_init_zero;
 	strncpy(msgSign.message, raw_msg, sizeof(msgSign.message));
 	msgSign.address_n = 0;
-	
+
 	// NOTE(): When
 	uint8_t msg_resp_sign[MSG_OUT_SIZE] __attribute__ ((aligned)) = {0};
 	ResponseSkycoinSignMessage *respSign = (ResponseSkycoinSignMessage *) (void *) msg_resp_sign;
@@ -242,7 +242,7 @@ START_TEST(test_msgSkycoinCheckMessageSignatureFailedAsExpectedForInvalidSignedM
 	ck_assert_int_ne(ErrOk, err);
 	ck_assert(failRespCheck->has_message);
 	int address_diff = strncmp(
-		respAddress->addresses[0], 
+		respAddress->addresses[0],
 		successRespCheck->message,
 		sizeof(respAddress->addresses[0]));
 	ck_assert_int_ne(0, address_diff);
@@ -288,7 +288,7 @@ START_TEST(test_msgSkycoinCheckMessageSignatureFailedAsExpectedForInvalidMessage
 	ck_assert_int_ne(ErrOk, err);
 	ck_assert(failRespCheck->has_message);
 	int address_diff = strncmp(
-		respAddress->addresses[0], 
+		respAddress->addresses[0],
 		successRespCheck->message,
 		sizeof(respAddress->addresses[0]));
 	ck_assert_int_ne(0, address_diff);
@@ -322,6 +322,8 @@ START_TEST(test_msgApplySettingsLabelGetFeaturesSuccess)
 	ck_assert_str_eq(storage_getLabel(), raw_label);
 	Features features = Features_init_zero;
 	msgGetFeaturesImpl(&features);
+	ck_assert_int_eq(features.has_firmware_features, (int) true);
+	ck_assert_int_eq(features.firmware_features, 4);
 	ck_assert_int_eq((int) features.has_label, (int) true);
 	ck_assert_str_eq(features.label, raw_label);
 }
@@ -423,6 +425,8 @@ START_TEST(test_msgGetFeatures)
 {
 	RESP_INIT(Features);
 	msgGetFeaturesImpl(resp);
+	ck_assert_int_eq(resp->has_firmware_features, (int) true);
+	ck_assert_int_eq(resp->firmware_features, 4);
 	ck_assert_int_eq(resp->has_fw_major, 1);
 	ck_assert_int_eq(resp->has_fw_minor, 1);
 	ck_assert_int_eq(resp->has_fw_patch, 1);
@@ -564,7 +568,8 @@ START_TEST(test_msgSkycoinAddressesStartIndex)
 
 	msgAddr.has_start_index = true;
 	msgAddr.start_index = random32() % 100;
-	msgAddr.address_n = random32() % (100 - msgAddr.start_index);
+	msgAddr.address_n = random32() % (100 - msgAddr.start_index) + 1;
+	ck_assert_uint_ge(msgAddr.address_n, 1);
 	msgAddr.has_confirm_address = false;
 
 	ck_assert_int_eq(msgSkycoinAddressImpl(&msgAddr, resp), ErrOk);
