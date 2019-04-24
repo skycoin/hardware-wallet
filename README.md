@@ -26,6 +26,7 @@
   - [Validate the TRNG](#Validate-the-TRNG)
     - [Files description](#Files-description)
   - [Releases](#releases)
+    - [Skycoin firmware releases](#skycoin-firmware-releases)
     - [Update the version](#update-the-version)
     - [Pre-release testing](#pre-release-testing)
     - [Creating release builds](#creating-release-builds)
@@ -242,6 +243,12 @@ Skycoin firmware is open source and it is easy to fork or copy official reposito
 The Skycoin hardware will be shipped with an immutable bootloader written in a protected memory that is impossible to re-write.
 
 The firmware however can evolve over time and some solutions were developed to update an existing firmware (see [skycoin-hw-cli](https://github.com/skycoin/hardware-wallet-go/releases)).
+
+##### Supported languages
+
+The supported languages are encoded in a masked `32 bits` number:
+ - `0` English
+ - `1:31` Reserved
 
 ##### Full-Firmware and bootloader folder
 
