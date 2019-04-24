@@ -225,53 +225,48 @@ static void send_msg_failure(usbd_device *dev)
 
 static void send_msg_features(usbd_device *dev)
 {
-	// response: Features message (id 17), payload len 30
-	//           - vendor = "bitcointrezor.com"
+	// response: Features message (id 17), payload len 39
+	//           - vendor = "skycoin.net"
 	//           - major_version = VERSION_MAJOR
 	//           - minor_version = VERSION_MINOR
 	//           - patch_version = VERSION_PATCH
 	//           - bootloader_mode = True
 	//           - firmware_present = True/False
 	//           - model = "1"
-	if (brand_new_firmware) {
-		while ( usbd_ep_write_packet(dev, ENDPOINT_ADDRESS_IN,
-			// header
-			"?##"
+	//           - RDP level = FirmwareFeatures_RdpH = 16 for rdp l2
+	char msg[] = {// header
+	        "?##"
 			// msg_id
 			"\x00\x11"
 			// msg_size
-			"\x00\x00\x00\x1e"
+			"\x00\x00\x00\x27"
 			// data
-			"\x0a" "\x11" "bitcointrezor.com"
+			"\x0a\x0b" "skycoin.net"
 			"\x10" VERSION_MAJOR_CHAR
 			"\x18" VERSION_MINOR_CHAR
 			"\x20" VERSION_PATCH_CHAR
 			"\x28" "\x01"
 			"\x90\x01" "\x00"
-			"\xaa" "\x01" "1"
+			"\xaa\x01\x09" "skywallet"
+			"\xe8\x01\x00"
 			// padding
-			"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-			, 64) != 64) {}
-	} else {
-		while ( usbd_ep_write_packet(dev, ENDPOINT_ADDRESS_IN,
-			// header
-			"?##"
-			// msg_id
-			"\x00\x11"
-			// msg_size
-			"\x00\x00\x00\x1e"
-			// data
-			"\x0a\x11" "bitcointrezor.com"
-			"\x10" VERSION_MAJOR_CHAR
-			"\x18" VERSION_MINOR_CHAR
-			"\x20" VERSION_PATCH_CHAR
-			"\x28" "\x01"
-			"\x90\x01" "\x01"
-			"\xaa" "\x01" "1"
-			// padding
-			"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-			, 64) != 64) {}
+			"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"};
+	uint8_t fetOpts = 0;
+	switch (rdp_level()) {
+		case 2:
+			fetOpts = 16;
+			break;
+		case 1:
+			fetOpts = 8;
+			break;
+		
 	}
+	memcpy(&msg[47], &fetOpts, sizeof(fetOpts));
+	if (!brand_new_firmware) {
+		uint8_t firmwarePresent = 1;
+		memcpy(&msg[32], &firmwarePresent, sizeof(firmwarePresent));
+	}
+	while (usbd_ep_write_packet(dev, ENDPOINT_ADDRESS_IN, msg , 64) != 64) {}
 }
 
 static void send_msg_buttonrequest_firmwarecheck(usbd_device *dev)
