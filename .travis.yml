@@ -77,6 +77,6 @@ deploy:
   skip_cleanup: true
   draft: true
   on:
-    repo: denisacostaq/hw
+    repo: skycoin/hardware-wallet
     tags: true
     condition: $TRAVIS_OS_NAME = "osx"
