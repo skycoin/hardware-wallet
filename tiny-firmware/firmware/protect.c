@@ -234,7 +234,7 @@ bool protectChangePinEx(const char* (*funcRequestPin)(PinMatrixRequestType, cons
 
 	pin = funcRequestPin(PinMatrixRequestType_PinMatrixRequestType_NewSecond, _("Please re-enter new PIN:"));
 
-	const bool result = pin && (strncmp(pin_compare, pin, sizeof(pin_compare)) == 0);
+	const bool result = pin && *pin && (strncmp(pin_compare, pin, sizeof(pin_compare)) == 0);
 
 	if (result) {
 		storage_setPin(pin_compare);

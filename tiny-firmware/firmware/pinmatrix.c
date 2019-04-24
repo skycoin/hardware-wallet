@@ -57,18 +57,23 @@ void pinmatrix_start(const char *text)
 	pinmatrix_draw(text);
 }
 
-void pinmatrix_done(char *pin)
-{
+void translate_pin_code(const char *matrix, char *pin) {
 	int k, i = 0;
 	while (pin && pin[i]) {
 		k = pin[i] - '1';
 		if (k >= 0 && k <= 8) {
-			pin[i] = pinmatrix_perm[k];
+			pin[i] = matrix[k];
 		} else {
-			pin[i] = 'X';
+			pin[i] = 0;
+			break;
 		}
 		i++;
 	}
+}
+
+void pinmatrix_done(char *pin)
+{
+	translate_pin_code(pinmatrix_perm, pin);
 	memset(pinmatrix_perm, 'X', sizeof(pinmatrix_perm) - 1);
 }
 
