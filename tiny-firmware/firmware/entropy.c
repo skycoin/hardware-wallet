@@ -56,14 +56,28 @@ void entropy_salt_mix_256(uint8_t *in, size_t in_len, uint8_t *buf) {
 	if (entropy_timeout == INVALID_TIMER) {
 		return;
 	}
-	#ifdef EMULATOR
-		uint64_t salt_ticker = 0;
-		random_buffer((uint8_t*)&salt_ticker, sizeof (salt_ticker));
-	#else
-		uint64_t salt_ticker = timer_ms();
-	#endif	// EMULATOR
 	// Salt source : System clock timer
+  uint64_t salt_ticker = 0;
+#if EMULATOR
+	random_buffer((uint8_t*)&salt_ticker, sizeof (salt_ticker));
+#else
+	salt_ticker = timer_ms();
+#endif	// EMULATOR
 	entropy_mix_256((uint8_t*)&salt_ticker, sizeof(salt_ticker), NULL);
+
+#if !EMULATOR
+  // Salt source : MCU core registers
+  uint32_t salt_mcu[3];
+  uint32_t rval;
+  __asm__ __volatile__ ("mov %0, lr" : "=r" (rval));
+  salt_mcu[0] = rval;
+  __asm__ __volatile__ ("mov %0, pc" : "=r" (rval));
+  salt_mcu[1] = rval;
+  __asm__ __volatile__ ("mov %0, sp" : "=r" (rval));
+  salt_mcu[2] = rval;
+	entropy_mix_256((uint8_t*)salt_mcu, sizeof(salt_mcu), NULL);
+#endif
+
 	// Salt source : TRNG 32 bits
 	uint32_t salt_trng = random32();
 	random_buffer((uint8_t*)&salt_trng, sizeof (salt_trng));
@@ -141,12 +155,15 @@ void set_external_entropy(uint8_t *entropy, size_t len) {
 	entropy_salt_mix_256(entropy, len, int_entropy);
 }
 
+#define GET_MSG_POINTER(TYPE, VarName) \
+
 void check_entropy(void) {
-#ifndef EMULATOR
-	GET_MSG_POINTER(EntropyRequest, entropy_request);
+#if !EMULATOR
+	EntropyRequest entropy_request;
+
 	if (is_external_entropy_needed() == ErrEntropyRequired) {
-		memset(&resp, 0, sizeof(EntropyRequest));
-		msg_write(MessageType_MessageType_EntropyRequest, entropy_request);
+		memset((void *) &entropy_request, 0, sizeof(EntropyRequest));
+		msg_write(MessageType_MessageType_EntropyRequest, &entropy_request);
 		stopwatch_reset(entropy_timeout);
 	}
 #endif
