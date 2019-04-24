@@ -42,8 +42,8 @@ endif
 export VERSION_IS_SEMANTIC_COMPLIANT
 ID_VENDOR=12602
 ID_PRODUCT=1
-#ISO-639-1 code for English language
-LANG=en
+#https://github.com/skycoin/skycoin-hardware-wallet/tree/55c50ceca0d5552ef4147eb2a26f8b12ee114749#supported-languages
+LANG=1
 COMBINED_VERSION=$(VERSION_BOOTLOADER)-$(VERSION_FIRMWARE)-$(ID_VENDOR)-$(ID_PRODUCT)-$(LANG)
 
 ifeq ($(UNAME_S), Darwin)
