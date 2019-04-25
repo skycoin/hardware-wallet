@@ -11,7 +11,10 @@
 
 #include "entropy.h"
 
+#include <stdio.h>
 #include <string.h>
+#include <libopencm3/stm32/memorymap.h>
+#include <libopencm3/stm32/rtc.h>
 
 #include "protob/c/messages.pb.h"
 #include "vendor/skycoin-crypto/tools/sha2.h"
@@ -22,6 +25,7 @@
 #include "skycoin_crypto.h"
 #include "messages.h"
 #include "messages.pb.h"
+#include "oled.h"
 
 #define EXTERNAL_ENTROPY_TIMEOUT 60000
 #define ENTROPY_RANDOMSALT_SIZE 256
@@ -37,6 +41,27 @@ ErrCode_t is_external_entropy_needed(void) {
 }
 
 #define INTERNAL_ENTROPY_SIZE SHA256_DIGEST_LENGTH
+#define RTC_PERIPH_SIZE (0x48 + 4)
+
+/**
+ * Salted entropy sources
+ *
+ * Type 0 - Constant values
+ * - MCU core registers (PC, SP, LR)
+ *
+ * Type 1 - variable between devices
+ * - device UUID
+ *
+ * Type 2 - variable between device runs (at init time)
+ * - RTC
+ * - stopwatch counter
+ *
+ * Type 3 - variable over time (after init, value continues to change)
+ * - RTC
+ * - random buffer (TRNG)
+ * - stopwatch counter
+ *
+ */
 
 static uint8_t entropy_mixer_prev_val[SHA256_DIGEST_LENGTH] = {0};
 
@@ -44,11 +69,29 @@ void reset_entropy_mix_256(void) {
 	if (entropy_timeout == INVALID_TIMER) {
 		entropy_timeout = stopwatch_start(EXTERNAL_ENTROPY_TIMEOUT);
 	}
+  // Salt source: 96-bits device UID
 	// FIXME : Read STM32_UUID instead
 	entropy_mix_256((uint8_t*)storage_uuid_str, sizeof(storage_uuid_str), NULL);
+#if !EMULATOR
+  // Salt source : MCU core registers
+  uint32_t salt_mcu[3] = {0};
+  uint32_t rval;
+  // FIXME LR is not likely to change neither over time nor across MCU devices
+  __asm__ __volatile__ ("mov %0, lr" : "=r" (rval));
+  salt_mcu[0] = rval;
+  // FIXME PC is not likely to change neither over time nor across MCU devices
+  __asm__ __volatile__ ("mov %0, pc" : "=r" (rval));
+  salt_mcu[1] = rval;
+  // FIXME SP is not likely to change neither over time nor across MCU devices
+  __asm__ __volatile__ ("mov %0, sp" : "=r" (rval));
+  salt_mcu[2] = rval;
+	entropy_mix_256((uint8_t*)salt_mcu, sizeof(salt_mcu), NULL);
+#endif
+  // Salt source : Random buffer
 	uint8_t rndbuf[ENTROPY_RANDOMSALT_SIZE];
 	random_buffer(rndbuf, sizeof(rndbuf));
 	entropy_mix_256(rndbuf, sizeof(rndbuf), NULL);
+  // Mix type 3 salt sources
 	entropy_salt_mix_256(NULL, 0, NULL);
 }
 
@@ -66,16 +109,20 @@ void entropy_salt_mix_256(uint8_t *in, size_t in_len, uint8_t *buf) {
 	entropy_mix_256((uint8_t*)&salt_ticker, sizeof(salt_ticker), NULL);
 
 #if !EMULATOR
-  // Salt source : MCU core registers
-  uint32_t salt_mcu[3];
-  uint32_t rval;
-  __asm__ __volatile__ ("mov %0, lr" : "=r" (rval));
-  salt_mcu[0] = rval;
-  __asm__ __volatile__ ("mov %0, pc" : "=r" (rval));
-  salt_mcu[1] = rval;
-  __asm__ __volatile__ ("mov %0, sp" : "=r" (rval));
-  salt_mcu[2] = rval;
-	entropy_mix_256((uint8_t*)salt_mcu, sizeof(salt_mcu), NULL);
+  // Salt source : RTC (76 bytes)
+  uint8_t salt_rtc[RTC_PERIPH_SIZE] = {0};
+  // FIXME: Can be read directly but affects volatile core registers
+  memcpy((void *) salt_rtc, (void *) RTC_BASE, sizeof(salt_rtc));
+  entropy_mix_256(salt_rtc, sizeof(salt_rtc), NULL);
+
+  char dbgtext[256];
+  sprintf(dbgtext, "Date %x%x%x%x Time %x%x%x%x",
+    salt_rtc[0], salt_rtc[1], salt_rtc[2], salt_rtc[3],
+    salt_rtc[4], salt_rtc[5], salt_rtc[6], salt_rtc[7]
+  );
+  oledClear();
+  oledDrawStringCenter(18, dbgtext, FONT_STANDARD);
+  oledRefresh();
 #endif
 
 	// Salt source : TRNG 32 bits
@@ -154,8 +201,6 @@ void set_external_entropy(uint8_t *entropy, size_t len) {
 	stopwatch_reset(entropy_timeout);
 	entropy_salt_mix_256(entropy, len, int_entropy);
 }
-
-#define GET_MSG_POINTER(TYPE, VarName) \
 
 void check_entropy(void) {
 #if !EMULATOR
