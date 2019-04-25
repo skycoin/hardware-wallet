@@ -12,6 +12,15 @@ $(warning "firmware version $(VERSION_FIRMWARE)...")
 CFLAGS+=-DAPPVER=0X$(VERSION_FIRMWARE)
 endif
 endif
+ifneq ($(BOOTLOADER),1)
+ifeq ($(DEBUG),1)
+	OPTFLAGS ?= -Og
+	DBGFLAGS ?= -g3 -ggdb3
+else
+	OPTFLAGS ?= -O3
+	DBGFLAGS ?= -DDNDEBUG
+endif
+endif
 
 ifeq ($(EMULATOR),1)
 
@@ -25,14 +34,6 @@ endif
 OBJDUMP  := objdump
 AR       := ar
 AS       := as
-
-ifeq ($(DEBUG),1)
-	OPTFLAGS ?= -Og
-	DBGFLAGS ?= -g3 -ggdb3
-else
-	OPTFLAGS ?= -O3
-	DBGFLAGS ?= -DDNDEBUG
-endif
 CPUFLAGS ?=
 FPUFLAGS ?=
 ifeq ($(UNAME_S),Darwin)
@@ -151,6 +152,7 @@ CFLAGS+=-DVERSION_IS_SEMANTIC_COMPLIANT=$(VERSION_IS_SEMANTIC_COMPLIANT)
 ifeq ($(VERSION_IS_SEMANTIC_COMPLIANT),0)
 $(warning "firmware version $(VERSION_FIRMWARE)...")
 CFLAGS+=-DAPPVER=0X$(VERSION_FIRMWARE)
+endif
 
 CFLAGS += -DDEBUG_RNG=0
 
