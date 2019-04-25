@@ -48,6 +48,7 @@ script:
     make clean;
     make emulator;
     cp emulator releases/emulator-${TRAVIS_OS_NAME}-${TRAVIS_TAG};
+    fi
 notifications:
   # https://github.com/kvld/travisci-telegram TravisCI Telegram Bot integration
   webhooks: https://fathomless-fjord-24024.herokuapp.com/notify

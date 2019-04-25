@@ -28,11 +28,11 @@ VERSION_FIRMWARE_PATCH  =$(shell ./ci-scripts/version/version_patch.sh)
 VERSION_FIRMWARE        =$(VERSION_FIRMWARE_MAJOR).$(VERSION_FIRMWARE_MINOR).$(VERSION_FIRMWARE_PATCH)
 # https://semver.org/
 VERSION_IS_SEMANTIC_COMPLIANT=0
-ifeq ($(shell echo $(VERSION_FIRMWARE) | egrep '^[0-9]+\.[0-9]+\.[0-9]+$$'),)
+ifeq ($(shell echo $(VERSION_FIRMWARE) | egrep '^[0-9]+\.[0-9]+\.[0-9]+$$'),) # empty result from egrep
 	VERSION_FIRMWARE    =$(shell ./ci-scripts/version/full_version.sh)
 	ifeq ($(shell echo $(VERSION_FIRMWARE) | egrep '^[0-9]+\.[0-9]+\.[0-9]+$$'),) # empty result from egrep
 		VERSION_IS_SEMANTIC_COMPLIANT=0
-		export VERSION_FIRMWARE=$(shell ./ci-scripts/version/full_version.sh)
+		VERSION_FIRMWARE=$(shell ./ci-scripts/version/full_version.sh)
 	else
 		VERSION_IS_SEMANTIC_COMPLIANT=1
 	endif
@@ -40,6 +40,7 @@ else
 	VERSION_IS_SEMANTIC_COMPLIANT=1
 endif
 export VERSION_IS_SEMANTIC_COMPLIANT
+export VERSION_FIRMWARE
 ID_VENDOR=12602
 ID_PRODUCT=1
 #https://github.com/skycoin/skycoin-hardware-wallet/tree/55c50ceca0d5552ef4147eb2a26f8b12ee114749#supported-languages
