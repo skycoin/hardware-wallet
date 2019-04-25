@@ -120,7 +120,10 @@ bootloader-clean:
 firmware-clean:
 	make -C tiny-firmware/ clean
 
-release-bootloader: ## Build bootloader.
+release-emulator: clean emulator ## Build emulator in release mode.
+	cp emulator releases/emulator-$(UNAME_S)-v$(VERSION_FIRMWARE)
+
+release-bootloader: ## Build bootloader in release mode.
 	if [ -z "$(shell echo $(VERSION_BOOTLOADER) | egrep '^[0-9]+\.[0-9]+\.[0-9]+$$' )" ]; then echo "Wrong bootloader version format"; exit 1; fi
 	DEBUG=0 VERSION_MAJOR=$(VERSION_BOOTLOADER_MAJOR) VERSION_MINOR=$(VERSION_BOOTLOADER_MINOR) VERSION_PATCH=$(VERSION_BOOTLOADER_PATCH) make bootloader
 	mv skybootloader-no-memory-protect.bin releases/skywallet-bootloader-no-memory-protect-v$(VERSION_BOOTLOADER).bin
@@ -146,10 +149,11 @@ release-combined-mem-protect: release-bootloader-mem-protect release-firmware ##
 	cd tiny-firmware/bootloader/combine/ ; $(PYTHON) prepare.py
 	mv tiny-firmware/bootloader/combine/combined.bin releases/skywallet-full-mem-protect-$(COMBINED_VERSION).bin
 
-release: release-combined release-combined-mem-protect ## Create a release for production
+release: release-combined release-combined-mem-protect release-emulator ## Create a release for production
 	gpg --armor --detach-sign releases/skywallet-firmware-v$(VERSION_FIRMWARE).bin
 	gpg --armor --detach-sign releases/skywallet-full-no-mem-protect-$(COMBINED_VERSION).bin
 	gpg --armor --detach-sign releases/skywallet-full-mem-protect-$(COMBINED_VERSION).bin
+	gpg --armor --detach-sign releases/emulator-$(UNAME_S)-v$(VERSION_FIRMWARE)
 
 tiny-firmware/bootloader/libskycoin-crypto.so:
 	make -C skycoin-api clean

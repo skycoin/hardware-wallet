@@ -47,9 +47,6 @@ script:
     ID_VENDOR=12602;
     ID_PRODUCT=1;
     export COMBINED_VERSION=${VERSION_BOOTLOADER}-${TRAVIS_TAG}-${ID_VENDOR}-${ID_PRODUCT}-1;
-    make clean;
-    make emulator;
-    cp emulator releases/emulator-${TRAVIS_OS_NAME}-${TRAVIS_TAG};
     fi
 notifications:
   # https://github.com/kvld/travisci-telegram TravisCI Telegram Bot integration
@@ -66,7 +63,8 @@ deploy:
    - releases/skywallet-full-no-mem-protect-${COMBINED_VERSION}.bin.asc
    - releases/skywallet-full-mem-protect-${COMBINED_VERSION}.bin
    - releases/skywallet-full-mem-protect-${COMBINED_VERSION}.bin.asc
-   - releases/emulator-${TRAVIS_OS_NAME}-${TRAVIS_TAG}
+   - releases/emulator-$(uname -s)-${TRAVIS_TAG}
+   - releases/emulator-$(uname -s)-${TRAVIS_TAG}.asc
   skip_cleanup: true
   draft: true
   on:
@@ -76,7 +74,8 @@ deploy:
   api_key:
     secure: ee6xAJoQIXKy8w7DvSMWTpIVymJCzV4raj7MatahyEAtIuQZ0oGR35mxxTHC6/iEkVvOP8+i+g7LTnGgTc1OSJmSq9PwwG+3aNnBLtZbdEs/b+tKkA4xLoK3aRpWJ9dD2uusjI3z3gVqj3N6u3Y7idYPdMSC7+L0G72CdtL9bqjL2j2rStgv5Teb8i9P6uAPDl01uoN1mMBxfGoYES1i+MkRVKg+6In5V+eoar0h1o3zki33W5S0bGSJo3VbasCLoJIiTEDgcnM2rqfJeb07URbSLOBqhFOidVFi9QdfRVfMoRWYmCtiYKyXraCj6LgWbD+A90ZMfOJBBI6iTl2QRsNVge1Jz02MTofH2VGmOpvM7oKmkmvhHdNXnEH7zr1xSNpWDHobvY0Pl6aVoiwK3C+idk8SSfeohEJEuj5uTLRrf3qrafdcMx/YKCYHDyvhxG+zTy5I4+hwxIfT40juUqQkcUEZvsaf0aOKX25EO5aRTnQpkn9rWMytohmBSnm8D5SMlUgrhn3CVO8xysW+VlomAVPEDAVyqopiOJrsD5E8lnp0VuwA4NUC/Gp+ZrxYYgJhAX+utWtVYQ7I4egZ8lIzE3BMJRUxK4ZunlqHsiVqI7nrGEZHvxc2+ALp8mpsfWf6H4t1kfkHWt354cupSl8Z2UlwPW0fE2/XNjE6WSk=
   file:
-   - releases/emulator-${TRAVIS_OS_NAME}-${TRAVIS_TAG}
+   - releases/emulator-$(uname -s)-${TRAVIS_TAG}
+   - releases/emulator-$(uname -s)-${TRAVIS_TAG}.asc
   skip_cleanup: true
   draft: true
   on:
