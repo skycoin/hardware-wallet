@@ -139,19 +139,18 @@ static inline void reverse_byte(uint8_t *data) {
 	}
 }
 
-static uint8_t bmp_logo64_data_inverted[sizeof(bmp_logo64_dataa)] = {0};
-static inline BITMAP inver_bitmap(BITMAP bm) {
+static inline BITMAP inver_bitmap(BITMAP bm, uint8_t *data) {
 	size_t data_len = (bm.width * bm.height) / 8;
 	for (size_t i = 0; i < data_len; ++i) {
 		uint8_t byte = 0;
 		memcpy(&byte, &(bm.data[data_len - 1 - i]), 1);
 		reverse_byte(&byte);
-		memcpy(&bmp_logo64_data_inverted[i], &byte, 1);
+		memcpy(&data[i], &byte, 1);
 	}
 	BITMAP inverted = {
 		.width = bm.width,
 		.height = bm.height,
-		.data = bmp_logo64_data_inverted
+		.data = data
 	};
 	return inverted;
 }
@@ -160,7 +159,10 @@ void bootloader_loop(void)
 {
 	oledClear();
 	if (rdp_level() != 2) {
-		BITMAP bmp_logo64_inverted = inver_bitmap(bmp_logo64);
+		// NOTE(denisacostaq@gmail.com): 48*64 is the size of the bmp_logo64 buffer.
+		uint8_t bmp_logo64_data_inverted[48*64] = {0};
+		BITMAP bmp_logo64_inverted =
+				inver_bitmap(bmp_logo64, bmp_logo64_data_inverted);
 		oledDrawBitmap(0, 0, &bmp_logo64_inverted);
 	} else {
 		oledDrawBitmap(0, 0, &bmp_logo64);
