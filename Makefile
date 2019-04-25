@@ -18,14 +18,14 @@ MKFILE_DIR  := $(dir $(MKFILE_PATH))
 
 FULL_FIRMWARE_PATH ?= releases/full-firmware-no-mem-protect.bin
 
-VERSION_BOOTLOADER_MAJOR=$(shell cat tiny-firmware/bootloader/VERSION | cut -d. -f1 | cut -c 1 --complement)
-VERSION_BOOTLOADER_MINOR=$(shell cat tiny-firmware/bootloader/VERSION | cut -d. -f2)
-VERSION_BOOTLOADER_PATCH=$(shell cat tiny-firmware/bootloader/VERSION | cut -d. -f3)
-VERSION_BOOTLOADER      =$(VERSION_BOOTLOADER_MAJOR).$(VERSION_BOOTLOADER_MINOR).$(VERSION_BOOTLOADER_PATCH)
-VERSION_FIRMWARE_MAJOR  =$(shell ./ci-scripts/version/version_major.sh)
-VERSION_FIRMWARE_MINOR  =$(shell ./ci-scripts/version/version_minor.sh)
-VERSION_FIRMWARE_PATCH  =$(shell ./ci-scripts/version/version_patch.sh)
-VERSION_FIRMWARE        =$(VERSION_FIRMWARE_MAJOR).$(VERSION_FIRMWARE_MINOR).$(VERSION_FIRMWARE_PATCH)
+VERSION_BOOTLOADER       =$(shell cat tiny-firmware/bootloader/VERSION | tr -d v)
+VERSION_BOOTLOADER_MAJOR =$(shell echo $(VERSION_BOOTLOADER) | cut -d. -f1)
+VERSION_BOOTLOADER_MINOR =$(shell echo $(VERSION_BOOTLOADER) | cut -d. -f2)
+VERSION_BOOTLOADER_PATCH =$(shell echo $(VERSION_BOOTLOADER) | cut -d. -f3)
+VERSION_FIRMWARE_MAJOR   =$(shell ./ci-scripts/version/version_major.sh)
+VERSION_FIRMWARE_MINOR   =$(shell ./ci-scripts/version/version_minor.sh)
+VERSION_FIRMWARE_PATCH   =$(shell ./ci-scripts/version/version_patch.sh)
+VERSION_FIRMWARE         =$(VERSION_FIRMWARE_MAJOR).$(VERSION_FIRMWARE_MINOR).$(VERSION_FIRMWARE_PATCH)
 # https://semver.org/
 VERSION_IS_SEMANTIC_COMPLIANT=0
 ifeq ($(shell echo $(VERSION_FIRMWARE) | egrep '^[0-9]+\.[0-9]+\.[0-9]+$$'),) # empty result from egrep
