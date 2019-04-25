@@ -105,7 +105,9 @@ ErrCode_t msgSkycoinSignMessageImpl(SkycoinSignMessage* msg, ResponseSkycoinSign
 	CHECK_PIN_UNCACHED_RET_ERR_CODE
 	uint8_t pubkey[33] = {0};
 	uint8_t seckey[32] = {0};
-	fsm_getKeyPairAtIndex(1, pubkey, seckey, NULL, msg->address_n);
+	if (fsm_getKeyPairAtIndex(1, pubkey, seckey, NULL, msg->address_n) != ErrOk) {
+		return ErrInvalidValue;
+	}
 	uint8_t digest[32] = {0};
 	if (is_digest(msg->message) == false) {
 		compute_sha256sum((const uint8_t *)msg->message, digest, strlen(msg->message));
@@ -131,8 +133,10 @@ ErrCode_t msgSignTransactionMessageImpl(uint8_t* message_digest, uint32_t index,
 	uint8_t pubkey[33] = {0};
 	uint8_t seckey[32] = {0};
 	uint8_t signature[65];
-	int res = ErrOk;
-	fsm_getKeyPairAtIndex(1, pubkey, seckey, NULL, index);
+	ErrCode_t res = fsm_getKeyPairAtIndex(1, pubkey, seckey, NULL, index);
+	if (res != ErrOk) {
+		return res;
+	}
 	if (ecdsa_skycoin_sign(random32(), seckey, message_digest, signature)) {
 		res = ErrFailed;
 	}
@@ -143,14 +147,14 @@ ErrCode_t msgSignTransactionMessageImpl(uint8_t* message_digest, uint32_t index,
 	return res;
 }
 
-int fsm_getKeyPairAtIndex(uint32_t nbAddress, uint8_t* pubkey, uint8_t* seckey, ResponseSkycoinAddress* respSkycoinAddress, uint32_t start_index)
+ErrCode_t fsm_getKeyPairAtIndex(uint32_t nbAddress, uint8_t* pubkey, uint8_t* seckey, ResponseSkycoinAddress* respSkycoinAddress, uint32_t start_index)
 {
 	const char* mnemo = storage_getFullSeed();
 	uint8_t seed[33] = {0};
 	uint8_t nextSeed[SHA256_DIGEST_LENGTH] = {0};
 	size_t size_address = 36;
 	if (mnemo == NULL || nbAddress == 0) {
-		return -1;
+		return ErrInvalidArg;
 	}
 	generate_deterministic_key_pair_iterator((const uint8_t *)mnemo, strlen(mnemo), nextSeed, seckey, pubkey);
 	if (respSkycoinAddress != NULL && start_index == 0) {
@@ -169,7 +173,7 @@ int fsm_getKeyPairAtIndex(uint32_t nbAddress, uint8_t* pubkey, uint8_t* seckey, 
 			respSkycoinAddress->addresses_count++;
 		}
 	}
-	return 0;
+	return ErrOk;
 }
 
 ErrCode_t msgSkycoinAddressImpl(SkycoinAddress* msg, ResponseSkycoinAddress *resp)
@@ -184,7 +188,7 @@ ErrCode_t msgSkycoinAddressImpl(SkycoinAddress* msg, ResponseSkycoinAddress *res
 
 	CHECK_MNEMONIC_RET_ERR_CODE
 
-	if (fsm_getKeyPairAtIndex(msg->address_n, pubkey, seckey, resp, start_index) != 0)
+	if (fsm_getKeyPairAtIndex(msg->address_n, pubkey, seckey, resp, start_index) != ErrOk)
 	{
 		return ErrAddressGeneration;
 	}
