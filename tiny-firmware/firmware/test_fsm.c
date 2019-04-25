@@ -49,7 +49,7 @@ void forceGenerateMnemonic(void) {
 	ck_assert_int_eq(ErrOk, msgGenerateMnemonicImpl(&msg, &random_buffer));
 }
 
-bool is_a_base16_caharacter(char c) {
+bool is_base16_char(char c) {
 	if ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
 		return true;
 	}
@@ -119,8 +119,9 @@ END_TEST
 START_TEST(test_msgSkycoinSignMessageReturnIsInHex)
 {
 	forceGenerateMnemonic();
-	char raw_msg[] = {
-		"32018964c1ac8c2a536b59dd830a80b9d4ce3bb1ad6a182c13b36240ebf4ec11"};
+	char raw_msg[] = {"32018964c1ac8c2a536b59dd830a80b9d4ce3bb1ad6a182c13b36240ebf4ec11"};
+	char test_msg[256];
+
 	SkycoinSignMessage msg = SkycoinSignMessage_init_zero;
 	strncpy(msg.message, raw_msg, sizeof(msg.message));
 	RESP_INIT(ResponseSkycoinSignMessage);
@@ -129,7 +130,8 @@ START_TEST(test_msgSkycoinSignMessageReturnIsInHex)
 	// 2 for each one in hex = 130
 	// TODO(): this kind of "dependency" is not maintainable.
 	for (size_t i = 0; i < sizeof(resp->signed_message); ++i) {
-		ck_assert(is_a_base16_caharacter(resp->signed_message[i]));
+		sprintf(test_msg, "Check that %d-th character in %s is in base16 alphabet", (int) i, resp->signed_message);
+		ck_assert_msg(is_base16_char(resp->signed_message[i]), test_msg);
 	}
 }
 END_TEST
@@ -147,8 +149,7 @@ START_TEST(test_msgSkycoinCheckMessageSignatureOk)
 	ck_assert_int_eq(respAddress->addresses_count, 1);
 	// NOTE(): `raw_msg` hash become from:
 	// https://github.com/skycoin/skycoin/blob/develop/src/cipher/testsuite/testdata/input-hashes.golden
-	char raw_msg[] = {
-		"66687aadf862bd776c8fc18b8e9f8e20089714856ee233b3902a591d0d5f2925"};
+	char raw_msg[] = {"66687aadf862bd776c8fc18b8e9f8e20089714856ee233b3902a591d0d5f2925"};
 	SkycoinSignMessage msgSign = SkycoinSignMessage_init_zero;
 	strncpy(msgSign.message, raw_msg, sizeof(msgSign.message));
 	msgSign.address_n = 0;
@@ -563,8 +564,10 @@ START_TEST(test_msgSkycoinAddressesAll)
 	ck_assert_int_eq(msgSkycoinAddressImpl(&msgAddr, resp), ErrOk);
 	ck_assert_int_eq(resp->addresses_count, msgAddr.address_n);
 	int i;
+	char test_msg[256];
 	for (i = 0; i < resp->addresses_count; ++i) {
-	ck_assert_str_eq(resp->addresses[i], TEST_MANY_ADDRESSES[i]);
+		sprintf(test_msg, "Check %d-th address , expected %s got %s", i, TEST_MANY_ADDRESSES[i], resp->addresses[i]);
+		ck_assert_msg(strcmp(resp->addresses[i], TEST_MANY_ADDRESSES[i]) == 0, test_msg);
 	}
 }
 END_TEST
@@ -587,8 +590,10 @@ START_TEST(test_msgSkycoinAddressesStartIndex)
 	ck_assert_int_eq(msgSkycoinAddressImpl(&msgAddr, resp), ErrOk);
 	ck_assert_int_eq(resp->addresses_count, msgAddr.address_n);
 	int i, index;
+	char test_msg[256];
 	for (i = 0, index = msgAddr.start_index; i < resp->addresses_count; ++i, ++index) {
-	ck_assert_str_eq(resp->addresses[i], TEST_MANY_ADDRESSES[index]);
+		sprintf(test_msg, "Check %d-th address , expected %s got %s", index, TEST_MANY_ADDRESSES[index], resp->addresses[i]);
+		ck_assert_msg(strcmp(resp->addresses[i], TEST_MANY_ADDRESSES[index]) == 0, test_msg);
 	}
 }
 END_TEST

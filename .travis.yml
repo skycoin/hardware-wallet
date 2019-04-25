@@ -30,7 +30,9 @@ before_script:
   - eval "./ci-scripts/install-${TRAVIS_OS_NAME}.sh"
   # Install linters
   - make install-linters
+
 script:
+  - make verify-protob-hash
   - make lint
   - make -C tiny-firmware/protob build-c
   - make test
