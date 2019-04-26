@@ -129,6 +129,6 @@ static inline void flash_write8(uint32_t addr, uint8_t byte) {
  * @return 0, 1, 2 as described in the manual for RDP level
  * [2.6.3 Read protection (RDP)](https://www.st.com/content/ccc/resource/technical/document/programming_manual/f7/7e/b9/a8/31/58/41/7b/CD00233952.pdf/files/CD00233952.pdf/jcr:content/translations/en.CD00233952.pdf)
  */
-uint8_t rdp_level(void);
+void set_up_rdp_level(void);
 
 #endif
