@@ -25,6 +25,7 @@
 #include "fastflash.h"
 #include "factory_test.h"
 #include "entropy.h"
+#include "memory.h"
 
 int main(void)
 {
@@ -47,6 +48,7 @@ int main(void)
 	timer_init();
 
 #ifdef APPVER
+	set_up_rdp_level();
 	// enable MPU (Memory Protection Unit)
 	mpu_config();
 #endif
