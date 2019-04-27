@@ -57,11 +57,6 @@ OBJS += $(TOP_DIR)protob/nanopb/vendor/nanopb/pb_common.o
 OBJS += $(TOP_DIR)protob/nanopb/vendor/nanopb/pb_decode.o
 OBJS += $(TOP_DIR)protob/nanopb/vendor/nanopb/pb_encode.o
 
-#libopencm3
-OBJS += $(TOP_DIR)vendor/libopencm3/lib/stm32/f2/gpio.o
-OBJS += $(TOP_DIR)vendor/libopencm3/lib/stm32/f2/gpio_common_f0234.o
-#end libopencm3
-
 ifneq ($(EMULATOR),1)
 OBJS += firmware/usb.o
 else

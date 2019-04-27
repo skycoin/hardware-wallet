@@ -12,6 +12,11 @@
 #include <libopencm3/stm32/gpio.h>
 #include "gpio_noise.h"
 
+#ifdef EMULATOR
+uint16_t read_gpio_noise(uint8_t port, uint8_t pin) {
+  return (( (uint16_t) port ) << 8) | pin;
+}
+#else
 uint16_t read_gpio_noise(uint8_t port, uint8_t pin) {
 
   uint32_t ports[] = { 0, GPIOA, GPIOB, GPIOC, GPIOD, GPIOE, GPIOF, GPIOG, GPIOH, GPIOI };
@@ -45,3 +50,4 @@ uint16_t read_gpio_noise(uint8_t port, uint8_t pin) {
   return ret ^ ( ret << shift ) ^ salt;
 
 }
+#endif
