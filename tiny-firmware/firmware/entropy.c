@@ -22,6 +22,7 @@
 #include "skycoin_crypto.h"
 #include "messages.h"
 #include "messages.pb.h"
+#include "gpio_noise.h"
 
 #define EXTERNAL_ENTROPY_TIMEOUT 60000
 #define ENTROPY_RANDOMSALT_SIZE 256
@@ -66,8 +67,10 @@ void entropy_salt_mix_256(uint8_t *in, size_t in_len, uint8_t *buf) {
 	entropy_mix_256((uint8_t*)&salt_ticker, sizeof(salt_ticker), NULL);
 	// Salt source : TRNG 32 bits
 	uint32_t salt_trng = random32();
-	random_buffer((uint8_t*)&salt_trng, sizeof (salt_trng));
 	entropy_mix_256((uint8_t*)&salt_trng, sizeof(salt_trng), NULL);
+	// Salt source : disconnected gpio (current noise)
+	uint16_t salt_gpio = read_gpio_noise(2, 2); /// Read from GPIOB : GPIO2
+	entropy_mix_256((uint8_t *)&salt_gpio, sizeof(salt_gpio), NULL);
 	if (in != NULL) {
 		entropy_mix_256(in, in_len, buf);
 	}
