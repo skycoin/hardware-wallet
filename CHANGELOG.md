@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Get firmware version from `git`, use `tiny-firmware/VERSION` if it's not possible.
 - Add deploy satge for travis.
 - A makefile target for `release`.
-- Some ci related bash scrips.
+- A a bash script to get firmware version.
 - Skycoin logo in bootloader mode
 - Enforce setting default device language to English
 - Use`protobuf` file definitions as a `git submodule` from http://github.com/skycoin/hardware-wallet-protob/
