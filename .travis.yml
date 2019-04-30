@@ -47,17 +47,15 @@ notifications:
   webhooks: https://fathomless-fjord-24024.herokuapp.com/notify
 
 before_deploy:
-- if [[ $TRAVIS_TAG != '' ]]; then
-  if [[ $TRAVIS_OS_NAME == 'linux' ]]; then
-  make release;
-  VERSION_BOOTLOADER=$(cat tiny-firmware/bootloader/VERSION);
-  ID_VENDOR=12602;
-  ID_PRODUCT=1;
-  export COMBINED_VERSION=${VERSION_BOOTLOADER}-${TRAVIS_TAG}-${ID_VENDOR}-${ID_PRODUCT}-1;
-  else
-  make release-emulator;
-  fi;
-  fi
+  - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then
+      make release;
+      VERSION_BOOTLOADER=$(cat tiny-firmware/bootloader/VERSION);
+      ID_VENDOR=12602;
+      ID_PRODUCT=1;
+      export COMBINED_VERSION=${VERSION_BOOTLOADER}-${TRAVIS_TAG}-${ID_VENDOR}-${ID_PRODUCT}-1;
+    else
+      make release-emulator;
+    fi
 
 deploy:
 - provider: releases
