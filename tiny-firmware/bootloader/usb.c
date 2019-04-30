@@ -255,11 +255,11 @@ static void send_msg_features(usbd_device *dev)
 	uint8_t fetOpts = 0;
 	switch (rdp_level) {
 		case 2:
-			// FIXME(denisacostaq@gmail.com): Add doc
+			// https://github.com/skycoin/hardware-wallet-protob/blob/b3a2d50a55c6fb047b895bec27204e0abae38900/protob/messages/types.proto#L139
 			fetOpts = (1 << 4);
 			break;
 		case 1:
-			// FIXME(denisacostaq@gmail.com): Add doc
+			// https://github.com/skycoin/hardware-wallet-protob/blob/b3a2d50a55c6fb047b895bec27204e0abae38900/protob/messages/types.proto#L138
 			fetOpts = (1 << 3);
 			break;
 		
