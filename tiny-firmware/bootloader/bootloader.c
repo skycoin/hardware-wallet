@@ -141,11 +141,19 @@ static inline void reverse_byte(uint8_t *data) {
 
 static inline BITMAP inver_bitmap(BITMAP bm, uint8_t *data) {
 	size_t data_len = (bm.width * bm.height) / 8;
-	for (size_t i = 0; i < data_len; ++i) {
+	memcpy(data, bm.data, data_len);
+	size_t data_mid_len = data_len/2;
+	for (size_t i = 0; i < data_mid_len; ++i) {
+		reverse_byte(&data[i]);
+		reverse_byte(&data[data_len - 1 - i]);
+		// NOTE: swap bytes in `i` with `data_len - 1 - i`
 		uint8_t byte = 0;
-		memcpy(&byte, &(bm.data[data_len - 1 - i]), 1);
-		reverse_byte(&byte);
-		memcpy(&data[i], &byte, 1);
+		memcpy(&byte, &data[i], sizeof(byte));
+		memcpy(&data[i], &data[data_len - 1 - i], sizeof(byte));
+		memcpy(&data[data_len - 1 - i], &byte, sizeof(byte));
+	}
+	if (data_len % 2) {
+		reverse_byte(&data[data_mid_len + 1]);
 	}
 	BITMAP inverted = {
 		.width = bm.width,
@@ -160,7 +168,7 @@ void bootloader_loop(void)
 {
 	oledClear();
 	if (rdp_level != 2) {
-		// NOTE(denisacostaq@gmail.com): 48*64 is the size of the bmp_logo64 buffer.
+		// NOTE 48*64 is the size of the bmp_logo64 buffer.
 		uint8_t bmp_logo64_data_inverted[48*64] = {0};
 		BITMAP bmp_logo64_inverted =
 				inver_bitmap(bmp_logo64, bmp_logo64_data_inverted);
