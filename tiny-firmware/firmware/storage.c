@@ -46,8 +46,7 @@
 /* magic constant to check validity of storage block */
 static const uint32_t storage_magic = 0x726f7473;   // 'stor' as uint32_t
 
-uint32_t device_uuid[STM32_UUID_LEN/sizeof(uint32_t)] = {0};
-#define storage_uuid device_uuid
+uint32_t storage_uuid[STM32_UUID_LEN/sizeof(uint32_t)] = {0};
 _Static_assert(sizeof(storage_uuid) == STM32_UUID_LEN, "storage_uuid has wrong size");
 
 Storage CONFIDENTIAL storageUpdate __attribute__((aligned(4)));
