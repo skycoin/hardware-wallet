@@ -662,6 +662,11 @@ START_TEST(test_transactionSign1)
     msg.transactionIn_count = 1;
     msg.transactionOut_count = 1;
     ResponseTransactionSign resp = ResponseTransactionSign_init_zero;
+    SetMnemonic nemonic = SetMnemonic_init_zero;
+    char raw_mnemonic[] = {
+        "cloud flower upset remain green metal below cup stem infant art thank"};
+    memcpy(nemonic.mnemonic, raw_mnemonic, sizeof(raw_mnemonic));
+    ck_assert_int_eq(msgSetMnemonicImpl(&nemonic), ErrOk);
     ErrCode_t errCode = msgTransactionSignImpl(&msg, funcConfirmTxn, &resp);
     ck_assert_int_eq(errCode, ErrOk);
 
