@@ -119,23 +119,26 @@ bool firmware_present(void)
 	return true;
 }
 
-static inline bool bit_status_in_byte(uint8_t data, uint8_t bit_pos) {
-	return (data & (uint8_t)(1 << bit_pos)) != 0;
-}
+#define BIT_STATUS_IN_BYTE(data, bit_pos) \
+	((data) & (uint8_t)(1 << (bit_pos))) != 0
 
-static inline void set_bit_in_byte(uint8_t *data, bool val, uint8_t bit_pos) {
-	uint8_t mask = (uint8_t)(1 << bit_pos);
-	if (val) {
-		(*data) |= mask;
-	} else {
-		(*data) &= (mask ^ 255);
+#define SET_UP_BIT_IN_BYTE(data, bit_pos) \
+	(*(data)) |= ((uint8_t)(1 << (bit_pos)))
+
+#define SET_DOWN_BIT_IN_BYTE(data, bit_pos) \
+	(*(data)) &= (((uint8_t)(1 << (bit_pos))) ^ 255)
+
+#define SET_BIT_IN_BYTE(data, val, bit_pos) \
+	if (val) { \
+		SET_UP_BIT_IN_BYTE((data), (bit_pos)); \
+	} else { \
+		SET_DOWN_BIT_IN_BYTE((data), (bit_pos)); \
 	}
-}
 
 static inline void reverse_byte(uint8_t *data) {
 	uint8_t tmp_data = *data;
 	for (uint8_t i = 0; i < 8; ++i) {
-		set_bit_in_byte(data, bit_status_in_byte(tmp_data, i), 7 - i);
+		SET_BIT_IN_BYTE(data, BIT_STATUS_IN_BYTE(tmp_data, i), 7 - i);
 	}
 }
 
