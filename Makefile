@@ -22,17 +22,17 @@ VERSION_BOOTLOADER       =$(shell cat tiny-firmware/bootloader/VERSION | tr -d v
 VERSION_BOOTLOADER_MAJOR =$(shell echo $(VERSION_BOOTLOADER) | cut -d. -f1)
 VERSION_BOOTLOADER_MINOR =$(shell echo $(VERSION_BOOTLOADER) | cut -d. -f2)
 VERSION_BOOTLOADER_PATCH =$(shell echo $(VERSION_BOOTLOADER) | cut -d. -f3)
-VERSION_FIRMWARE_MAJOR   =$(shell ./ci-scripts/version/version_major.sh)
-VERSION_FIRMWARE_MINOR   =$(shell ./ci-scripts/version/version_minor.sh)
-VERSION_FIRMWARE_PATCH   =$(shell ./ci-scripts/version/version_patch.sh)
+VERSION_FIRMWARE_RAW     =$(shell ./ci-scripts/version.sh)
+VERSION_FIRMWARE_MAJOR   =$(shell echo $(VERSION_FIRMWARE_RAW) | tr -d v | cut -d. -f1)
+VERSION_FIRMWARE_MINOR   =$(shell echo $(VERSION_FIRMWARE_RAW) | cut -d. -f2)
+VERSION_FIRMWARE_PATCH   =$(shell echo $(VERSION_FIRMWARE_RAW) | cut -d. -f3)
 VERSION_FIRMWARE         =$(VERSION_FIRMWARE_MAJOR).$(VERSION_FIRMWARE_MINOR).$(VERSION_FIRMWARE_PATCH)
 # https://semver.org/
 VERSION_IS_SEMANTIC_COMPLIANT=0
 ifeq ($(shell echo $(VERSION_FIRMWARE) | egrep '^[0-9]+\.[0-9]+\.[0-9]+$$'),) # empty result from egrep
-	VERSION_FIRMWARE    =$(shell ./ci-scripts/version/full_version.sh)
+	VERSION_FIRMWARE     =$(VERSION_FIRMWARE_RAW)
 	ifeq ($(shell echo $(VERSION_FIRMWARE) | egrep '^[0-9]+\.[0-9]+\.[0-9]+$$'),) # empty result from egrep
 		VERSION_IS_SEMANTIC_COMPLIANT=0
-		VERSION_FIRMWARE=$(shell ./ci-scripts/version/full_version.sh)
 	else
 		VERSION_IS_SEMANTIC_COMPLIANT=1
 	endif
@@ -53,7 +53,7 @@ else
 	LD_VAR=LD_LIBRARY_PATH
 endif
 check-version: ## Check that the tiny-firmware/VERSION match the current tag
-	@./ci-scripts/version/full_version.sh > tiny-firmware/VERSION
+	@./ci-scripts/version.sh > tiny-firmware/VERSION
 	@if [ $$VERSION_IS_SEMANTIC_COMPLIANT -eq 1 ]; then git diff --exit-code tiny-firmware/VERSION; fi
 	@git checkout tiny-firmware/VERSION
 
@@ -197,6 +197,9 @@ test: ## Run all project test suites.
 
 st-flash: ## Deploy (flash) firmware on physical wallet
 	st-flash write $(FULL_FIRMWARE_PATH) 0x08000000
+
+oflash: full-firmware
+	openocd -f openocd.cfg
 
 check-trng: ## Run test tools over random buffers
 	make -C trng-test trng-generate-buffers
