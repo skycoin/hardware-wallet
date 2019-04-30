@@ -30,8 +30,10 @@ before_script:
   - eval "./ci-scripts/install-${TRAVIS_OS_NAME}.sh"
   # Install linters
   - make install-linters
+
 script:
   - find tiny-firmware/protob/nanopb/vendor/nanopb
+  - make verify-protob-hash
   - make lint
   - make -C tiny-firmware/protob install-deps-nanopb
   - make -C tiny-firmware/protob install-protoc

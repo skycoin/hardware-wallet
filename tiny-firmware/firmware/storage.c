@@ -46,8 +46,9 @@
 /* magic constant to check validity of storage block */
 static const uint32_t storage_magic = 0x726f7473;   // 'stor' as uint32_t
 
-static uint32_t storage_uuid[12 / sizeof(uint32_t)];
-_Static_assert(sizeof(storage_uuid) == 12, "storage_uuid has wrong size");
+uint32_t device_uuid[STM32_UUID_LEN/sizeof(uint32_t)] = {0};
+#define storage_uuid device_uuid
+_Static_assert(sizeof(storage_uuid) == STM32_UUID_LEN, "storage_uuid has wrong size");
 
 Storage CONFIDENTIAL storageUpdate __attribute__((aligned(4)));
 _Static_assert((sizeof(storageUpdate) & 3) == 0, "storage unaligned");
@@ -247,8 +248,7 @@ void storage_init(void)
 
 void storage_generate_uuid(void)
 {
-	// set random uuid
-	random_buffer((uint8_t *)storage_uuid, sizeof(storage_uuid));
+	// NOTE(denisacostaq@gmail.com): storage_uuid is loaded from main function
 	data2hex(storage_uuid, sizeof(storage_uuid), storage_uuid_str);
 	reset_entropy_mix_256();
 }
