@@ -237,19 +237,14 @@ bool storage_from_flash(void)
 
 void storage_init(void)
 {
+	// NOTE(denisacostaq@gmail.com): storage_uuid is loaded from main function
+	data2hex(storage_uuid, sizeof(storage_uuid), storage_uuid_str);
 	if (!storage_from_flash()) {
 		storage_wipe();
 		storage_show_error();
 	} else {
 		reset_entropy_mix_256();
 	}
-}
-
-void storage_generate_uuid(void)
-{
-	// NOTE(denisacostaq@gmail.com): storage_uuid is loaded from main function
-	data2hex(storage_uuid, sizeof(storage_uuid), storage_uuid_str);
-	reset_entropy_mix_256();
 }
 
 void session_clear(bool clear_pin)
@@ -768,7 +763,7 @@ uint32_t storage_getFlags(void)
 void storage_wipe(void)
 {
 	session_clear(true);
-	storage_generate_uuid();
+	reset_entropy_mix_256();
 
 	svc_flash_unlock();
 	storage_commit_locked(false);
