@@ -23,7 +23,7 @@
     Such values [might not be particularly random](https://security.stackexchange.com/questions/16117/in-hashing-does-it-matter-how-random-a-salt-is).
     Internal entropy is eventually combined with an external entropy received from the user host device.
 
-### Why I see a inverted skycoin logo in bootloader?
+### Why do I see a inverted skycoin logo in bootloader?
 
 If you see an inverted skycoin logo in bootloader mode like in the following image, maybe you have a non skycoin official hardware wallet.
 
