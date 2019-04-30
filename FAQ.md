@@ -25,6 +25,6 @@
 
 ### Why do I see a inverted skycoin logo in bootloader?
 
-If you see an inverted skycoin logo in bootloader mode like in the following image, maybe you have a non skycoin official hardware wallet.
+If you see an inverted skycoin logo in bootloader mode like in the following image, maybe you have either flashed for development or not official device.
 
 ![Kiku](images/skycoin_logo_inverted_bootloader.jpg)
