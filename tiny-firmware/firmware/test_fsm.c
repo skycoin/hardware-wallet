@@ -710,6 +710,12 @@ START_TEST(test_transactionSign2)
         }
     };
 
+    SetMnemonic nemonic = SetMnemonic_init_zero;
+    char raw_mnemonic[] = {
+            "cloud flower upset remain green metal below cup stem infant art thank"};
+    memcpy(nemonic.mnemonic, raw_mnemonic, sizeof(raw_mnemonic));
+    ck_assert_int_eq(msgSetMnemonicImpl(&nemonic), ErrOk);
+
     TransactionSign* msg = malloc(sizeof(TransactionSign));
     memcpy(msg->transactionIn, &transactionInputs, 8*sizeof(SkycoinTransactionInput));
     memcpy(msg->transactionOut, &transactionOutputs, 8*sizeof(SkycoinTransactionOutput));
@@ -780,6 +786,13 @@ START_TEST(test_transactionSign3)
             .hour = 1
         }
     };
+
+    SetMnemonic nemonic = SetMnemonic_init_zero;
+    char raw_mnemonic[] = {
+            "cloud flower upset remain green metal below cup stem infant art thank"};
+    memcpy(nemonic.mnemonic, raw_mnemonic, sizeof(raw_mnemonic));
+    ck_assert_int_eq(msgSetMnemonicImpl(&nemonic), ErrOk);
+
     TransactionSign* msg = malloc(sizeof(TransactionSign));
     memcpy(msg->transactionIn, &transactionInputs, 8*sizeof(SkycoinTransactionInput));
     memcpy(msg->transactionOut, &transactionOutputs, 8*sizeof(SkycoinTransactionOutput));
@@ -852,6 +865,13 @@ START_TEST(test_transactionSign4)
             .hour = 0
         }
     };
+
+    SetMnemonic nemonic = SetMnemonic_init_zero;
+    char raw_mnemonic[] = {
+            "cloud flower upset remain green metal below cup stem infant art thank"};
+    memcpy(nemonic.mnemonic, raw_mnemonic, sizeof(raw_mnemonic));
+    ck_assert_int_eq(msgSetMnemonicImpl(&nemonic), ErrOk);
+
     TransactionSign* msg = malloc(sizeof(TransactionSign));
     memcpy(msg->transactionIn, &transactionInputs, 8*sizeof(SkycoinTransactionInput));
     memcpy(msg->transactionOut, &transactionOutputs, 8*sizeof(SkycoinTransactionOutput));
@@ -908,6 +928,13 @@ START_TEST(test_transactionSign5)
             .hour = 0
         }
     };
+
+    SetMnemonic nemonic = SetMnemonic_init_zero;
+    char raw_mnemonic[] = {
+            "cloud flower upset remain green metal below cup stem infant art thank"};
+    memcpy(nemonic.mnemonic, raw_mnemonic, sizeof(raw_mnemonic));
+    ck_assert_int_eq(msgSetMnemonicImpl(&nemonic), ErrOk);
+
     TransactionSign* msg = malloc(sizeof(TransactionSign));
     memcpy(msg->transactionIn, &transactionInputs, 8*sizeof(SkycoinTransactionInput));
     memcpy(msg->transactionOut, &transactionOutputs, 8*sizeof(SkycoinTransactionOutput));
@@ -961,6 +988,13 @@ START_TEST(test_transactionSign6)
             .hour = 1
         }
     };
+
+    SetMnemonic nemonic = SetMnemonic_init_zero;
+    char raw_mnemonic[] = {
+            "cloud flower upset remain green metal below cup stem infant art thank"};
+    memcpy(nemonic.mnemonic, raw_mnemonic, sizeof(raw_mnemonic));
+    ck_assert_int_eq(msgSetMnemonicImpl(&nemonic), ErrOk);
+
     TransactionSign* msg = malloc(sizeof(TransactionSign));
     memcpy(msg->transactionIn, &transactionInputs, 8*sizeof(SkycoinTransactionInput));
     memcpy(msg->transactionOut, &transactionOutputs, 8*sizeof(SkycoinTransactionOutput));
@@ -1014,6 +1048,13 @@ START_TEST(test_transactionSign7)
             .hour = 33
         }
     };
+
+    SetMnemonic nemonic = SetMnemonic_init_zero;
+    char raw_mnemonic[] = {
+            "cloud flower upset remain green metal below cup stem infant art thank"};
+    memcpy(nemonic.mnemonic, raw_mnemonic, sizeof(raw_mnemonic));
+    ck_assert_int_eq(msgSetMnemonicImpl(&nemonic), ErrOk);
+
     TransactionSign* msg = malloc(sizeof(TransactionSign));
     memcpy(msg->transactionIn, &transactionInputs, 8*sizeof(SkycoinTransactionInput));
     memcpy(msg->transactionOut, &transactionOutputs, 8*sizeof(SkycoinTransactionOutput));
@@ -1081,6 +1122,13 @@ START_TEST(test_transactionSign8)
             .hour = 1000
         }
     };
+
+    SetMnemonic nemonic = SetMnemonic_init_zero;
+    char raw_mnemonic[] = {
+            "cloud flower upset remain green metal below cup stem infant art thank"};
+    memcpy(nemonic.mnemonic, raw_mnemonic, sizeof(raw_mnemonic));
+    ck_assert_int_eq(msgSetMnemonicImpl(&nemonic), ErrOk);
+
     TransactionSign* msg = malloc(sizeof(TransactionSign));
     memcpy(msg->transactionIn, &transactionInputs, 8*sizeof(SkycoinTransactionInput));
     memcpy(msg->transactionOut, &transactionOutputs, 8*sizeof(SkycoinTransactionOutput));
@@ -1130,6 +1178,13 @@ START_TEST(test_transactionSign9)
             .hour = 500
         }
     };
+
+    SetMnemonic nemonic = SetMnemonic_init_zero;
+    char raw_mnemonic[] = {
+            "cloud flower upset remain green metal below cup stem infant art thank"};
+    memcpy(nemonic.mnemonic, raw_mnemonic, sizeof(raw_mnemonic));
+    ck_assert_int_eq(msgSetMnemonicImpl(&nemonic), ErrOk);
+
     TransactionSign* msg = malloc(sizeof(TransactionSign));
     memcpy(msg->transactionIn, &transactionInputs, 8*sizeof(SkycoinTransactionInput));
     memcpy(msg->transactionOut, &transactionOutputs, 8*sizeof(SkycoinTransactionOutput));
@@ -1175,6 +1230,13 @@ START_TEST(test_transactionSign10)
             .hour = 1000
         }
     };
+
+    SetMnemonic nemonic = SetMnemonic_init_zero;
+    char raw_mnemonic[] = {
+            "cloud flower upset remain green metal below cup stem infant art thank"};
+    memcpy(nemonic.mnemonic, raw_mnemonic, sizeof(raw_mnemonic));
+    ck_assert_int_eq(msgSetMnemonicImpl(&nemonic), ErrOk);
+
     TransactionSign* msg = malloc(sizeof(TransactionSign));
     memcpy(msg->transactionIn, &transactionInputs, 8*sizeof(SkycoinTransactionInput));
     memcpy(msg->transactionOut, &transactionOutputs, 8*sizeof(SkycoinTransactionOutput));
