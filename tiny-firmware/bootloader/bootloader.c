@@ -119,44 +119,60 @@ bool firmware_present(void)
 	return true;
 }
 
-#define BIT_STATUS_IN_BYTE(data, bit_pos) \
-	((data) & (uint8_t)(1 << (bit_pos))) != 0
-
-#define SET_UP_BIT_IN_BYTE(data, bit_pos) \
-	(*(data)) |= ((uint8_t)(1 << (bit_pos)))
-
-#define SET_DOWN_BIT_IN_BYTE(data, bit_pos) \
-	(*(data)) &= (((uint8_t)(1 << (bit_pos))) ^ 255)
-
-#define SET_BIT_IN_BYTE(data, val, bit_pos) \
-	if (val) { \
-		SET_UP_BIT_IN_BYTE((data), (bit_pos)); \
-	} else { \
-		SET_DOWN_BIT_IN_BYTE((data), (bit_pos)); \
-	}
-
-static inline void reverse_byte(uint8_t *data) {
-	uint8_t tmp_data = *data;
-	for (uint8_t i = 0; i < 8; ++i) {
-		SET_BIT_IN_BYTE(data, BIT_STATUS_IN_BYTE(tmp_data, i), 7 - i);
-	}
+/**
+ * @brief reverse_word reverse a 32 bits word
+ * @details RBIT is a hardware instruction to
+ * @details eficiently reverse the bit order in a 32-bit word.
+ * @param data
+ */
+static inline void reverse_word(uint32_t *data) {
+	// ABout rbit:
+	// http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.dui0489h/Cihjgdid.html
+	// http://www.keil.com/support/man/docs/armasm/armasm_dom1361289889382.htm
+	asm(
+		"push {r7, r8}\n\t"
+		"mov r8, %1\n\t"
+		"rbit r7, r8\n\n"
+		"mov %0, r7\n\t"
+		"pop {r8, r7}": "=r" (*data) : "r" (*data));
 }
 
-static inline BITMAP inver_bitmap(BITMAP bm, uint8_t *data) {
+static inline BITMAP invert_bitmap(BITMAP bm, uint8_t *data) {
 	size_t data_len = (bm.width * bm.height) / 8;
 	memcpy(data, bm.data, data_len);
 	size_t data_mid_len = data_len/2;
-	for (size_t i = 0; i < data_mid_len; ++i) {
-		reverse_byte(&data[i]);
-		reverse_byte(&data[data_len - 1 - i]);
-		// NOTE: swap bytes in `i` with `data_len - 1 - i`
-		uint8_t byte = 0;
-		memcpy(&byte, &data[i], sizeof(byte));
-		memcpy(&data[i], &data[data_len - 1 - i], sizeof(byte));
-		memcpy(&data[data_len - 1 - i], &byte, sizeof(byte));
+	for (size_t i = 0; i + 3 < data_mid_len; i+=4) {
+		uint32_t l_num = 0;
+		memcpy(&l_num, &data[i], sizeof(l_num));
+		reverse_word(&l_num);
+		uint32_t r_num = 0;
+		memcpy(&r_num, &data[data_len - 4 - i], sizeof(l_num));
+		reverse_word(&r_num);
+		memcpy(&data[i], &r_num, sizeof(r_num));
+		memcpy(&data[data_len - 4 - i], &l_num, sizeof(l_num));
+	}
+	if (data_mid_len % 4) {
+		uint8_t unprocessed = data_mid_len % 4;
+		uint32_t l_num = 0;
+		memcpy(&l_num, &data[data_mid_len - unprocessed], unprocessed);
+		reverse_word(&l_num);
+		uint32_t r_num = 0;
+		size_t wp = 0;
+		if (data_len % 2) {
+			wp = data_len - data_mid_len + 1;
+		} else {
+			wp = data_len - data_mid_len;
+		}
+		memcpy(&r_num, &data[wp], unprocessed);
+		reverse_word(&r_num);
+		memcpy(&data[data_mid_len - unprocessed], &r_num, unprocessed);
+		memcpy(&data[wp], &l_num, unprocessed);
 	}
 	if (data_len % 2) {
-		reverse_byte(&data[data_mid_len + 1]);
+		uint32_t num = 0;
+		memcpy(&num, &data[data_mid_len + 1], 1);
+		reverse_word(&num);
+		memcpy(&data[data_mid_len + 1], &num, 1);
 	}
 	BITMAP inverted = {
 		.width = bm.width,
@@ -174,7 +190,7 @@ void bootloader_loop(void)
 		// NOTE 48*64 is the size of the bmp_logo64 buffer.
 		uint8_t bmp_logo64_data_inverted[48*64] = {0};
 		BITMAP bmp_logo64_inverted =
-				inver_bitmap(bmp_logo64, bmp_logo64_data_inverted);
+				invert_bitmap(bmp_logo64, bmp_logo64_data_inverted);
 		oledDrawBitmap(0, 0, &bmp_logo64_inverted);
 	} else {
 		oledDrawBitmap(0, 0, &bmp_logo64);
