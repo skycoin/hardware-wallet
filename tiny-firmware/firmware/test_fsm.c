@@ -666,12 +666,13 @@ START_TEST(test_transactionSign1)
     ck_assert_int_eq(errCode, ErrOk);
 
     SkycoinCheckMessageSignature* msg_s = malloc(sizeof(SkycoinCheckMessageSignature));
-    memcpy(msg_s->address, "2EU3JbveHdkxW6z5tdhbbB2kRAWvXC2pLzw", strlen(msg_s->address));
-    strncpy(msg_s->message, "d11c62b1e0e9abf629b1f5f4699cef9fbc504b45ceedf0047ead686979498218", strlen(msg_s->message));
-    memcpy(msg_s->signature, resp.signatures[0], strlen(msg_s->signature));
+    memcpy(msg_s->address, "2EU3JbveHdkxW6z5tdhbbB2kRAWvXC2pLzw", sizeof(msg_s->address));
+    strncpy(msg_s->message, "d11c62b1e0e9abf629b1f5f4699cef9fbc504b45ceedf0047ead686979498218", sizeof(msg_s->message));
+    memcpy(msg_s->signature, resp.signatures[0], sizeof(msg_s->signature));
 
     Failure failure_resp = Failure_init_default;
     Success success_resp = Success_init_default;
+    forceGenerateMnemonic();
     ErrCode_t check_sign = msgSkycoinCheckMessageSignatureImpl(msg_s, &success_resp, &failure_resp);
 
     printf("Error message  => %s \n", failure_resp.message);
