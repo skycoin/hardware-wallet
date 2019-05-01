@@ -1,7 +1,8 @@
 /*
- * This file is part of the TREZOR project, https://trezor.io/
+ * This file is part of the Skycoin project, https://skycoin.net/ 
  *
  * Copyright (C) 2014 Pavol Rusnak <stick@satoshilabs.com>
+ * Copyright (C) 2018-2019 Skycoin Project
  *
  * This library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -107,16 +108,19 @@ extern uint8_t *emulator_flash_base;
 #define FLASH_CODE_SECTOR_FIRST	4
 #define FLASH_CODE_SECTOR_LAST	7
 
+#define STM32_UUID_LEN 12
+
 #ifdef BOOTLOADER
 void memory_protect(void);
 #endif
 void memory_write_unlock(void);
 int memory_bootloader_hash(uint8_t *hash);
 
-inline void flash_write32(uint32_t addr, uint32_t word) {
+static inline void flash_write32(uint32_t addr, uint32_t word) {
 	*(volatile uint32_t *) FLASH_PTR(addr) = word;
 }
-inline void flash_write8(uint32_t addr, uint8_t byte) {
+
+static inline void flash_write8(uint32_t addr, uint8_t byte) {
 	*(volatile uint8_t *) FLASH_PTR(addr) = byte;
 }
 

@@ -1,7 +1,8 @@
 /*
- * This file is part of the TREZOR project, https://trezor.io/
+ * This file is part of the Skycoin project, https://skycoin.net
  *
  * Copyright (C) 2014 Pavol Rusnak <stick@satoshilabs.com>
+ * Copyright (C) 2019 Skycoin Project
  *
  * This library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -105,6 +106,8 @@ bool protectButton(ButtonRequestType type, bool confirm_only)
 	}
 
 	usbTiny(0);
+
+	simulateButtonPress = false;
 
 	return result;
 }
@@ -211,11 +214,17 @@ bool protectPin(bool use_cached)
 	}
 }
 
-bool protectChangePin(void)
-{
-	static CONFIDENTIAL char pin_compare[17];
+bool protectChangePin() {
+	return protectChangePinEx(NULL);
+}
 
-	const char *pin = requestPin(PinMatrixRequestType_PinMatrixRequestType_NewFirst, _("Please enter new PIN:"));
+bool protectChangePinEx(const char* (*funcRequestPin)(PinMatrixRequestType, const char *)) {
+	static CONFIDENTIAL char pin_compare[17];
+	if (funcRequestPin == NULL) {
+		funcRequestPin = requestPin;
+	}
+
+	const char *pin = funcRequestPin(PinMatrixRequestType_PinMatrixRequestType_NewFirst, _("Please enter new PIN:"));
 
 	if (!pin) {
 		return false;
@@ -223,9 +232,9 @@ bool protectChangePin(void)
 
 	strlcpy(pin_compare, pin, sizeof(pin_compare));
 
-	pin = requestPin(PinMatrixRequestType_PinMatrixRequestType_NewSecond, _("Please re-enter new PIN:"));
+	pin = funcRequestPin(PinMatrixRequestType_PinMatrixRequestType_NewSecond, _("Please re-enter new PIN:"));
 
-	const bool result = pin && (strncmp(pin_compare, pin, sizeof(pin_compare)) == 0);
+	const bool result = pin && *pin && (strncmp(pin_compare, pin, sizeof(pin_compare)) == 0);
 
 	if (result) {
 		storage_setPin(pin_compare);

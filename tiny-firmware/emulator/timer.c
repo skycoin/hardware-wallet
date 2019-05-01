@@ -20,8 +20,11 @@
 #include <time.h>
 
 #include "timer.h"
+#include "firmware/swtimer.h"
 
-void timer_init(void) {}
+void timer_init(void) {
+  timer_init_sw();
+}
 
 uint32_t timer_ms(void) {
 	struct timespec t;

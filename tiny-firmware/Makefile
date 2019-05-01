@@ -1,6 +1,10 @@
 APPVER = 1.0.0
 
-#libtrezor.a
+SDL_CFLAGS ?= $(shell sdl2-config --cflags | sed 's/-D_THREAD_SAFE//g')
+ENABLE_GETENTROPY ?= 0
+DISABLE_GETENTROPY_CONFIRM ?= 0
+
+#libskywallet.a
 ifneq ($(EMULATOR),1)
 CFLAGS += -DAPPVER=$(APPVER)
 OBJS += startup.o
@@ -23,7 +27,16 @@ OBJS += memory.o
 OBJS += gen/bitmaps.o
 endif
 OBJS += gen/fonts.o
-#end libtrezor.a
+#end libskywallet.a
+
+#test_skyhw
+TEST_OBJS += firmware/test_timer.o
+TEST_OBJS += firmware/test_fsm.o
+TEST_OBJS += firmware/test_droplet.o
+TEST_OBJS += firmware/test_main.o
+TEST_OBJS += firmware/test_many_address_golden.o
+TEST_OBJS += firmware/test_protect.o
+#end test_skyhw
 
 ifneq ($(EMULATOR),1)
 LDSCRIPT  = memory.ld
@@ -33,7 +46,7 @@ endif
 
 DEBUG_LINK ?= 0
 CFLAGS += -Wno-sequence-point
-CFLAGS += -I$(TOP_DIR)vendor/nanopb -Iprotob -DPB_FIELD_16BIT=1
+CFLAGS += -I$(TOP_DIR)protob/nanopb/vendor/nanopb -I$(TOP_DIR)protob/c -DPB_FIELD_16BIT=1
 # CFLAGS += -DQR_MAX_VERSION=0
 CFLAGS += -DDEBUG_LINK=$(DEBUG_LINK)
 CFLAGS += -DDEBUG_LOG=$(DEBUG_LOG)
@@ -41,31 +54,36 @@ CFLAGS += -DDEBUG_LOG=$(DEBUG_LOG)
 INC+=-Ifirmware
 CFLAGS += -I. $(INC)
 
-OBJS += $(TOP_DIR)vendor/nanopb/pb_common.o
-OBJS += $(TOP_DIR)vendor/nanopb/pb_decode.o
-OBJS += $(TOP_DIR)vendor/nanopb/pb_encode.o
+OBJS += $(TOP_DIR)protob/nanopb/vendor/nanopb/pb_common.o
+OBJS += $(TOP_DIR)protob/nanopb/vendor/nanopb/pb_decode.o
+OBJS += $(TOP_DIR)protob/nanopb/vendor/nanopb/pb_encode.o
 
 ifneq ($(EMULATOR),1)
 OBJS += firmware/usb.o
 else
 OBJS += firmware/udp.o
 endif
-OBJS += firmware/trezor.o
+OBJS += firmware/skywallet.o
 OBJS += firmware/layout2.o
 OBJS += firmware/storage.o
 OBJS += firmware/messages.o
+OBJS += firmware/droplet.o
 OBJS += firmware/fsm.o
+OBJS += firmware/fsm_impl.o
 OBJS += firmware/protect.o
 OBJS += firmware/pinmatrix.o
 OBJS += firmware/reset.o
 OBJS += firmware/recovery.o
 OBJS += firmware/factory_test.o
+OBJS += firmware/entropy.o
+OBJS += firmware/swtimer.o
 
-OBJS += protob/messages.pb.o
-OBJS += protob/types.pb.o
+OBJS += protob/c/messages.pb.o
+OBJS += protob/c/types.pb.o
 
 #skycoin-crypto
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/skycoin_crypto.o
+OBJS += $(TOP_DIR)vendor/skycoin-crypto/check_digest.o
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/skycoin_check_signature_tools.o
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/skycoin_check_signature.o
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/base58.o
@@ -81,11 +99,9 @@ OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/bip32.o
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/ecdsa.o
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/memzero.o
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/secp256k1.o
+OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/bip39.o
+OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/pbkdf2.o
 #end skycoin-crypto
-
-#trezor-crypto
-OBJS += $(TOP_DIR)vendor/skycoin-crypto/trezor-tools/bip39.o
-#end trezor-crypto
 
 ifeq ($(REVERSE_SCREEN),1)
 CFLAGS   += -DREVERSE_SCREEN=1
@@ -107,7 +123,7 @@ CFLAGS   += -DHEADLESS=1
 else
 CFLAGS   += -DHEADLESS=0
 
-CFLAGS   += -I/usr/include/SDL2 -D_REENTRANT
+CFLAGS   += $(SDL_CFLAGS) -D_REENTRANT
 LDLIBS   += -lSDL2
 endif
 endif
@@ -130,7 +146,7 @@ endif
 
 
 proto:
-	cd protob && make
+	cd protob && make build-c
 
 libopencm3:
 	cd vendor/libopencm3 && make
@@ -142,6 +158,7 @@ include Makefile.include
 
 clean::
 	rm -f $(OBJS)
+	rm -f firmware/*.o
 	rm -f *.a
 	rm -f *.bin
 	rm -f *.d
@@ -150,4 +167,4 @@ clean::
 	rm -f *.list
 	rm -f *.log
 	rm -f *.srec
-	cd protob && make clean
+	cd protob && make clean-c

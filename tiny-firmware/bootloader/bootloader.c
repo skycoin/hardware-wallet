@@ -1,7 +1,8 @@
 /*
- * This file is part of the TREZOR project, https://trezor.io/
+ * This file is part of the Skycoin project, https://skycoin.net/
  *
  * Copyright (C) 2014 Pavol Rusnak <stick@satoshilabs.com>
+ * Copyright (C) 2018-2019 Skycoin Project
  *
  * This library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -61,7 +62,7 @@ void layout32bits(const uint8_t *buffer, const char* message)
 
 void show_halt(void)
 {
-	layoutDialog(&bmp_icon_error, NULL, NULL, NULL, "Unofficial firmware", "aborted.", NULL, "Unplug your Skycoin wallet", "contact our support.", NULL);
+	layoutDialog(&bmp_icon_error, NULL, NULL, NULL, "Unofficial firmware", "aborted.", NULL, "Unplug your Skywallet", "contact our support.", NULL);
 	shutdown();
 }
 
@@ -124,7 +125,8 @@ void bootloader_loop(void)
 	oledDrawBitmap(0, 0, &bmp_logo64);
 	if (firmware_present()) {
 		oledDrawString(52, 0, "SKYCOIN", FONT_STANDARD);
-		static char serial[25];
+		// NOTE(): *2 due to the hex formad and +1 because of the trailing NUL char
+		static char serial[SERIAL_NUMBER_SIZE*2 + 1];
 		fill_serialno_fixed(serial);
 		oledDrawString(52, 20, "Serial No.", FONT_STANDARD);
 		oledDrawString(52, 40, serial + 12, FONT_STANDARD); // second part of serial

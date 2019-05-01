@@ -22,7 +22,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "trezor.h"
+#include "skywallet.h"
 
 #define MSG_IN_SIZE (12*1024)
 

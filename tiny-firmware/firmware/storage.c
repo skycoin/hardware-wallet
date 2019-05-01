@@ -1,7 +1,8 @@
 /*
- * This file is part of the TREZOR project, https://trezor.io/
+ * This file is part of the Skycoin project, https://skycoin.net/ 
  *
  * Copyright (C) 2014 Pavol Rusnak <stick@satoshilabs.com>
+ * Copyright (C) 2018-2019 Skycoin Project
  *
  * This library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -25,7 +26,7 @@
 
 #include "messages.pb.h"
 
-#include "trezor.h"
+#include "skywallet.h"
 #include "sha2.h"
 #include "hmac.h"
 #include "bip32.h"
@@ -40,12 +41,14 @@
 #include "memzero.h"
 #include "protect.h"
 #include "supervise.h"
+#include "firmware/entropy.h"
 
 /* magic constant to check validity of storage block */
 static const uint32_t storage_magic = 0x726f7473;   // 'stor' as uint32_t
 
-static uint32_t storage_uuid[12 / sizeof(uint32_t)];
-_Static_assert(sizeof(storage_uuid) == 12, "storage_uuid has wrong size");
+uint32_t device_uuid[STM32_UUID_LEN/sizeof(uint32_t)] = {0};
+#define storage_uuid device_uuid
+_Static_assert(sizeof(storage_uuid) == STM32_UUID_LEN, "storage_uuid has wrong size");
 
 Storage CONFIDENTIAL storageUpdate __attribute__((aligned(4)));
 _Static_assert((sizeof(storageUpdate) & 3) == 0, "storage unaligned");
@@ -53,7 +56,8 @@ _Static_assert((sizeof(storageUpdate) & 3) == 0, "storage unaligned");
 #define FLASH_STORAGE (FLASH_STORAGE_START + sizeof(storage_magic) + sizeof(storage_uuid))
 #define storageRom ((const Storage *) FLASH_PTR(FLASH_STORAGE))
 
-char storage_uuid_str[25];
+// size *2 due to the hex formad and +1 because of the trailing NUL char
+char storage_uuid_str[SERIAL_NUMBER_SIZE*2 + 1];
 
 /*
  storage layout:
@@ -110,7 +114,7 @@ static char CONFIDENTIAL sessionPassphrase[51];
 
 #define STORAGE_VERSION 9
 
-void storage_show_error(void)
+void __attribute__((noreturn)) storage_show_error(void)
 {
 	layoutDialog(&bmp_icon_error, NULL, NULL, NULL, _("Storage failure"), _("detected."), NULL, _("Please unplug"), _("the device."), NULL);
 	shutdown();
@@ -237,14 +241,16 @@ void storage_init(void)
 	if (!storage_from_flash()) {
 		storage_wipe();
 		storage_show_error();
+	} else {
+		reset_entropy_mix_256();
 	}
 }
 
 void storage_generate_uuid(void)
 {
-	// set random uuid
-	random_buffer((uint8_t *)storage_uuid, sizeof(storage_uuid));
+	// NOTE(denisacostaq@gmail.com): storage_uuid is loaded from main function
 	data2hex(storage_uuid, sizeof(storage_uuid), storage_uuid_str);
+	reset_entropy_mix_256();
 }
 
 void session_clear(bool clear_pin)
@@ -470,9 +476,19 @@ void storage_setHomescreen(const uint8_t *data, uint32_t size)
 	}
 }
 
+bool storage_hasLabel(void)
+{
+	return storageRom->has_label;
+}
+
 const char *storage_getLabel(void)
 {
 	return storageRom->has_label ? storageRom->label : 0;
+}
+
+const char *storage_getLabelOrDeviceId(void)
+{
+    return storageRom->has_label ? storage_getLabel() : storage_uuid_str;
 }
 
 const char *storage_getLanguage(void)
@@ -760,4 +776,8 @@ void storage_wipe(void)
 	storage_check_flash_errors(svc_flash_lock());
 
 	storage_clearPinArea();
+    
+    storageUpdate.has_label = true;
+    strncpy(storageUpdate.label, storage_uuid_str, sizeof(storageUpdate.label));
+    storage_update();
 }

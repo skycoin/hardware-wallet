@@ -32,7 +32,7 @@ To flash the previous version and load the new one you need to run the following
 
 NOTE: To load it properly you need to connect your HW with 6 pins and microB to your PC.
 
-##CLA signing policies
+## CLA signing policies
 Every contributor needs to sign the CLA. Upon creating a PR, you will be asked to agree to the Individual Contributor License Agreement, covering the fundamental legal questions around contributing to a Skycoin repo. Agreeing to the CLA is mandatory.
 
 You can read more about contributing the contributing to all skycoin repositories [here](https://github.com/skycoin/skycoin/wiki/). 
@@ -69,12 +69,13 @@ At the core of the firmware , messages handlers are implemented in `tiny-firmwar
 
 **Important** `*Impl` functions in `fsm_impl.c` must not contain code for handling user interaction since they are meant to be used to implement [test cases](#testing).
 
-###Gen
+
+### Gen
 If some image needs to be used in the hardware wallet, you must add appropriate bitmap.
 You can read more how to add a bitmap image [here](https://github.com/skycoin/hardware-wallet/tree/develop/tiny-firmware/gen)
 Fonts for the hardware wallet, are also generated in this section of the code base.
 
-###Emulator
+### Emulator
 Instead of connecting hardware wallet and interacting directly with it, you run an emulator and work with it. An emulator is written using the SDL library for the graphics interface.
 
 
@@ -84,7 +85,8 @@ Testing is performed on top of [check framework](https://libcheck.github.io/chec
 
 ### Steps to add new test files
 
-- Create `test_FILENAME.c` and `test_FILENAME.h` at `./tiny-firmware/firmware/` from the C project template of your preference. Make sure to include the later in the former.
+
+- Create `test_FILENAME.c` and `test_FILENAME.h` from the C project template of your preference. Make sure to include the later in the former.
 - Include `check.h`.
 - Implement `void setup_tc_FILENAME(void)` and `void teardown_tc_FILENAME(void)` for preparing test fixture, if any.
 - Define test blocks enclosed between `START_TEST(test_TCNAME)` and `END_TEST` macros.
@@ -102,7 +104,7 @@ There are a few tests which are executed with  `make test` on the Hardware walle
 - Test of the firmware
 
 These tests cover the most significant parts of the firmware, so they are necessary for every release build.
-####Cryptography test
+#### Cryptography test
 First of all, occur the test of the cryptography. Because the lion's share of functionality is based on it.
 We are using python unit tests for the cryptography, so all the values are pre-computed and if during the execution some of the tests are failed this is a sign that something is broken in skycoin cryptography.
 The list of the functions which are tested:
@@ -118,7 +120,7 @@ This part of the test consist of:
 If the timer is in an inactive state stopwatch_counter function must return the maximum value of the uint32.
 Then the ascending and descending order of timer is tested.
 Also, we must test the overflow of the timer. But these test cases are not implemented yet.
-#####Finite state machine test
+##### Finite state machine test
 
 A finite state machine is responsible for interaction with the user. So all the functionality must behave properly, so as:
 - Skycoin sign message must be returned in hexadecimal. Check message signature must fail in cases with invalid signed messages.
@@ -134,7 +136,7 @@ Tests that PIN matrix layout works well and checks input with wrong digits.
 
 
 
-##Relationship to other projects
+## Relationship to other projects
 
 - [Hardware wallet daemon](https://github.com/skycoin/hardware-wallet-daemon)
 The hardware wallet daemon provides an HTTP API to interface with the wallets supported by skycoin. It uses the go bindings provided by the hardware wallet GO library. 

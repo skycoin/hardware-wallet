@@ -1,7 +1,8 @@
 /*
- * This file is part of the TREZOR project, https://trezor.io/
+ * This file is part of the Skycoin project, https://skycoin.net/ 
  *
  * Copyright (C) 2017 Saleem Rashid <trezor@saleemrashid.com>
+ * Copyright (C) 2018-2019 Skycoin Project
  *
  * This library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -55,7 +56,7 @@ void oledInit(void) {
 
 	int scale = emulatorScale();
 
-	SDL_Window *window = SDL_CreateWindow("TREZOR",
+	SDL_Window *window = SDL_CreateWindow("SKYWALLET",
 		SDL_WINDOWPOS_UNDEFINED,
 		SDL_WINDOWPOS_UNDEFINED,
 		OLED_WIDTH * scale,

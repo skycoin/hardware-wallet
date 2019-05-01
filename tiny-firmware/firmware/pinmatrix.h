@@ -20,8 +20,9 @@
 #ifndef __PINMATRIX_H__
 #define __PINMATRIX_H__
 
-void pinmatrix_start(const char *text);
-void pinmatrix_done(char *pin);
+void pinmatrix_start(const char *);
+void translate_pin_code(const char *, char *);
+void pinmatrix_done(char *);
 const char *pinmatrix_get(void);
 
 #endif

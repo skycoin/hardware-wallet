@@ -1,3 +1,14 @@
+/*
+ * This file is part of the Skycoin project, https://skycoin.net/
+ *
+ * Copyright (C) 2018-2019 Skycoin Project
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ */
+
 #include "skycoin_crypto.h"
 
 #include <string.h>
@@ -29,11 +40,8 @@ void tohex(char * str, const uint8_t* buffer, int bufferLength)
     }
 }
 
-void writebuf_fromhexstr(const char *str, uint8_t* buf)
-{
-    size_t len = strlen(str) / 2;
-    if (len > 32) len = 32;
-    for (size_t i = 0; i < len; i++) {
+void tobuff(const char* str, uint8_t* buf, size_t bufferLength ) {
+    for (size_t i = 0; i < bufferLength; i++) {
         uint8_t c = 0;
         if (str[i * 2] >= '0' && str[i*2] <= '9') c += (str[i * 2] - '0') << 4;
         if ((str[i * 2] & ~0x20) >= 'A' && (str[i*2] & ~0x20) <= 'F') c += (10 + (str[i * 2] & ~0x20) - 'A') << 4;
@@ -41,6 +49,13 @@ void writebuf_fromhexstr(const char *str, uint8_t* buf)
         if ((str[i * 2 + 1] & ~0x20) >= 'A' && (str[i * 2 + 1] & ~0x20) <= 'F') c += (10 + (str[i * 2 + 1] & ~0x20) - 'A');
         buf[i] = c;
     }
+}
+
+void writebuf_fromhexstr(const char *str, uint8_t* buf)
+{
+    size_t len = strlen(str) / 2;
+    if (len > 32) len = 32;
+    tobuff(str, buf, len);
 }
 
 void generate_pubkey_from_seckey(const uint8_t* seckey, uint8_t* pubkey)
@@ -115,12 +130,34 @@ void generate_deterministic_key_pair_iterator(const uint8_t* seed, const size_t 
     generate_deterministic_key_pair(seed2, SHA256_DIGEST_LENGTH, seckey, pubkey);
 }
 
-void compute_sha256sum(const uint8_t *seed, uint8_t* digest /*size SHA256_DIGEST_LENGTH*/, size_t seed_lenght)
+/**
+ * @brief compute_sha256sum hash over buffer
+ * @param buffer in data
+ * @param buffer_len in data len
+ * @param out_digest out sha256 data
+ */
+void compute_sha256sum(const uint8_t *data, uint8_t* digest /*size SHA256_DIGEST_LENGTH*/, size_t data_length)
 {
     SHA256_CTX ctx;
     sha256_Init(&ctx);
-    sha256_Update(&ctx, seed, seed_lenght);
+    sha256_Update(&ctx, data, data_length);
     sha256_Final(&ctx, digest);
+}
+
+/**
+ * @brief add_sha256 make the sum of msg2 and to msg1
+ * @param msg1 buffer content
+ * @param msg1_len buffer conttn len
+ * @param msg2 buffer content
+ * @param msg2_len buffer content len
+ * @param out_digest sum_sha256 of msg1 appened to mag2
+ */
+void add_sha256(const uint8_t *msg1,size_t msg1_len,const uint8_t *msg2,size_t msg2_len,uint8_t *out_digest) {
+	SHA256_CTX ctx;
+	sha256_Init(&ctx);
+	sha256_Update(&ctx, msg1, msg1_len);
+	sha256_Update(&ctx, msg2, msg2_len);
+	sha256_Final(&ctx, out_digest);
 }
 
 // address_size is the size of the allocated address buffer, it will be overwritten by the computed address size
@@ -241,4 +278,92 @@ int ecdsa_skycoin_sign(const uint32_t nonce_value, const uint8_t *priv_key, cons
 	memset(&randk, 0, sizeof(randk));
 
 	return -1;
+}
+
+void transaction_initZeroTransaction(Transaction* self) {
+    self->nbIn = 0;
+    self->nbOut = 0;
+    self->has_innerHash = 0;
+}
+
+void transaction_addInput(Transaction* self, uint8_t* address) {
+    memcpy(&self->inAddress[self->nbIn], address, 32);
+    self->nbIn++;
+};
+
+void transaction_addOutput(Transaction* self,  uint32_t coin, uint32_t hour, char* address) {
+    self->outAddress[self->nbOut].coin = coin;
+    self->outAddress[self->nbOut].hour = hour;
+    size_t len = 36;
+    uint8_t b58string[36];
+    b58tobin(b58string, &len, address);
+    memcpy(self->outAddress[self->nbOut].address, &b58string[36 - len], len);
+    self->nbOut++;
+}
+
+void transaction_innerHash(Transaction* self) {
+
+    uint8_t ctx[sizeof(Transaction)];
+    memset(ctx, 0, sizeof(Transaction));
+    uint64_t bitcount = 0;
+    // serialized in
+    uint8_t nbIn = self->nbIn;
+    memcpy(&ctx[bitcount], &nbIn, 1);
+    memset(&ctx[bitcount + 1], 0, 3);
+    bitcount += 4;
+    for (uint8_t i = 0; i < self->nbIn; ++i) {
+        memcpy(&ctx[bitcount], (uint8_t*)&self->inAddress[i], 32);
+        bitcount += 32;
+    }
+
+    // serialized out
+    uint8_t nbOut = self->nbOut;
+    memcpy(&ctx[bitcount], &nbOut, 1);
+    memset(&ctx[bitcount + 1], 0, 3);
+    bitcount += 4;
+    for (uint8_t i = 0; i < self->nbOut; ++i) {
+        ctx[bitcount] = 0;
+        bitcount += 1;
+        memcpy(&ctx[bitcount], &self->outAddress[i].address, 20);
+        bitcount += 20;
+        memcpy(&ctx[bitcount], (uint8_t*)&self->outAddress[i].coin, 4);
+        bitcount += 4;
+        memset(&ctx[bitcount], 0, 4);
+        bitcount += 4;
+        memcpy(&ctx[bitcount], (uint8_t*)&self->outAddress[i].hour, 4);
+        bitcount += 4;
+        memset(&ctx[bitcount], 0, 4);
+        bitcount += 4;
+    }
+
+    SHA256_CTX sha256ctx;
+    sha256_Init(&sha256ctx);
+    sha256_Update(&sha256ctx, ctx, bitcount);
+    sha256_Final(&sha256ctx, self->innerHash);
+    self->has_innerHash = 1;
+}
+
+void transaction_msgToSign(Transaction* self, uint8_t index, uint8_t* msg_digest) {
+    if (index >= self->nbIn) {
+        return;
+    }
+    // concat innerHash and transaction hash
+    uint8_t shaInput[64];
+    if (!self->has_innerHash) {
+        transaction_innerHash(self);
+    }
+    memcpy(shaInput, self->innerHash, 32);
+    memcpy(&shaInput[32], (uint8_t*)&self->inAddress[index], 32);
+#ifdef EMULATOR
+#if EMULATOR
+    char str[128];
+    tohex(str, shaInput, 64);
+    printf("InnerHash computation on %s\n", str);
+#endif
+#endif
+    // compute hash
+    SHA256_CTX sha256ctx;
+    sha256_Init(&sha256ctx);
+    sha256_Update(&sha256ctx, shaInput, 64);
+    sha256_Final(&sha256ctx, msg_digest);
 }

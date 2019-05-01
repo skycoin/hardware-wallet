@@ -25,12 +25,13 @@
 #include "serialno.h"
 #include "util.h"
 #include "sha2.h"
+#include "memory.h"
 
 void fill_serialno_fixed(char *s)
 {
-	uint32_t uuid[8];
+	uint32_t uuid[STM32_UUID_LEN] = {0};
 	desig_get_unique_id(uuid);
 	sha256_Raw((const uint8_t *)uuid, 12, (uint8_t *)uuid);
 	sha256_Raw((const uint8_t *)uuid, 32, (uint8_t *)uuid);
-	data2hex(uuid, 12, s);
+	data2hex(uuid, STM32_UUID_LEN, s);
 }
