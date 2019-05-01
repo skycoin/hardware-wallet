@@ -16,7 +16,7 @@ To build you project you need to execute the following commands:
 - `make clean`
 - `make clean-lib`
 - `make build-deps`
-- `make bootloader` add this for bootloader prolly
+- `make bootloader`
 - `make firmware-deps`
 - `make firmware`
 - `make sign`
