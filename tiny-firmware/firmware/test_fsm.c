@@ -654,26 +654,34 @@ START_TEST(test_transactionSign1)
             .hour = 2
         }
     };
-    TransactionSign* msg = malloc(sizeof(TransactionSign));
-    memcpy(msg->transactionIn, &transactionInputs, sizeof(SkycoinTransactionInput));
-    memcpy(msg->transactionOut, &transactionOutputs, sizeof(SkycoinTransactionOutput));
-    msg->nbIn = 1;
-    msg->nbOut = 1;
-    msg->transactionIn_count = 1;
-    msg->transactionOut_count = 1;
-    ResponseTransactionSign resp = ResponseTransactionSign_init_default;
-    ErrCode_t errCode = msgTransactionSignImpl(msg, funcConfirmTxn, &resp);
+    TransactionSign msg = TransactionSign_init_zero;
+    msg.transactionIn[0] = transactionInputs[0];
+    msg.transactionOut[0] = transactionOutputs[0];
+    msg.nbIn = 1;
+    msg.nbOut = 1;
+    msg.transactionIn_count = 1;
+    msg.transactionOut_count = 1;
+    ResponseTransactionSign resp = ResponseTransactionSign_init_zero;
+    SetMnemonic nemonic = SetMnemonic_init_zero;
+    char raw_mnemonic[] = {
+        "cloud flower upset remain green metal below cup stem infant art thank"};
+    memcpy(nemonic.mnemonic, raw_mnemonic, sizeof(raw_mnemonic));
+    ck_assert_int_eq(msgSetMnemonicImpl(&nemonic), ErrOk);
+    ErrCode_t errCode = msgTransactionSignImpl(&msg, funcConfirmTxn, &resp);
     ck_assert_int_eq(errCode, ErrOk);
 
-    SkycoinCheckMessageSignature* msg_s = malloc(sizeof(SkycoinCheckMessageSignature));
-    memcpy(msg_s->address, "2EU3JbveHdkxW6z5tdhbbB2kRAWvXC2pLzw", sizeof(msg_s->address));
-    strncpy(msg_s->message, "d11c62b1e0e9abf629b1f5f4699cef9fbc504b45ceedf0047ead686979498218", sizeof(msg_s->message));
-    memcpy(msg_s->signature, resp.signatures[0], sizeof(msg_s->signature));
+    SkycoinCheckMessageSignature msg_s = SkycoinCheckMessageSignature_init_zero;
+    char raw_addr[] = {"2EU3JbveHdkxW6z5tdhbbB2kRAWvXC2pLzw"};
+    memcpy(msg_s.address, raw_addr, sizeof(raw_addr));
+    char raw_msg[] = {
+        "d11c62b1e0e9abf629b1f5f4699cef9fbc504b45ceedf0047ead686979498218"};
+    memcpy(msg_s.message, raw_msg, sizeof(raw_msg));
+    memcpy(msg_s.signature, resp.signatures[0], sizeof(msg_s.signature));
 
     Failure failure_resp = Failure_init_default;
     Success success_resp = Success_init_default;
-    forceGenerateMnemonic();
-    ErrCode_t check_sign = msgSkycoinCheckMessageSignatureImpl(msg_s, &success_resp, &failure_resp);
+    ErrCode_t check_sign = msgSkycoinCheckMessageSignatureImpl(
+                &msg_s, &success_resp, &failure_resp);
 
     printf("Error message  => %s \n", failure_resp.message);
     printf("Success message  => %s \n", success_resp.message);
