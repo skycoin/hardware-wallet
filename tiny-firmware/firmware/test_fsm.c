@@ -716,14 +716,15 @@ START_TEST(test_transactionSign2)
     memcpy(nemonic.mnemonic, raw_mnemonic, sizeof(raw_mnemonic));
     ck_assert_int_eq(msgSetMnemonicImpl(&nemonic), ErrOk);
 
-    TransactionSign* msg = malloc(sizeof(TransactionSign));
-    memcpy(msg->transactionIn, &transactionInputs, 8*sizeof(SkycoinTransactionInput));
-    memcpy(msg->transactionOut, &transactionOutputs, 8*sizeof(SkycoinTransactionOutput));
-    msg->nbIn = 2;
-    msg->nbOut = 1;
+    TransactionSign msg = TransactionSign_init_zero;
+    msg.transactionIn[0] = transactionInputs[0];
+    msg.transactionIn[1] = transactionInputs[1];
+    msg.transactionOut[0] = transactionOutputs[0];
+    msg.nbIn = 2;
+    msg.nbOut = 1;
 
     ResponseTransactionSign resp = ResponseTransactionSign_init_default;
-    ErrCode_t errCode = msgTransactionSignImpl(msg, funcConfirmTxn, &resp);
+    ErrCode_t errCode = msgTransactionSignImpl(&msg, funcConfirmTxn, &resp);
     ck_assert_int_eq(errCode, ErrOk);
     ck_assert_int_eq(resp.signatures_count, 2);
 
@@ -793,14 +794,17 @@ START_TEST(test_transactionSign3)
     memcpy(nemonic.mnemonic, raw_mnemonic, sizeof(raw_mnemonic));
     ck_assert_int_eq(msgSetMnemonicImpl(&nemonic), ErrOk);
 
-    TransactionSign* msg = malloc(sizeof(TransactionSign));
-    memcpy(msg->transactionIn, &transactionInputs, 8*sizeof(SkycoinTransactionInput));
-    memcpy(msg->transactionOut, &transactionOutputs, 8*sizeof(SkycoinTransactionOutput));
-    msg->nbIn = 3;
-    msg->nbOut = 2;
+    TransactionSign msg = TransactionSign_init_zero;
+    msg.transactionIn[0] = transactionInputs[0];
+    msg.transactionIn[1] = transactionInputs[1];
+    msg.transactionIn[2] = transactionInputs[2];
+    msg.transactionOut[0] = transactionOutputs[0];
+    msg.transactionOut[1] = transactionOutputs[1];
+    msg.nbIn = 3;
+    msg.nbOut = 2;
 
     ResponseTransactionSign resp = ResponseTransactionSign_init_default;
-    ErrCode_t errCode = msgTransactionSignImpl(msg, funcConfirmTxn, &resp);
+    ErrCode_t errCode = msgTransactionSignImpl(&msg, funcConfirmTxn, &resp);
     ck_assert_int_eq(errCode, ErrOk);
     ck_assert_int_eq(resp.signatures_count, 3);
 
@@ -872,14 +876,15 @@ START_TEST(test_transactionSign4)
     memcpy(nemonic.mnemonic, raw_mnemonic, sizeof(raw_mnemonic));
     ck_assert_int_eq(msgSetMnemonicImpl(&nemonic), ErrOk);
 
-    TransactionSign* msg = malloc(sizeof(TransactionSign));
-    memcpy(msg->transactionIn, &transactionInputs, 8*sizeof(SkycoinTransactionInput));
-    memcpy(msg->transactionOut, &transactionOutputs, 8*sizeof(SkycoinTransactionOutput));
-    msg->nbIn = 2;
-    msg->nbOut = 1;
+    TransactionSign msg = TransactionSign_init_zero;
+    msg.transactionIn[0] = transactionInputs[0];
+    msg.transactionIn[1] = transactionInputs[1];
+    msg.transactionOut[0] = transactionOutputs[0];
+    msg.nbIn = 2;
+    msg.nbOut = 1;
 
     ResponseTransactionSign resp = ResponseTransactionSign_init_default;
-    ErrCode_t errCode = msgTransactionSignImpl(msg, funcConfirmTxn, &resp);
+    ErrCode_t errCode = msgTransactionSignImpl(&msg, funcConfirmTxn, &resp);
     ck_assert_int_eq(errCode, ErrOk);
     ck_assert_int_eq(resp.signatures_count, 2);
 
@@ -935,14 +940,14 @@ START_TEST(test_transactionSign5)
     memcpy(nemonic.mnemonic, raw_mnemonic, sizeof(raw_mnemonic));
     ck_assert_int_eq(msgSetMnemonicImpl(&nemonic), ErrOk);
 
-    TransactionSign* msg = malloc(sizeof(TransactionSign));
-    memcpy(msg->transactionIn, &transactionInputs, 8*sizeof(SkycoinTransactionInput));
-    memcpy(msg->transactionOut, &transactionOutputs, 8*sizeof(SkycoinTransactionOutput));
-    msg->nbIn = 1;
-    msg->nbOut = 1;
+    TransactionSign msg = TransactionSign_init_zero;
+    msg.transactionIn[0] = transactionInputs[0];
+    msg.transactionOut[0] = transactionOutputs[0];
+    msg.nbIn = 1;
+    msg.nbOut = 1;
 
     ResponseTransactionSign resp = ResponseTransactionSign_init_default;
-    ErrCode_t errCode = msgTransactionSignImpl(msg, funcConfirmTxn, &resp);
+    ErrCode_t errCode = msgTransactionSignImpl(&msg, funcConfirmTxn, &resp);
     ck_assert_int_eq(errCode, ErrOk);
     ck_assert_int_eq(resp.signatures_count, 1);
 
@@ -995,14 +1000,16 @@ START_TEST(test_transactionSign6)
     memcpy(nemonic.mnemonic, raw_mnemonic, sizeof(raw_mnemonic));
     ck_assert_int_eq(msgSetMnemonicImpl(&nemonic), ErrOk);
 
-    TransactionSign* msg = malloc(sizeof(TransactionSign));
-    memcpy(msg->transactionIn, &transactionInputs, 8*sizeof(SkycoinTransactionInput));
-    memcpy(msg->transactionOut, &transactionOutputs, 8*sizeof(SkycoinTransactionOutput));
-    msg->nbIn = 1;
-    msg->nbOut = 3;
+    TransactionSign msg = TransactionSign_init_zero;
+    msg.transactionIn[0] = transactionInputs[0];
+    msg.transactionOut[0] = transactionOutputs[0];
+    msg.transactionOut[1] = transactionOutputs[1];
+    msg.transactionOut[2] = transactionOutputs[2];
+    msg.nbIn = 1;
+    msg.nbOut = 3;
 
     ResponseTransactionSign resp = ResponseTransactionSign_init_default;
-    ErrCode_t errCode = msgTransactionSignImpl(msg, funcConfirmTxn, &resp);
+    ErrCode_t errCode = msgTransactionSignImpl(&msg, funcConfirmTxn, &resp);
     ck_assert_int_eq(errCode, ErrOk);
     ck_assert_int_eq(resp.signatures_count, 1);
 
@@ -1055,14 +1062,16 @@ START_TEST(test_transactionSign7)
     memcpy(nemonic.mnemonic, raw_mnemonic, sizeof(raw_mnemonic));
     ck_assert_int_eq(msgSetMnemonicImpl(&nemonic), ErrOk);
 
-    TransactionSign* msg = malloc(sizeof(TransactionSign));
-    memcpy(msg->transactionIn, &transactionInputs, 8*sizeof(SkycoinTransactionInput));
-    memcpy(msg->transactionOut, &transactionOutputs, 8*sizeof(SkycoinTransactionOutput));
-    msg->nbIn = 3;
-    msg->nbOut = 1;
+    TransactionSign msg = TransactionSign_init_zero;
+    msg.transactionIn[0] = transactionInputs[0];
+    msg.transactionIn[1] = transactionInputs[1];
+    msg.transactionIn[2] = transactionInputs[2];
+    msg.transactionOut[0] = transactionOutputs[0];
+    msg.nbIn = 3;
+    msg.nbOut = 1;
 
     ResponseTransactionSign resp = ResponseTransactionSign_init_default;
-    ErrCode_t errCode = msgTransactionSignImpl(msg, funcConfirmTxn, &resp);
+    ErrCode_t errCode = msgTransactionSignImpl(&msg, funcConfirmTxn, &resp);
     ck_assert_int_eq(errCode, ErrOk);
     ck_assert_int_eq(resp.signatures_count, 3);
 
@@ -1129,14 +1138,14 @@ START_TEST(test_transactionSign8)
     memcpy(nemonic.mnemonic, raw_mnemonic, sizeof(raw_mnemonic));
     ck_assert_int_eq(msgSetMnemonicImpl(&nemonic), ErrOk);
 
-    TransactionSign* msg = malloc(sizeof(TransactionSign));
-    memcpy(msg->transactionIn, &transactionInputs, 8*sizeof(SkycoinTransactionInput));
-    memcpy(msg->transactionOut, &transactionOutputs, 8*sizeof(SkycoinTransactionOutput));
-    msg->nbIn = 1;
-    msg->nbOut = 1;
+    TransactionSign msg = TransactionSign_init_zero;
+    msg.transactionIn[0] = transactionInputs[0];
+    msg.transactionOut[0] = transactionOutputs[0];
+    msg.nbIn = 1;
+    msg.nbOut = 1;
 
     ResponseTransactionSign resp = ResponseTransactionSign_init_default;
-    ErrCode_t errCode = msgTransactionSignImpl(msg, funcConfirmTxn, &resp);
+    ErrCode_t errCode = msgTransactionSignImpl(&msg, funcConfirmTxn, &resp);
     ck_assert_int_eq(errCode, ErrOk);
     ck_assert_int_eq(resp.signatures_count, 1);
 
@@ -1185,14 +1194,15 @@ START_TEST(test_transactionSign9)
     memcpy(nemonic.mnemonic, raw_mnemonic, sizeof(raw_mnemonic));
     ck_assert_int_eq(msgSetMnemonicImpl(&nemonic), ErrOk);
 
-    TransactionSign* msg = malloc(sizeof(TransactionSign));
-    memcpy(msg->transactionIn, &transactionInputs, 8*sizeof(SkycoinTransactionInput));
-    memcpy(msg->transactionOut, &transactionOutputs, 8*sizeof(SkycoinTransactionOutput));
-    msg->nbIn = 1;
-    msg->nbOut = 2;
+    TransactionSign msg = TransactionSign_init_zero;
+    msg.transactionIn[0] = transactionInputs[0];
+    msg.transactionOut[0] = transactionOutputs[0];
+    msg.transactionOut[1] = transactionOutputs[1];
+    msg.nbIn = 1;
+    msg.nbOut = 2;
 
     ResponseTransactionSign resp = ResponseTransactionSign_init_default;
-    ErrCode_t errCode = msgTransactionSignImpl(msg, funcConfirmTxn, &resp);
+    ErrCode_t errCode = msgTransactionSignImpl(&msg, funcConfirmTxn, &resp);
     ck_assert_int_eq(errCode, ErrOk);
     ck_assert_int_eq(resp.signatures_count, 1);
 
@@ -1237,14 +1247,14 @@ START_TEST(test_transactionSign10)
     memcpy(nemonic.mnemonic, raw_mnemonic, sizeof(raw_mnemonic));
     ck_assert_int_eq(msgSetMnemonicImpl(&nemonic), ErrOk);
 
-    TransactionSign* msg = malloc(sizeof(TransactionSign));
-    memcpy(msg->transactionIn, &transactionInputs, 8*sizeof(SkycoinTransactionInput));
-    memcpy(msg->transactionOut, &transactionOutputs, 8*sizeof(SkycoinTransactionOutput));
-    msg->nbIn = 1;
-    msg->nbOut = 1;
+    TransactionSign msg = TransactionSign_init_zero;
+    msg.transactionIn[0] = transactionInputs[0];
+    msg.transactionOut[0] = transactionOutputs[0];
+    msg.nbIn = 1;
+    msg.nbOut = 1;
 
     ResponseTransactionSign resp = ResponseTransactionSign_init_default;
-    ErrCode_t errCode = msgTransactionSignImpl(msg, funcConfirmTxn, &resp);
+    ErrCode_t errCode = msgTransactionSignImpl(&msg, funcConfirmTxn, &resp);
     ck_assert_int_eq(errCode, ErrOk);
     ck_assert_int_eq(resp.signatures_count, 1);
 
