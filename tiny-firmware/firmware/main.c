@@ -29,7 +29,7 @@
 #include "entropy.h"
 #include "memory.h"
 
-extern uint32_t device_uuid[STM32_UUID_LEN/sizeof(uint32_t)];
+extern uint32_t storage_uuid[STM32_UUID_LEN/sizeof(uint32_t)];
 int main(void)
 {
 #ifndef APPVER
@@ -52,11 +52,11 @@ int main(void)
 
 #ifdef APPVER
 	set_up_rdp_level();
-	desig_get_unique_id(device_uuid);
+	desig_get_unique_id(storage_uuid);
 	// enable MPU (Memory Protection Unit)
 	mpu_config();
 #else
-	random_buffer((uint8_t *)device_uuid, sizeof(device_uuid));
+	random_buffer((uint8_t *)storage_uuid, sizeof(storage_uuid));
 #endif
 
 #if DEBUG_LINK
