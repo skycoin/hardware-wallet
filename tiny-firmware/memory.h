@@ -108,6 +108,8 @@ extern uint8_t *emulator_flash_base;
 #define FLASH_CODE_SECTOR_FIRST	4
 #define FLASH_CODE_SECTOR_LAST	7
 
+#define STM32_UUID_LEN 12
+
 #ifdef BOOTLOADER
 void memory_protect(void);
 #endif
