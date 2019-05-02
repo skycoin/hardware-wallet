@@ -156,6 +156,7 @@ static inline BITMAP invert_bitmap(BITMAP bm, uint8_t *data) {
 		uint32_t l_num = 0;
 		memcpy(&l_num, &data[data_mid_len - unprocessed], unprocessed);
 		reverse_word(&l_num);
+		l_num <<= (4 - unprocessed);
 		uint32_t r_num = 0;
 		size_t wp = 0;
 		if (data_len % 2) {
@@ -165,6 +166,7 @@ static inline BITMAP invert_bitmap(BITMAP bm, uint8_t *data) {
 		}
 		memcpy(&r_num, &data[wp], unprocessed);
 		reverse_word(&r_num);
+		r_num <<= (4 - unprocessed);
 		memcpy(&data[data_mid_len - unprocessed], &r_num, unprocessed);
 		memcpy(&data[wp], &l_num, unprocessed);
 	}
@@ -172,6 +174,7 @@ static inline BITMAP invert_bitmap(BITMAP bm, uint8_t *data) {
 		uint32_t num = 0;
 		memcpy(&num, &data[data_mid_len + 1], 1);
 		reverse_word(&num);
+		num <<= 3;
 		memcpy(&data[data_mid_len + 1], &num, 1);
 	}
 	BITMAP inverted = {
