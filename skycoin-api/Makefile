@@ -90,7 +90,7 @@ clean: ## Delete all temporary files
 	rm -f $(MKFILE_DIR)/*.o test_skycoin_crypto
 	rm -f $(MKFILE_DIR)/*.so
 	rm -f $(TOOLS_DIR)/*.o
-	rm -f $(MKFILE_DIR)/trezor-tools/*.o
+	rm -f $(MKFILE_DIR)/tools/*.o
 	rm -f $(MKFILE_DIR)/*.a
 
 help:

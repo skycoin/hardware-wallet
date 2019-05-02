@@ -176,7 +176,7 @@ check-trng: ## Run test tools over random buffers
 	make -C trng-test trng-generate-buffers
 	make -C trng-test run-tests
 
-verify-protob-hash: ## verify protob submodule hash
+check-protob: ## verify protob submodule hash
 	./ci-scripts/verify_protob_hash.sh
 
 help:

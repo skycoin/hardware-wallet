@@ -33,7 +33,7 @@ before_script:
 
 script:
   - find tiny-firmware/protob/nanopb/vendor/nanopb
-  - make verify-protob-hash
+  - make check-protob
   - make lint
   - make -C tiny-firmware/protob install-deps-nanopb
   - make -C tiny-firmware/protob install-protoc
