@@ -32,7 +32,7 @@ before_script:
   - make install-linters
 
 script:
-  - make verify-protob-hash
+  - make check-protob
   - make lint
   - make -C tiny-firmware/protob build-c
   - make test
