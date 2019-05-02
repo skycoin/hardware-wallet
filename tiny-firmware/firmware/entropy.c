@@ -75,29 +75,29 @@ void reset_entropy_mix_256(void) {
 	if (entropy_timeout == INVALID_TIMER) {
 		entropy_timeout = stopwatch_start(EXTERNAL_ENTROPY_TIMEOUT);
 	}
-  // Salt source: 96-bits device UID
+	// Salt source: 96-bits device UID
 	// FIXME : Read STM32_UUID instead
 	entropy_mix_256((uint8_t*)storage_uuid_str, sizeof(storage_uuid_str), NULL);
 #if !EMULATOR
-  // Salt source : MCU core registers
-  uint32_t salt_mcu[3] = {0};
-  uint32_t rval;
-  // FIXME LR is not likely to change neither over time nor across MCU devices
-  __asm__ __volatile__ ("mov %0, lr" : "=r" (rval));
-  salt_mcu[0] = rval;
-  // FIXME PC is not likely to change neither over time nor across MCU devices
-  __asm__ __volatile__ ("mov %0, pc" : "=r" (rval));
-  salt_mcu[1] = rval;
-  // FIXME SP is not likely to change neither over time nor across MCU devices
-  __asm__ __volatile__ ("mov %0, sp" : "=r" (rval));
-  salt_mcu[2] = rval;
+	// Salt source : MCU core registers
+	uint32_t salt_mcu[3] = {0};
+	uint32_t rval;
+	// FIXME LR is not likely to change neither over time nor across MCU devices
+	__asm__ __volatile__ ("mov %0, lr" : "=r" (rval));
+	salt_mcu[0] = rval;
+	// FIXME PC is not likely to change neither over time nor across MCU devices
+	__asm__ __volatile__ ("mov %0, pc" : "=r" (rval));
+	salt_mcu[1] = rval;
+	// FIXME SP is not likely to change neither over time nor across MCU devices
+	__asm__ __volatile__ ("mov %0, sp" : "=r" (rval));
+	salt_mcu[2] = rval;
 	entropy_mix_256((uint8_t*)salt_mcu, sizeof(salt_mcu), NULL);
 #endif
-  // Salt source : Random buffer
+	// Salt source : Random buffer
 	uint8_t rndbuf[ENTROPY_RANDOMSALT_SIZE];
 	random_buffer(rndbuf, sizeof(rndbuf));
 	entropy_mix_256(rndbuf, sizeof(rndbuf), NULL);
-  // Mix type 3 salt sources
+	// Mix type 3 salt sources
 	entropy_salt_mix_256(NULL, 0, NULL);
 }
 
@@ -106,16 +106,22 @@ void entropy_salt_mix_256(uint8_t *in, size_t in_len, uint8_t *buf) {
 		return;
 	}
 	// Salt source : System clock timer
-  uint64_t salt_ticker = 0;
+	uint64_t salt_ticker = 0;
 #if !EMULATOR
-  // Salt source : RTC (76 bytes)
-  uint8_t salt_rtc[RTC_PERIPH_SIZE] = {0};
-  // FIXME: Can be read directly but affects volatile core registers
-  memcpy((void *) salt_rtc, (void *) RTC_BASE, sizeof(salt_rtc));
-  entropy_mix_256(salt_rtc, sizeof(salt_rtc), NULL);
+	// Salt source : RTC (76 bytes)
+	uint8_t salt_rtc[RTC_PERIPH_SIZE] = {0};
+	// FIXME: Can be read directly but affects volatile core registers
+	memcpy((void *) salt_rtc, (void *) RTC_BASE, sizeof(salt_rtc));
+	entropy_mix_256(salt_rtc, sizeof(salt_rtc), NULL);
 
+	// Salt source : disconnected gpio (current noise)
+	uint16_t salt_gpio = read_gpio_noise(2, 2); /// Read from GPIOB : GPIO2
+	entropy_mix_256((uint8_t *)&salt_gpio, sizeof(salt_gpio), NULL);
+
+	// Salt source : Systick timer
 	salt_ticker = timer_ms();
 #else
+	// Salt source : Simulate SysTick timer with random number
 	random_buffer((uint8_t*)&salt_ticker, sizeof (salt_ticker));
 #endif	// EMULATOR
 	entropy_mix_256((uint8_t*)&salt_ticker, sizeof(salt_ticker), NULL);
@@ -123,9 +129,6 @@ void entropy_salt_mix_256(uint8_t *in, size_t in_len, uint8_t *buf) {
 	// Salt source : TRNG 32 bits
 	uint32_t salt_trng = random32();
 	entropy_mix_256((uint8_t*)&salt_trng, sizeof(salt_trng), NULL);
-	// Salt source : disconnected gpio (current noise)
-	uint16_t salt_gpio = read_gpio_noise(2, 2); /// Read from GPIOB : GPIO2
-	entropy_mix_256((uint8_t *)&salt_gpio, sizeof(salt_gpio), NULL);
 	if (in != NULL) {
 		entropy_mix_256(in, in_len, buf);
 	}
