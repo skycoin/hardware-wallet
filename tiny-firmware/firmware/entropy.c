@@ -44,7 +44,6 @@ ErrCode_t is_external_entropy_needed(void) {
 }
 
 #define INTERNAL_ENTROPY_SIZE SHA256_DIGEST_LENGTH
-#define RTC_PERIPH_SIZE (0x48 + 4)
 
 /**
  * Salted entropy sources
@@ -57,7 +56,7 @@ ErrCode_t is_external_entropy_needed(void) {
  *
  * Type 2 - variable between device runs (at init time)
  * - RTC
- * - stopwatch counter
+ * - stopwatch counter based on SysTick timer
  *
  * Type 3 - variable over time (after init, value continues to change)
  * - RTC
@@ -106,12 +105,6 @@ void entropy_salt_mix_256(uint8_t *in, size_t in_len, uint8_t *buf) {
 	// Salt source : System clock timer
 	uint64_t salt_ticker = 0;
 #if !EMULATOR
-	// Salt source : RTC (76 bytes)
-	uint8_t salt_rtc[RTC_PERIPH_SIZE] = {0};
-	// FIXME: Can be read directly but affects volatile core registers
-	memcpy((void *) salt_rtc, (void *) RTC_BASE, sizeof(salt_rtc));
-	entropy_mix_256(salt_rtc, sizeof(salt_rtc), NULL);
-
 	// Salt source : disconnected gpio (current noise)
 	uint16_t salt_gpio = read_gpio_noise(2, 2); /// Read from GPIOB : GPIO2
 	entropy_mix_256((uint8_t *)&salt_gpio, sizeof(salt_gpio), NULL);
