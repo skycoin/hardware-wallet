@@ -31,7 +31,7 @@
 volatile uint64_t system_millis;
 
 /*
- * Initialise the Cortex-M3 SysTick timer
+ * @brief initialise the Cortex-M3 SysTick timer
  */
 void timer_init(void) {
 	random_buffer((uint8_t*)&system_millis, sizeof (system_millis));

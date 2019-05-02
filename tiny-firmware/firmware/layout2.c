@@ -105,7 +105,7 @@ void layoutHome(void)
 		layoutSwipe();
 	}
 	layoutLast = layoutHome;
-	const char *label = storage_isInitialized() ? storage_getLabel() : _("Go to trezor.io/start");
+	const char *label = storage_isInitialized() ? storage_getLabel() : _("Go to skycoin.net/");
 	const uint8_t *homescreen = bmp_skycoin_logo64.data;
 	if (homescreen) {
 		BITMAP b;
