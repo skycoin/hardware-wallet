@@ -13,8 +13,14 @@
 
 #include <stdio.h>
 #include <string.h>
+
+#if !EMULATOR
+
 #include <libopencm3/stm32/memorymap.h>
 #include <libopencm3/stm32/rtc.h>
+#include "gpio_noise.h"
+
+#endif // EMULATOR
 
 #include "protob/c/messages.pb.h"
 #include "vendor/skycoin-crypto/tools/sha2.h"
@@ -26,7 +32,6 @@
 #include "messages.h"
 #include "messages.pb.h"
 #include "oled.h"
-#include "gpio_noise.h"
 
 #define EXTERNAL_ENTROPY_TIMEOUT 60000
 #define ENTROPY_RANDOMSALT_SIZE 256
@@ -102,13 +107,6 @@ void entropy_salt_mix_256(uint8_t *in, size_t in_len, uint8_t *buf) {
 	}
 	// Salt source : System clock timer
   uint64_t salt_ticker = 0;
-#if EMULATOR
-	random_buffer((uint8_t*)&salt_ticker, sizeof (salt_ticker));
-#else
-	salt_ticker = timer_ms();
-#endif	// EMULATOR
-	entropy_mix_256((uint8_t*)&salt_ticker, sizeof(salt_ticker), NULL);
-
 #if !EMULATOR
   // Salt source : RTC (76 bytes)
   uint8_t salt_rtc[RTC_PERIPH_SIZE] = {0};
@@ -116,15 +114,11 @@ void entropy_salt_mix_256(uint8_t *in, size_t in_len, uint8_t *buf) {
   memcpy((void *) salt_rtc, (void *) RTC_BASE, sizeof(salt_rtc));
   entropy_mix_256(salt_rtc, sizeof(salt_rtc), NULL);
 
-  char dbgtext[256];
-  sprintf(dbgtext, "Date %x%x%x%x Time %x%x%x%x",
-    salt_rtc[0], salt_rtc[1], salt_rtc[2], salt_rtc[3],
-    salt_rtc[4], salt_rtc[5], salt_rtc[6], salt_rtc[7]
-  );
-  oledClear();
-  oledDrawStringCenter(18, dbgtext, FONT_STANDARD);
-  oledRefresh();
-#endif
+	salt_ticker = timer_ms();
+#else
+	random_buffer((uint8_t*)&salt_ticker, sizeof (salt_ticker));
+#endif	// EMULATOR
+	entropy_mix_256((uint8_t*)&salt_ticker, sizeof(salt_ticker), NULL);
 
 	// Salt source : TRNG 32 bits
 	uint32_t salt_trng = random32();
