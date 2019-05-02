@@ -237,7 +237,7 @@ bool storage_from_flash(void)
 
 void storage_init(void)
 {
-	// NOTE(denisacostaq@gmail.com): storage_uuid is loaded from main function
+	// NOTE(): storage_uuid is loaded from main function
 	data2hex(storage_uuid, sizeof(storage_uuid), storage_uuid_str);
 	if (!storage_from_flash()) {
 		storage_wipe();

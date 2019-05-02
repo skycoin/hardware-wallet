@@ -11,13 +11,10 @@
 
 #include "entropy.h"
 
-#include <stdio.h>
 #include <string.h>
 
 #if !EMULATOR
 
-#include <libopencm3/stm32/memorymap.h>
-#include <libopencm3/stm32/rtc.h>
 #include "gpio_noise.h"
 
 #endif // EMULATOR
@@ -65,7 +62,8 @@ ErrCode_t is_external_entropy_needed(void) {
  * Type 3 - variable over time (after init, value continues to change)
  * - RTC
  * - random buffer (TRNG)
- * - stopwatch counter
+ * - stopwatch counter based on SysTick timer
+ * - unconnected GPIO pin
  *
  */
 

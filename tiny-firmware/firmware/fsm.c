@@ -443,7 +443,7 @@ void fsm_msgGenerateMnemonic(GenerateMnemonic* msg) {
 			fsm_sendFailure(FailureType_Failure_FirmwareError, _("Mnemonic generation failed"));
 			break;
 	}
-	// layoutHome();
+	layoutHome();
 }
 
 void fsm_msgSetMnemonic(SetMnemonic* msg)

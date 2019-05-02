@@ -83,7 +83,7 @@ ErrCode_t msgGenerateMnemonicImpl(GenerateMnemonic* msg, void (*random_buffer_fu
 	entropy_salt_mix_256(data, sizeof(data), int_entropy);
 	memset(data, 0, sizeof(data));
 	const char* mnemonic = mnemonic_from_data(int_entropy, strength / 8);
-  memset(int_entropy, 0, sizeof(int_entropy));
+	memset(int_entropy, 0, sizeof(int_entropy));
 	if (!mnemonic) {
 		return ErrInvalidValue;
 	}
@@ -356,7 +356,7 @@ ErrCode_t msgTransactionSignImpl(TransactionSign *msg, ErrCode_t (*funcConfirmTx
 					return ErrAddressGeneration;
 			}
 		} else {
-      // NOTICE: A single output per address is assumed
+			// NOTICE: A single output per address is assumed
 			ErrCode_t err = funcConfirmTxn(strCoin, strHour, msg, i);
 			if (err != ErrOk)
 				return err;
@@ -369,14 +369,14 @@ ErrCode_t msgTransactionSignImpl(TransactionSign *msg, ErrCode_t (*funcConfirmTx
 	for (uint32_t i = 0; i < msg->nbIn; ++i) {
 		uint8_t digest[32];
 		transaction_msgToSign(&transaction, i, digest);
-    // Only sign inputs owned by Skywallet device
-    if (msg->transactionIn[i].has_index) {
+		// Only sign inputs owned by Skywallet device
+		if (msg->transactionIn[i].has_index) {
 			if (msgSignTransactionMessageImpl(digest, msg->transactionIn[i].index, resp->signatures[resp->signatures_count]) != ErrOk) {
 				//fsm_sendFailure(FailureType_Failure_InvalidSignature, NULL);
 				//layoutHome();
 				return ErrInvalidSignature;
 			}
-    }
+		}
 		resp->signatures_count++;
 	#if EMULATOR
 		char str[64];
@@ -386,10 +386,10 @@ ErrCode_t msgTransactionSignImpl(TransactionSign *msg, ErrCode_t (*funcConfirmTx
 		printf("Nb signatures: %d\n", resp->signatures_count);
 	#endif
 	}
-  if (resp->signatures_count != msg->nbIn) {
-    // Ensure number of sigs and inputs is the same. Mismatch should never happen.
-    return ErrFailed;
-  }
+	if (resp->signatures_count != msg->nbIn) {
+		// Ensure number of sigs and inputs is the same. Mismatch should never happen.
+		return ErrFailed;
+	}
 	#if EMULATOR
 		char str[64];
 		tohex(str, transaction.innerHash, 32);
@@ -455,9 +455,9 @@ ErrCode_t msgSetMnemonicImpl(SetMnemonic *msg) {
 }
 
 ErrCode_t msgGetEntropyImpl(GetRawEntropy *msg, Entropy *resp, void (*random_buffer_func)(uint8_t *buf, size_t len)) {
-  (void)msg;
-  (void)resp;
-  (void)random_buffer_func;
+	(void)msg;
+	(void)resp;
+	(void)random_buffer_func;
 #if defined(EMULATOR) && EMULATOR
 	return ErrNotImplemented;
 #else
