@@ -27,7 +27,6 @@
 #include "rng.h"
 #include "rand.h"
 #include "error.h"
-//#include "skywallet.h"
 #include <stdio.h>
 #include <inttypes.h>
 #include "fsm.h"
@@ -188,9 +187,6 @@ START_TEST(test_msgSkycoinCheckMessageSignatureOk)
 	strncpy(checkMsg.message, msgSign.message, sizeof(checkMsg.message));
 	memcpy(checkMsg.address, respAddress->addresses[0], sizeof(checkMsg.address));
 	memcpy(checkMsg.signature, respSign->signed_message, sizeof(checkMsg.signature));
-	printf("Message =>> %s\n", checkMsg.message);
-	printf("Address =>> %s\n", checkMsg.address);
-	printf("Signature =>> %s\n", checkMsg.signature);
 	uint8_t msg_success_resp_check[MSG_OUT_SIZE] __attribute__ ((aligned)) = {0};
 	uint8_t msg_fail_resp_check[MSG_OUT_SIZE] __attribute__ ((aligned)) = {0};
 	Success *successRespCheck = (Success *) (void *) msg_success_resp_check;
