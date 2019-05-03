@@ -150,6 +150,8 @@ release-combined-mem-protect: release-bootloader-mem-protect release-firmware ##
 	mv tiny-firmware/bootloader/combine/combined.bin releases/skywallet-full-mem-protect-$(COMBINED_VERSION).bin
 
 release: release-combined release-combined-mem-protect release-emulator ## Create a release for production
+
+release-sign: release # Create detached signatures for all the generated files for release
 	gpg --armor --detach-sign releases/skywallet-firmware-v$(VERSION_FIRMWARE).bin
 	gpg --armor --detach-sign releases/skywallet-full-no-mem-protect-$(COMBINED_VERSION).bin
 	gpg --armor --detach-sign releases/skywallet-full-mem-protect-$(COMBINED_VERSION).bin
