@@ -19,17 +19,19 @@
 
 #include <time.h>
 
-#include "timer.h"
 #include "firmware/swtimer.h"
+#include "timer.h"
 
-void timer_init(void) {
-  timer_init_sw();
+void timer_init(void)
+{
+    timer_init_sw();
 }
 
-uint32_t timer_ms(void) {
-	struct timespec t;
-	clock_gettime(CLOCK_MONOTONIC, &t);
+uint32_t timer_ms(void)
+{
+    struct timespec t;
+    clock_gettime(CLOCK_MONOTONIC, &t);
 
-        uint32_t msec = t.tv_sec * 1000 + (t.tv_nsec / 1000000);
-	return msec;
+    uint32_t msec = t.tv_sec * 1000 + (t.tv_nsec / 1000000);
+    return msec;
 }

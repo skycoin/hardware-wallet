@@ -21,8 +21,8 @@
 #ifndef __PROTECT_H__
 #define __PROTECT_H__
 
-#include <stdbool.h>
 #include "types.pb.h"
+#include <stdbool.h>
 
 bool protectButton(ButtonRequestType type, bool confirm_only);
 bool protectPin(bool use_cached);
@@ -32,7 +32,7 @@ bool protectPassphrase(void);
 extern bool protectAbortedByInitialize;
 
 // Symbols exported for testing
-bool protectChangePinEx(const char* (*)(PinMatrixRequestType, const char *));
-const char *requestPin(PinMatrixRequestType type, const char *text);
+bool protectChangePinEx(const char* (*)(PinMatrixRequestType, const char*));
+const char* requestPin(PinMatrixRequestType type, const char* text);
 
 #endif

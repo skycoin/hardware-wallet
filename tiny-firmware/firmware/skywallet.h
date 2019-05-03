@@ -22,16 +22,6 @@
 
 #include <stdint.h>
 
-#ifndef VERSION_MAJOR
-#define VERSION_MAJOR 1
-#endif
-#ifndef VERSION_MINOR
-#define VERSION_MINOR 7
-#endif
-#ifndef VERSION_PATCH
-#define VERSION_PATCH 0
-#endif
-
 #define STR(X) #X
 #define VERSTR(X) STR(X)
 

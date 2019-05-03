@@ -18,5 +18,4 @@
 
 int is_digest(char* digest);
 
-#endif  // __SKYCOINAPI_CHECKDIGEST_H__
-
+#endif // __SKYCOINAPI_CHECKDIGEST_H__

@@ -12,6 +12,8 @@
 #ifndef GPIO_NOISE_GENERATOR
 #define GPIO_NOISE_GENERATOR
 
+#include <stdint.h>
+
 uint16_t read_gpio_noise(uint8_t, uint8_t);
 
 #endif
