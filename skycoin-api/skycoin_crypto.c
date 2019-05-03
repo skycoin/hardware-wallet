@@ -11,47 +11,47 @@
 
 #include "skycoin_crypto.h"
 
-#include <string.h>
 #include <stdio.h> //sprintf
+#include <string.h>
 
-#include "sha2.h"
+#include "base58.h"
 #include "bip32.h"
 #include "curves.h"
-#include "ripemd160.h"
-#include "base58.h"
 #include "ecdsa.h"
+#include "ripemd160.h"
+#include "sha2.h"
 
-extern void bn_print(const bignum256 *a);
+extern void bn_print(const bignum256* a);
 static void create_node(const char* seed_str, HDNode* node);
 
 static void create_node(const char* seed_str, HDNode* node)
 {
-    const char* curve_name = SECP256K1_NAME; 
-    hdnode_from_seed((const uint8_t *)seed_str, strlen(seed_str), curve_name, node);
+    const char* curve_name = SECP256K1_NAME;
+    hdnode_from_seed((const uint8_t*)seed_str, strlen(seed_str), curve_name, node);
     hdnode_fill_public_key(node);
 }
 
-void tohex(char * str, const uint8_t* buffer, int bufferLength)
+void tohex(char* str, const uint8_t* buffer, int bufferLength)
 {
     int i;
-    for (i = 0; i < bufferLength; ++i)
-    {
-        sprintf(&str[2*i], "%02x", buffer[i]);
+    for (i = 0; i < bufferLength; ++i) {
+        sprintf(&str[2 * i], "%02x", buffer[i]);
     }
 }
 
-void tobuff(const char* str, uint8_t* buf, size_t bufferLength ) {
+void tobuff(const char* str, uint8_t* buf, size_t bufferLength)
+{
     for (size_t i = 0; i < bufferLength; i++) {
         uint8_t c = 0;
-        if (str[i * 2] >= '0' && str[i*2] <= '9') c += (str[i * 2] - '0') << 4;
-        if ((str[i * 2] & ~0x20) >= 'A' && (str[i*2] & ~0x20) <= 'F') c += (10 + (str[i * 2] & ~0x20) - 'A') << 4;
+        if (str[i * 2] >= '0' && str[i * 2] <= '9') c += (str[i * 2] - '0') << 4;
+        if ((str[i * 2] & ~0x20) >= 'A' && (str[i * 2] & ~0x20) <= 'F') c += (10 + (str[i * 2] & ~0x20) - 'A') << 4;
         if (str[i * 2 + 1] >= '0' && str[i * 2 + 1] <= '9') c += (str[i * 2 + 1] - '0');
         if ((str[i * 2 + 1] & ~0x20) >= 'A' && (str[i * 2 + 1] & ~0x20) <= 'F') c += (10 + (str[i * 2 + 1] & ~0x20) - 'A');
         buf[i] = c;
     }
 }
 
-void writebuf_fromhexstr(const char *str, uint8_t* buf)
+void writebuf_fromhexstr(const char* str, uint8_t* buf)
 {
     size_t len = strlen(str) / 2;
     if (len > 32) len = 32;
@@ -72,7 +72,7 @@ void generate_deterministic_key_pair(const uint8_t* seed, const size_t seed_leng
     generate_pubkey_from_seckey(seckey, pubkey);
 }
 
-void ecdh(const uint8_t* secret_key, const uint8_t* remote_public_key, uint8_t* ecdh_key/*should be size SHA256_DIGEST_LENGTH*/)
+void ecdh(const uint8_t* secret_key, const uint8_t* remote_public_key, uint8_t* ecdh_key /*should be size SHA256_DIGEST_LENGTH*/)
 {
     uint8_t mult[65] = {0};
     char seed_str[256] = "dummy seed";
@@ -80,12 +80,9 @@ void ecdh(const uint8_t* secret_key, const uint8_t* remote_public_key, uint8_t* 
     create_node(seed_str, &dummy_node);
     ecdh_multiply(dummy_node.curve->params, secret_key, remote_public_key, mult); //65
     memcpy(&ecdh_key[1], &mult[1], 32);
-    if (mult[64] % 2 == 0)
-    {
+    if (mult[64] % 2 == 0) {
         ecdh_key[0] = 0x02;
-    }
-    else
-    {
+    } else {
         ecdh_key[0] = 0x03;
     }
 }
@@ -136,7 +133,7 @@ void generate_deterministic_key_pair_iterator(const uint8_t* seed, const size_t 
  * @param buffer_len in data len
  * @param out_digest out sha256 data
  */
-void compute_sha256sum(const uint8_t *data, uint8_t* digest /*size SHA256_DIGEST_LENGTH*/, size_t data_length)
+void compute_sha256sum(const uint8_t* data, uint8_t* digest /*size SHA256_DIGEST_LENGTH*/, size_t data_length)
 {
     SHA256_CTX ctx;
     sha256_Init(&ctx);
@@ -152,16 +149,17 @@ void compute_sha256sum(const uint8_t *data, uint8_t* digest /*size SHA256_DIGEST
  * @param msg2_len buffer content len
  * @param out_digest sum_sha256 of msg1 appened to mag2
  */
-void add_sha256(const uint8_t *msg1,size_t msg1_len,const uint8_t *msg2,size_t msg2_len,uint8_t *out_digest) {
-	SHA256_CTX ctx;
-	sha256_Init(&ctx);
-	sha256_Update(&ctx, msg1, msg1_len);
-	sha256_Update(&ctx, msg2, msg2_len);
-	sha256_Final(&ctx, out_digest);
+void add_sha256(const uint8_t* msg1, size_t msg1_len, const uint8_t* msg2, size_t msg2_len, uint8_t* out_digest)
+{
+    SHA256_CTX ctx;
+    sha256_Init(&ctx);
+    sha256_Update(&ctx, msg1, msg1_len);
+    sha256_Update(&ctx, msg2, msg2_len);
+    sha256_Final(&ctx, out_digest);
 }
 
 // address_size is the size of the allocated address buffer, it will be overwritten by the computed address size
-void generate_base58_address_from_pubkey(const uint8_t* pubkey, char* address, size_t *size_address)
+void generate_base58_address_from_pubkey(const uint8_t* pubkey, char* address, size_t* size_address)
 {
     uint8_t pubkey_hash[25] = {0};
     uint8_t r1[SHA256_DIGEST_LENGTH] = {0};
@@ -177,7 +175,7 @@ void generate_base58_address_from_pubkey(const uint8_t* pubkey, char* address, s
     b58enc(address, size_address, pubkey_hash, sizeof(pubkey_hash));
 }
 
-void generate_bitcoin_address_from_pubkey(const uint8_t* pubkey, char* address, size_t *size_address)
+void generate_bitcoin_address_from_pubkey(const uint8_t* pubkey, char* address, size_t* size_address)
 {
     uint8_t b1[SHA256_DIGEST_LENGTH] = {0};
     uint8_t b2[25] = {0};
@@ -192,7 +190,7 @@ void generate_bitcoin_address_from_pubkey(const uint8_t* pubkey, char* address, 
 }
 
 
-void generate_bitcoin_private_address_from_seckey(const uint8_t* seckey, char* address, size_t *size_address)
+void generate_bitcoin_private_address_from_seckey(const uint8_t* seckey, char* address, size_t* size_address)
 {
     uint8_t b2[38] = {0};
     uint8_t h1[SHA256_DIGEST_LENGTH] = {0};
@@ -212,86 +210,89 @@ void generate_bitcoin_private_address_from_seckey(const uint8_t* seckey, char* a
 // digest is 32 bytes of digest
 // is_canonical is an optional function that checks if the signature
 // conforms to additional coin-specific rules.
-int ecdsa_skycoin_sign(const uint32_t nonce_value, const uint8_t *priv_key, const uint8_t *digest, uint8_t *sig)
+int ecdsa_skycoin_sign(const uint32_t nonce_value, const uint8_t* priv_key, const uint8_t* digest, uint8_t* sig)
 {
-	int i;
-	curve_point R;
-	bignum256 nonce, z, randk;
-	bignum256 *s = &R.y;
-	uint8_t by; // signature recovery byte
+    int i;
+    curve_point R;
+    bignum256 nonce, z, randk;
+    bignum256* s = &R.y;
+    uint8_t by; // signature recovery byte
 
     HDNode dummy_node;
     char seed_str[256] = "dummy seed";
     create_node(seed_str, &dummy_node);
-	bn_read_be(digest, &z);
+    bn_read_be(digest, &z);
 
-	for (i = 0; i < 1; i++) {
-		// generate random number nonce
-		// generate_k_random(&nonce, &dummy_node.curve->params->order);
-		bn_read_uint32(nonce_value, &nonce);
-		// compute nonce*G
-		scalar_multiply(dummy_node.curve->params, &nonce, &R);
-		by = R.y.val[0] & 1;
-		// r = (rx mod n)
-		if (!bn_is_less(&R.x, &dummy_node.curve->params->order)) {
-			bn_subtract(&R.x, &dummy_node.curve->params->order, &R.x);
-			by |= 2;
-		}
-		// if r is zero, we retry
-		if (bn_is_zero(&R.x)) {
+    for (i = 0; i < 1; i++) {
+        // generate random number nonce
+        // generate_k_random(&nonce, &dummy_node.curve->params->order);
+        bn_read_uint32(nonce_value, &nonce);
+        // compute nonce*G
+        scalar_multiply(dummy_node.curve->params, &nonce, &R);
+        by = R.y.val[0] & 1;
+        // r = (rx mod n)
+        if (!bn_is_less(&R.x, &dummy_node.curve->params->order)) {
+            bn_subtract(&R.x, &dummy_node.curve->params->order, &R.x);
+            by |= 2;
+        }
+        // if r is zero, we retry
+        if (bn_is_zero(&R.x)) {
             printf("Premature exit 1");
-			continue;
-		}
-		bn_inverse(&nonce, &dummy_node.curve->params->order);         // (nonce*rand)^-1
-		bn_read_be(priv_key, s);               // priv
-		bn_multiply(&R.x, s, &dummy_node.curve->params->order);   // R.x*priv
-        bn_add(s, &z);                         // R.x*priv + z
-		bn_multiply(&nonce, s, &dummy_node.curve->params->order);     // (nonce*rand)^-1 (R.x*priv + z)
-		bn_mod(s, &dummy_node.curve->params->order);
+            continue;
+        }
+        bn_inverse(&nonce, &dummy_node.curve->params->order);     // (nonce*rand)^-1
+        bn_read_be(priv_key, s);                                  // priv
+        bn_multiply(&R.x, s, &dummy_node.curve->params->order);   // R.x*priv
+        bn_add(s, &z);                                            // R.x*priv + z
+        bn_multiply(&nonce, s, &dummy_node.curve->params->order); // (nonce*rand)^-1 (R.x*priv + z)
+        bn_mod(s, &dummy_node.curve->params->order);
 
-		// if s is zero, we retry
-		if (bn_is_zero(s)) {
+        // if s is zero, we retry
+        if (bn_is_zero(s)) {
             printf("Premature exit 2");
-			continue;
-		}
+            continue;
+        }
 
-		// if S > order/2 => S = -S
-		if (bn_is_less(&dummy_node.curve->params->order_half, s)) {
-			bn_subtract(&dummy_node.curve->params->order, s, s);
-			by ^= 1;
-		}
-		// we are done, R.x and s is the result signature
-		bn_write_be(&R.x, sig);
-		bn_write_be(s, sig + 32);
+        // if S > order/2 => S = -S
+        if (bn_is_less(&dummy_node.curve->params->order_half, s)) {
+            bn_subtract(&dummy_node.curve->params->order, s, s);
+            by ^= 1;
+        }
+        // we are done, R.x and s is the result signature
+        bn_write_be(&R.x, sig);
+        bn_write_be(s, sig + 32);
 
         sig[64] = by;
 
-		memset(&nonce, 0, sizeof(nonce));
-		memset(&randk, 0, sizeof(randk));
+        memset(&nonce, 0, sizeof(nonce));
+        memset(&randk, 0, sizeof(randk));
 
-		return 0;
-	}
+        return 0;
+    }
 
-	// Too many retries without a valid signature
-	// -> fail with an error
-	memset(&nonce, 0, sizeof(nonce));
-	memset(&randk, 0, sizeof(randk));
+    // Too many retries without a valid signature
+    // -> fail with an error
+    memset(&nonce, 0, sizeof(nonce));
+    memset(&randk, 0, sizeof(randk));
 
-	return -1;
+    return -1;
 }
 
-void transaction_initZeroTransaction(Transaction* self) {
+void transaction_initZeroTransaction(Transaction* self)
+{
     self->nbIn = 0;
     self->nbOut = 0;
     self->has_innerHash = 0;
 }
 
-void transaction_addInput(Transaction* self, uint8_t* address) {
+void transaction_addInput(Transaction* self, uint8_t* address)
+{
     memcpy(&self->inAddress[self->nbIn], address, 32);
     self->nbIn++;
 };
 
-void transaction_addOutput(Transaction* self,  uint32_t coin, uint32_t hour, char* address) {
+void transaction_addOutput(Transaction* self, uint32_t coin, uint32_t hour, char* address)
+{
     self->outAddress[self->nbOut].coin = coin;
     self->outAddress[self->nbOut].hour = hour;
     size_t len = 36;
@@ -301,8 +302,8 @@ void transaction_addOutput(Transaction* self,  uint32_t coin, uint32_t hour, cha
     self->nbOut++;
 }
 
-void transaction_innerHash(Transaction* self) {
-
+void transaction_innerHash(Transaction* self)
+{
     uint8_t ctx[sizeof(Transaction)];
     memset(ctx, 0, sizeof(Transaction));
     uint64_t bitcount = 0;
@@ -343,7 +344,8 @@ void transaction_innerHash(Transaction* self) {
     self->has_innerHash = 1;
 }
 
-void transaction_msgToSign(Transaction* self, uint8_t index, uint8_t* msg_digest) {
+void transaction_msgToSign(Transaction* self, uint8_t index, uint8_t* msg_digest)
+{
     if (index >= self->nbIn) {
         return;
     }

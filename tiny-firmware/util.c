@@ -21,48 +21,49 @@
 
 inline void delay(uint32_t wait)
 {
-	while (--wait > 0) __asm__("nop");
+    while (--wait > 0)
+        __asm__("nop");
 }
 
-static const char *hexdigits = "0123456789ABCDEF";
+static const char* hexdigits = "0123456789ABCDEF";
 
-void uint32hex(uint32_t num, char *str)
+void uint32hex(uint32_t num, char* str)
 {
-	for (uint32_t i = 0; i < 8; i++) {
-		str[i] = hexdigits[(num >> (28 - i * 4)) & 0xF];
-	}
+    for (uint32_t i = 0; i < 8; i++) {
+        str[i] = hexdigits[(num >> (28 - i * 4)) & 0xF];
+    }
 }
 
 // converts data to hexa
-void data2hex(const void *data, uint32_t len, char *str)
+void data2hex(const void* data, uint32_t len, char* str)
 {
-	const uint8_t *cdata = (uint8_t *)data;
-	for (uint32_t i = 0; i < len; i++) {
-		str[i * 2    ] = hexdigits[(cdata[i] >> 4) & 0xF];
-		str[i * 2 + 1] = hexdigits[cdata[i] & 0xF];
-	}
-	str[len * 2] = 0;
+    const uint8_t* cdata = (uint8_t*)data;
+    for (uint32_t i = 0; i < len; i++) {
+        str[i * 2] = hexdigits[(cdata[i] >> 4) & 0xF];
+        str[i * 2 + 1] = hexdigits[cdata[i] & 0xF];
+    }
+    str[len * 2] = 0;
 }
 
-uint32_t readprotobufint(uint8_t **ptr)
+uint32_t readprotobufint(uint8_t** ptr)
 {
-	uint32_t result = (**ptr & 0x7F);
-	if (**ptr & 0x80) {
-		(*ptr)++;
-		result += (**ptr & 0x7F) * 128;
-		if (**ptr & 0x80) {
-			(*ptr)++;
-			result += (**ptr & 0x7F) * 128 * 128;
-			if (**ptr & 0x80) {
-				(*ptr)++;
-				result += (**ptr & 0x7F) * 128 * 128 * 128;
-				if (**ptr & 0x80) {
-					(*ptr)++;
-					result += (**ptr & 0x7F) * 128 * 128 * 128 * 128;
-				}
-			}
-		}
-	}
-	(*ptr)++;
-	return result;
+    uint32_t result = (**ptr & 0x7F);
+    if (**ptr & 0x80) {
+        (*ptr)++;
+        result += (**ptr & 0x7F) * 128;
+        if (**ptr & 0x80) {
+            (*ptr)++;
+            result += (**ptr & 0x7F) * 128 * 128;
+            if (**ptr & 0x80) {
+                (*ptr)++;
+                result += (**ptr & 0x7F) * 128 * 128 * 128;
+                if (**ptr & 0x80) {
+                    (*ptr)++;
+                    result += (**ptr & 0x7F) * 128 * 128 * 128 * 128;
+                }
+            }
+        }
+    }
+    (*ptr)++;
+    return result;
 }

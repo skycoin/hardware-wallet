@@ -27,12 +27,12 @@
 #define VERSION_MINOR_CHAR VERSTR(VERSION_MINOR)
 #define VERSION_PATCH_CHAR VERSTR(VERSION_PATCH)
 
-#include <stdbool.h>
 #include "memory.h"
+#include <stdbool.h>
 
-void layoutFirmwareHash(const uint8_t *hash);
+void layoutFirmwareHash(const uint8_t* hash);
 #if SIGNATURE_DEBUG
-void layout32bits(const uint8_t *buffer, const char* message);
+void layout32bits(const uint8_t* buffer, const char* message);
 #endif
 bool firmware_present(void);
 

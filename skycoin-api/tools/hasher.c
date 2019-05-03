@@ -22,54 +22,60 @@
 
 #include "hasher.h"
 
-void hasher_Init(Hasher *hasher, HasherType type) {
-	hasher->type = type;
+void hasher_Init(Hasher* hasher, HasherType type)
+{
+    hasher->type = type;
 
-	switch (hasher->type) {
-	case HASHER_SHA2:
-		sha256_Init(&hasher->ctx.sha2);
-		break;
-	case HASHER_BLAKE:
-		blake256_Init(&hasher->ctx.blake);
-		break;
-	}
+    switch (hasher->type) {
+    case HASHER_SHA2:
+        sha256_Init(&hasher->ctx.sha2);
+        break;
+    case HASHER_BLAKE:
+        blake256_Init(&hasher->ctx.blake);
+        break;
+    }
 }
 
-void hasher_Reset(Hasher *hasher) {
-	hasher_Init(hasher, hasher->type);
+void hasher_Reset(Hasher* hasher)
+{
+    hasher_Init(hasher, hasher->type);
 }
 
-void hasher_Update(Hasher *hasher, const uint8_t *data, size_t length) {
-	switch (hasher->type) {
-	case HASHER_SHA2:
-		sha256_Update(&hasher->ctx.sha2, data, length);
-		break;
-	case HASHER_BLAKE:
-		blake256_Update(&hasher->ctx.blake, data, length);
-		break;
-	}
+void hasher_Update(Hasher* hasher, const uint8_t* data, size_t length)
+{
+    switch (hasher->type) {
+    case HASHER_SHA2:
+        sha256_Update(&hasher->ctx.sha2, data, length);
+        break;
+    case HASHER_BLAKE:
+        blake256_Update(&hasher->ctx.blake, data, length);
+        break;
+    }
 }
 
-void hasher_Final(Hasher *hasher, uint8_t hash[HASHER_DIGEST_LENGTH]) {
-	switch (hasher->type) {
-	case HASHER_SHA2:
-		sha256_Final(&hasher->ctx.sha2, hash);
-		break;
-	case HASHER_BLAKE:
-		blake256_Final(&hasher->ctx.blake, hash);
-		break;
-	}
+void hasher_Final(Hasher* hasher, uint8_t hash[HASHER_DIGEST_LENGTH])
+{
+    switch (hasher->type) {
+    case HASHER_SHA2:
+        sha256_Final(&hasher->ctx.sha2, hash);
+        break;
+    case HASHER_BLAKE:
+        blake256_Final(&hasher->ctx.blake, hash);
+        break;
+    }
 }
 
-void hasher_Double(Hasher *hasher, uint8_t hash[HASHER_DIGEST_LENGTH]) {
-	hasher_Final(hasher, hash);
-	hasher_Raw(hasher->type, hash, HASHER_DIGEST_LENGTH, hash);
+void hasher_Double(Hasher* hasher, uint8_t hash[HASHER_DIGEST_LENGTH])
+{
+    hasher_Final(hasher, hash);
+    hasher_Raw(hasher->type, hash, HASHER_DIGEST_LENGTH, hash);
 }
 
-void hasher_Raw(HasherType type, const uint8_t *data, size_t length, uint8_t hash[HASHER_DIGEST_LENGTH]) {
-	Hasher hasher;
+void hasher_Raw(HasherType type, const uint8_t* data, size_t length, uint8_t hash[HASHER_DIGEST_LENGTH])
+{
+    Hasher hasher;
 
-	hasher_Init(&hasher, type);
-	hasher_Update(&hasher, data, length);
-	hasher_Final(&hasher, hash);
+    hasher_Init(&hasher, type);
+    hasher_Update(&hasher, data, length);
+    hasher_Final(&hasher, hash);
 }
