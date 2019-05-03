@@ -600,6 +600,23 @@ START_TEST(test_msgSkycoinAddressesTooMany)
 }
 END_TEST
 
+START_TEST(test_msgSkycoinAddressesFailWithoutMnemonic)
+{
+	SkycoinAddress msgAddr = SkycoinAddress_init_zero;
+	RESP_INIT(ResponseSkycoinAddress);
+
+	storage_wipe();
+
+	msgAddr.has_start_index = true;
+	msgAddr.start_index = random32() % 100;
+	msgAddr.address_n = random32() % (100 - msgAddr.start_index) + 1;
+	ck_assert_uint_ge(msgAddr.address_n, 1);
+	msgAddr.has_confirm_address = false;
+
+	ck_assert_int_eq(msgSkycoinAddressImpl(&msgAddr, resp), ErrMnemonicRequired);
+}
+END_TEST
+
 // define test cases
 TCase *add_fsm_tests(TCase *tc)
 {
@@ -629,5 +646,6 @@ TCase *add_fsm_tests(TCase *tc)
 	tcase_add_test(tc, test_msgSkycoinAddressesAll);
 	tcase_add_test(tc, test_msgSkycoinAddressesStartIndex);
 	tcase_add_test(tc, test_msgSkycoinAddressesTooMany);
+	tcase_add_test(tc, test_msgSkycoinAddressesFailWithoutMnemonic);
 	return tc;
 }
