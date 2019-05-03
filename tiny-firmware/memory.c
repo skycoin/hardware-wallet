@@ -58,3 +58,18 @@ int memory_bootloader_hash(uint8_t *hash)
 	sha256_Raw(hash, 32, hash);
 	return 32;
 }
+
+uint8_t rdp_level;
+void set_up_rdp_level(void) {
+	switch (FLASH_OPTION_BYTES_1 & 0xFF00) {
+		case 0xCC00:
+			rdp_level = 2;
+			break;
+		case 0xAA00:
+			rdp_level = 0;
+			break;
+		default:
+			rdp_level = 1;
+			break;
+	}
+}

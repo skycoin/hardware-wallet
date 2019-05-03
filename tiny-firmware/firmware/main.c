@@ -51,6 +51,7 @@ int main(void)
 	timer_init();
 
 #if !defined(EMULATOR) || EMULATOR == 0
+	set_up_rdp_level();
 	desig_get_unique_id(storage_uuid);
 	// enable MPU (Memory Protection Unit)
 	mpu_config();
