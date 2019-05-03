@@ -27,7 +27,32 @@
 #include "rng.h"
 #include "rand.h"
 #include "error.h"
-
+#include <stdio.h>
+#include <inttypes.h>
+#include "fsm.h"
+#include "messages.h"
+#include "bip32.h"
+#include "storage.h"
+#include "rng.h"
+#include "oled.h"
+#include "protect.h"
+#include "pinmatrix.h"
+#include "layout2.h"
+#include "reset.h"
+#include "recovery.h"
+#include "bip39.h"
+#include "memory.h"
+#include "usb.h"
+#include "util.h"
+#include "base58.h"
+#include "gettext.h"
+#include "skycoin_crypto.h"
+#include "skycoin_check_signature.h"
+#include "check_digest.h"
+#include "fsm_impl.h"
+#include "droplet.h"
+#include "skyparams.h"
+#include "entropy.h"
 #include "test_fsm.h"
 #include "test_many_address_golden.h"
 
@@ -600,6 +625,652 @@ START_TEST(test_msgSkycoinAddressesTooMany)
 }
 END_TEST
 
+ErrCode_t funcConfirmTxn(char* a, char* b, TransactionSign* sign, uint32_t t){
+    (void) a;
+    (void) b;
+    (void) sign;
+    (void) t;
+    return ErrOk;
+}
+
+START_TEST(test_transactionSign1)
+{
+    SkycoinTransactionInput transactionInputs[1] = {
+        {
+            .hashIn = "181bd5656115172fe81451fae4fb56498a97744d89702e73da75ba91ed5200f9",
+            .has_index = true,
+            .index = 0
+        }
+    };
+
+    SkycoinTransactionOutput transactionOutputs[1] = {
+            {
+            .address = "K9TzLrgqz7uXn3QJHGxmzdRByAzH33J2ot",
+            .coin = 100000,
+            .hour = 2
+        }
+    };
+    TransactionSign msg = TransactionSign_init_zero;
+    msg.transactionIn[0] = transactionInputs[0];
+    msg.transactionOut[0] = transactionOutputs[0];
+    msg.nbIn = 1;
+    msg.nbOut = 1;
+    msg.transactionIn_count = 1;
+    msg.transactionOut_count = 1;
+    ResponseTransactionSign resp = ResponseTransactionSign_init_zero;
+    SetMnemonic nemonic = SetMnemonic_init_zero;
+    char raw_mnemonic[] = {
+        "cloud flower upset remain green metal below cup stem infant art thank"};
+    memcpy(nemonic.mnemonic, raw_mnemonic, sizeof(raw_mnemonic));
+    ck_assert_int_eq(msgSetMnemonicImpl(&nemonic), ErrOk);
+    ErrCode_t errCode = msgTransactionSignImpl(&msg, funcConfirmTxn, &resp);
+    ck_assert_int_eq(errCode, ErrOk);
+
+    SkycoinCheckMessageSignature msg_s = SkycoinCheckMessageSignature_init_zero;
+    char raw_addr[] = {"2EU3JbveHdkxW6z5tdhbbB2kRAWvXC2pLzw"};
+    memcpy(msg_s.address, raw_addr, sizeof(raw_addr));
+    char raw_msg[] = {
+        "d11c62b1e0e9abf629b1f5f4699cef9fbc504b45ceedf0047ead686979498218"};
+    memcpy(msg_s.message, raw_msg, sizeof(raw_msg));
+    memcpy(msg_s.signature, resp.signatures[0], sizeof(msg_s.signature));
+
+    Failure failure_resp = Failure_init_default;
+    Success success_resp = Success_init_default;
+    ErrCode_t check_sign = msgSkycoinCheckMessageSignatureImpl(
+                &msg_s, &success_resp, &failure_resp);
+    ck_assert_int_eq(check_sign, ErrOk);
+
+}
+END_TEST
+
+START_TEST(test_transactionSign2)
+{
+    SkycoinTransactionInput transactionInputs[2] = {
+        {
+            .hashIn = "01a9ef6c25271229ef9760e1536c3dc5ccf0ead7de93a64c12a01340670d87e9",
+            .has_index = true,
+            .index = 0
+        },
+        {
+            .hashIn = "8c2c97bfd34e0f0f9833b789ce03c2e80ac0b94b9d0b99cee6ea76fb662e8e1c",
+            .has_index = true,
+            .index = 0
+        }
+    };
+
+    SkycoinTransactionOutput transactionOutputs[1] = {
+        {
+            .address = "K9TzLrgqz7uXn3QJHGxmzdRByAzH33J2ot",
+            .coin = 20800000,
+            .hour = 255
+        }
+    };
+
+    SetMnemonic nemonic = SetMnemonic_init_zero;
+    char raw_mnemonic[] = {
+            "cloud flower upset remain green metal below cup stem infant art thank"};
+    memcpy(nemonic.mnemonic, raw_mnemonic, sizeof(raw_mnemonic));
+    ck_assert_int_eq(msgSetMnemonicImpl(&nemonic), ErrOk);
+
+    TransactionSign msg = TransactionSign_init_zero;
+    msg.transactionIn[0] = transactionInputs[0];
+    msg.transactionIn[1] = transactionInputs[1];
+    msg.transactionOut[0] = transactionOutputs[0];
+    msg.nbIn = 2;
+    msg.nbOut = 1;
+
+    ResponseTransactionSign resp = ResponseTransactionSign_init_default;
+    ErrCode_t errCode = msgTransactionSignImpl(&msg, funcConfirmTxn, &resp);
+    ck_assert_int_eq(errCode, ErrOk);
+    ck_assert_int_eq(resp.signatures_count, 2);
+
+    SkycoinCheckMessageSignature msg_s = SkycoinCheckMessageSignature_init_zero;
+    char raw_addr[] = {"2EU3JbveHdkxW6z5tdhbbB2kRAWvXC2pLzw"};
+    memcpy(msg_s.address, raw_addr, sizeof(raw_addr));
+    char raw_msg[] = {
+            "9bbde062d665a8b11ae15aee6d4f32f0f3d61af55160c142060795a219378a54"};
+    memcpy(msg_s.message, raw_msg, sizeof(raw_msg));
+    memcpy(msg_s.signature, resp.signatures[0], sizeof(msg_s.signature));
+
+    Failure failure_resp = Failure_init_default;
+    Success success_resp = Success_init_default;
+    ErrCode_t check_sign = msgSkycoinCheckMessageSignatureImpl(
+            &msg_s, &success_resp, &failure_resp);
+    ck_assert_int_eq(check_sign, ErrOk);
+
+    SkycoinCheckMessageSignature msg_s2 = SkycoinCheckMessageSignature_init_zero;
+    memcpy(msg_s2.address, raw_addr, sizeof(raw_addr));
+    char raw_msg2[] = {
+            "f947b0352b19672f7b7d04dc2f1fdc47bc5355878f3c47a43d4d4cfbae07d026"};
+    memcpy(msg_s2.message, raw_msg2, sizeof(raw_msg2));
+    memcpy(msg_s2.signature, resp.signatures[1], sizeof(msg_s2.signature));
+
+    ErrCode_t check_sign2 = msgSkycoinCheckMessageSignatureImpl(
+            &msg_s2, &success_resp, &failure_resp);
+    ck_assert_int_eq(check_sign2, ErrOk);
+
+}
+END_TEST
+
+START_TEST(test_transactionSign3)
+{
+    SkycoinTransactionInput transactionInputs[3] = {
+        {
+            .hashIn = "da3b5e29250289ad78dc42dcf007ab8f61126198e71e8306ff8c11696a0c40f7",
+            .has_index = true,
+            .index = 0
+        },
+        {
+            .hashIn = "33e826d62489932905dd936d3edbb74f37211d68d4657689ed4b8027edcad0fb",
+            .has_index = true,
+            .index = 0
+        },
+        {
+            .hashIn = "668f4c144ad2a4458eaef89a38f10e5307b4f0e8fce2ade96fb2cc2409fa6592",
+            .has_index = true,
+            .index = 0
+        }
+    };
+
+    SkycoinTransactionOutput transactionOutputs[2] = {
+        {
+            .address = "K9TzLrgqz7uXn3QJHGxmzdRByAzH33J2ot",
+            .coin = 111000000,
+            .hour = 6464556
+        },{
+            .address = "2iNNt6fm9LszSWe51693BeyNUKX34pPaLx8",
+            .coin = 1900000,
+            .hour = 1
+        }
+    };
+
+    SetMnemonic nemonic = SetMnemonic_init_zero;
+    char raw_mnemonic[] = {
+            "cloud flower upset remain green metal below cup stem infant art thank"};
+    memcpy(nemonic.mnemonic, raw_mnemonic, sizeof(raw_mnemonic));
+    ck_assert_int_eq(msgSetMnemonicImpl(&nemonic), ErrOk);
+
+    TransactionSign msg = TransactionSign_init_zero;
+    msg.transactionIn[0] = transactionInputs[0];
+    msg.transactionIn[1] = transactionInputs[1];
+    msg.transactionIn[2] = transactionInputs[2];
+    msg.transactionOut[0] = transactionOutputs[0];
+    msg.transactionOut[1] = transactionOutputs[1];
+    msg.nbIn = 3;
+    msg.nbOut = 2;
+
+    ResponseTransactionSign resp = ResponseTransactionSign_init_default;
+    ErrCode_t errCode = msgTransactionSignImpl(&msg, funcConfirmTxn, &resp);
+    ck_assert_int_eq(errCode, ErrOk);
+    ck_assert_int_eq(resp.signatures_count, 3);
+
+    SkycoinCheckMessageSignature msg_s = SkycoinCheckMessageSignature_init_zero;
+    char raw_addr[] = {"2EU3JbveHdkxW6z5tdhbbB2kRAWvXC2pLzw"};
+    memcpy(msg_s.address, raw_addr, sizeof(raw_addr));
+    char raw_msg[] = {
+            "ff383c647551a3ba0387f8334b3f397e45f9fc7b3b5c3b18ab9f2b9737bce039"};
+    memcpy(msg_s.message, raw_msg, sizeof(raw_msg));
+    memcpy(msg_s.signature, resp.signatures[0], sizeof(msg_s.signature));
+
+    Failure failure_resp = Failure_init_default;
+    Success success_resp = Success_init_default;
+    ErrCode_t check_sign = msgSkycoinCheckMessageSignatureImpl(
+            &msg_s, &success_resp, &failure_resp);
+    ck_assert_int_eq(check_sign, ErrOk);
+
+    SkycoinCheckMessageSignature msg_s2 = SkycoinCheckMessageSignature_init_zero;
+    memcpy(msg_s2.address, raw_addr, sizeof(raw_addr));
+    char raw_msg2[] = {
+            "c918d83d8d3b1ee85c1d2af6885a0067bacc636d2ebb77655150f86e80bf4417"};
+    memcpy(msg_s2.message, raw_msg2, sizeof(raw_msg2));
+    memcpy(msg_s2.signature, resp.signatures[1], sizeof(msg_s2.signature));
+
+    ErrCode_t check_sign2 = msgSkycoinCheckMessageSignatureImpl(
+            &msg_s2, &success_resp, &failure_resp);
+    ck_assert_int_eq(check_sign2, ErrOk);
+
+    SkycoinCheckMessageSignature msg_s3 = SkycoinCheckMessageSignature_init_zero;
+    memcpy(msg_s3.address, raw_addr, sizeof(raw_addr));
+    char raw_msg3[] = {
+            "0e827c5d16bab0c3451850cc6deeaa332cbcb88322deea4ea939424b072e9b97"};
+    memcpy(msg_s3.message, raw_msg3, sizeof(raw_msg3));
+    memcpy(msg_s3.signature, resp.signatures[2], sizeof(msg_s3.signature));
+
+    ErrCode_t check_sign3 = msgSkycoinCheckMessageSignatureImpl(
+            &msg_s3, &success_resp, &failure_resp);
+    ck_assert_int_eq(check_sign3, ErrOk);
+
+}
+END_TEST
+
+START_TEST(test_transactionSign4)
+{
+    SkycoinTransactionInput transactionInputs[2] = {
+        {
+            .hashIn = "b99f62c5b42aec6be97f2ca74bb1a846be9248e8e19771943c501e0b48a43d82",
+            .has_index = true,
+            .index = 0
+        },
+        {
+            .hashIn = "cd13f705d9c1ce4ac602e4c4347e986deab8e742eae8996b34c429874799ebb2",
+            .has_index = true,
+            .index = 0
+        }
+    };
+
+    SkycoinTransactionOutput transactionOutputs[1] = {
+        {
+            .address = "22S8njPeKUNJBijQjNCzaasXVyf22rWv7gF",
+            .coin = 23100000,
+            .hour = 0
+        }
+    };
+
+    SetMnemonic nemonic = SetMnemonic_init_zero;
+    char raw_mnemonic[] = {
+            "cloud flower upset remain green metal below cup stem infant art thank"};
+    memcpy(nemonic.mnemonic, raw_mnemonic, sizeof(raw_mnemonic));
+    ck_assert_int_eq(msgSetMnemonicImpl(&nemonic), ErrOk);
+
+    TransactionSign msg = TransactionSign_init_zero;
+    msg.transactionIn[0] = transactionInputs[0];
+    msg.transactionIn[1] = transactionInputs[1];
+    msg.transactionOut[0] = transactionOutputs[0];
+    msg.nbIn = 2;
+    msg.nbOut = 1;
+
+    ResponseTransactionSign resp = ResponseTransactionSign_init_default;
+    ErrCode_t errCode = msgTransactionSignImpl(&msg, funcConfirmTxn, &resp);
+    ck_assert_int_eq(errCode, ErrOk);
+    ck_assert_int_eq(resp.signatures_count, 2);
+
+    SkycoinCheckMessageSignature msg_s = SkycoinCheckMessageSignature_init_zero;
+    char raw_addr[] = {"2EU3JbveHdkxW6z5tdhbbB2kRAWvXC2pLzw"};
+    memcpy(msg_s.address, raw_addr, sizeof(raw_addr));
+    char raw_msg[] = {
+            "42a26380399172f2024067a17704fceda607283a0f17cb0024ab7a96fc6e4ac6"};
+    memcpy(msg_s.message, raw_msg, sizeof(raw_msg));
+    memcpy(msg_s.signature, resp.signatures[0], sizeof(msg_s.signature));
+
+    Failure failure_resp = Failure_init_default;
+    Success success_resp = Success_init_default;
+    ErrCode_t check_sign = msgSkycoinCheckMessageSignatureImpl(
+            &msg_s, &success_resp, &failure_resp);
+    ck_assert_int_eq(check_sign, ErrOk);
+
+    SkycoinCheckMessageSignature msg_s2 = SkycoinCheckMessageSignature_init_zero;
+    memcpy(msg_s2.address, raw_addr, sizeof(raw_addr));
+    char raw_msg2[] = {
+            "5e0a5a8c7ea4a2a500c24e3a4bfd83ef9f74f3c2ff4bdc01240b66a41e34ebbf"};
+    memcpy(msg_s2.message, raw_msg2, sizeof(raw_msg2));
+    memcpy(msg_s2.signature, resp.signatures[1], sizeof(msg_s2.signature));
+
+    ErrCode_t check_sign2 = msgSkycoinCheckMessageSignatureImpl(
+            &msg_s2, &success_resp, &failure_resp);
+    ck_assert_int_eq(check_sign2, ErrOk);
+
+}
+END_TEST
+
+START_TEST(test_transactionSign5)
+{
+    SkycoinTransactionInput transactionInputs[1] = {
+        {
+            .hashIn = "4c12fdd28bd580989892b0518f51de3add96b5efb0f54f0cd6115054c682e1f1",
+            .has_index = true,
+            .index = 0
+        }
+    };
+
+    SkycoinTransactionOutput transactionOutputs[1] = {
+        {
+            .address = "2iNNt6fm9LszSWe51693BeyNUKX34pPaLx8",
+            .coin = 1000000,
+            .hour = 0
+        }
+    };
+
+    SetMnemonic nemonic = SetMnemonic_init_zero;
+    char raw_mnemonic[] = {
+            "cloud flower upset remain green metal below cup stem infant art thank"};
+    memcpy(nemonic.mnemonic, raw_mnemonic, sizeof(raw_mnemonic));
+    ck_assert_int_eq(msgSetMnemonicImpl(&nemonic), ErrOk);
+
+    TransactionSign msg = TransactionSign_init_zero;
+    msg.transactionIn[0] = transactionInputs[0];
+    msg.transactionOut[0] = transactionOutputs[0];
+    msg.nbIn = 1;
+    msg.nbOut = 1;
+
+    ResponseTransactionSign resp = ResponseTransactionSign_init_default;
+    ErrCode_t errCode = msgTransactionSignImpl(&msg, funcConfirmTxn, &resp);
+    ck_assert_int_eq(errCode, ErrOk);
+    ck_assert_int_eq(resp.signatures_count, 1);
+
+    SkycoinCheckMessageSignature msg_s = SkycoinCheckMessageSignature_init_zero;
+    char raw_addr[] = {"2EU3JbveHdkxW6z5tdhbbB2kRAWvXC2pLzw"};
+    memcpy(msg_s.address, raw_addr, sizeof(raw_addr));
+    char raw_msg[] = {
+            "c40e110f5e460532bfb03a5a0e50262d92d8913a89c87869adb5a443463dea69"};
+    memcpy(msg_s.message, raw_msg, sizeof(raw_msg));
+    memcpy(msg_s.signature, resp.signatures[0], sizeof(msg_s.signature));
+
+    Failure failure_resp = Failure_init_default;
+    Success success_resp = Success_init_default;
+    ErrCode_t check_sign = msgSkycoinCheckMessageSignatureImpl(
+            &msg_s, &success_resp, &failure_resp);
+    ck_assert_int_eq(check_sign, ErrOk);
+
+}
+END_TEST
+
+START_TEST(test_transactionSign6)
+{
+    SkycoinTransactionInput transactionInputs[1] = {
+        {
+            .hashIn = "c5467f398fc3b9d7255d417d9ca208c0a1dfa0ee573974a5fdeb654e1735fc59",
+            .has_index = true,
+            .index = 0
+        }
+    };
+
+    SkycoinTransactionOutput transactionOutputs[3] = {
+        {
+            .address = "K9TzLrgqz7uXn3QJHGxmzdRByAzH33J2ot",
+            .coin = 10000000,
+            .hour = 1
+        }, {
+            .address = "VNz8LR9JTSoz5o7qPHm3QHj4EiJB6LV18L",
+            .coin = 5500000,
+            .hour = 0
+        }, {
+            .address = "22S8njPeKUNJBijQjNCzaasXVyf22rWv7gF",
+            .coin = 4500000,
+            .hour = 1
+        }
+    };
+
+    SetMnemonic nemonic = SetMnemonic_init_zero;
+    char raw_mnemonic[] = {
+            "cloud flower upset remain green metal below cup stem infant art thank"};
+    memcpy(nemonic.mnemonic, raw_mnemonic, sizeof(raw_mnemonic));
+    ck_assert_int_eq(msgSetMnemonicImpl(&nemonic), ErrOk);
+
+    TransactionSign msg = TransactionSign_init_zero;
+    msg.transactionIn[0] = transactionInputs[0];
+    msg.transactionOut[0] = transactionOutputs[0];
+    msg.transactionOut[1] = transactionOutputs[1];
+    msg.transactionOut[2] = transactionOutputs[2];
+    msg.nbIn = 1;
+    msg.nbOut = 3;
+
+    ResponseTransactionSign resp = ResponseTransactionSign_init_default;
+    ErrCode_t errCode = msgTransactionSignImpl(&msg, funcConfirmTxn, &resp);
+    ck_assert_int_eq(errCode, ErrOk);
+    ck_assert_int_eq(resp.signatures_count, 1);
+
+    SkycoinCheckMessageSignature msg_s = SkycoinCheckMessageSignature_init_zero;
+    char raw_addr[] = {"2EU3JbveHdkxW6z5tdhbbB2kRAWvXC2pLzw"};
+    memcpy(msg_s.address, raw_addr, sizeof(raw_addr));
+    char raw_msg[] = {
+            "7edea77354eca0999b1b023014eb04638b05313d40711707dd03a9935696ccd1"};
+    memcpy(msg_s.message, raw_msg, sizeof(raw_msg));
+    memcpy(msg_s.signature, resp.signatures[0], sizeof(msg_s.signature));
+
+    Failure failure_resp = Failure_init_default;
+    Success success_resp = Success_init_default;
+    ErrCode_t check_sign = msgSkycoinCheckMessageSignatureImpl(
+            &msg_s, &success_resp, &failure_resp);
+    ck_assert_int_eq(check_sign, ErrOk);
+
+}
+END_TEST
+
+START_TEST(test_transactionSign7)
+{
+    SkycoinTransactionInput transactionInputs[3] = {
+        {
+            .hashIn = "7b65023cf64a56052cdea25ce4fa88943c8bc96d1ab34ad64e2a8b4c5055087e",
+            .has_index = true,
+            .index = 0
+        }, {
+            .hashIn = "0c0696698cba98047bc042739e14839c09bbb8bb5719b735bff88636360238ad",
+            .has_index = true,
+            .index = 0
+        }, {
+            .hashIn = "ae3e0b476b61734e590b934acb635d4ad26647bc05867cb01abd1d24f7f2ce50",
+            .has_index = true,
+            .index = 0
+        }
+    };
+
+    SkycoinTransactionOutput transactionOutputs[1] = {
+        {
+            .address = "22S8njPeKUNJBijQjNCzaasXVyf22rWv7gF",
+            .coin = 25000000,
+            .hour = 33
+        }
+    };
+
+    SetMnemonic nemonic = SetMnemonic_init_zero;
+    char raw_mnemonic[] = {
+            "cloud flower upset remain green metal below cup stem infant art thank"};
+    memcpy(nemonic.mnemonic, raw_mnemonic, sizeof(raw_mnemonic));
+    ck_assert_int_eq(msgSetMnemonicImpl(&nemonic), ErrOk);
+
+    TransactionSign msg = TransactionSign_init_zero;
+    msg.transactionIn[0] = transactionInputs[0];
+    msg.transactionIn[1] = transactionInputs[1];
+    msg.transactionIn[2] = transactionInputs[2];
+    msg.transactionOut[0] = transactionOutputs[0];
+    msg.nbIn = 3;
+    msg.nbOut = 1;
+
+    ResponseTransactionSign resp = ResponseTransactionSign_init_default;
+    ErrCode_t errCode = msgTransactionSignImpl(&msg, funcConfirmTxn, &resp);
+    ck_assert_int_eq(errCode, ErrOk);
+    ck_assert_int_eq(resp.signatures_count, 3);
+
+    SkycoinCheckMessageSignature msg_s = SkycoinCheckMessageSignature_init_zero;
+    char raw_addr[] = {"2EU3JbveHdkxW6z5tdhbbB2kRAWvXC2pLzw"};
+    memcpy(msg_s.address, raw_addr, sizeof(raw_addr));
+    char raw_msg[] = {
+            "ec9053ab9988feb0cfb3fcce96f02c7d146ff7a164865c4434d1dbef42a24e91"};
+    memcpy(msg_s.message, raw_msg, sizeof(raw_msg));
+    memcpy(msg_s.signature, resp.signatures[0], sizeof(msg_s.signature));
+
+    Failure failure_resp = Failure_init_default;
+    Success success_resp = Success_init_default;
+    ErrCode_t check_sign = msgSkycoinCheckMessageSignatureImpl(
+            &msg_s, &success_resp, &failure_resp);
+    ck_assert_int_eq(check_sign, ErrOk);
+
+    SkycoinCheckMessageSignature msg_s2 = SkycoinCheckMessageSignature_init_zero;
+    memcpy(msg_s2.address, raw_addr, sizeof(raw_addr));
+    char raw_msg2[] = {
+            "332534f92c27b31f5b73d8d0c7dde4527b540024f8daa965fe9140e97f3c2b06"};
+    memcpy(msg_s2.message, raw_msg2, sizeof(raw_msg2));
+    memcpy(msg_s2.signature, resp.signatures[1], sizeof(msg_s2.signature));
+
+    ErrCode_t check_sign2 = msgSkycoinCheckMessageSignatureImpl(
+            &msg_s2, &success_resp, &failure_resp);
+    ck_assert_int_eq(check_sign2, ErrOk);
+
+    SkycoinCheckMessageSignature msg_s3 = SkycoinCheckMessageSignature_init_zero;
+    memcpy(msg_s3.address, raw_addr, sizeof(raw_addr));
+    char raw_msg3[] = {
+            "63f955205ceb159415268bad68acaae6ac8be0a9f33ef998a84d1c09a8b52798"};
+    memcpy(msg_s3.message, raw_msg3, sizeof(raw_msg3));
+    memcpy(msg_s3.signature, resp.signatures[2], sizeof(msg_s3.signature));
+
+    ErrCode_t check_sign3 = msgSkycoinCheckMessageSignatureImpl(
+            &msg_s3, &success_resp, &failure_resp);
+    ck_assert_int_eq(check_sign3, ErrOk);
+
+}
+END_TEST
+
+START_TEST(test_transactionSign8)
+{
+    SkycoinTransactionInput transactionInputs[3] = {
+        {
+            .hashIn = "ae6fcae589898d6003362aaf39c56852f65369d55bf0f2f672bcc268c15a32da",
+            .has_index = true,
+            .index = 0
+        }
+    };
+
+    SkycoinTransactionOutput transactionOutputs[1] = {
+        {
+            .address = "3pXt9MSQJkwgPXLNePLQkjKq8tsRnFZGQA",
+            .coin = 1000000,
+            .hour = 1000
+        }
+    };
+
+    SetMnemonic nemonic = SetMnemonic_init_zero;
+    char raw_mnemonic[] = {
+            "cloud flower upset remain green metal below cup stem infant art thank"};
+    memcpy(nemonic.mnemonic, raw_mnemonic, sizeof(raw_mnemonic));
+    ck_assert_int_eq(msgSetMnemonicImpl(&nemonic), ErrOk);
+
+    TransactionSign msg = TransactionSign_init_zero;
+    msg.transactionIn[0] = transactionInputs[0];
+    msg.transactionOut[0] = transactionOutputs[0];
+    msg.nbIn = 1;
+    msg.nbOut = 1;
+
+    ResponseTransactionSign resp = ResponseTransactionSign_init_default;
+    ErrCode_t errCode = msgTransactionSignImpl(&msg, funcConfirmTxn, &resp);
+    ck_assert_int_eq(errCode, ErrOk);
+    ck_assert_int_eq(resp.signatures_count, 1);
+
+    SkycoinCheckMessageSignature msg_s = SkycoinCheckMessageSignature_init_zero;
+    char raw_addr[] = {"2EU3JbveHdkxW6z5tdhbbB2kRAWvXC2pLzw"};
+    memcpy(msg_s.address, raw_addr, sizeof(raw_addr));
+    char raw_msg[] = {
+            "47bfa37c79f7960df8e8a421250922c5165167f4c91ecca5682c1106f9010a7f"};
+    memcpy(msg_s.message, raw_msg, sizeof(raw_msg));
+    memcpy(msg_s.signature, resp.signatures[0], sizeof(msg_s.signature));
+
+    Failure failure_resp = Failure_init_default;
+    Success success_resp = Success_init_default;
+    ErrCode_t check_sign = msgSkycoinCheckMessageSignatureImpl(
+            &msg_s, &success_resp, &failure_resp);
+    ck_assert_int_eq(check_sign, ErrOk);
+
+}
+END_TEST
+
+START_TEST(test_transactionSign9)
+{
+    SkycoinTransactionInput transactionInputs[1] = {
+        {
+            .hashIn = "ae6fcae589898d6003362aaf39c56852f65369d55bf0f2f672bcc268c15a32da",
+            .has_index = true,
+            .index = 0
+        }
+    };
+
+    SkycoinTransactionOutput transactionOutputs[2] = {
+        {
+            .address = "3pXt9MSQJkwgPXLNePLQkjKq8tsRnFZGQA",
+            .coin = 300000,
+            .hour = 500
+        }, {
+            .address = "S6Dnv6gRTgsHCmZQxjN7cX5aRjJvDvqwp9",
+            .coin = 700000,
+            .hour = 500
+        }
+    };
+
+    SetMnemonic nemonic = SetMnemonic_init_zero;
+    char raw_mnemonic[] = {
+            "cloud flower upset remain green metal below cup stem infant art thank"};
+    memcpy(nemonic.mnemonic, raw_mnemonic, sizeof(raw_mnemonic));
+    ck_assert_int_eq(msgSetMnemonicImpl(&nemonic), ErrOk);
+
+    TransactionSign msg = TransactionSign_init_zero;
+    msg.transactionIn[0] = transactionInputs[0];
+    msg.transactionOut[0] = transactionOutputs[0];
+    msg.transactionOut[1] = transactionOutputs[1];
+    msg.nbIn = 1;
+    msg.nbOut = 2;
+
+    ResponseTransactionSign resp = ResponseTransactionSign_init_default;
+    ErrCode_t errCode = msgTransactionSignImpl(&msg, funcConfirmTxn, &resp);
+    ck_assert_int_eq(errCode, ErrOk);
+    ck_assert_int_eq(resp.signatures_count, 1);
+
+    SkycoinCheckMessageSignature msg_s = SkycoinCheckMessageSignature_init_zero;
+    char raw_addr[] = {"2EU3JbveHdkxW6z5tdhbbB2kRAWvXC2pLzw"};
+    memcpy(msg_s.address, raw_addr, sizeof(raw_addr));
+    char raw_msg[] = {
+            "e0c6e4982b1b8c33c5be55ac115b69be68f209c5d9054954653e14874664b57d"};
+    memcpy(msg_s.message, raw_msg, sizeof(raw_msg));
+    memcpy(msg_s.signature, resp.signatures[0], sizeof(msg_s.signature));
+
+    Failure failure_resp = Failure_init_default;
+    Success success_resp = Success_init_default;
+    ErrCode_t check_sign = msgSkycoinCheckMessageSignatureImpl(
+            &msg_s, &success_resp, &failure_resp);
+    ck_assert_int_eq(check_sign, ErrOk);
+
+}
+END_TEST
+
+START_TEST(test_transactionSign10)
+{
+    SkycoinTransactionInput transactionInputs[1] = {
+        {
+            .hashIn = "ae6fcae589898d6003362aaf39c56852f65369d55bf0f2f672bcc268c15a32da",
+            .has_index = true,
+            .index = 0
+        }
+    };
+
+    SkycoinTransactionOutput transactionOutputs[2] = {
+        {
+            .address = "S6Dnv6gRTgsHCmZQxjN7cX5aRjJvDvqwp9",
+            .coin = 1000000,
+            .hour = 1000
+        }
+    };
+
+    SetMnemonic nemonic = SetMnemonic_init_zero;
+    char raw_mnemonic[] = {
+            "cloud flower upset remain green metal below cup stem infant art thank"};
+    memcpy(nemonic.mnemonic, raw_mnemonic, sizeof(raw_mnemonic));
+    ck_assert_int_eq(msgSetMnemonicImpl(&nemonic), ErrOk);
+
+    TransactionSign msg = TransactionSign_init_zero;
+    msg.transactionIn[0] = transactionInputs[0];
+    msg.transactionOut[0] = transactionOutputs[0];
+    msg.nbIn = 1;
+    msg.nbOut = 1;
+
+    ResponseTransactionSign resp = ResponseTransactionSign_init_default;
+    ErrCode_t errCode = msgTransactionSignImpl(&msg, funcConfirmTxn, &resp);
+    ck_assert_int_eq(errCode, ErrOk);
+    ck_assert_int_eq(resp.signatures_count, 1);
+
+    SkycoinCheckMessageSignature msg_s = SkycoinCheckMessageSignature_init_zero;
+    char raw_addr[] = {"2EU3JbveHdkxW6z5tdhbbB2kRAWvXC2pLzw"};
+    memcpy(msg_s.address, raw_addr, sizeof(raw_addr));
+    char raw_msg[] = {
+            "457648543755580ad40ab461bbef2b0ffe19f2130f2f220cbb2f196b05d436b4"};
+    memcpy(msg_s.message, raw_msg, sizeof(raw_msg));
+    memcpy(msg_s.signature, resp.signatures[0], sizeof(msg_s.signature));
+
+    Failure failure_resp = Failure_init_default;
+    Success success_resp = Success_init_default;
+    ErrCode_t check_sign = msgSkycoinCheckMessageSignatureImpl(
+            &msg_s, &success_resp, &failure_resp);
+    ck_assert_int_eq(check_sign, ErrOk);
+
+}
+END_TEST
+
 // define test cases
 TCase *add_fsm_tests(TCase *tc)
 {
@@ -629,5 +1300,15 @@ TCase *add_fsm_tests(TCase *tc)
 	tcase_add_test(tc, test_msgSkycoinAddressesAll);
 	tcase_add_test(tc, test_msgSkycoinAddressesStartIndex);
 	tcase_add_test(tc, test_msgSkycoinAddressesTooMany);
+	tcase_add_test(tc, test_transactionSign1);
+	tcase_add_test(tc, test_transactionSign2);
+	tcase_add_test(tc, test_transactionSign3);
+	tcase_add_test(tc, test_transactionSign4);
+	tcase_add_test(tc, test_transactionSign5);
+	tcase_add_test(tc, test_transactionSign6);
+	tcase_add_test(tc, test_transactionSign7);
+	tcase_add_test(tc, test_transactionSign8);
+	tcase_add_test(tc, test_transactionSign9);
+	tcase_add_test(tc, test_transactionSign10);
 	return tc;
 }
