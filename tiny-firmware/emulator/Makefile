@@ -19,7 +19,6 @@ CFLAGS   += -DHEADLESS=1
 else
 CFLAGS   += -DHEADLESS=0
 CFLAGS   += $(SDL_CFLAGS) -D_REENTRANT
-CFLAGS   += -I$(TOOLCHAIN_DIR)/include
 LDLIBS   += -lSDL2
 endif
 
