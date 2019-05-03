@@ -591,8 +591,7 @@ void fsm_msgEntropyAck(EntropyAck *msg)
 			fsm_sendSuccess(_("Recived entropy"));
 			break;
 		default:
-			fsm_sendFailure(FailureType_Failure_FirmwareError,
-							_("Entropy ack failed."));
+			fsm_sendFailure(FailureType_Failure_FirmwareError, _("Entropy ack failed."));
 			break;
 	}
 	layoutHome();

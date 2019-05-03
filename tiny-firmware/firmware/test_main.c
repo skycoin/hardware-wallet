@@ -22,7 +22,6 @@ Suite *test_suite(void)
 	Suite *s = suite_create("firmware");
 
 	suite_add_tcase(s, add_fsm_tests(tcase_create("fsm")));
-//	suite_add_tcase(s, add_fsm_impl_tests(tcase_create("fsm_impl")));
 	suite_add_tcase(s, add_droplet_tests(tcase_create("droplet")));
 	suite_add_tcase(s, add_timer_tests(tcase_create("timer")));
 	suite_add_tcase(s, add_protect_tests(tcase_create("protect")));

@@ -386,7 +386,6 @@ ErrCode_t msgTransactionSignImpl(TransactionSign *msg, ErrCode_t (*funcConfirmTx
 		char str[64];
 		tohex(str, (uint8_t*)digest, 32);
 		printf("Signing message:  %s\n", str);
-//        strncpy(resp->signatures[i], str, strlen(str)*sizeof(char));
 		printf("Signed message:  %s\n", resp->signatures[i]);
 		printf("Nb signatures: %d\n", resp->signatures_count);
 	#endif
