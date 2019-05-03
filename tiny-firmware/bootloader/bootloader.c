@@ -105,7 +105,6 @@ void __attribute__((noreturn)) load_app(int signed_firmware)
 
 bool firmware_present(void)
 {
-#ifndef APPVER
 	if (memcmp((const void *)FLASH_META_MAGIC, "SKY1", 4)) { // magic does not match
 		return false;
 	}
@@ -115,7 +114,6 @@ bool firmware_present(void)
 	if (*((const uint32_t *)FLASH_META_CODELEN) > FLASH_TOTAL_SIZE - (FLASH_APP_START - FLASH_ORIGIN)) { // firmware reports bigger size than flash size
 		return false;
 	}
-#endif
 	return true;
 }
 
@@ -220,17 +218,12 @@ void bootloader_loop(void)
 
 int main(void)
 {
-#ifndef APPVER
 	setup();
-#endif
 	__stack_chk_guard = random32(); // this supports compiler provided unpredictable stack protection checks
-#ifndef APPVER
 	set_up_rdp_level();
 	memory_protect();
 	oledInit();
-#endif
 
-#ifndef APPVER
 	// at least one button is unpressed
 	uint16_t state = gpio_port_read(BTN_PORT);
 	int unpressed = ((state & BTN_PIN_YES) == BTN_PIN_YES || (state & BTN_PIN_NO) == BTN_PIN_NO);
@@ -251,7 +244,6 @@ int main(void)
 
 		load_app(signed_firmware);
 	}
-#endif
 
 	bootloader_loop();
 

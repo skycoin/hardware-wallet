@@ -305,7 +305,7 @@ static void display_choices(bool twoColumn, char choices[9][12], int num)
 static void next_matrix(void) {
 	const char * const *wl = mnemonic_wordlist();
 	char word_choices[9][12];
-	uint32_t idx, num;
+	uint32_t idx, num = 0;
 	bool last = (word_index % 4) == 3;
 
 	/* Build the matrix:

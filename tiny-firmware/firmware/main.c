@@ -32,14 +32,14 @@
 extern uint32_t storage_uuid[STM32_UUID_LEN/sizeof(uint32_t)];
 int main(void)
 {
-#ifndef APPVER
+#if defined(EMULATOR) && EMULATOR == 1
 	setup();
 	__stack_chk_guard = random32(); // this supports compiler provided unpredictable stack protection checks
 	oledInit();
-#else
+#else  // defined(EMULATOR) && EMULATOR == 1
 	setupApp();
 	__stack_chk_guard = random32(); // this supports compiler provided unpredictable stack protection checks
-#endif
+#endif  // defined(EMULATOR) && EMULATOR == 1
 
 #if FASTFLASH
 	uint16_t state = gpio_port_read(BTN_PORT);
@@ -50,14 +50,14 @@ int main(void)
 
 	timer_init();
 
-#ifdef APPVER
+#if !defined(EMULATOR) || EMULATOR == 0
 	set_up_rdp_level();
 	desig_get_unique_id(storage_uuid);
 	// enable MPU (Memory Protection Unit)
 	mpu_config();
 #else
 	random_buffer((uint8_t *)storage_uuid, sizeof(storage_uuid));
-#endif
+#endif  // !defined(EMULATOR) || EMULATOR == 0
 
 #if DEBUG_LINK
 	oledSetDebugLink(1);
