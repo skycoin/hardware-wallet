@@ -12,18 +12,18 @@
 #ifndef __TIMERIMPL_H__
 #define __TIMERIMPL_H__
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 /* Software stopwatch timers */
 #define MAX_TIMERS 16
 
 typedef struct {
-	bool active;
-	// Zero-delay for ascending counters, else countdown
-	uint32_t delay;
-	// Ticks at last time timer was either started or reset
-	uint32_t checkpoint;
+    bool active;
+    // Zero-delay for ascending counters, else countdown
+    uint32_t delay;
+    // Ticks at last time timer was either started or reset
+    uint32_t checkpoint;
 } TIMER;
 
 void stopwatch_start_impl(TIMER* t, uint32_t timeout, uint32_t ticks);

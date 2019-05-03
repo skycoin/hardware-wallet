@@ -26,8 +26,9 @@
 
 static volatile char tiny = 0;
 
-void usbInit(void) {
-	emulatorSocketInit();
+void usbInit(void)
+{
+    emulatorSocketInit();
 }
 
 #if DEBUG_LINK
@@ -39,55 +40,58 @@ void usbInit(void) {
 extern bool simulateButtonPress;
 extern int buttonPressType;
 
-void usbPoll(void) {
-	emulatorPoll();
+void usbPoll(void)
+{
+    emulatorPoll();
 
-	static uint8_t buffer[64];
+    static uint8_t buffer[64];
 
-	int iface = 0, i, j = 0;
+    int iface = 0, i, j = 0;
 
-	if (emulatorSocketRead(&iface, buffer, sizeof(buffer)) > 0) {
-		#if EMULATOR
-			for (i = 0; i < 5; i++) {
-				if ( buffer[i] == i ) {
-					j++;
-				} else {
-					break;
-				}
-			}
-			if ( j == 5 ) {
-				simulateButtonPress = true;
-				buttonPressType = buffer[5];
-				return;
-			} else {
-				simulateButtonPress = false;
-		#endif
-			if (!tiny) {
-				msg_read_common(_ISDBG, buffer, sizeof(buffer));
-			} else {
-				msg_read_tiny(buffer, sizeof(buffer));
-			}
-		#if EMULATOR
-			}
-		#endif
-	}
+    if (emulatorSocketRead(&iface, buffer, sizeof(buffer)) > 0) {
+#if EMULATOR
+        for (i = 0; i < 5; i++) {
+            if (buffer[i] == i) {
+                j++;
+            } else {
+                break;
+            }
+        }
+        if (j == 5) {
+            simulateButtonPress = true;
+            buttonPressType = buffer[5];
+            return;
+        } else {
+            simulateButtonPress = false;
+#endif
+            if (!tiny) {
+                msg_read_common(_ISDBG, buffer, sizeof(buffer));
+            } else {
+                msg_read_tiny(buffer, sizeof(buffer));
+            }
+#if EMULATOR
+        }
+#endif
+    }
 
-	const uint8_t *data = msg_out_data();
-	if (data != NULL) {
-		emulatorSocketWrite(0, data, 64);
-	}
+    const uint8_t* data = msg_out_data();
+    if (data != NULL) {
+        emulatorSocketWrite(0, data, 64);
+    }
 }
 
-char usbTiny(char set) {
-	char old = tiny;
-	tiny = set;
-	return old;
+char usbTiny(char set)
+{
+    char old = tiny;
+    tiny = set;
+    return old;
 }
 
-void usbSleep(uint32_t millis) {
-	uint32_t start = timer_ms();
+void usbSleep(uint32_t millis)
+{
+    uint32_t start = timer_ms();
 
-	while ((timer_ms() - start) < millis) {
-		usbPoll();
-	}
+    while ((timer_ms() - start) < millis) {
+        usbPoll();
+    }
 }

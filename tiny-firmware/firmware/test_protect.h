@@ -11,4 +11,4 @@
 
 #include <check.h>
 
-TCase *add_protect_tests(TCase *tc);
+TCase* add_protect_tests(TCase* tc);

@@ -65,48 +65,48 @@
 
  */
 
-#define FLASH_ORIGIN		(0x08000000)
+#define FLASH_ORIGIN (0x08000000)
 
 #if EMULATOR
-extern uint8_t *emulator_flash_base;
-#define FLASH_PTR(x)		(emulator_flash_base + (x - FLASH_ORIGIN))
+extern uint8_t* emulator_flash_base;
+#define FLASH_PTR(x) (emulator_flash_base + (x - FLASH_ORIGIN))
 #else
-#define FLASH_PTR(x)		(const uint8_t*) (x)
+#define FLASH_PTR(x) (const uint8_t*)(x)
 #endif
 
-#define FLASH_TOTAL_SIZE	(512 * 1024)
+#define FLASH_TOTAL_SIZE (512 * 1024)
 
-#define FLASH_BOOT_START	(FLASH_ORIGIN)
-#define FLASH_BOOT_LEN		(0x8000)
+#define FLASH_BOOT_START (FLASH_ORIGIN)
+#define FLASH_BOOT_LEN (0x8000)
 
-#define FLASH_META_START	(FLASH_BOOT_START + FLASH_BOOT_LEN)
-#define FLASH_META_LEN		(0x8000)
+#define FLASH_META_START (FLASH_BOOT_START + FLASH_BOOT_LEN)
+#define FLASH_META_LEN (0x8000)
 
-#define FLASH_APP_START		(FLASH_META_START + FLASH_META_LEN)
+#define FLASH_APP_START (FLASH_META_START + FLASH_META_LEN)
 
-#define FLASH_META_MAGIC	(FLASH_META_START)
-#define FLASH_META_CODELEN	(FLASH_META_START + 0x0004)
-#define FLASH_META_SIGINDEX1	(FLASH_META_START + 0x0008)
-#define FLASH_META_SIGINDEX2	(FLASH_META_START + 0x0009)
-#define FLASH_META_SIGINDEX3	(FLASH_META_START + 0x000A)
-#define FLASH_META_FLAGS	(FLASH_META_START + 0x000B)
-#define FLASH_META_SIG1		(FLASH_META_START + 0x0040)
-#define FLASH_META_SIG2		(FLASH_META_START + 0x0080)
-#define FLASH_META_SIG3		(FLASH_META_START + 0x00C0)
+#define FLASH_META_MAGIC (FLASH_META_START)
+#define FLASH_META_CODELEN (FLASH_META_START + 0x0004)
+#define FLASH_META_SIGINDEX1 (FLASH_META_START + 0x0008)
+#define FLASH_META_SIGINDEX2 (FLASH_META_START + 0x0009)
+#define FLASH_META_SIGINDEX3 (FLASH_META_START + 0x000A)
+#define FLASH_META_FLAGS (FLASH_META_START + 0x000B)
+#define FLASH_META_SIG1 (FLASH_META_START + 0x0040)
+#define FLASH_META_SIG2 (FLASH_META_START + 0x0080)
+#define FLASH_META_SIG3 (FLASH_META_START + 0x00C0)
 
-#define FLASH_META_DESC_LEN		(0x100)
+#define FLASH_META_DESC_LEN (0x100)
 
-#define FLASH_STORAGE_START	(FLASH_META_START + FLASH_META_DESC_LEN)
-#define FLASH_STORAGE_LEN	(FLASH_APP_START - FLASH_STORAGE_START)
+#define FLASH_STORAGE_START (FLASH_META_START + FLASH_META_DESC_LEN)
+#define FLASH_STORAGE_LEN (FLASH_APP_START - FLASH_STORAGE_START)
 
-#define FLASH_BOOT_SECTOR_FIRST	0
-#define FLASH_BOOT_SECTOR_LAST	1
+#define FLASH_BOOT_SECTOR_FIRST 0
+#define FLASH_BOOT_SECTOR_LAST 1
 
-#define FLASH_META_SECTOR_FIRST	2
-#define FLASH_META_SECTOR_LAST	3
+#define FLASH_META_SECTOR_FIRST 2
+#define FLASH_META_SECTOR_LAST 3
 
-#define FLASH_CODE_SECTOR_FIRST	4
-#define FLASH_CODE_SECTOR_LAST	7
+#define FLASH_CODE_SECTOR_FIRST 4
+#define FLASH_CODE_SECTOR_LAST 7
 
 #define STM32_UUID_LEN 12
 
@@ -114,14 +114,16 @@ extern uint8_t *emulator_flash_base;
 void memory_protect(void);
 #endif
 void memory_write_unlock(void);
-int memory_bootloader_hash(uint8_t *hash);
+int memory_bootloader_hash(uint8_t* hash);
 
-static inline void flash_write32(uint32_t addr, uint32_t word) {
-	*(volatile uint32_t *) FLASH_PTR(addr) = word;
+static inline void flash_write32(uint32_t addr, uint32_t word)
+{
+    *(volatile uint32_t*)FLASH_PTR(addr) = word;
 }
 
-static inline void flash_write8(uint32_t addr, uint8_t byte) {
-	*(volatile uint8_t *) FLASH_PTR(addr) = byte;
+static inline void flash_write8(uint32_t addr, uint8_t byte)
+{
+    *(volatile uint8_t*)FLASH_PTR(addr) = byte;
 }
 
 /**
