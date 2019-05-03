@@ -269,6 +269,9 @@ ErrCode_t msgApplySettingsImpl(ApplySettings *msg)
 	return ErrOk;
 }
 
+#if !defined(EMULATOR) || !EMULATOR
+extern uint8_t rdp_level;
+#endif
 ErrCode_t msgGetFeaturesImpl(Features *resp)
 {
 	resp->has_vendor = true;         strlcpy(resp->vendor, "Skycoin Foundation", sizeof(resp->vendor));
@@ -295,6 +298,8 @@ ErrCode_t msgGetFeaturesImpl(Features *resp)
 	resp->has_firmware_features = true;
 #if defined(EMULATOR) && EMULATOR
 	resp->firmware_features |= FirmwareFeatures_IsEmulator;
+#else
+	resp->firmware_features |= (uint32_t)(rdp_level << FirmwareFeatures_IsEmulator);
 #endif
 
 #if DISABLE_GETENTROPY_CONFIRM
