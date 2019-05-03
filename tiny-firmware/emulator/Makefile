@@ -20,7 +20,6 @@ else
 CFLAGS   += -DHEADLESS=0
 CFLAGS   += $(SDL_CFLAGS) -D_REENTRANT
 CFLAGS   += -I$(TOOLCHAIN_DIR)/include
-CFLAGS	 += -I$(TOP_DIR)firmware
 LDLIBS   += -lSDL2
 endif
 

@@ -14,11 +14,11 @@
 #include <string.h>
 
 #include "protob/c/messages.pb.h"
-#include "sha2.h"
+#include "vendor/skycoin-crypto/tools/sha2.h"
 #include "rng.h"
-#include "swtimer.h"
+#include "firmware/swtimer.h"
 #include "timer.h"
-#include "storage.h"
+#include "firmware/storage.h"
 #include "skycoin_crypto.h"
 #include "messages.h"
 #include "messages.pb.h"

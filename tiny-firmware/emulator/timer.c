@@ -20,7 +20,7 @@
 #include <time.h>
 
 #include "timer.h"
-#include "swtimer.h"
+#include "firmware/swtimer.h"
 
 void timer_init(void) {
   timer_init_sw();

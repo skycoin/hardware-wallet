@@ -41,7 +41,7 @@
 #include "memzero.h"
 #include "protect.h"
 #include "supervise.h"
-#include "entropy.h"
+#include "firmware/entropy.h"
 
 /* magic constant to check validity of storage block */
 static const uint32_t storage_magic = 0x726f7473;   // 'stor' as uint32_t
