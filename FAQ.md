@@ -13,14 +13,18 @@
     National Institute of Standards and Technology (NIST) Statistical Test Suite (STS) 
     SP 800-22rev1a (April 2010).
 - Does the hardware wallet get entropy from the host machine?
-  * Yes, when performing cryptographically sensitive operations e.g. mnemonic generation
-    if a low internal entropy is detected then an external random 32 bytes 
-    buffer is used to increase internal entropy, as long as external buffer have an
-    entropy level of at least 4.0 bits/symbol.
+  * Yes, an external random 32 bytes  buffer is used to increase internal entropy
+    when performing cryptographically sensitive operations e.g. mnemonic generation
 - How does the hardware wallet get entropy?
-  * The hardware wallet generates internal entropy from a peripheral device and
-    eventually combine this with an external entropy received from the user host device.
-- How does the hardware wallet ensure having enough entropy to generate a recovery seed?
-  * The device builds a histogram with the random buffer as input and measures the
-    [Shannon entropy level](ihttps://en.wiktionary.org/wiki/Shannon_entropy) over
-    this histogram. A value of at least 4.0 bits/symbol is considered good enough.
+  * The hardware wallet generates internal entropy from a peripheral device. This value is
+    [salted with several sources](https://security.stackexchange.com/questions/73588/does-too-long-a-salt-reduce-the-security-of-a-stored-password-hash)
+    so as to make unfeasible some kinds of dictionary and lookup attacks (e.g. [rainbow tables](https://en.wikipedia.org/wiki/Rainbow_table) ).
+    The salt is chosen in such a way that no two devices can generate the same value in (at least) the time frame of a human lifetime.
+    Such values [might not be particularly random](https://security.stackexchange.com/questions/16117/in-hashing-does-it-matter-how-random-a-salt-is).
+    Internal entropy is eventually combined with an external entropy received from the user host device.
+
+### Why do I see a inverted skycoin logo in bootloader?
+
+If you see an inverted skycoin logo in bootloader mode like in the following image, maybe you have either flashed for development or not official device.
+
+![Kiku](images/skycoin_logo_inverted_bootloader.jpg)

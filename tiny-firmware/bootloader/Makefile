@@ -1,7 +1,7 @@
 NAME  = bootloader
 BOOTLOADER = 1
 
-#libtrezor.a
+#libskywallet.a
 OBJS += ../startup.o
 OBJS += ../buttons.o
 OBJS += ../layout.o
@@ -15,7 +15,7 @@ OBJS += ../util.o
 OBJS += ../memory.o
 OBJS += ../gen/bitmaps.o
 OBJS += ../gen/fonts.o
-#end libtrezor.a
+#end libskywallet.a
 
 #skycoin-crypto
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/skycoin_check_signature.o
@@ -53,6 +53,7 @@ else
 CFLAGS += -DSIGNATURE_DEBUG=0
 endif
 OPTFLAGS ?= -Os
+DEBUG ?= 0
 
 LDSCRIPT = bootloader-memory.ld
 LDLIBS   += -lopencm3_stm32f2

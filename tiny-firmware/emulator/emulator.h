@@ -25,16 +25,16 @@
 #include <stddef.h>
 
 #if !defined(__APPLE__) && !defined(TARGET_OS_MAC)
-#include "strl.h"  // NOTE(denisacostaq@gmail.com): This file is not required by BSD family(Darwin)
-#endif  // !defined(__APPLE__) && !defined(TARGET_OS_MAC)
+#include "strl.h" // NOTE(): This file is not required by BSD family(Darwin)
+#endif            // !defined(__APPLE__) && !defined(TARGET_OS_MAC)
 
 void emulatorPoll(void);
-void emulatorRandom(void *buffer, size_t size);
+void emulatorRandom(void* buffer, size_t size);
 
 void emulatorSocketInit(void);
-size_t emulatorSocketRead(int *iface, void *buffer, size_t size);
-size_t emulatorSocketWrite(int iface, const void *buffer, size_t size);
+size_t emulatorSocketRead(int* iface, void* buffer, size_t size);
+size_t emulatorSocketWrite(int iface, const void* buffer, size_t size);
 
-#endif  // EMULATOR
+#endif // EMULATOR
 
-#endif  // __EMULATOR_H__
+#endif // __EMULATOR_H__
