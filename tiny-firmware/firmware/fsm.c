@@ -339,11 +339,17 @@ void fsm_msgTransactionSign(TransactionSign* msg)
 void fsm_msgSkycoinSignMessage(SkycoinSignMessage* msg)
 {
     RESP_INIT(ResponseSkycoinSignMessage);
-	CHECK_PIN_UNCACHED
-	char strAddr[6];
-	snprintf(strAddr, sizeof(strAddr), "%d", msg->address_n);
-	layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"), _("sign message using"), strAddr, "-th address?", NULL, NULL);
-	CHECK_BUTTON_PROTECT
+    CHECK_PIN_UNCACHED
+
+    ResponseSkycoinAddress respAddr;
+    uint8_t seckey[32] = {0};
+    uint8_t pubkey[33] = {0};
+    fsm_getKeyPairAtIndex(1, pubkey, seckey, &respAddr, msg->address_n);
+
+    CHECK_MNEMONIC
+    layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"), _("sign message using"), _("this address?"), respAddr.addresses[0], NULL, NULL);
+    CHECK_BUTTON_PROTECT
+
     ErrCode_t err = msgSkycoinSignMessageImpl(msg, resp);
     char* failMsg = NULL;
     if (err == ErrMnemonicRequired) {

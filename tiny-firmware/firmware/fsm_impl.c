@@ -110,10 +110,10 @@ ErrCode_t msgSkycoinSignMessageImpl(SkycoinSignMessage* msg, ResponseSkycoinSign
         return ErrInvalidValue;
     }
     uint8_t digest[32] = {0};
-	if (is_digest(msg->message)) {
+    if (is_digest(msg->message)) {
         writebuf_fromhexstr(msg->message, digest);
-	} else {
-		compute_sha256sum((const uint8_t *)msg->message, digest, strlen(msg->message));
+    } else {
+        compute_sha256sum((const uint8_t *)msg->message, digest, strlen(msg->message));
     }
     uint8_t signature[65];
     int res = ecdsa_skycoin_sign(random32(), seckey, digest, signature);
@@ -210,10 +210,10 @@ ErrCode_t msgSkycoinCheckMessageSignatureImpl(SkycoinCheckMessageSignature* msg,
     // /2 because the hex to buff conversion.
     uint8_t digest[(sizeof(msg->message) - 1) / 2] = {0};
     //     RESP_INIT(Success);
-	if (is_digest(msg->message)) {
+    if (is_digest(msg->message)) {
         tobuff(msg->message, digest, MIN(sizeof(digest), sizeof(msg->message)));
-	} else {
-		compute_sha256sum((const uint8_t *)msg->message, digest, strlen(msg->message));
+    } else {
+        compute_sha256sum((const uint8_t *)msg->message, digest, strlen(msg->message));
     }
     tobuff(msg->signature, sign, sizeof(sign));
 
