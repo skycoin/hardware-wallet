@@ -374,7 +374,9 @@ void fsm_msgSkycoinAddress(SkycoinAddress* msg)
         // fall through
     case ErrOk:
         msg_write(MessageType_MessageType_ResponseSkycoinAddress, resp);
-        break;
+        // NOTE: this return is important to avoid calling
+        // fsm_sendResponseFromErrCode by mistake
+        return;
     case ErrPinRequired:
         failMsg = _("Expected pin");
         break;
