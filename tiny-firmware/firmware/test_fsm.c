@@ -84,6 +84,10 @@ bool is_base16_char(char c)
     return false;
 }
 
+/**
+ * Test cases : GenerateMnemonic
+ */
+
 START_TEST(test_msgGenerateMnemonicImplOk)
 {
     storage_wipe();
@@ -118,31 +122,38 @@ START_TEST(test_msgGenerateMnemonicImplShouldFailForWrongSeedCount)
 }
 END_TEST
 
-START_TEST(test_msgEntropyAckImplFailAsExpectedForSyncProblemInProtocol)
+/**
+ * Test cases : EntropyAck
+ */
+
+#define INTERNAL_ENTROPY_SIZE SHA256_DIGEST_LENGTH
+
+extern uint8_t int_entropy[INTERNAL_ENTROPY_SIZE];
+extern uint8_t entropy_mixer_prev_val[SHA256_DIGEST_LENGTH];
+
+START_TEST(test_msgEntropyAckChgMixerNotInternal)
 {
+    EntropyAck eaMsg = EntropyAck_init_zero;
+
+    uint8_t null_entropy[INTERNAL_ENTROPY_SIZE] = {0};
+
     storage_wipe();
-    EntropyAck msg = EntropyAck_init_zero;
-    msg.has_entropy = true;
-    char entropy[EXTERNAL_ENTROPY_MAX_SIZE] = {0};
-    memcpy(msg.entropy.bytes, entropy, sizeof(entropy));
-    ErrCode_t ret = msgEntropyAckImpl(&msg);
-    ck_assert_int_eq(ErrOk, ret);
+    ck_assert_mem_eq(int_entropy, null_entropy, sizeof(int_entropy));
+    eaMsg.has_entropy = true;
+    eaMsg.entropy.size = 32;
+    random_buffer(eaMsg.entropy.bytes, 32);
+
+    uint8_t entropy_mixer_initial_state[sizeof(entropy_mixer_prev_val)];
+    memcpy(entropy_mixer_initial_state, entropy_mixer_prev_val, sizeof(entropy_mixer_prev_val));
+    ck_assert_int_eq(ErrOk, msgEntropyAckImpl(&eaMsg));
+    ck_assert_mem_eq(int_entropy, null_entropy, sizeof(int_entropy));
+    ck_assert_mem_ne(entropy_mixer_prev_val, entropy_mixer_initial_state, sizeof(entropy_mixer_prev_val));
 }
 END_TEST
 
-START_TEST(test_msgGenerateMnemonicEntropyAckSequenceShouldBeOk)
-{
-    storage_wipe();
-    GenerateMnemonic gnMsg = GenerateMnemonic_init_zero;
-    ck_assert_int_eq(
-        ErrOk,
-        msgGenerateMnemonicImpl(&gnMsg, &random_buffer));
-    EntropyAck eaMsg = EntropyAck_init_zero;
-    eaMsg.has_entropy = true;
-    random_buffer(eaMsg.entropy.bytes, 32);
-    ck_assert_int_eq(ErrOk, msgEntropyAckImpl(&eaMsg));
-}
-END_TEST
+/**
+ * Test cases : SkycoinSignMessage
+ */
 
 START_TEST(test_msgSkycoinSignMessageReturnIsInHex)
 {
@@ -163,6 +174,10 @@ START_TEST(test_msgSkycoinSignMessageReturnIsInHex)
     }
 }
 END_TEST
+
+/**
+ * Test cases : SkycoinCheckMessage
+ */
 
 START_TEST(test_msgSkycoinCheckMessageSignatureOk)
 {
@@ -325,6 +340,10 @@ START_TEST(test_msgSkycoinCheckMessageSignatureFailedAsExpectedForInvalidMessage
 }
 END_TEST
 
+/**
+ * Test cases : ApplySettings
+ */
+
 START_TEST(test_msgApplySettingsLabelSuccess)
 {
     storage_wipe();
@@ -443,6 +462,10 @@ START_TEST(test_msgApplySettingsNoSettingsFailure)
 }
 END_TEST
 
+/**
+ * Test cases : Features
+ */
+
 START_TEST(test_msgFeaturesLabelDefaultsToDeviceId)
 {
     storage_wipe();
@@ -512,6 +535,10 @@ const char* pin_reader_wrong(PinMatrixRequestType pinReqType, const char* text)
     return "789";
 }
 
+/**
+ * Test cases : ChangePin
+ */
+
 START_TEST(test_msgChangePinSuccess)
 {
     ChangePin msg = ChangePin_init_zero;
@@ -580,6 +607,10 @@ START_TEST(test_msgChangePinSecondRejected)
     ck_assert_str_eq(storage_getPin(), TEST_PIN1);
 }
 END_TEST
+
+/**
+ * Test cases : SkycoinAddresses
+ */
 
 START_TEST(test_msgSkycoinAddressesAll)
 {
@@ -674,7 +705,11 @@ ErrCode_t funcConfirmTxn(char* a, char* b, TransactionSign* sign, uint32_t t)
     return ErrOk;
 }
 
-START_TEST(test_transactionSign1)
+/**
+ * Test cases : TransactionSign
+ */
+
+START_TEST(test_msgTransactionSign1)
 {
     SkycoinTransactionInput transactionInputs[1] = {
         {.hashIn = "181bd5656115172fe81451fae4fb56498a97744d89702e73da75ba91ed5200f9",
@@ -717,7 +752,7 @@ START_TEST(test_transactionSign1)
 }
 END_TEST
 
-START_TEST(test_transactionSign2)
+START_TEST(test_msgTransactionSign2)
 {
     SkycoinTransactionInput transactionInputs[2] = {
         {.hashIn = "01a9ef6c25271229ef9760e1536c3dc5ccf0ead7de93a64c12a01340670d87e9",
@@ -777,7 +812,7 @@ START_TEST(test_transactionSign2)
 }
 END_TEST
 
-START_TEST(test_transactionSign3)
+START_TEST(test_msgTransactionSign3)
 {
     SkycoinTransactionInput transactionInputs[3] = {
         {.hashIn = "da3b5e29250289ad78dc42dcf007ab8f61126198e71e8306ff8c11696a0c40f7",
@@ -856,7 +891,7 @@ START_TEST(test_transactionSign3)
 }
 END_TEST
 
-START_TEST(test_transactionSign4)
+START_TEST(test_msgTransactionSign4)
 {
     SkycoinTransactionInput transactionInputs[2] = {
         {.hashIn = "b99f62c5b42aec6be97f2ca74bb1a846be9248e8e19771943c501e0b48a43d82",
@@ -916,7 +951,7 @@ START_TEST(test_transactionSign4)
 }
 END_TEST
 
-START_TEST(test_transactionSign5)
+START_TEST(test_msgTransactionSign5)
 {
     SkycoinTransactionInput transactionInputs[1] = {
         {.hashIn = "4c12fdd28bd580989892b0518f51de3add96b5efb0f54f0cd6115054c682e1f1",
@@ -961,7 +996,7 @@ START_TEST(test_transactionSign5)
 }
 END_TEST
 
-START_TEST(test_transactionSign6)
+START_TEST(test_msgTransactionSign6)
 {
     SkycoinTransactionInput transactionInputs[1] = {
         {.hashIn = "c5467f398fc3b9d7255d417d9ca208c0a1dfa0ee573974a5fdeb654e1735fc59",
@@ -1014,7 +1049,7 @@ START_TEST(test_transactionSign6)
 }
 END_TEST
 
-START_TEST(test_transactionSign7)
+START_TEST(test_msgTransactionSign7)
 {
     SkycoinTransactionInput transactionInputs[3] = {
         {.hashIn = "7b65023cf64a56052cdea25ce4fa88943c8bc96d1ab34ad64e2a8b4c5055087e",
@@ -1089,7 +1124,7 @@ START_TEST(test_transactionSign7)
 }
 END_TEST
 
-START_TEST(test_transactionSign8)
+START_TEST(test_msgTransactionSign8)
 {
     SkycoinTransactionInput transactionInputs[3] = {
         {.hashIn = "ae6fcae589898d6003362aaf39c56852f65369d55bf0f2f672bcc268c15a32da",
@@ -1134,7 +1169,7 @@ START_TEST(test_transactionSign8)
 }
 END_TEST
 
-START_TEST(test_transactionSign9)
+START_TEST(test_msgTransactionSign9)
 {
     SkycoinTransactionInput transactionInputs[1] = {
         {.hashIn = "ae6fcae589898d6003362aaf39c56852f65369d55bf0f2f672bcc268c15a32da",
@@ -1183,7 +1218,7 @@ START_TEST(test_transactionSign9)
 }
 END_TEST
 
-START_TEST(test_transactionSign10)
+START_TEST(test_msgTransactionSign10)
 {
     SkycoinTransactionInput transactionInputs[1] = {
         {.hashIn = "ae6fcae589898d6003362aaf39c56852f65369d55bf0f2f672bcc268c15a32da",
@@ -1248,8 +1283,7 @@ TCase* add_fsm_tests(TCase* tc)
     tcase_add_test(tc, test_msgApplySettingsUnsupportedLanguage);
     tcase_add_test(tc, test_msgApplySettingsNoSettingsFailure);
     tcase_add_test(tc, test_msgFeaturesLabelDefaultsToDeviceId);
-    tcase_add_test(tc, test_msgEntropyAckImplFailAsExpectedForSyncProblemInProtocol);
-    tcase_add_test(tc, test_msgGenerateMnemonicEntropyAckSequenceShouldBeOk);
+    tcase_add_test(tc, test_msgEntropyAckChgMixerNotInternal);
     tcase_add_test(tc, test_msgChangePinSuccess);
     tcase_add_test(tc, test_msgChangePinSecondRejected);
     tcase_add_test(tc, test_msgChangePinEditSuccess);
@@ -1257,16 +1291,16 @@ TCase* add_fsm_tests(TCase* tc)
     tcase_add_test(tc, test_msgSkycoinAddressesAll);
     tcase_add_test(tc, test_msgSkycoinAddressesStartIndex);
     tcase_add_test(tc, test_msgSkycoinAddressesTooMany);
-	tcase_add_test(tc, test_msgSkycoinAddressesFailWithoutMnemonic);
-    tcase_add_test(tc, test_transactionSign1);
-    tcase_add_test(tc, test_transactionSign2);
-    tcase_add_test(tc, test_transactionSign3);
-    tcase_add_test(tc, test_transactionSign4);
-    tcase_add_test(tc, test_transactionSign5);
-    tcase_add_test(tc, test_transactionSign6);
-    tcase_add_test(tc, test_transactionSign7);
-    tcase_add_test(tc, test_transactionSign8);
-    tcase_add_test(tc, test_transactionSign9);
-    tcase_add_test(tc, test_transactionSign10);
+    tcase_add_test(tc, test_msgSkycoinAddressesFailWithoutMnemonic);
+    tcase_add_test(tc, test_msgTransactionSign1);
+    tcase_add_test(tc, test_msgTransactionSign2);
+    tcase_add_test(tc, test_msgTransactionSign3);
+    tcase_add_test(tc, test_msgTransactionSign4);
+    tcase_add_test(tc, test_msgTransactionSign5);
+    tcase_add_test(tc, test_msgTransactionSign6);
+    tcase_add_test(tc, test_msgTransactionSign7);
+    tcase_add_test(tc, test_msgTransactionSign8);
+    tcase_add_test(tc, test_msgTransactionSign9);
+    tcase_add_test(tc, test_msgTransactionSign10);
     return tc;
 }
