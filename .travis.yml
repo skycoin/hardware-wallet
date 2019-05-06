@@ -10,9 +10,6 @@ matrix:
             - ubuntu-toolchain-r-test
     - os: osx
 
-env:
-  global:
-    - XARGS="-screen 0 1024x768x24"
 before_script:
   - sh "./tiny-firmware/protob/ci-scripts/install-${TRAVIS_OS_NAME}.sh" ;
   # Define env vars for Linux builds
@@ -44,15 +41,6 @@ script:
   - make clean
   - make full-firmware
   - make clean
-#!/usr/bin/env bash
-# On GNU/Linux wrap emulator in xvfb graphics context
-- if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then
-  xvfb-run --server-args="${XARGS}" make -C ./tmp/hardware-wallet run-emulator & true ;
-# Run self-tests
-  ps aux | grep emulator;
-  go get -v -u github.com/skycoin/hardware-wallet-go;
-  go test -count=1 -v github.com/skycoin/hardware-wallet-go/src/device-wallet/integration;
-  fi
 
 notifications:
   # https://github.com/kvld/travisci-telegram TravisCI Telegram Bot integration
