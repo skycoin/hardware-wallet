@@ -126,7 +126,6 @@ ErrCode_t msgSkycoinSignMessageImpl(SkycoinSignMessage* msg, ResponseSkycoinSign
     char signature_in_hex[hex_len];
     tohex(signature_in_hex, signature, sizeof(signature));
     memcpy(resp->signed_message, signature_in_hex, hex_len);
-    msg_write(MessageType_MessageType_ResponseSkycoinSignMessage, resp);
     return ErrOk;
 }
 

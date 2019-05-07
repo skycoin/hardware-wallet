@@ -355,7 +355,11 @@ void fsm_msgSkycoinSignMessage(SkycoinSignMessage* msg)
     if (err == ErrMnemonicRequired) {
         failMsg = _("Mnemonic not set");
     }
-    fsm_sendResponseFromErrCode(err, NULL, failMsg);
+    if (err == ErrOk) {
+        msg_write(MessageType_MessageType_ResponseSkycoinSignMessage, resp);
+    } else {
+        fsm_sendResponseFromErrCode(err, NULL, failMsg);
+    }
     layoutHome();
 }
 
