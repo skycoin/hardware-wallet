@@ -294,13 +294,22 @@ void fsm_msgSkycoinCheckMessageSignature(SkycoinCheckMessageSignature* msg)
 {
     GET_MSG_POINTER(Success, successResp);
     GET_MSG_POINTER(Failure, failureResp);
-    if (msgSkycoinCheckMessageSignatureImpl(msg, successResp, failureResp) == ErrOk) {
+    switch (msgSkycoinCheckMessageSignatureImpl(msg, successResp, failureResp)) {
+      case ErrOk:
         msg_write(MessageType_MessageType_Success, successResp);
-    } else {
+        layoutRawMessage("Verification success");
+        return;
+      case ErrInvalidSignature:
         failureResp->code = FailureType_Failure_InvalidSignature;
         msg_write(MessageType_MessageType_Failure, failureResp);
+        layoutRawMessage("Wrong signature");
+        break;
+      default:
+        failureResp->code = FailureType_Failure_FirmwareError;
+        layoutHome();
+        break;
     }
-    layoutHome();
+    msg_write(MessageType_MessageType_Failure, failureResp);
 }
 
 ErrCode_t requestConfirmTransaction(char* strCoin, char* strHour, TransactionSign* msg, uint32_t i)
