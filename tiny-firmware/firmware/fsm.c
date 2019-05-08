@@ -147,11 +147,8 @@ void fsm_sendResponseFromErrCode(ErrCode_t err, const char* successMsg, const ch
         break;
     default:
         failure = FailureType_Failure_FirmwareError;
-        failMsg = _("Unexpected failure");
+        failMsg = _("Unexpected firmware error");
         break;
-    }
-    if (failMsg == NULL) {
-        failMsg = _("Firmware error");
     }
     fsm_sendFailure(failure, failMsg);
 }
