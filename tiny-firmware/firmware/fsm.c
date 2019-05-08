@@ -150,6 +150,9 @@ void fsm_sendResponseFromErrCode(ErrCode_t err, const char* successMsg, const ch
         failMsg = _("Unexpected failure");
         break;
     }
+    if (failMsg == NULL) {
+        failMsg = _("Firmware error");
+    }
     fsm_sendFailure(failure, failMsg);
 }
 
