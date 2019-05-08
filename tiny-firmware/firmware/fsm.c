@@ -351,11 +351,15 @@ void fsm_msgSkycoinSignMessage(SkycoinSignMessage* msg)
     CHECK_BUTTON_PROTECT
 
     ErrCode_t err = msgSkycoinSignMessageImpl(msg, resp);
-    char* failMsg = NULL;
-    if (err == ErrMnemonicRequired) {
-        failMsg = _("Mnemonic not set");
+    if (err == ErrOk) {
+        msg_write(MessageType_MessageType_ResponseSkycoinSignMessage, resp);
+    } else {
+        char* failMsg = NULL;
+        if (err == ErrMnemonicRequired) {
+            failMsg = _("Mnemonic not set");
+        }
+        fsm_sendResponseFromErrCode(err, NULL, failMsg);
     }
-    fsm_sendResponseFromErrCode(err, NULL, failMsg);
     layoutHome();
 }
 
@@ -374,7 +378,8 @@ void fsm_msgSkycoinAddress(SkycoinAddress* msg)
         // fall through
     case ErrOk:
         msg_write(MessageType_MessageType_ResponseSkycoinAddress, resp);
-        break;
+        layoutHome();
+        return;
     case ErrPinRequired:
         failMsg = _("Expected pin");
         break;
