@@ -117,10 +117,10 @@ ErrCode_t msgSkycoinSignMessageImpl(SkycoinSignMessage* msg, ResponseSkycoinSign
     }
     uint8_t signature[65];
     int res = ecdsa_skycoin_sign(random32(), seckey, digest, signature);
-    if (res == 0) {
-        layoutRawMessage("Signature success");
-    } else {
-        layoutRawMessage("Signature failed");
+    if (res) {
+        // Too many retries without a valid signature
+        // -> fail with an error
+        return ErrFailed;
     }
     const size_t hex_len = 2 * sizeof(signature);
     char signature_in_hex[hex_len];
