@@ -339,12 +339,27 @@ void fsm_msgTransactionSign(TransactionSign* msg)
 void fsm_msgSkycoinSignMessage(SkycoinSignMessage* msg)
 {
     RESP_INIT(ResponseSkycoinSignMessage);
+    CHECK_PIN_UNCACHED
+
+    ResponseSkycoinAddress respAddr;
+    uint8_t seckey[32] = {0};
+    uint8_t pubkey[33] = {0};
+    fsm_getKeyPairAtIndex(1, pubkey, seckey, &respAddr, msg->address_n);
+
+    CHECK_MNEMONIC
+    layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"), _("sign message using"), _("this address?"), respAddr.addresses[0], NULL, NULL);
+    CHECK_BUTTON_PROTECT
+
     ErrCode_t err = msgSkycoinSignMessageImpl(msg, resp);
-    char* failMsg = NULL;
-    if (err == ErrMnemonicRequired) {
-        failMsg = _("Mnemonic not set");
+    if (err == ErrOk) {
+        msg_write(MessageType_MessageType_ResponseSkycoinSignMessage, resp);
+    } else {
+        char* failMsg = NULL;
+        if (err == ErrMnemonicRequired) {
+            failMsg = _("Mnemonic not set");
+        }
+        fsm_sendResponseFromErrCode(err, NULL, failMsg);
     }
-    fsm_sendResponseFromErrCode(err, NULL, failMsg);
     layoutHome();
 }
 
@@ -363,7 +378,8 @@ void fsm_msgSkycoinAddress(SkycoinAddress* msg)
         // fall through
     case ErrOk:
         msg_write(MessageType_MessageType_ResponseSkycoinAddress, resp);
-        break;
+        layoutHome();
+        return;
     case ErrPinRequired:
         failMsg = _("Expected pin");
         break;
