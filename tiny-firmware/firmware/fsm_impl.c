@@ -225,10 +225,8 @@ ErrCode_t msgSkycoinCheckMessageSignatureImpl(SkycoinCheckMessageSignature* msg,
         if (memcmp(pubkeybase58, msg->address, pubkeybase58_size)) {
             strncpy(failureResp->message, _("Address does not match"), sizeof(failureResp->message));
             failureResp->has_message = true;
-            layoutRawMessage("Wrong signature");
             ret = ErrInvalidSignature;
         } else {
-            layoutRawMessage("Verification success");
             memcpy(successResp->message, pubkeybase58, pubkeybase58_size);
             successResp->has_message = true;
         }
