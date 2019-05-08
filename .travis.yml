@@ -82,3 +82,15 @@ deploy:
       repo: skycoin/hardware-wallet
       tags: true
       condition: $TRAVIS_OS_NAME = "osx"
+  - provider: s3
+    access_key_id: $AWS_ACCESS_KEY_ID
+    secret_access_key: $AWS_SECRET_ACCESS_KEY
+    bucket: $AWS_BUCKET
+    skip_cleanup: true
+    local_dir: releases
+      upload-dir: Skywallet/travis-release
+      acl: private
+      region: $AWS_REGION
+      on:
+        repo: skycoin/hardware-wallet
+        branch: master
