@@ -367,14 +367,15 @@ void fsm_msgSkycoinSignMessage(SkycoinSignMessage* msg)
     err = msgSkycoinSignMessageImpl(msg, resp);
     if (err == ErrOk) {
         msg_write(MessageType_MessageType_ResponseSkycoinSignMessage, resp);
+        layoutRawMessage("Signature success");
     } else {
         char* failMsg = NULL;
         if (err == ErrMnemonicRequired) {
             failMsg = _("Mnemonic not set");
         }
         fsm_sendResponseFromErrCode(err, NULL, failMsg);
+        layoutHome();
     }
-    layoutHome();
 }
 
 void fsm_msgSkycoinAddress(SkycoinAddress* msg)
