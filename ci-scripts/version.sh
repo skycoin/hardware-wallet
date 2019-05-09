@@ -8,7 +8,7 @@ then
         version=$(cat ./tiny-firmware/VERSION 2> /dev/null)
         if [ $? -ne 0 ]
         then
-            version='unknow'
+            version='unknown'
         fi
     fi
 fi
