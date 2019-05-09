@@ -1,6 +1,6 @@
 # Skycoin hardware wallet
 
-[![Build Status](https://travis-ci.com/skycoin/hardware-wallet.svg?branch=master)](https://travis-ci.com/skycoin/hardware-wallet)
+[![Build Status](https://travis-ci.com/skycoin/hardware-wallet.svg?branch=develop)](https://travis-ci.com/skycoin/hardware-wallet)
 
 ## Table of contents
 
