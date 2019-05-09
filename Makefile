@@ -1,8 +1,9 @@
 .DEFAULT_GOAL := help
 .PHONY: clean-lib clean
 .PHONY: build-deps firmware-deps bootloader bootloader-mem-protect
+.PHONY: check check-version check-trng check-protob test
 .PHONY: firmware sign full-firmware-mem-protect full-firmware
-.PHONY: emulator run-emulator st-flash
+.PHONY: emulator run-emulator st-flash oflash
 .PHONY: bootloader-clean release-bootloader release-bootloader-mem-protect
 .PHONY: firmware-clean release-firmware
 .PHONY: release-combined release-combined-mem-protect
@@ -202,6 +203,10 @@ st-flash: ## Deploy (flash) firmware on physical wallet
 
 oflash: full-firmware
 	openocd -f openocd.cfg
+
+check-version:
+	echo "Bootloader : $(VERSION_BOOTLOADER_MAJOR).$(VERSION_BOOTLOADER_MAJOR).$(VERSION_BOOTLOADER_MAJOR)"
+	echo "Firmware   : $(VERSION_FIRMWARE_MAJOR).$(VERSION_FIRMWARE_MAJOR).$(VERSION_FIRMWARE_MAJOR)"
 
 check-trng: ## Run test tools over random buffers
 	make -C trng-test trng-generate-buffers
