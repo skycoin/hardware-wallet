@@ -19,4 +19,3 @@
 extern char TEST_MANY_ADDRESSES[100][36];
 
 #endif // __TEST_MANY_ADDRESSES_GOLDEN__
-

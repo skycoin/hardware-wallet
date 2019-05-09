@@ -35,21 +35,21 @@
 uint32_t random32(void)
 {
 #ifdef _WIN32
-	static int initialized = 0;
-	if (!initialized) {
-		srand((unsigned)time(NULL));
-		initialized = 1;
-	}
-	return ((rand() % 0xFF) | ((rand() % 0xFF) << 8) | ((rand() % 0xFF) << 16) | ((rand() % 0xFF) << 24));
+    static int initialized = 0;
+    if (!initialized) {
+        srand((unsigned)time(NULL));
+        initialized = 1;
+    }
+    return ((rand() % 0xFF) | ((rand() % 0xFF) << 8) | ((rand() % 0xFF) << 16) | ((rand() % 0xFF) << 24));
 #else
-	static FILE *frand = NULL;
-	if (!frand) {
-		frand = fopen("/dev/urandom", "r");
-	}
-	uint32_t r;
-	size_t len_read = fread(&r, 1, sizeof(r), frand);
-	assert(len_read == sizeof(r));
-	return r;
+    static FILE* frand = NULL;
+    if (!frand) {
+        frand = fopen("/dev/urandom", "r");
+    }
+    uint32_t r;
+    size_t len_read = fread(&r, 1, sizeof(r), frand);
+    assert(len_read == sizeof(r));
+    return r;
 #endif
 }
 
@@ -61,28 +61,29 @@ uint32_t random32(void)
 
 uint32_t random_uniform(uint32_t n)
 {
-	uint32_t x, max = 0xFFFFFFFF - (0xFFFFFFFF % n);
-	while ((x = random32()) >= max);
-	return x / (max / n);
+    uint32_t x, max = 0xFFFFFFFF - (0xFFFFFFFF % n);
+    while ((x = random32()) >= max)
+        ;
+    return x / (max / n);
 }
 
-void __attribute__((weak)) random_buffer(uint8_t *buf, size_t len)
+void __attribute__((weak)) random_buffer(uint8_t* buf, size_t len)
 {
-	uint32_t r = 0;
-	for (size_t i = 0; i < len; i++) {
-		if (i % 4 == 0) {
-			r = random32();
-		}
-		buf[i] = (r >> ((i % 4) * 8)) & 0xFF;
-	}
+    uint32_t r = 0;
+    for (size_t i = 0; i < len; i++) {
+        if (i % 4 == 0) {
+            r = random32();
+        }
+        buf[i] = (r >> ((i % 4) * 8)) & 0xFF;
+    }
 }
 
-void random_permute(char *str, size_t len)
+void random_permute(char* str, size_t len)
 {
-	for (int i = len - 1; i >= 1; i--) {
-		int j = random_uniform(i + 1);
-		char t = str[j];
-		str[j] = str[i];
-		str[i] = t;
-	}
+    for (int i = len - 1; i >= 1; i--) {
+        int j = random_uniform(i + 1);
+        char t = str[j];
+        str[j] = str[i];
+        str[i] = t;
+    }
 }

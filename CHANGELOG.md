@@ -8,7 +8,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+- Travis instructions to deploy to S3 bucket.
+- Get firmware version from `git`, use `tiny-firmware/VERSION` if it's not possible.
 - Read device `uuid` from physical device.
+- Add deploy satge for travis.
+- A makefile target for `release`.
+- A a bash script to get firmware version.
 - Skycoin logo in bootloader mode
 - Enforce setting default device language to English
 - Use`protobuf` file definitions as a `git submodule` from http://github.com/skycoin/hardware-wallet-protob/
@@ -36,6 +41,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Removed
 
+- Releases folder.
 - Installation instructions for `protobuf` related tools, use this from `hardware-wallet-protob` submodule.
 - Remove support to recover device from words matrix. The only support method is scrambled words.
 - Not possible to enforce BIP-39 wordlist during recovery process.
