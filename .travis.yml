@@ -88,9 +88,9 @@ deploy:
     bucket: $AWS_BUCKET
     skip_cleanup: true
     local_dir: releases
-      upload-dir: Skywallet/travis-release
-      acl: private
-      region: $AWS_REGION
-      on:
-        repo: skycoin/hardware-wallet
-        branch: master
+    upload-dir: Skywallet/travis-release
+    acl: private
+    region: $AWS_REGION
+    on:
+      repo: skycoin/hardware-wallet
+      branch: master

@@ -147,7 +147,7 @@ void fsm_sendResponseFromErrCode(ErrCode_t err, const char* successMsg, const ch
         break;
     default:
         failure = FailureType_Failure_FirmwareError;
-        failMsg = _("Unexpected failure");
+        failMsg = _("Unexpected firmware error");
         break;
     }
     fsm_sendFailure(failure, failMsg);
@@ -353,23 +353,29 @@ void fsm_msgSkycoinSignMessage(SkycoinSignMessage* msg)
     ResponseSkycoinAddress respAddr;
     uint8_t seckey[32] = {0};
     uint8_t pubkey[33] = {0};
-    fsm_getKeyPairAtIndex(1, pubkey, seckey, &respAddr, msg->address_n);
+    ErrCode_t err = fsm_getKeyPairAtIndex(1, pubkey, seckey, &respAddr, msg->address_n);
+    if (err != ErrOk) {
+        fsm_sendResponseFromErrCode(err, NULL, _("Unable to get keys pair"));
+        layoutHome();
+        return;
+    }
 
     CHECK_MNEMONIC
     layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"), _("sign message using"), _("this address?"), respAddr.addresses[0], NULL, NULL);
     CHECK_BUTTON_PROTECT
 
-    ErrCode_t err = msgSkycoinSignMessageImpl(msg, resp);
+    err = msgSkycoinSignMessageImpl(msg, resp);
     if (err == ErrOk) {
         msg_write(MessageType_MessageType_ResponseSkycoinSignMessage, resp);
+        layoutRawMessage("Signature success");
     } else {
         char* failMsg = NULL;
         if (err == ErrMnemonicRequired) {
             failMsg = _("Mnemonic not set");
         }
         fsm_sendResponseFromErrCode(err, NULL, failMsg);
+        layoutHome();
     }
-    layoutHome();
 }
 
 void fsm_msgSkycoinAddress(SkycoinAddress* msg)
