@@ -23,12 +23,12 @@
 #include <ctype.h>
 
 #include "layout2.h"
+#include "tiny-firmware/oled.h"
+#include "tiny-firmware/gen/bitmaps.h"
+#include "tiny-firmware/util.h"
+#include "tiny-firmware/timer.h"
 #include "storage.h"
-#include "oled.h"
-#include "bitmaps.h"
 #include "string.h"
-#include "util.h"
-#include "timer.h"
 #include "bignum.h"
 #include "secp256k1.h"
 #include "gettext.h"

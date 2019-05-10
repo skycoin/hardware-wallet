@@ -38,7 +38,7 @@
 #define VERSION_PATCH_CHAR "\x00"
 
 #include <stdbool.h>
-#include "memory.h"
+#include "tiny-firmware/memory.h"
 
 void layoutFirmwareHash(const uint8_t *hash);
 #if SIGNATURE_DEBUG

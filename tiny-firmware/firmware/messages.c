@@ -22,7 +22,7 @@
 #include "skywallet.h"
 #include "messages.h"
 #include "fsm.h"
-#include "util.h"
+#include "tiny-firmware/util.h"
 #include "gettext.h"
 
 #include "pb_decode.h"

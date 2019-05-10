@@ -22,9 +22,10 @@
 #include <string.h>
 
 #include "signatures.h"
+
+#include "bootloader.h"
 #include "skycoin_check_signature.h"
 #include "sha2.h"
-#include "bootloader.h"
 
 #define PUBKEYS 5
 

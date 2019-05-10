@@ -12,22 +12,22 @@
 #include <libopencm3/stm32/desig.h>
 
 #include "skywallet.h"
-#include "oled.h"
-#include "bitmaps.h"
-#include "util.h"
+#include "tiny-firmware/oled.h"
+#include "tiny-firmware/gen/bitmaps.h"
+#include "tiny-firmware/util.h"
 #include "usb.h"
-#include "setup.h"
+#include "tiny-firmware/setup.h"
 #include "storage.h"
-#include "layout.h"
+#include "tiny-firmware/layout.h"
 #include "layout2.h"
-#include "rng.h"
-#include "timer.h"
-#include "buttons.h"
+#include "tiny-firmware/rng.h"
+#include "tiny-firmware/timer.h"
+#include "tiny-firmware/buttons.h"
 #include "gettext.h"
 #include "fastflash.h"
 #include "factory_test.h"
 #include "entropy.h"
-#include "memory.h"
+#include "tiny-firmware/memory.h"
 
 extern uint32_t device_uuid[STM32_UUID_LEN/sizeof(uint32_t)];
 int main(void)

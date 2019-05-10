@@ -18,7 +18,7 @@
  * along with this library.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "oled.h"
+#include "tiny-firmware/oled.h"
 
 #if HEADLESS
 

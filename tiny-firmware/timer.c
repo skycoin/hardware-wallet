@@ -24,8 +24,8 @@
 #include <libopencm3/cm3/systick.h>
 #include <libopencm3/cm3/vector.h>
 
-#include "rng.h"
-#include "firmware/swtimer.h"
+#include "tiny-firmware/rng.h"
+#include "tiny-firmware/firmware/swtimer.h"
 
 /* 1 tick = 1 ms */
 volatile uint64_t system_millis;

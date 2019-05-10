@@ -24,19 +24,21 @@
 
 #include <string.h>
 
-#include "buttons.h"
-#include "bootloader.h"
-#include "oled.h"
-#include "rng.h"
 #include "usb.h"
-#include "serialno.h"
-#include "layout.h"
-#include "util.h"
+
+#include "bootloader.h"
 #include "signatures.h"
 #include "sha2.h"
 #include "ecdsa.h"
 #include "secp256k1.h"
 #include "memzero.h"
+
+#include "tiny-firmware/buttons.h"
+#include "tiny-firmware/oled.h"
+#include "tiny-firmware/rng.h"
+#include "tiny-firmware/serialno.h"
+#include "tiny-firmware/layout.h"
+#include "tiny-firmware/util.h"
 
 #define FIRMWARE_MAGIC "SKY1"
 

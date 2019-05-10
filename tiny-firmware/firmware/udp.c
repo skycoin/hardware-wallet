@@ -22,7 +22,7 @@
 #include "usb.h"
 
 #include "messages.h"
-#include "timer.h"
+#include "tiny-firmware/timer.h"
 
 static volatile char tiny = 0;
 

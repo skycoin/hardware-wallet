@@ -17,7 +17,7 @@
  * along with this library.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "rng.h"
+#include "tiny-firmware/rng.h"
 
 uint32_t random32(void) {
 	static uint32_t last = 0;

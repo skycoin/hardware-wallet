@@ -38,6 +38,7 @@ OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/memzero.small.o
 
 CFLAGS += -DUSE_PRECOMPUTED_IV=0
 CFLAGS += -DUSE_PRECOMPUTED_CP=0
+CFLAGS += -I$(TOP_DIR)../
 
 ifeq ($(SIGNATURE_PROTECT),1)
 CFLAGS += -DSIGNATURE_PROTECT=1

@@ -13,6 +13,7 @@ HEADLESS ?= 0
 
 CFLAGS += -include stdio.h
 CFLAGS += -include $(TOP_DIR)emulator/emulator.h
+CFLAGS += -I$(TOP_DIR)../
 
 ifeq ($(HEADLESS),1)
 CFLAGS   += -DHEADLESS=1

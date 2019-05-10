@@ -89,7 +89,6 @@ CFLAGS   += $(OPTFLAGS) \
             -DSTM32F2 \
             -DRAND_PLATFORM_INDEPENDENT=1 \
             -I$(TOOLCHAIN_DIR)/include \
-            -I$(TOP_DIR) \
             -I$(TOP_DIR)gen \
             -isystem$(TOP_DIR)vendor/skycoin-crypto \
             -isystem$(TOP_DIR)vendor/skycoin-crypto/tools \

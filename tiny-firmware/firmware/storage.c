@@ -26,22 +26,22 @@
 
 #include "messages.pb.h"
 
+#include "storage.h"
+#include "tiny-firmware/util.h"
+#include "tiny-firmware/memory.h"
+#include "tiny-firmware/rng.h"
+#include "tiny-firmware/supervise.h"
 #include "skywallet.h"
 #include "sha2.h"
 #include "hmac.h"
 #include "bip32.h"
 #include "bip39.h"
-#include "util.h"
-#include "memory.h"
-#include "rng.h"
-#include "storage.h"
 #include "layout2.h"
 #include "usb.h"
 #include "gettext.h"
 #include "memzero.h"
 #include "protect.h"
-#include "supervise.h"
-#include "firmware/entropy.h"
+#include "entropy.h"
 
 /* magic constant to check validity of storage block */
 static const uint32_t storage_magic = 0x726f7473;   // 'stor' as uint32_t

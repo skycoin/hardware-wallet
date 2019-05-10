@@ -10,7 +10,7 @@
  */
 
 #include "swtimer.h"
-#include "timer.h"
+#include "tiny-firmware/timer.h"
 #include "timerimpl.h"
 
 TIMER sw_timers[MAX_TIMERS];

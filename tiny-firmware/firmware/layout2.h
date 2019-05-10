@@ -21,9 +21,9 @@
 #ifndef __LAYOUT2_H__
 #define __LAYOUT2_H__
 
-#include "layout.h"
+#include "tiny-firmware/layout.h"
+#include "tiny-firmware/gen/bitmaps.h"
 #include "types.pb.h"
-#include "bitmaps.h"
 #include "bignum.h"
 #include "skywallet.h"
 

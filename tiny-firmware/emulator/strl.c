@@ -17,10 +17,10 @@
  * along with this library.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <string.h>
+
 #include "strl.h"
 #include "util.h"
-
-#include <string.h>
 
 size_t strlcpy(char *dst, const char *src, size_t size) {
 	size_t ret = strlen(src);

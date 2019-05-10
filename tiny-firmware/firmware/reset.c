@@ -20,7 +20,7 @@
 
 #include "reset.h"
 #include "storage.h"
-#include "rng.h"
+#include "tiny-firmware/rng.h"
 #include "sha2.h"
 #include "messages.h"
 #include "fsm.h"
@@ -28,7 +28,7 @@
 #include "types.pb.h"
 #include "protect.h"
 #include "bip39.h"
-#include "util.h"
+#include "tiny-firmware/util.h"
 #include "gettext.h"
 #include "entropy.h"
 

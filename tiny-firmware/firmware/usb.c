@@ -25,8 +25,8 @@
 #include "usb.h"
 #include "messages.h"
 #include "storage.h"
-#include "util.h"
-#include "timer.h"
+#include "tiny-firmware/util.h"
+#include "tiny-firmware/timer.h"
 
 #define USB_INTERFACE_INDEX_MAIN 0
 

@@ -22,7 +22,7 @@
 #include <stdbool.h>
 #include <unistd.h>
 
-#include "memory.h"
+#include "tiny-firmware/memory.h"
 
 void flash_lock(void) {}
 void flash_unlock(void) {}

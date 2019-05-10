@@ -24,7 +24,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "firmware/error.h"
+#include "error.h"
 
 void reset_init(bool display_random, uint32_t _strength, bool passphrase_protection, bool pin_protection, const char *language, const char *label, bool skip_backup);
 ErrCode_t reset_entropy(void);

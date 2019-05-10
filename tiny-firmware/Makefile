@@ -46,7 +46,8 @@ endif
 
 DEBUG_LINK ?= 0
 CFLAGS += -Wno-sequence-point
-CFLAGS += -I(TOP_DIR)protob/nanopb/vendor/nanopb -I(TOP_DIR)protob/c -DPB_FIELD_16BIT=1
+CFLAGS += -I$(TOP_DIR)../
+CFLAGS += -I$(TOP_DIR)protob/nanopb/vendor/nanopb -I$(TOP_DIR)protob/c -DPB_FIELD_16BIT=1
 # CFLAGS += -DQR_MAX_VERSION=0
 CFLAGS += -DDEBUG_LINK=$(DEBUG_LINK)
 CFLAGS += -DDEBUG_LOG=$(DEBUG_LOG)

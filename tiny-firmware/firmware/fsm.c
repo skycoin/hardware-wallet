@@ -22,22 +22,23 @@
 
 #include <stdio.h>
 #include <inttypes.h>
-#include "skywallet.h"
+
 #include "fsm.h"
+#include "skywallet.h"
 #include "messages.h"
 #include "bip32.h"
 #include "storage.h"
-#include "rng.h"
-#include "oled.h"
+#include "tiny-firmware/rng.h"
+#include "tiny-firmware/oled.h"
+#include "tiny-firmware/util.h"
+#include "tiny-firmware/memory.h"
 #include "protect.h"
 #include "pinmatrix.h"
 #include "layout2.h"
 #include "reset.h"
 #include "recovery.h"
 #include "bip39.h"
-#include "memory.h"
 #include "usb.h"
-#include "util.h"
 #include "base58.h"
 #include "gettext.h"
 #include "skycoin_crypto.h"
