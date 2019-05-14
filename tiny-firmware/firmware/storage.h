@@ -83,7 +83,6 @@ typedef struct _Storage {
 extern Storage storageUpdate;
 
 void storage_init(void);
-void storage_generate_uuid(void);
 void storage_clear_update(void);
 void storage_update(void);
 void session_clear(bool clear_pin);
