@@ -88,7 +88,7 @@ deploy:
     bucket: $AWS_BUCKET
     skip_cleanup: true
     local_dir: releases
-    upload-dir: Skywallet/travis-release
+    upload-dir: skywallet
     acl: private
     region: $AWS_REGION
     on:
