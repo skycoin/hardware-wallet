@@ -12,7 +12,8 @@
 #include "fsm_impl.h"
 
 #include <libopencm3/stm32/flash.h>
-
+#include <stdio.h>
+#include <inttypes.h>
 
 #include "base58.h"
 #include "bip32.h"

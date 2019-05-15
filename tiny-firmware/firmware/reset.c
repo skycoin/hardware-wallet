@@ -23,12 +23,15 @@
 #include "tiny-firmware/rng.h"
 #include "sha2.h"
 #include "storage.h"
+#include "fsm.h"
 #include "types.pb.h"
 #include "protect.h"
 #include "bip39.h"
 #include "tiny-firmware/util.h"
 #include "gettext.h"
 #include "entropy.h"
+#include "layout2.h"
+#include "messages.h"
 
 uint32_t strength;
 uint8_t int_entropy[32];

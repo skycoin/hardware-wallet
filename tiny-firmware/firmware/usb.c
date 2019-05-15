@@ -22,10 +22,14 @@
 #include <libopencm3/usb/usbd.h>
 
 #include "messages.h"
-#include "skywallet.h"
-#include "storage.h"
+#include "tiny-firmware/bootloader/signatures.h"
+#include "usb.h"
+#include "secp256k1.h"
+#include "memzero.h"
 #include "tiny-firmware/util.h"
 #include "tiny-firmware/timer.h"
+#include "skywallet.h"
+#include "storage.h"
 
 #define USB_INTERFACE_INDEX_MAIN 0
 

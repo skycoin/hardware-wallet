@@ -28,6 +28,7 @@
 #include "messages.h"
 #include "bip32.h"
 #include "storage.h"
+#include "layout2.h"
 #include "tiny-firmware/rng.h"
 #include "tiny-firmware/oled.h"
 #include "tiny-firmware/util.h"

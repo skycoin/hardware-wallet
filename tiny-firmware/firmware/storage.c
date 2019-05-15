@@ -26,7 +26,6 @@
 
 #include "messages.pb.h"
 
-#include "storage.h"
 #include "tiny-firmware/util.h"
 #include "tiny-firmware/memory.h"
 #include "tiny-firmware/rng.h"
@@ -44,6 +43,7 @@
 #include "memzero.h"
 #include "protect.h"
 #include "entropy.h"
+#include "storage.h"
 
 /* magic constant to check validity of storage block */
 static const uint32_t storage_magic = 0x726f7473; // 'stor' as uint32_t

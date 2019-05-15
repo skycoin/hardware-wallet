@@ -26,9 +26,8 @@
 #include "storage.h"
 #include "skycoin_crypto.h"
 #include "messages.h"
-#include "oled.h"
-#include "protob/c/messages.pb.h"
-#include "vendor/skycoin-crypto/tools/sha2.h"
+#include "tiny-firmware/oled.h"
+#include "sha2.h"
 
 #define EXTERNAL_ENTROPY_TIMEOUT 60000
 #define ENTROPY_RANDOMSALT_SIZE 256

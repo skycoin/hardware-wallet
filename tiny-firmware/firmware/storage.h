@@ -23,6 +23,8 @@
 
 #include "bip32.h"
 #include "tiny-firmware/serialno.h"
+#include "messages.pb.h"
+#include "types.pb.h"
 
 #define STORAGE_FIELD(TYPE, NAME) \
     bool has_##NAME;              \
