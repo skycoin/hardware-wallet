@@ -54,6 +54,7 @@ else
 CFLAGS += -DSIGNATURE_DEBUG=0
 endif
 OPTFLAGS ?= -Os
+DEBUG ?= 0
 
 LDSCRIPT = bootloader-memory.ld
 LDLIBS   += -lopencm3_stm32f2

@@ -17,25 +17,28 @@
  * along with this library.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <string.h>
 
 #include "strl.h"
 #include "util.h"
 
-size_t strlcpy(char *dst, const char *src, size_t size) {
-	size_t ret = strlen(src);
+#include <string.h>
 
-	if (size) {
-		size_t len = MIN(ret, size - 1);
-		memcpy(dst, src, len);
-		dst[len] = '\0';
-	}
+size_t strlcpy(char* dst, const char* src, size_t size)
+{
+    size_t ret = strlen(src);
 
-	return ret;
+    if (size) {
+        size_t len = MIN(ret, size - 1);
+        memcpy(dst, src, len);
+        dst[len] = '\0';
+    }
+
+    return ret;
 }
 
-size_t strlcat(char *dst, const char *src, size_t size) {
-	size_t n = strnlen(dst, size);
+size_t strlcat(char* dst, const char* src, size_t size)
+{
+    size_t n = strnlen(dst, size);
 
-	return n + strlcpy(&dst[n], src, size - n);
+    return n + strlcpy(&dst[n], src, size - n);
 }

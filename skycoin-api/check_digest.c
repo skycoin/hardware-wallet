@@ -16,10 +16,11 @@
 
 static bool matchhexdigit(char c)
 {
-  return ((c >= '0') && (c <= '9')) || ((c >= 'a') && (c <= 'f')) || ((c >= 'A') && (c <= 'F'));
+    return ((c >= '0') && (c <= '9')) || ((c >= 'a') && (c <= 'f')) || ((c >= 'A') && (c <= 'F'));
 }
 
-int is_digest(char* digest) {
+int is_digest(char* digest)
+{
     if (strlen(digest) != 64) {
         return false;
     }

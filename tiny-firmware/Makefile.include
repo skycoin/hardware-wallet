@@ -1,6 +1,26 @@
 TOP_DIR       := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))/
 TOOLCHAIN_DIR ?= $(TOP_DIR)vendor/libopencm3
 UNAME_S ?= $(shell uname -s)
+DEBUG ?= 1
+CFLAGS+=-DVERSION_MAJOR=$(VERSION_MAJOR)
+CFLAGS+=-DVERSION_MINOR=$(VERSION_MINOR)
+CFLAGS+=-DVERSION_PATCH=$(VERSION_PATCH)
+CFLAGS+=-DVERSION_IS_SEMANTIC_COMPLIANT=$(VERSION_IS_SEMANTIC_COMPLIANT)
+ifeq ($(VERSION_IS_SEMANTIC_COMPLIANT),0)
+ifeq ($(BOOTLOADER),0)
+$(warning "firmware version $(VERSION_FIRMWARE)...")
+CFLAGS+=-DAPPVER=0X$(VERSION_FIRMWARE)
+endif
+endif
+ifneq ($(BOOTLOADER),1)
+ifeq ($(DEBUG),1)
+	OPTFLAGS ?= -Og
+	DBGFLAGS ?= -g3 -ggdb3
+else
+	OPTFLAGS ?= -O3
+	DBGFLAGS ?= -DDNDEBUG
+endif
+endif
 
 ifeq ($(EMULATOR),1)
 
@@ -14,9 +34,6 @@ endif
 OBJDUMP  := objdump
 AR       := ar
 AS       := as
-
-OPTFLAGS ?= -O3
-DBGFLAGS ?= -g3 -ggdb3
 CPUFLAGS ?=
 FPUFLAGS ?=
 ifeq ($(UNAME_S),Darwin)
@@ -34,9 +51,13 @@ OBJDUMP  := $(PREFIX)objdump
 AR       := $(PREFIX)ar
 AS       := $(PREFIX)as
 OPENOCD  := openocd -f interface/stlink-v2.cfg -c "transport select hla_swd" -f target/stm32f2x.cfg
-
-OPTFLAGS ?= -O3
-DBGFLAGS ?= -g -DNDEBUG
+ifeq ($(DEBUG),1)
+	OPTFLAGS ?= -Og
+	DBGFLAGS ?= -g
+else
+	OPTFLAGS ?= -O3
+	DBGFLAGS ?= -DNDEBUG
+endif
 CPUFLAGS ?= -mcpu=cortex-m3 -mthumb
 FPUFLAGS ?= -msoft-float
 
@@ -126,18 +147,10 @@ else
 CFLAGS += -DMEMORY_PROTECT=0
 endif
 endif
-
-
-ifdef VERSION_MAJOR
-CFLAGS+=-DVERSION_MAJOR=$(VERSION_MAJOR)
-endif
-
-ifdef VERSION_MINOR
-CFLAGS+=-DVERSION_MINOR=$(VERSION_MINOR)
-endif
-
-ifdef VERSION_PATCH
-CFLAGS+=-DVERSION_PATCH=$(VERSION_PATCH)
+CFLAGS+=-DVERSION_IS_SEMANTIC_COMPLIANT=$(VERSION_IS_SEMANTIC_COMPLIANT)
+ifeq ($(VERSION_IS_SEMANTIC_COMPLIANT),0)
+$(warning "firmware version $(VERSION_FIRMWARE)...")
+CFLAGS+=-DAPPVER=0X$(VERSION_FIRMWARE)
 endif
 
 CFLAGS += -DDEBUG_RNG=0

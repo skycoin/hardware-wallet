@@ -1,6 +1,6 @@
 # Skycoin hardware wallet
 
-[![Build Status](https://travis-ci.com/skycoin/hardware-wallet.svg?branch=master)](https://travis-ci.com/skycoin/hardware-wallet)
+[![Build Status](https://travis-ci.com/skycoin/hardware-wallet.svg?branch=develop)](https://travis-ci.com/skycoin/hardware-wallet)
 
 ## Table of contents
 
@@ -26,6 +26,7 @@
   - [Validate the TRNG](#Validate-the-TRNG)
     - [Files description](#Files-description)
   - [Releases](#releases)
+    - [Skycoin firmware releases](#skycoin-firmware-releases)
     - [Update the version](#update-the-version)
     - [Pre-release testing](#pre-release-testing)
     - [Creating release builds](#creating-release-builds)
@@ -40,7 +41,7 @@ The firmware had been copied and modified from [this repository](https://github.
 
 The [skycoin-api](https://github.com/skycoin/hardware-wallet/tree/master/skycoin-api) folder contains the definition of the functions implementing the skycoin features.
 
-The [skycoin-cli](https://github.com/skycoin/hardware-wallet-go/) defines golang functions that communicate with the firmware.
+The [skycoin-hw-cli](https://github.com/skycoin/hardware-wallet-go/releases) defines golang functions that communicate with the firmware.
 
 There is also a [javascript API](https://github.com/skycoin/hardware-wallet-js/).
 
@@ -77,7 +78,7 @@ However for the default `brew` installation in practice this should not be neede
 ### Build a bootloader
 
 ```
-make bootloader # Your firmware is bootloader-no-memory-protect.bin
+make bootloader # Your firmware is skybootloader-no-memory-protect.bin
 ```
 
 ### Build a bootloader with memory protection enabled
@@ -93,13 +94,13 @@ make bootloader-mem-protect # Your firmware is bootloader-memory-protected.bin
 ### Build a firmware
 
 ```
-make firmware  # Your firmware is tiny-firmware/skycoin.bin
+make firmware  # Your firmware is tiny-firmware/skyfirmware.bin
 ```
 
 ### Sign firmware
 
 ```
-make sign # Your firmware is tiny-firmware/skycoin.bin
+make sign # Your firmware is tiny-firmware/skyfirmware.bin
 ```
 
 ### Combine bootloader and firmware
@@ -151,8 +152,8 @@ The project releases production-ready binaries combining firmware and bootloader
 
 - **Bootloader version**: Consecutive bootloader version identifier
 - **Firmware version**: Consecutive firmware version identifier
-- **SoC identifier**: for the MCU model and combination of peripherals considered for building the specific combined binary release. A value of `0` should be reserved to developer's local environment
-- **Country Exit Code**: to cope with i18n and locale specific features. At present only a value of `1` is supported for American English (i.e. `en_US`).
+- **SoC identifier**: With the `Manufacturer` and `product` identifiers reported in hidraw `USB` driver.
+- **Country Exit Code**: to cope with i18n and locale specific features. At present only a value of `en` is supported for English according to `ISO-639-1`.
 
 Version identifiers are strings including, in the same order, the numbers mentioned above separated by dots.
 
@@ -225,6 +226,42 @@ But in general a bit of research should be done looking at the files content. Th
 
 ### Releases
 
+#### Skycoin firmware releases
+
+The skycoin firmware is composed of two parts: the [bootloader](https://github.com/skycoin/hardware-wallet/tree/master/tiny-firmware/bootloader) and the [firmware](https://github.com/skycoin/hardware-wallet/tree/master/tiny-firmware/firmware).
+
+When plugging the device in, the bootloader runs first. Its only purpose it to check firmware's validity using Skycoin signature.
+
+The firmware is expected to have a header with proper MAGIC number and three signature slots. 
+
+If the firmware does not have a valid signature in its header it is considered **"not official"**. A warning will be displayed but the user can still skip it and use it anyway.
+
+The "unofficial firmware warning", **means that the firmware was not signed by Skycoin Foundation**.
+
+Skycoin firmware is open source and it is easy to fork or copy official repository and create concurrent firmware for the device. Skycoin Foundation however will not put its signature on it.
+
+The Skycoin hardware will be shipped with an immutable bootloader written in a protected memory that is impossible to re-write.
+
+The firmware however can evolve over time and some solutions were developed to update an existing firmware (see [skycoin-hw-cli](https://github.com/skycoin/hardware-wallet-go/releases)).
+
+##### Supported languages
+
+The supported languages are encoded in a masked `32 bits` number:
+ - `0` English
+ - `1:31` Reserved
+
+##### Full-Firmware and bootloader folder
+
+The [firmware](https://github.com/skycoin/hardware-wallet/tree/master/tiny-firmware/firmware) and [bootloader](https://github.com/skycoin/hardware-wallet/tree/master/tiny-firmware/bootloader) folders are here for development purpose. They are meant to be [flashed with st-link](https://github.com/skycoin/hardware-wallet/blob/master/tiny-firmware/README.md#3-how-to-burn-the-firmware-in-the-device) on a STM32 device in which the memory protection was not enabled yet.
+
+You can check [here](https://github.com/skycoin/hardware-wallet/blob/master/tiny-firmware/README.md#3-how-to-burn-the-firmware-in-the-device) for instructions about how to burn a full firmware on a device.
+
+##### Firmware folder
+
+If you are a user of the skycoin electronic wallet and want to update your firmware. You can pick-up [official and tested releases](https://github.com/skycoin/hardware-wallet/releases).
+
+To update firmware the device must be in "bootloader mode". Press both buttons, unplug your device and plug it back in. Then you can use [skycoin-cli](https://github.com/skycoin/hardware-wallet/releases) `firmwareUpdate` message to update the firmware.
+
 #### Update the version
 
 0. If the `master` branch has commits that are not in `develop` (e.g. due to a hotfix applied to `master`), merge `master` into `develop` (and fix any build or test failures)
@@ -264,13 +301,45 @@ Once the candidate release build artifacts have been downloaded it is necessary 
 
 #### Creating release builds
 
-The following instruction creates a full firmware with:
-* firmware version: 1.1.0
-* bootloader version: 1.2.0
+The following instruction creates a full release:
 
 ```bash
-make combined-release-mem-protect VERSION_FIRMWARE=1.1.0 VERSION_BOOTLOADER=1.2.0
+make release
+```
+Firmware version will be retrieved automatically from `git`, and bootloader version will be take from `tiny-firmware/VERSION`.
+
+## Responsible Disclosure
+
+Security flaws in Skywallet source or infrastructure can be sent to security@skycoin.net.
+Bounties are available for accepted critical bug reports.
+
+PGP Key for signing:
+
+```
+-----BEGIN PGP PUBLIC KEY BLOCK-----
+
+mDMEWaj46RYJKwYBBAHaRw8BAQdApB44Kgde4Kiax3M9Ta+QbzKQQPoUHYP51fhN
+1XTSbRi0I0daLUMgU0tZQ09JTiA8dG9rZW5AcHJvdG9ubWFpbC5jb20+iJYEExYK
+AD4CGwMFCwkIBwIGFQgJCgsCBBYCAwECHgECF4AWIQQQpyK3by/+e9I4AiJYAWMb
+0nx4dAUCWq/TNwUJCmzbzgAKCRBYAWMb0nx4dKzqAP4tKJIk1vV2bO60nYdEuFB8
+FAgb5ITlkj9PyoXcunETVAEAhigo4miyE/nmE9JT3Q/ZAB40YXS6w3hWSl3YOF1P
+VQq4OARZqPjpEgorBgEEAZdVAQUBAQdAa8NkEMxo0dr2x9PlNjTZ6/gGwhaf5OEG
+t2sLnPtYxlcDAQgHiH4EGBYKACYCGwwWIQQQpyK3by/+e9I4AiJYAWMb0nx4dAUC
+Wq/TTQUJCmzb5AAKCRBYAWMb0nx4dFPAAQD7otGsKbV70UopH+Xdq0CDTzWRbaGw
+FAoZLIZRcFv8zwD/Z3i9NjKJ8+LS5oc8rn8yNx8xRS+8iXKQq55bDmz7Igw=
+=5fwW
+-----END PGP PUBLIC KEY BLOCK-----
 ```
 
-Variables `VERSION_FIRMWARE` and `VERSION_BOOTLOADER` are optional and default to the contents of `tiny-firmware/VERSION` and `tiny-firmware/bootloader/VERSION` respectively.
+Key ID: [0x5801631BD27C7874](https://pgp.mit.edu/pks/lookup?search=0x5801631BD27C7874&op=index)
 
+The fingerprint for this key is:
+
+```
+pub   ed25519 2017-09-01 [SC] [expires: 2023-03-18]
+      10A7 22B7 6F2F FE7B D238  0222 5801 631B D27C 7874
+uid                      GZ-C SKYCOIN <token@protonmail.com>
+sub   cv25519 2017-09-01 [E] [expires: 2023-03-18]
+```
+
+Keybase.io account: https://keybase.io/gzc

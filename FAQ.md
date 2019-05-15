@@ -22,3 +22,9 @@
     The salt is chosen in such a way that no two devices can generate the same value in (at least) the time frame of a human lifetime.
     Such values [might not be particularly random](https://security.stackexchange.com/questions/16117/in-hashing-does-it-matter-how-random-a-salt-is).
     Internal entropy is eventually combined with an external entropy received from the user host device.
+
+### Why do I see a inverted skycoin logo in bootloader?
+
+If you see an inverted skycoin logo in bootloader mode like in the following image, maybe you have either flashed for development or not official device.
+
+![Kiku](images/skycoin_logo_inverted_bootloader.jpg)

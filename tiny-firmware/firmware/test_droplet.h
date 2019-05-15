@@ -11,5 +11,4 @@
 
 #include <check.h>
 
-TCase *add_droplet_tests(TCase *tc);
-
+TCase* add_droplet_tests(TCase* tc);

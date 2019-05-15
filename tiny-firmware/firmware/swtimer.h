@@ -15,8 +15,8 @@
 #include <stdint.h>
 
 #define INVALID_TIMER 0x7F
-#define NO_TIMEOUT    0
-#define INFINITE_TS   UINT32_MAX
+#define NO_TIMEOUT 0
+#define INFINITE_TS UINT32_MAX
 
 typedef uint8_t SWTIMER;
 
