@@ -19,7 +19,7 @@
 
 
 #include "strl.h"
-#include "util.h"
+#include "tiny-firmware/util.h"
 
 #include <string.h>
 
