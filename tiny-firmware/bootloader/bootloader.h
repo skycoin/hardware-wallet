@@ -20,29 +20,19 @@
 #ifndef __BOOTLOADER_H__
 #define __BOOTLOADER_H__
 
-#ifndef VERSION_MAJOR
-#define VERSION_MAJOR 1
-#endif
-#ifndef VERSION_MINOR
-#define VERSION_MINOR 5
-#endif
-#ifndef VERSION_PATCH
-#define VERSION_PATCH 0
-#endif
-
 #define STR(X) #X
 #define VERSTR(X) STR(X)
 
-#define VERSION_MAJOR_CHAR "\x01"
-#define VERSION_MINOR_CHAR "\x05"
-#define VERSION_PATCH_CHAR "\x00"
+#define VERSION_MAJOR_CHAR VERSTR(VERSION_MAJOR)
+#define VERSION_MINOR_CHAR VERSTR(VERSION_MINOR)
+#define VERSION_PATCH_CHAR VERSTR(VERSION_PATCH)
 
-#include <stdbool.h>
 #include "memory.h"
+#include <stdbool.h>
 
-void layoutFirmwareHash(const uint8_t *hash);
+void layoutFirmwareHash(const uint8_t* hash);
 #if SIGNATURE_DEBUG
-void layout32bits(const uint8_t *buffer, const char* message);
+void layout32bits(const uint8_t* buffer, const char* message);
 #endif
 bool firmware_present(void);
 

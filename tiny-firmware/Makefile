@@ -1,12 +1,9 @@
-APPVER = 1.0.0
-
 SDL_CFLAGS ?= $(shell sdl2-config --cflags | sed 's/-D_THREAD_SAFE//g')
 ENABLE_GETENTROPY ?= 0
 DISABLE_GETENTROPY_CONFIRM ?= 0
 
 #libskywallet.a
 ifneq ($(EMULATOR),1)
-CFLAGS += -DAPPVER=$(APPVER)
 OBJS += startup.o
 OBJS += timer.o
 OBJS += setup.o
@@ -37,6 +34,7 @@ TEST_OBJS += serialno.o
 TEST_OBJS += firmware/test_serialno.o
 TEST_OBJS += firmware/test_main.o
 TEST_OBJS += firmware/test_many_address_golden.o
+TEST_OBJS += firmware/test_protect.o
 #end test_skyhw
 
 ifneq ($(EMULATOR),1)
@@ -76,6 +74,7 @@ OBJS += firmware/pinmatrix.o
 OBJS += firmware/reset.o
 OBJS += firmware/recovery.o
 OBJS += firmware/factory_test.o
+OBJS += firmware/gpio_noise.o
 OBJS += firmware/entropy.o
 OBJS += firmware/swtimer.o
 
@@ -130,7 +129,7 @@ endif
 endif
 
 ifneq ($(EMULATOR),1)
-NAME  = skycoin
+NAME  = skyfirmware
 else
 NAME = skycoin-emulator
 endif
