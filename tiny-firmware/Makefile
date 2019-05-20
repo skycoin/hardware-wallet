@@ -33,6 +33,8 @@ OBJS += gen/fonts.o
 TEST_OBJS += firmware/test_timer.o
 TEST_OBJS += firmware/test_fsm.o
 TEST_OBJS += firmware/test_droplet.o
+TEST_OBJS += serialno.o
+TEST_OBJS += firmware/test_serialno.o
 TEST_OBJS += firmware/test_main.o
 TEST_OBJS += firmware/test_many_address_golden.o
 #end test_skyhw

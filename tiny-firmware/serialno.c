@@ -26,11 +26,16 @@
 #include "util.h"
 #include "sha2.h"
 
+void serialno_from_uuid(uint32_t *uuid, char *s)
+{
+	sha256_Raw((const uint8_t *)uuid, 12, (uint8_t *)uuid);
+	sha256_Raw((const uint8_t *)uuid, 32, (uint8_t *)uuid);
+	data2hex(uuid, 12, s);
+}
+
 void fill_serialno_fixed(char *s)
 {
 	uint32_t uuid[8];
 	desig_get_unique_id(uuid);
-	sha256_Raw((const uint8_t *)uuid, 12, (uint8_t *)uuid);
-	sha256_Raw((const uint8_t *)uuid, 32, (uint8_t *)uuid);
-	data2hex(uuid, 12, s);
+	serialno_from_uuid(uuid, s);
 }
