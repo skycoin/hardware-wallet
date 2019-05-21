@@ -13,6 +13,7 @@
 
 #include "test_fsm.h"
 #include "test_droplet.h"
+#include "test_reset.h"
 #include "test_serialno.h"
 #include "test_protect.h"
 #include "test_timer.h"
@@ -27,6 +28,7 @@ Suite* test_suite(void)
     suite_add_tcase(s, add_timer_tests(tcase_create("timer")));
     suite_add_tcase(s, add_protect_tests(tcase_create("protect")));
     suite_add_tcase(s, add_serialno_tests(tcase_create("serialno")));
+    suite_add_tcase(s, add_reset_tests(tcase_create("reset")));
     return s;
 }
 

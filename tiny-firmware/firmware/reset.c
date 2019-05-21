@@ -38,6 +38,15 @@ bool skip_backup = false;
 
 void reset_init(bool display_random, uint32_t _strength, bool passphrase_protection, bool pin_protection, const char* language, const char* label, bool _skip_backup)
 {
+    reset_init_ex(display_random, _strength, passphrase_protection, pin_protection, language, label, _skip_backup, NULL);
+}
+
+void reset_init_ex(bool display_random, uint32_t _strength, bool passphrase_protection, bool pin_protection, const char* language, const char* label, bool _skip_backup, const char* (*funcRequestPin)(PinMatrixRequestType, const char*))
+{
+    if (funcRequestPin == NULL) {
+        funcRequestPin = requestPin;
+    }
+
     if (_strength != 128 && _strength != 192 && _strength != 256) {
         return;
     }
@@ -45,15 +54,15 @@ void reset_init(bool display_random, uint32_t _strength, bool passphrase_protect
     strength = _strength;
     skip_backup = _skip_backup;
 
-    random_buffer(int_entropy, 32);
-
-    char ent_str[4][17];
-    data2hex(int_entropy, 8, ent_str[0]);
-    data2hex(int_entropy + 8, 8, ent_str[1]);
-    data2hex(int_entropy + 16, 8, ent_str[2]);
-    data2hex(int_entropy + 24, 8, ent_str[3]);
+    random_salted_buffer(int_entropy, 32);
 
     if (display_random) {
+        char ent_str[4][17];
+        data2hex(int_entropy, 8, ent_str[0]);
+        data2hex(int_entropy + 8, 8, ent_str[1]);
+        data2hex(int_entropy + 16, 8, ent_str[2]);
+        data2hex(int_entropy + 24, 8, ent_str[3]);
+
         layoutDialogSwipe(&bmp_icon_info, _("Cancel"), _("Continue"), NULL, _("Internal entropy:"), ent_str[0], ent_str[1], ent_str[2], ent_str[3], NULL);
         if (!protectButton(ButtonRequestType_ButtonRequest_ResetDevice, false)) {
             fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
@@ -62,7 +71,7 @@ void reset_init(bool display_random, uint32_t _strength, bool passphrase_protect
         }
     }
 
-    if (pin_protection && !protectChangePin()) {
+    if (pin_protection && !protectChangePinEx(funcRequestPin)) {
         fsm_sendFailure(FailureType_Failure_PinMismatch, NULL);
         layoutHome();
         return;

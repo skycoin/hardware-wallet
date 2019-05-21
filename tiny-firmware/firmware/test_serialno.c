@@ -11,7 +11,7 @@
 
 #include <check.h>
 
-#include "test_droplet.h"
+#include "test_serialno.h"
 #include "serialno.h"
 
 // FIXME: Missing reference. Defined in libopencm3
