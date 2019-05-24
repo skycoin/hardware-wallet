@@ -28,3 +28,46 @@
 If you see an inverted skycoin logo in bootloader mode like in the following image, maybe you have either flashed for development or not official device.
 
 ![Kiku](images/skycoin_logo_inverted_bootloader.jpg)
+
+### What should I do if something fails?
+
+If you are experiencing any issues:
+
+- Determine if your particular case is mentioned in [troubleshooting section](#troubleshooting) and try to follow the corresponding instructions to fix it.
+- Contact the developers via [Skycoin development channel in Telegram](https://t.me/skycoindev).
+
+## Troubleshooting
+
+This section describes quick solutions to some common errors or mistakes.
+
+### What does "Got TypeError when importing the protocol definitions for generator" message mean?
+
+If you are getting this error quite likely your system is configured to run Python version `2.x` by default. This version of Python is not supported. At all times `Python3` is a requirement.
+
+Firstly , confirm that Python 2.x was executed by running the following commands from a terminal window:
+
+```sh
+which protoc
+protoc --version
+python -c 'import google.protobuf; print(google.protobuf.__file__)'
+```
+
+If `python2` is part of the output then that's exactly the case so continue with instructions that follow. Otherwise [contact the team](#what-should-i-do-if-something-fails).
+
+In order to force using Python3 set `PYTHON=python3` environment variable while invoking all make targets. For instance if building bootloader binary just once
+
+```sh
+make bootloader PYTHON=python3
+```
+
+In order to invoke multiple targets export that variable to the glovbal OS environment, e.g. on Unix systems
+
+```sh
+export PYTHON=python3
+make bootloader
+make firmware
+make full-firmware
+```
+
+For further details see #235 .
+

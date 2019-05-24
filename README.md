@@ -57,13 +57,17 @@ Follow the instructions written on [tiny-firware/README.md](https://github.com/s
 
 ## Build instructions:
 
-### Build and run emulator
-
-Update submodules:
+Immediately after cloning this repository make sure submoudules are up-to-date by executing the following command. All other commands expect this step completed first.
 
 ```
 git submodule update --init --recursive
+```
 
+Should you find any issues while running any of the commands that follow please consult [FAQ](FAQ.md) before [reporting a bug](ihttps://github.com/skycoin/hardware-wallet/issues/new?assignees=&labels=bug&template=bug_report.md&title=).
+
+### Build and run emulator
+
+```
 make clean && make run-emulator
 ```
 
