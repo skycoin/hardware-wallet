@@ -57,7 +57,7 @@ Follow the instructions written on [tiny-firware/README.md](https://github.com/s
 
 ## Build instructions:
 
-Immediately after cloning this repository make sure submoudules are up-to-date by executing. All other commands expect this step completed first.
+Immediately after cloning this repository make sure submoudules are up-to-date by executing the following command. All other commands expect this step completed first.
 
 ```
 git submodule update --init --recursive
