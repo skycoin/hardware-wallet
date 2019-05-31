@@ -663,5 +663,4 @@ void fsm_msgEntropyAck(EntropyAck* msg)
         fsm_sendFailure(FailureType_Failure_FirmwareError, _("Entropy ack failed."), &msgtype);
         break;
     }
-    layoutHome();
 }
