@@ -14,6 +14,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 typedef struct TransactionOutput {
     uint64_t coin;
@@ -51,4 +52,12 @@ int ecdsa_skycoin_sign(const uint32_t nonce_value, const uint8_t* priv_key, cons
 void tohex(char* str, const uint8_t* buffer, int bufferLength);
 void tobuff(const char* str, uint8_t* buf, size_t bufferLength);
 void writebuf_fromhexstr(const char* str, uint8_t* buf);
+
+/**
+ * @brief verify_pub_key ec secp256k1
+ * @param pub_key pub key to b verified
+ * @return true if the verification success
+ */
+bool verify_pub_key(const uint8_t* pub_key);
+
 #endif

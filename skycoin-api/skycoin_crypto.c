@@ -13,6 +13,7 @@
 
 #include <stdio.h> //sprintf
 #include <string.h>
+#include <stdbool.h>
 
 #include "base58.h"
 #include "bip32.h"
@@ -29,6 +30,19 @@ static void create_node(const char* seed_str, HDNode* node)
     const char* curve_name = SECP256K1_NAME;
     hdnode_from_seed((const uint8_t*)seed_str, strlen(seed_str), curve_name, node);
     hdnode_fill_public_key(node);
+}
+
+bool verify_pub_key(const uint8_t* pub_key) {
+    (void)pub_key;
+    char seed_str[256] = "dummy seed";
+    HDNode dummy_node;
+    create_node(seed_str, &dummy_node);
+    curve_point pub;
+
+    if (ecdsa_read_pubkey(dummy_node.curve->params, pub_key, &pub)) {
+        return true;
+    }
+    return false;
 }
 
 void tohex(char* str, const uint8_t* buffer, int bufferLength)
