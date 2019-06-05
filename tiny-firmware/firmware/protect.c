@@ -188,7 +188,7 @@ bool protectPin(bool use_cached)
             protectAbortedByInitialize = true;
             msg_tiny_id = 0xFFFF;
             usbTiny(0);
-            fsm_sendFailure(FailureType_Failure_PinCancelled, NULL);
+            fsm_sendFailure(FailureType_Failure_PinCancelled, NULL, 0);
             return false;
         }
         wait--;
@@ -197,11 +197,11 @@ bool protectPin(bool use_cached)
     const char* pin;
     pin = requestPin(PinMatrixRequestType_PinMatrixRequestType_Current, _("Please enter current PIN:"));
     if (!pin) {
-        fsm_sendFailure(FailureType_Failure_PinCancelled, NULL);
+        fsm_sendFailure(FailureType_Failure_PinCancelled, NULL, 0);
         return false;
     }
     if (!storage_increasePinFails(fails)) {
-        fsm_sendFailure(FailureType_Failure_PinInvalid, NULL);
+        fsm_sendFailure(FailureType_Failure_PinInvalid, NULL, 0);
         return false;
     }
     if (storage_containsPin(pin)) {
@@ -210,7 +210,7 @@ bool protectPin(bool use_cached)
         return true;
     } else {
         protectCheckMaxTry(storage_getPinWait(fails));
-        fsm_sendFailure(FailureType_Failure_PinInvalid, NULL);
+        fsm_sendFailure(FailureType_Failure_PinInvalid, NULL, 0);
         return false;
     }
 }
