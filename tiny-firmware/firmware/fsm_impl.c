@@ -225,6 +225,10 @@ ErrCode_t msgSkycoinCheckMessageSignatureImpl(SkycoinCheckMessageSignature* msg,
             strncpy(failureResp->message, _("Address does not match"), sizeof(failureResp->message));
             failureResp->has_message = true;
             ret = ErrInvalidSignature;
+        } else if (!verify_pub_key(pubkey)) {
+            strncpy(failureResp->message, _("Address vrification failed"), sizeof(failureResp->message));
+            failureResp->has_message = true;
+            ret = ErrInvalidSignature;
         } else {
             memcpy(successResp->message, pubkeybase58, pubkeybase58_size);
             successResp->has_message = true;
