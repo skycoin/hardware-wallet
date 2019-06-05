@@ -13,7 +13,6 @@
 
 #include <stdio.h> //sprintf
 #include <string.h>
-#include <stdbool.h>
 
 #include "base58.h"
 #include "bip32.h"
