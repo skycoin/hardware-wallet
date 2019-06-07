@@ -313,18 +313,18 @@ void fsm_msgSkycoinCheckMessageSignature(SkycoinCheckMessageSignature* msg)
       case ErrOk:
         msg_write(MessageType_MessageType_Success, successResp);
         layoutRawMessage("Verification success");
-        return;
+        break;
       case ErrInvalidSignature:
-        failureResp->code = FailureType_Failure_InvalidSignature;
+      case ErrInvalidPubKey:
         msg_write(MessageType_MessageType_Failure, failureResp);
         layoutRawMessage("Wrong signature");
         break;
       default:
-        failureResp->code = FailureType_Failure_FirmwareError;
+        strncpy(failureResp->message, _("Firmware error."), sizeof(failureResp->message));
+        msg_write(MessageType_MessageType_Failure, failureResp);
         layoutHome();
         break;
     }
-    msg_write(MessageType_MessageType_Failure, failureResp);
 }
 
 ErrCode_t requestConfirmTransaction(char* strCoin, char* strHour, TransactionSign* msg, uint32_t i)
