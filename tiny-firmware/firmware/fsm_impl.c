@@ -215,9 +215,8 @@ ErrCode_t msgSkycoinCheckMessageSignatureImpl(SkycoinCheckMessageSignature* msg,
         compute_sha256sum((const uint8_t *)msg->message, digest, strlen(msg->message));
     }
     tobuff(msg->signature, sign, sizeof(sign));
-
-    ErrCode_t ret = recover_pubkey_from_signed_message((char*)digest, sign, pubkey) == 0 ? ErrOk : ErrFailed;
-
+    ErrCode_t ret = recover_pubkey_from_signed_message(
+                (char*)digest, sign, pubkey) == 0 ? ErrOk : ErrInvalidPubKey;
     if (ret == ErrOk) {
         size_t pubkeybase58_size = sizeof(pubkeybase58);
         generate_base58_address_from_pubkey(pubkey, pubkeybase58, &pubkeybase58_size);
@@ -226,7 +225,7 @@ ErrCode_t msgSkycoinCheckMessageSignatureImpl(SkycoinCheckMessageSignature* msg,
             failureResp->has_message = true;
             ret = ErrInvalidSignature;
         } else {
-            memcpy(successResp->message, pubkeybase58, pubkeybase58_size);
+            strncpy(successResp->message, _("Verification success."), sizeof(successResp->message));
             successResp->has_message = true;
         }
     } else {
