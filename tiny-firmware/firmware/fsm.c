@@ -146,6 +146,12 @@ void fsm_sendResponseFromErrCode(ErrCode_t err, const char* successMsg, const ch
     case ErrSignPreconditionFailed:
         failure = FailureType_Failure_InvalidSignature;
         break;
+    case ErrInvalidPubKey:
+        if (failMsg == NULL) {
+            failMsg = _("Unable to get pub key.");
+        }
+        failure = FailureType_Failure_InvalidSignature;
+        break;
     case ErrInvalidSignature:
         if (failMsg == NULL) {
             failMsg = _("Invalid signature.");
