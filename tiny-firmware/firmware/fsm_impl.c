@@ -225,7 +225,7 @@ ErrCode_t msgSkycoinCheckMessageSignatureImpl(SkycoinCheckMessageSignature* msg,
             failureResp->has_message = true;
             ret = ErrInvalidSignature;
         } else {
-            strncpy(successResp->message, _("Verification success."), sizeof(successResp->message));
+            memcpy(successResp->message, pubkeybase58, pubkeybase58_size);
             successResp->has_message = true;
         }
     } else {
