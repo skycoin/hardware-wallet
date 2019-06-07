@@ -144,7 +144,12 @@ void fsm_sendResponseFromErrCode(ErrCode_t err, const char* successMsg, const ch
         failure = FailureType_Failure_UnexpectedMessage;
         break;
     case ErrSignPreconditionFailed:
+        failure = FailureType_Failure_InvalidSignature;
+        break;
     case ErrInvalidSignature:
+        if (failMsg == NULL) {
+            failMsg = _("Invalid signature.");
+        }
         failure = FailureType_Failure_InvalidSignature;
         break;
     default:
