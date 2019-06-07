@@ -217,6 +217,25 @@ START_TEST(test_msgSkycoinCheckMessageSignatureOk)
 }
 END_TEST
 
+START_TEST(test_msgSkycoinCheckMessageSignatureCanNotGetPubKey)
+{
+    // NOTE Given
+    SkycoinCheckMessageSignature checkMsg = SkycoinCheckMessageSignature_init_zero;
+    strncpy(checkMsg.message, "msgSign.message", sizeof(checkMsg.message));
+    strncpy(checkMsg.address, "respAddress->addresses[0]", sizeof(checkMsg.address));
+    strncpy(checkMsg.signature, "respSign->signed_message", sizeof(checkMsg.signature));
+    Success successRespCheck = Success_init_zero;
+    Failure failRespCheck = Failure_init_zero;
+
+    // NOTE When
+    ErrCode_t err = msgSkycoinCheckMessageSignatureImpl(
+                &checkMsg, &successRespCheck, &failRespCheck);
+
+    // NOTE Then
+    ck_assert_int_eq(ErrInvalidPubKey, err);
+}
+END_TEST
+
 static void swap_char(char* ch1, char* ch2)
 {
     char tmp;
@@ -1235,6 +1254,7 @@ TCase* add_fsm_tests(TCase* tc)
     tcase_add_test(tc, test_msgGenerateMnemonicImplOk);
     tcase_add_test(tc, test_msgGenerateMnemonicImplShouldFailIfItWasDone);
     tcase_add_test(tc, test_msgSkycoinCheckMessageSignatureOk);
+    tcase_add_test(tc, test_msgSkycoinCheckMessageSignatureCanNotGetPubKey);
     tcase_add_test(tc, test_msgGenerateMnemonicImplShouldFailForWrongSeedCount);
     tcase_add_test(tc, test_msgSkycoinCheckMessageSignatureFailedAsExpectedForInvalidSignedMessage);
     tcase_add_test(tc, test_msgSkycoinCheckMessageSignatureFailedAsExpectedForInvalidMessage);
