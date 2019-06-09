@@ -1,5 +1,5 @@
 /*
- * This file is part of the Skycoin project, https://skycoin.net/ 
+ * This file is part of the Skycoin project, https://skycoin.net/
  *
  * Copyright (C) 2018-2019 Skycoin Project
  *
@@ -13,9 +13,9 @@
 
 #include "curves.h"
 #include "skycoin_check_signature_tools.h"
+#include "bip32.h"
 #include <string.h> // memcpy
 // #include "bignum.h"
-// #include "bip32.h"
 
 // Compute public key from signature and recovery id.
 // returns 0 if verification succeeded
@@ -81,23 +81,21 @@ int verify_digest_recover(const ecdsa_curve* curve, uint8_t* pub_key, const uint
     return 0;
 }
 
-/*signature: 65 bytes, 
-message 32 bytes, 
+/*signature: 65 bytes,
+message 32 bytes,
 pubkey 33 bytes
 returns 0 if signature matches and 5 if it does not*/
 int recover_pubkey_from_signed_message(const char* message, const uint8_t* signature, uint8_t* pubkey)
 {
     int res = -1;
-    HNode dummy_node;
-    char seed_str[256] = "dummy seed";
     uint8_t long_pubkey[65];
-    create_node(seed_str, &dummy_node);
+    const curve_info* curve = get_curve_by_name(SECP256K1_NAME);
 
     bignum256 r, s;
     bn_read_be(signature, &r);
     bn_read_be(signature + 32, &s);
 
-    res = verify_digest_recover(dummy_node.curve->params, long_pubkey, signature, (uint8_t*)message);
+    res = verify_digest_recover(curve->params, long_pubkey, signature, (uint8_t*)message);
     memcpy(&pubkey[1], &long_pubkey[1], 32);
     if (long_pubkey[64] % 2 == 0) {
         pubkey[0] = 0x02;

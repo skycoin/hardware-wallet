@@ -1,5 +1,5 @@
 /*
- * This file is part of the Skycoin project, https://skycoin.net/ 
+ * This file is part of the Skycoin project, https://skycoin.net/
  *
  * Copyright (C) 2018-2019 Skycoin Project
  *
@@ -13,48 +13,8 @@
 #define SKYCOIN_CHECK_SIGNATURE_TOOLS_H
 
 #include "bignum.h"
+#include "ecdsa.h"
 #include <stdint.h>
-// #include "ecdsa.h"
-
-
-// curve point x and y
-typedef struct {
-    bignum256 x, y;
-} curve_point;
-
-
-typedef struct {
-    bignum256 prime;      // prime order of the finite field
-    curve_point G;        // initial curve point
-    bignum256 order;      // order of G
-    bignum256 order_half; // order of G divided by 2
-    int a;                // coefficient 'a' of the elliptic curve
-    bignum256 b;          // coefficient 'b' of the elliptic curve
-
-} ecdsa_curve;
-
-
-typedef enum {
-    HASHER_SHA2,
-    HASHER_BLAKE,
-} HasherType;
-
-
-typedef struct {
-    const char* bip32_name;    // string for generating BIP32 xprv from seed
-    const ecdsa_curve* params; // ecdsa curve parameters, null for ed25519
-    HasherType hasher_type;    // hasher type for BIP32 and ECDSA
-} curve_info;
-
-
-// typedef struct {
-// 	uint32_t depth;
-// 	uint32_t child_num;
-// 	uint8_t chain_code[32];
-// 	uint8_t private_key[32];
-// 	uint8_t public_key[33];
-// 	const curve_info *curve;
-// } HDNode;
 
 
 typedef struct jacobian_curve_point {
@@ -62,20 +22,6 @@ typedef struct jacobian_curve_point {
 } jacobian_curve_point;
 
 
-typedef struct {
-    uint32_t depth;
-    uint32_t child_num;
-    uint8_t chain_code[32];
-    uint8_t private_key[32];
-    uint8_t public_key[33];
-    const curve_info* curve;
-} HNode;
-
-void ecdsa_get_public_key33(const ecdsa_curve* curve, const uint8_t* priv_key, uint8_t* pub_key);
-// const curve_info *get_curve_by_name(const char *curve_name);
-// int hdnode_from_seed(const uint8_t *seed, int seed_len, const char* curve, HDNode *out);
-// void hdnode_fill_public_key(HDNode *node);
-void create_node(const char* seed_str, HNode* node);
 void uncompress_mcoords(const ecdsa_curve* curve, uint8_t odd, const bignum256* x, bignum256* y);
 int mecdsa_validate_pubkey(const ecdsa_curve* curve, const curve_point* pub);
 void mpoint_multiply(const ecdsa_curve* curve, const bignum256* k, const curve_point* p, curve_point* res);

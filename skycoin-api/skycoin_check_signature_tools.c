@@ -1,5 +1,5 @@
 /*
- * This file is part of the Skycoin project, https://skycoin.net/ 
+ * This file is part of the Skycoin project, https://skycoin.net/
  *
  * Copyright (C) 2018-2019 Skycoin Project
  *
@@ -15,6 +15,7 @@
 #include "hmac.h"
 #include "memzero.h"
 #include "rand.h"
+#include "bip32.h"
 #include <assert.h>
 #include <string.h>
 // #include "secp256k1.h"
@@ -48,12 +49,12 @@ const ecdsa_curve msecp256k1 = {
 
     /* b */ {/*.val =*/{7}}
 
-    // #if USE_PRECOMPUTED_CP
-    // 	,
-    // 	/* cp */ {
-    // #include "secp256k1.table"
-    // 	}
-    // #endif
+    #if USE_PRECOMPUTED_CP
+    	,
+    	/* cp */ {
+    #include "secp256k1.table"
+    	}
+    #endif
 };
 
 const curve_info secp256k1_minfo = {
@@ -61,43 +62,6 @@ const curve_info secp256k1_minfo = {
     .params = &msecp256k1,
     .hasher_type = HASHER_SHA2,
 };
-
-static int from_seed(const uint8_t* seed, int seed_len, HNode* out)
-{
-    static CONFIDENTIAL uint8_t I[32 + 32];
-    memset(out, 0, sizeof(HNode));
-    out->depth = 0;
-    out->child_num = 0;
-    out->curve = &secp256k1_minfo;
-    if (out->curve == 0) {
-        return 0;
-    }
-    static CONFIDENTIAL HMAC_SHA512_CTX ctx;
-    hmac_sha512_Init(&ctx, (const uint8_t*)out->curve->bip32_name, strlen(out->curve->bip32_name));
-    hmac_sha512_Update(&ctx, seed, seed_len);
-    hmac_sha512_Final(&ctx, I);
-
-    if (out->curve->params) {
-        bignum256 a;
-        while (true) {
-            bn_read_be(I, &a);
-            if (!bn_is_zero(&a)                                  // != 0
-                && bn_is_less(&a, &out->curve->params->order)) { // < order
-                break;
-            }
-            hmac_sha512_Init(&ctx, (const uint8_t*)out->curve->bip32_name, strlen(out->curve->bip32_name));
-            hmac_sha512_Update(&ctx, I, sizeof(I));
-            hmac_sha512_Final(&ctx, I);
-        }
-        memzero(&a, sizeof(a));
-    }
-    memcpy(out->private_key, I, 32);
-    memcpy(out->chain_code, I + 32, 32);
-    memzero(out->public_key, sizeof(out->public_key));
-    memzero(I, sizeof(I));
-    return 1;
-}
-
 
 void mecdsa_get_public_key33(const ecdsa_curve* curve, const uint8_t* priv_key, uint8_t* pub_key)
 {
@@ -112,22 +76,6 @@ void mecdsa_get_public_key33(const ecdsa_curve* curve, const uint8_t* priv_key, 
     memzero(&R, sizeof(R));
     memzero(&k, sizeof(k));
 }
-
-static void fill_public_key(HNode* node)
-{
-    if (node->public_key[0] != 0)
-        return;
-    if (node->curve->params) {
-        mecdsa_get_public_key33(node->curve->params, node->private_key, node->public_key);
-    }
-}
-
-void create_node(const char* seed_str, HNode* node)
-{
-    from_seed((const uint8_t*)seed_str, strlen(seed_str), node);
-    fill_public_key(node);
-}
-
 
 void uncompress_mcoords(const ecdsa_curve* curve, uint8_t odd, const bignum256* x, bignum256* y)
 {
