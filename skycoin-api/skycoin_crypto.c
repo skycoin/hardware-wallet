@@ -15,7 +15,7 @@
 #include <string.h>
 
 #include "base58.h"
-#include "bip32.h"
+#include "secp256k1.h"
 #include "curves.h"
 #include "ecdsa.h"
 #include "ripemd160.h"

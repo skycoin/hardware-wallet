@@ -23,6 +23,10 @@
 
 #include "secp256k1.h"
 
+#include <string.h>
+
+#include "curves.h"
+
 const ecdsa_curve secp256k1 = {
     /* .prime */ {
         /*.val =*/{0x3ffffc2f, 0x3ffffffb, 0x3fffffff, 0x3fffffff, 0x3fffffff, 0x3fffffff, 0x3fffffff, 0x3fffffff, 0xffff}},
@@ -51,3 +55,48 @@ const curve_info secp256k1_info = {
     .params = &secp256k1,
     .hasher_type = HASHER_SHA2,
 };
+
+/*
+const curve_info ed25519_info = {
+    .bip32_name = "ed25519 seed",
+    .params = NULL,
+    .hasher_type = HASHER_SHA2,
+};
+
+const curve_info ed25519_sha3_info = {
+    .bip32_name = "ed25519-sha3 seed",
+    .params = NULL,
+    .hasher_type = HASHER_SHA2,
+};
+
+const curve_info curve25519_info = {
+    .bip32_name = "curve25519 seed",
+    .params = NULL,
+    .hasher_type = HASHER_SHA2,
+};
+*/
+
+
+const curve_info* get_curve_by_name(const char* curve_name)
+{
+    if (curve_name == 0) {
+        return 0;
+    }
+    if (strcmp(curve_name, SECP256K1_NAME) == 0) {
+        return &secp256k1_info;
+    }
+
+    /*
+    if (strcmp(curve_name, ED25519_NAME) == 0) {
+        return &ed25519_info;
+    }
+    if (strcmp(curve_name, ED25519_SHA3_NAME) == 0) {
+        return &ed25519_sha3_info;
+    }
+    if (strcmp(curve_name, CURVE25519_NAME) == 0) {
+        return &curve25519_info;
+    }
+    */
+
+    return 0;
+}
