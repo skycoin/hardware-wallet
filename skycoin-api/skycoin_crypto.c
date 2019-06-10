@@ -15,21 +15,13 @@
 #include <string.h>
 
 #include "base58.h"
-#include "bip32.h"
+#include "secp256k1.h"
 #include "curves.h"
 #include "ecdsa.h"
 #include "ripemd160.h"
 #include "sha2.h"
 
 extern void bn_print(const bignum256* a);
-static void create_node(const char* seed_str, HDNode* node);
-
-static void create_node(const char* seed_str, HDNode* node)
-{
-    const char* curve_name = SECP256K1_NAME;
-    hdnode_from_seed((const uint8_t*)seed_str, strlen(seed_str), curve_name, node);
-    hdnode_fill_public_key(node);
-}
 
 bool verify_pub_key(const uint8_t* pub_key) {
     (void)pub_key;
@@ -73,10 +65,8 @@ void writebuf_fromhexstr(const char* str, uint8_t* buf)
 
 void generate_pubkey_from_seckey(const uint8_t* seckey, uint8_t* pubkey)
 {
-    char seed_str[256] = "dummy seed";
-    HDNode dummy_node;
-    create_node(seed_str, &dummy_node);
-    ecdsa_get_public_key33(dummy_node.curve->params, seckey, pubkey);
+    const curve_info* curve = get_curve_by_name(SECP256K1_NAME);
+    ecdsa_get_public_key33(curve->params, seckey, pubkey);
 }
 
 void generate_deterministic_key_pair(const uint8_t* seed, const size_t seed_length, uint8_t* seckey, uint8_t* pubkey)
@@ -88,10 +78,8 @@ void generate_deterministic_key_pair(const uint8_t* seed, const size_t seed_leng
 void ecdh(const uint8_t* secret_key, const uint8_t* remote_public_key, uint8_t* ecdh_key /*should be size SHA256_DIGEST_LENGTH*/)
 {
     uint8_t mult[65] = {0};
-    char seed_str[256] = "dummy seed";
-    HDNode dummy_node;
-    create_node(seed_str, &dummy_node);
-    ecdh_multiply(dummy_node.curve->params, secret_key, remote_public_key, mult); //65
+    const curve_info* curve = get_curve_by_name(SECP256K1_NAME);
+    ecdh_multiply(curve->params, secret_key, remote_public_key, mult); //65
     memcpy(&ecdh_key[1], &mult[1], 32);
     if (mult[64] % 2 == 0) {
         ecdh_key[0] = 0x02;
@@ -231,21 +219,20 @@ int ecdsa_skycoin_sign(const uint32_t nonce_value, const uint8_t* priv_key, cons
     bignum256* s = &R.y;
     uint8_t by; // signature recovery byte
 
-    HDNode dummy_node;
-    char seed_str[256] = "dummy seed";
-    create_node(seed_str, &dummy_node);
+    const curve_info* curve = get_curve_by_name(SECP256K1_NAME);
+
     bn_read_be(digest, &z);
 
     for (i = 0; i < 1; i++) {
         // generate random number nonce
-        // generate_k_random(&nonce, &dummy_node.curve->params->order);
+        // generate_k_random(&nonce, &curve->params->order);
         bn_read_uint32(nonce_value, &nonce);
         // compute nonce*G
-        scalar_multiply(dummy_node.curve->params, &nonce, &R);
+        scalar_multiply(curve->params, &nonce, &R);
         by = R.y.val[0] & 1;
         // r = (rx mod n)
-        if (!bn_is_less(&R.x, &dummy_node.curve->params->order)) {
-            bn_subtract(&R.x, &dummy_node.curve->params->order, &R.x);
+        if (!bn_is_less(&R.x, &curve->params->order)) {
+            bn_subtract(&R.x, &curve->params->order, &R.x);
             by |= 2;
         }
         // if r is zero, we retry
@@ -253,12 +240,12 @@ int ecdsa_skycoin_sign(const uint32_t nonce_value, const uint8_t* priv_key, cons
             printf("Premature exit 1");
             continue;
         }
-        bn_inverse(&nonce, &dummy_node.curve->params->order);     // (nonce*rand)^-1
+        bn_inverse(&nonce, &curve->params->order);     // (nonce*rand)^-1
         bn_read_be(priv_key, s);                                  // priv
-        bn_multiply(&R.x, s, &dummy_node.curve->params->order);   // R.x*priv
+        bn_multiply(&R.x, s, &curve->params->order);   // R.x*priv
         bn_add(s, &z);                                            // R.x*priv + z
-        bn_multiply(&nonce, s, &dummy_node.curve->params->order); // (nonce*rand)^-1 (R.x*priv + z)
-        bn_mod(s, &dummy_node.curve->params->order);
+        bn_multiply(&nonce, s, &curve->params->order); // (nonce*rand)^-1 (R.x*priv + z)
+        bn_mod(s, &curve->params->order);
 
         // if s is zero, we retry
         if (bn_is_zero(s)) {
@@ -267,8 +254,8 @@ int ecdsa_skycoin_sign(const uint32_t nonce_value, const uint8_t* priv_key, cons
         }
 
         // if S > order/2 => S = -S
-        if (bn_is_less(&dummy_node.curve->params->order_half, s)) {
-            bn_subtract(&dummy_node.curve->params->order, s, s);
+        if (bn_is_less(&curve->params->order_half, s)) {
+            bn_subtract(&curve->params->order, s, s);
             by ^= 1;
         }
         // we are done, R.x and s is the result signature

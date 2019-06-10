@@ -769,20 +769,53 @@ int ecdsa_sign_digest(const ecdsa_curve* curve, const uint8_t* priv_key, const u
 
 void ecdsa_get_public_key33(const ecdsa_curve* curve, const uint8_t* priv_key, uint8_t* pub_key)
 {
+	/*
+    SKYCOIN CIPHER AUDIT
+	Skycoin cipher audit comparison
+	Function: GeneratePublicKey
+	File: src/cipher/secp256k1-go/secp256k1-go2/ec.go
+	*/
+
     curve_point R;
     bignum256 k;
 
     bn_read_be(priv_key, &k);
+
+    /*
+    SKYCOIN CIPHER AUDIT
+	Compare to function: ECmultGen()
+	*/
     // compute k*G
     scalar_multiply(curve, &k, &R);
+
+    /*
+    SKYCOIN CIPHER AUDIT
+    Compare to function: XY.Bytes()
+    Notes: XY.Bytes() performs a "Normalize()" step on the X,Y field points.
+    There is no Normalize() step below, so the result of the scalar_multiply()
+    above must be normalized.
+    There are two function definitions for scalar_multiply depending on the value of the
+    USE_PRECOMPUTED_CP macro.
+    Both functions appear to do a normalization step, although using a different algorithm
+    than the one used by Skycoin.
+    This is because libsecp256k1 uses a newer field point normalization algorithm
+    that is safe(r) against side-channel timing attacks.
+    */
     pub_key[0] = 0x02 | (R.y.val[0] & 0x01);
     bn_write_be(&R.x, pub_key + 1);
+
     memzero(&R, sizeof(R));
     memzero(&k, sizeof(k));
 }
 
 void ecdsa_get_public_key65(const ecdsa_curve* curve, const uint8_t* priv_key, uint8_t* pub_key)
 {
+    /*
+    SKYCOIN CIPHER AUDIT
+	Not used by Skycoin.
+	Skycoin only uses compressed public keys (33 bytes long).
+	Keep this function for future Bitcoin use.
+	*/
     curve_point R;
     bignum256 k;
 
@@ -813,6 +846,12 @@ int ecdsa_uncompress_pubkey(const ecdsa_curve* curve, const uint8_t* pub_key, ui
 
 void ecdsa_get_pubkeyhash(const uint8_t* pub_key, HasherType hasher_type, uint8_t* pubkeyhash)
 {
+    /*
+    SKYCOIN CIPHER AUDIT
+	This looks like Bitcoin's AddressFromPubkey.
+	Bitcoin's AddressFromPubkey is different from Skycoin's, so don't use this for Skycoin.
+	*/
+
     uint8_t h[HASHER_DIGEST_LENGTH];
     if (pub_key[0] == 0x04) { // uncompressed format
         hasher_Raw(hasher_type, pub_key, 65, h);
@@ -827,6 +866,15 @@ void ecdsa_get_pubkeyhash(const uint8_t* pub_key, HasherType hasher_type, uint8_
 
 void uncompress_coords(const ecdsa_curve* curve, uint8_t odd, const bignum256* x, bignum256* y)
 {
+	/*
+	SKYCOIN CIPHER AUDIT
+	Compare to function: XY.SetXO
+	RESULT:
+	This looks very similar to XY.SetXO, with these differences:
+	- The first operation in XY.SetXO is a Sqr(), which is missing here
+	- The bn_subi() operation here, is not in XY.SetXO
+	*/
+
     // y^2 = x^3 + a*x + b
     memcpy(y, x, sizeof(bignum256));      // y is x
     bn_multiply(x, y, &curve->prime);     // y is x^2
