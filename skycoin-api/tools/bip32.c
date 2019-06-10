@@ -164,9 +164,6 @@ const curve_info* get_curve_by_name(const char* curve_name)
     if (strcmp(curve_name, SECP256K1_NAME) == 0) {
         return &secp256k1_info;
     }
-    if (strcmp(curve_name, SECP256K1_DECRED_NAME) == 0) {
-        return &secp256k1_decred_info;
-    }
     if (strcmp(curve_name, ED25519_NAME) == 0) {
         return &ed25519_info;
     }

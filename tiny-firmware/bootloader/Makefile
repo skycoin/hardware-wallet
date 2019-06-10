@@ -22,6 +22,7 @@ OBJS += $(TOP_DIR)vendor/skycoin-crypto/skycoin_check_signature.o
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/skycoin_check_signature_tools.o
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/curves.o
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/hmac.o
+OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/secp256k1.o
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/bip32.o
 
 #end skycoin-crypto
