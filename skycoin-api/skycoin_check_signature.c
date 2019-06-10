@@ -91,10 +91,6 @@ int recover_pubkey_from_signed_message(const char* message, const uint8_t* signa
     uint8_t long_pubkey[65];
     const curve_info* curve = get_curve_by_name(SECP256K1_NAME);
 
-    bignum256 r, s;
-    bn_read_be(signature, &r);
-    bn_read_be(signature + 32, &s);
-
     res = verify_digest_recover(curve->params, long_pubkey, signature, (uint8_t*)message);
     memcpy(&pubkey[1], &long_pubkey[1], 32);
     if (long_pubkey[64] % 2 == 0) {
