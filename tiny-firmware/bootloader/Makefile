@@ -31,7 +31,7 @@ OBJS += signatures.o
 OBJS += usb.o
 
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/bignum.small.o
-# OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/ecdsa.small.o
+OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/ecdsa.small.o
 # OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/secp256k1.small.o
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/sha2.small.o
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/memzero.small.o
