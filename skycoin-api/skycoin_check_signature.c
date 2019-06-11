@@ -17,8 +17,14 @@
 #include <string.h> // memcpy
 // #include "bignum.h"
 
-// Compute uncompressed public key from compact signature.
-// Returns 0 if verification succeeded
+/*
+Compute uncompressed public key from compact signature.
+Returns 0 if verification succeeded
+
+pub_key: 65 bytes (uncompressed)
+sig: 65 bytes
+digest: 32 bytes
+*/
 int verify_digest_recover(uint8_t* pub_key, const uint8_t* sig, const uint8_t* digest)
 {
 	const ecdsa_curve* curve = get_curve_by_name(SECP256K1_NAME)->params;
@@ -88,21 +94,30 @@ int verify_digest_recover(uint8_t* pub_key, const uint8_t* sig, const uint8_t* d
     return 0;
 }
 
-/*signature: 65 bytes,
+/*
+signature: 65 bytes,
 message 32 bytes,
 pubkey 33 bytes
-returns 0 if signature matches and 5 if it does not*/
+returns 0 if the operation succeeds.
+
+Success means that the signature is valid and that a valid public key was
+recovered from the signed message.
+The caller must compare the recovered pubkey to the expected pubkey.
+*/
 int recover_pubkey_from_signed_message(const char* message, const uint8_t* signature, uint8_t* pubkey)
 {
-    int res = -1;
+    int res;
     uint8_t long_pubkey[65];
 
     res = verify_digest_recover(long_pubkey, signature, (uint8_t*)message);
+
+    // Compress the public key
     memcpy(&pubkey[1], &long_pubkey[1], 32);
     if (long_pubkey[64] % 2 == 0) {
         pubkey[0] = 0x02;
     } else {
         pubkey[0] = 0x03;
     }
+
     return res;
 }
