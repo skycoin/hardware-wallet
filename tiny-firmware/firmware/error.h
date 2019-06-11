@@ -86,7 +86,6 @@ enum ErrCode {
     ErrLowEntropy = ERROR_CODE(PkgEntropy, ReasonOutOfBounds),           /*!< Buffer entropy under 4.0 bits/symbol */
     ErrUnexpectedMessage = ERROR_CODE(PkgServer, ReasonInvalidState),    /*!< Server state loses path */
     ErrSignPreconditionFailed = ERROR_CODE(PkgSign, ReasonInvalidState), /*!< Signing precondition failed */
-    ErrInvalidPubKey = ERROR_CODE(PkgSign, ReasonArgumentError),         /*!< Invalid pub key */
     ErrInvalidSignature = ERROR_CODE(PkgSign, ReasonValueError),         /*!< Invalid Message Signature */
 };
 typedef enum ErrCode ErrCode_t;

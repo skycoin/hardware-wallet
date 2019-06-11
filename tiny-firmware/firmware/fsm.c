@@ -146,12 +146,6 @@ void fsm_sendResponseFromErrCode(ErrCode_t err, const char* successMsg, const ch
     case ErrSignPreconditionFailed:
         failure = FailureType_Failure_InvalidSignature;
         break;
-    case ErrInvalidPubKey:
-        if (failMsg == NULL) {
-            failMsg = _("Unable to get pub key.");
-        }
-        failure = FailureType_Failure_InvalidSignature;
-        break;
     case ErrInvalidSignature:
         if (failMsg == NULL) {
             failMsg = _("Invalid signature.");
@@ -320,22 +314,24 @@ void fsm_msgSkycoinCheckMessageSignature(SkycoinCheckMessageSignature* msg)
 {
     GET_MSG_POINTER(Success, successResp);
     GET_MSG_POINTER(Failure, failureResp);
+    uint16_t msg_id = MessageType_MessageType_Failure;
+    void *msg_ptr = failureResp;
     switch (msgSkycoinCheckMessageSignatureImpl(msg, successResp, failureResp)) {
-      case ErrOk:
-        msg_write(MessageType_MessageType_Success, successResp);
-        layoutRawMessage("Verification success");
-        break;
-      case ErrInvalidSignature:
-      case ErrInvalidPubKey:
-        msg_write(MessageType_MessageType_Failure, failureResp);
-        layoutRawMessage("Wrong signature");
-        break;
-      default:
-        strncpy(failureResp->message, _("Firmware error."), sizeof(failureResp->message));
-        msg_write(MessageType_MessageType_Failure, failureResp);
-        layoutHome();
-        break;
+        case ErrOk:
+            msg_id = MessageType_MessageType_Success;
+            msg_ptr = successResp;
+            layoutRawMessage("Verification success");
+            break;
+        case ErrInvalidSignature:
+            failureResp->code = FailureType_Failure_InvalidSignature;
+            layoutRawMessage("Wrong signature");
+            break;
+        default:
+            strncpy(failureResp->message, _("Firmware error."), sizeof(failureResp->message));
+            layoutHome();
+            break;
     }
+    msg_write(msg_id, msg_ptr);
 }
 
 ErrCode_t requestConfirmTransaction(char* strCoin, char* strHour, TransactionSign* msg, uint32_t i)
