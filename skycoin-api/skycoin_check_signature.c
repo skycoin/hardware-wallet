@@ -13,11 +13,12 @@
 
 #include "curves.h"
 #include "secp256k1.h"
+#include "ecdsa.h"
 #include <string.h> // memcpy
 // #include "bignum.h"
 
-// Compute public key from signature and recovery id.
-// returns 0 if verification succeeded
+// Compute uncompressed public key from compact signature.
+// Returns 0 if verification succeeded
 int verify_digest_recover(uint8_t* pub_key, const uint8_t* sig, const uint8_t* digest)
 {
 	const ecdsa_curve* curve = get_curve_by_name(SECP256K1_NAME)->params;
