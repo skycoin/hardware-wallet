@@ -325,7 +325,7 @@ void fsm_msgSkycoinCheckMessageSignature(SkycoinCheckMessageSignature* msg)
         msg_write(MessageType_MessageType_Success, successResp);
         layoutRawMessage("Verification success");
         break;
-      case ErrInvalidSignature:
+      case ErrAddressGeneration:
       case ErrInvalidPubKey:
         msg_write(MessageType_MessageType_Failure, failureResp);
         layoutRawMessage("Wrong signature");

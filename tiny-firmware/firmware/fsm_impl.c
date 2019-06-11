@@ -202,8 +202,6 @@ ErrCode_t msgSkycoinCheckMessageSignatureImpl(SkycoinCheckMessageSignature* msg,
     // NOTE(): -1 because the end of string ('\0')
     // /2 because the hex to buff conversion.
     uint8_t sign[(sizeof(msg->signature) - 1) / 2];
-    // NOTE(): -1 because the end of string ('\0')
-    char pubkeybase58[sizeof(msg->address) - 1];
     uint8_t pubkey[33] = {0};
     // NOTE(): -1 because the end of string ('\0')
     // /2 because the hex to buff conversion.
@@ -217,26 +215,28 @@ ErrCode_t msgSkycoinCheckMessageSignatureImpl(SkycoinCheckMessageSignature* msg,
     tobuff(msg->signature, sign, sizeof(sign));
     ErrCode_t ret = recover_pubkey_from_signed_message(
                 (char*)digest, sign, pubkey) == 0 ? ErrOk : ErrInvalidPubKey;
-    if (ret == ErrOk) {
+    if (ret != ErrOk) {
+        strncpy(failureResp->message, _("Unable to get pub key from signed message"), sizeof(failureResp->message));
+        failureResp->has_message = true;
+        return ret;
+    }
+    if (verify_pub_key(pubkey)) {
+        // NOTE(): -1 because the end of string ('\0')
+        char pubkeybase58[sizeof(msg->address) - 1];
         size_t pubkeybase58_size = sizeof(pubkeybase58);
         generate_base58_address_from_pubkey(pubkey, pubkeybase58, &pubkeybase58_size);
         if (memcmp(pubkeybase58, msg->address, pubkeybase58_size)) {
             strncpy(failureResp->message, _("Address does not match"), sizeof(failureResp->message));
             failureResp->has_message = true;
-            ret = ErrInvalidSignature;
-        } else if (!verify_pub_key(pubkey)) {
-            strncpy(failureResp->message, _("Address vrification failed"), sizeof(failureResp->message));
-            failureResp->has_message = true;
-            ret = ErrInvalidSignature;
-        } else {
-            memcpy(successResp->message, pubkeybase58, pubkeybase58_size);
-            successResp->has_message = true;
+            return ErrAddressGeneration;
         }
-    } else {
-        strncpy(failureResp->message, _("Unable to get pub key from signed message"), sizeof(failureResp->message));
-        failureResp->has_message = true;
+        memcpy(successResp->message, pubkeybase58, pubkeybase58_size);
+        successResp->has_message = true;
+        return ErrOk;
     }
-    return ret;
+    strncpy(failureResp->message, _("Address verification failed"), sizeof(failureResp->message));
+    failureResp->has_message = true;
+    return ErrInvalidPubKey;
 }
 
 ErrCode_t verifyLanguage(char* lang)
