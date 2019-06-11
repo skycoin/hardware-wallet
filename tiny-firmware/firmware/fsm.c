@@ -370,6 +370,7 @@ void fsm_msgTransactionSign(TransactionSign* msg)
 
 void fsm_msgSkycoinSignMessage(SkycoinSignMessage* msg)
 {
+    CHECK_MNEMONIC
     RESP_INIT(ResponseSkycoinSignMessage);
     CHECK_PIN_UNCACHED
 
@@ -383,8 +384,6 @@ void fsm_msgSkycoinSignMessage(SkycoinSignMessage* msg)
         layoutHome();
         return;
     }
-
-    CHECK_MNEMONIC
     layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"), _("sign message using"), _("this address?"), respAddr.addresses[0], NULL, NULL);
     CHECK_BUTTON_PROTECT
 
