@@ -1,5 +1,5 @@
 /*
- * This file is part of the Skycoin project, https://skycoin.net/ 
+ * This file is part of the Skycoin project, https://skycoin.net/
  *
  * Copyright (C) 2018-2019 Skycoin Project
  *
@@ -44,7 +44,7 @@ void compute_sha256sum(const uint8_t* seed, uint8_t* digest /*size SHA256_DIGEST
 void add_sha256(const uint8_t* msg1, size_t msg1_len, const uint8_t* msg2, size_t msg2_len, uint8_t* out_digest);
 void generate_pubkey_from_seckey(const uint8_t* seckey, uint8_t* pubkey);
 void generate_deterministic_key_pair(const uint8_t* seed, const size_t seed_length, uint8_t* seckey, uint8_t* pubkey);
-void generate_base58_address_from_pubkey(const uint8_t* pubkey, char* address, size_t* size_address);
+void generate_skycoin_address_from_pubkey(const uint8_t* pubkey, char* address, size_t* size_address);
 void generate_bitcoin_address_from_pubkey(const uint8_t* pubkey, char* address, size_t* size_address);
 void generate_bitcoin_private_address_from_seckey(const uint8_t* pubkey, char* address, size_t* size_address);
 int ecdsa_skycoin_sign(const uint32_t nonce_value, const uint8_t* priv_key, const uint8_t* digest, uint8_t* sig);

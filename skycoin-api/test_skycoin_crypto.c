@@ -1,5 +1,5 @@
 /*
- * This file is part of the Skycoin project, https://skycoin.net/ 
+ * This file is part of the Skycoin project, https://skycoin.net/
  *
  * Copyright (C) 2018-2019 Skycoin Project
  *
@@ -102,6 +102,36 @@ START_TEST(test_secp256k1Hash)
     memset(secp256k1Hash_digest, 0, SHA256_DIGEST_LENGTH);
     secp256k1Hash((const uint8_t*)seed, strlen(seed), secp256k1Hash_digest);
     ck_assert_mem_eq(secp256k1Hash_digest, fromhex("5e81d46f56767496bc05ed177c5237cd4fe5013e617c726af43e1cba884f17d1"), SHA256_DIGEST_LENGTH);
+
+    // Skycoin core test vector file: integration-test.wlt
+    strcpy(seed, "exchange stage green marine palm tobacco decline shadow cereal chapter lamp copy");
+    memset(secp256k1Hash_digest, 0, SHA256_DIGEST_LENGTH);
+    secp256k1Hash((const uint8_t*)seed, strlen(seed), secp256k1Hash_digest);
+    ck_assert_mem_eq(secp256k1Hash_digest, fromhex("1c0ff9dd77fb5dd079078c3098e61a9d99965e8d55121cc3fb576af61d6d450a"), SHA256_DIGEST_LENGTH);
+
+    // Skycoin core test vector file: test1.wlt
+    strcpy(seed, "buddy fossil side modify turtle door label grunt baby worth brush master");
+    memset(secp256k1Hash_digest, 0, SHA256_DIGEST_LENGTH);
+    secp256k1Hash((const uint8_t*)seed, strlen(seed), secp256k1Hash_digest);
+    ck_assert_mem_eq(secp256k1Hash_digest, fromhex("9182b02c0004217ba9a55593f8cf0abecc30d041e094b266dbb5103e1919adaf"), SHA256_DIGEST_LENGTH);
+
+    // Skycoin core test vector file: test1.wlt
+    strcpy(seed, "buddy fossil side modify turtle door label grunt baby worth brush master");
+    memset(secp256k1Hash_digest, 0, SHA256_DIGEST_LENGTH);
+    secp256k1Hash((const uint8_t*)seed, strlen(seed), secp256k1Hash_digest);
+    ck_assert_mem_eq(secp256k1Hash_digest, fromhex("9182b02c0004217ba9a55593f8cf0abecc30d041e094b266dbb5103e1919adaf"), SHA256_DIGEST_LENGTH);
+
+    // Skycoin core test vector file: test2.wlt
+    strcpy(seed, "sample assume enjoy museum behind horror mad reward forward reform valley planet");
+    memset(secp256k1Hash_digest, 0, SHA256_DIGEST_LENGTH);
+    secp256k1Hash((const uint8_t*)seed, strlen(seed), secp256k1Hash_digest);
+    ck_assert_mem_eq(secp256k1Hash_digest, fromhex("67de80ac3ae025c8742bec541da7018d08fa351983557d2bc753e90e24337d13"), SHA256_DIGEST_LENGTH);
+
+    // Skycoin core test vector file: test3.wlt
+    strcpy(seed, "acoustic test story tank thrive wine able frequent marriage use swim develop");
+    memset(secp256k1Hash_digest, 0, SHA256_DIGEST_LENGTH);
+    secp256k1Hash((const uint8_t*)seed, strlen(seed), secp256k1Hash_digest);
+    ck_assert_mem_eq(secp256k1Hash_digest, fromhex("f3a7942899ed2723999288ea83f4f20908bf9deabc05bc8216339da4d3e02c0b"), SHA256_DIGEST_LENGTH);
 }
 END_TEST
 
@@ -138,6 +168,40 @@ START_TEST(test_generate_deterministic_key_pair_iterator)
     generate_deterministic_key_pair_iterator((const uint8_t*)seed, strlen(seed), nextSeed, seckey, pubkey);
     ck_assert_mem_eq(pubkey, fromhex("03b17c7b7c564385be66f9c1b9da6a0b5aea56f0cb70548e6528a2f4f7b27245d8"), 33);
     ck_assert_mem_eq(seckey, fromhex("c89b70a1f7b960c08068de9f2d3b32287833b26372935aa5042f7cc1dc985335"), 32);
+
+    // Skycoin core test vector file: test1.wlt
+    strcpy(seed, "buddy fossil side modify turtle door label grunt baby worth brush master");
+    memset(pubkey, 0, sizeof(pubkey));
+    memset(seckey, 0, sizeof(seckey));
+    generate_deterministic_key_pair_iterator((const uint8_t*)seed, strlen(seed), nextSeed, seckey, pubkey);
+    ck_assert_mem_eq(pubkey, fromhex("028ef95b281f1bd6483f0c5c1ed1144b77c360b92a4eb48f681a6dff67a7c2dab1"), 33);
+    ck_assert_mem_eq(seckey, fromhex("1fc5396e91e60b9fc613d004ea5bd2ccea17053a12127301b3857ead76fdb93e"), 32);
+
+    // Skycoin core test vector file: test2.wlt
+    strcpy(seed, "sample assume enjoy museum behind horror mad reward forward reform valley planet");
+    memset(pubkey, 0, sizeof(pubkey));
+    memset(seckey, 0, sizeof(seckey));
+    generate_deterministic_key_pair_iterator((const uint8_t*)seed, strlen(seed), nextSeed, seckey, pubkey);
+    ck_assert_mem_eq(pubkey, fromhex("03595cffa8e5906b08be0c6bf907c9b6ad70f422b7c875b1a0da2c11114145c71f"), 33);
+    ck_assert_mem_eq(seckey, fromhex("7154a28fc9939a759cd00067130507e118e8e068ed0df595d488c2562ce8c9f0"), 32);
+
+    // Skycoin core test vector file: test3.wlt
+    strcpy(seed, "acoustic test story tank thrive wine able frequent marriage use swim develop");
+    memset(pubkey, 0, sizeof(pubkey));
+    memset(seckey, 0, sizeof(seckey));
+    generate_deterministic_key_pair_iterator((const uint8_t*)seed, strlen(seed), nextSeed, seckey, pubkey);
+    ck_assert_mem_eq(pubkey, fromhex("03a179e412d9d27e14ba647177648a871a7311f15a5312064c7abac1d72764081c"), 33);
+    ck_assert_mem_eq(seckey, fromhex("7889f1d107dade4369bbb1ab6a55cf74a31d0524601398f03a57c5b0b1f5444b"), 32);
+
+    // Skycoin core test vector from TestGenerateSecretRetries
+    // This seed input generates an invalid secret key on the first attempt, and the code
+    // should regenerate secret keys until it finds a value one
+    strcpy(seed, (const char*)fromhex("67c53b28b8c7b06be53b490c28c0a3b77724b5c31c4bf12b71cd44c6bb4586f3"));
+    memset(pubkey, 0, sizeof(pubkey));
+    memset(seckey, 0, sizeof(seckey));
+    generate_deterministic_key_pair_iterator((const uint8_t*)seed, strlen(seed), nextSeed, seckey, pubkey);
+    ck_assert_mem_eq(pubkey, fromhex("8da26362f073a32d6437cd97ed09e56f53fa96882afcdcdf1865b1035ace6f2f"), 33);
+    ck_assert_mem_eq(seckey, fromhex("020bba05e8cdbabcdccd078ba77305c728aa064407a6c617d5d0239a38fcdd8379"), 32);
 }
 END_TEST
 
@@ -147,15 +211,15 @@ START_TEST(test_base58_address_from_pubkey)
     char address[256] = {0};
     size_t size_address = sizeof(address);
     memcpy(pubkey, fromhex("02e5be89fa161bf6b0bc64ec9ec7fe27311fbb78949c3ef9739d4c73a84920d6e1"), 33);
-    generate_base58_address_from_pubkey(pubkey, address, &size_address);
+    generate_skycoin_address_from_pubkey(pubkey, address, &size_address);
     ck_assert_str_eq(address, "2EVNa4CK9SKosT4j1GEn8SuuUUEAXaHAMbM");
 
     memcpy(pubkey, fromhex("030e40dda21c27126d829b6ae57816e1440dcb2cc73e37e860af26eff1ec55ed73"), 33);
-    generate_base58_address_from_pubkey(pubkey, address, &size_address);
+    generate_skycoin_address_from_pubkey(pubkey, address, &size_address);
     ck_assert_str_eq(address, "2EKq1QXRmfe7jsWzNdYsmyoz8q3VkwkLsDJ");
 
     memcpy(pubkey, fromhex("035843e72258696b391cf1d898fc65f31e66876ea0c9e101f8ddc3ebb4b87dc5b0"), 33);
-    generate_base58_address_from_pubkey(pubkey, address, &size_address);
+    generate_skycoin_address_from_pubkey(pubkey, address, &size_address);
     ck_assert_str_eq(address, "5UgkXRHrf5XRk41BFq1DVyeFZHTQXirhUu");
 }
 END_TEST
