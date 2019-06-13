@@ -15,6 +15,10 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#define SKYCOIN_PUBKEY_LEN 33
+#define SKYCOIN_SECKEY_LEN 32
+#define SKYCOIN_SIG_LEN 65
+
 typedef struct TransactionOutput {
     uint64_t coin;
     uint64_t hour;

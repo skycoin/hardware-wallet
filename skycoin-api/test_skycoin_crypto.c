@@ -70,6 +70,26 @@ START_TEST(test_generate_public_key_from_seckey)
     memcpy(seckey, fromhex("c89b70a1f7b960c08068de9f2d3b32287833b26372935aa5042f7cc1dc985335"), sizeof(seckey));
     generate_pubkey_from_seckey(seckey, pubkey);
     ck_assert_mem_eq(pubkey, fromhex("03b17c7b7c564385be66f9c1b9da6a0b5aea56f0cb70548e6528a2f4f7b27245d8"), SHA256_DIGEST_LENGTH);
+
+    // Skycoin core test vector 1 from TestAbnormalKeys2
+    memcpy(seckey, fromhex("08efb79385c9a8b0d1c6f5f6511be0c6f6c2902963d874a3a4bacc18802528d3"), sizeof(seckey));
+    generate_pubkey_from_seckey(seckey, pubkey);
+    ck_assert_mem_eq(pubkey, fromhex("03c74332d6094b1f603d4902fc6b1aa09fb3ef81f3015a4000cc0077ff70543c16"), SHA256_DIGEST_LENGTH);
+
+    // Skycoin core test vector 2 from TestAbnormalKeys2
+    memcpy(seckey, fromhex("78298d9ecdc0640c9ae6883201a53f4518055442642024d23c45858f45d0c3e6"), sizeof(seckey));
+    generate_pubkey_from_seckey(seckey, pubkey);
+    ck_assert_mem_eq(pubkey, fromhex("02fa3e6e0b1fb76e26dffe7b1e01fd02677fedfed23a59000092c706b04214bee3"), SHA256_DIGEST_LENGTH);
+
+    // Skycoin core test vector 3 from TestAbnormalKeys2
+    memcpy(seckey, fromhex("04e04fe65bfa6ded50a12769a3bd83d7351b2dbff08c9bac14662b23a3294b9e"), sizeof(seckey));
+    generate_pubkey_from_seckey(seckey, pubkey);
+    ck_assert_mem_eq(pubkey, fromhex("034f25c9400dd0f87a9c420b35b5a157d21caa086ef8fa00015bc3c8ab73a1cc4c"), SHA256_DIGEST_LENGTH);
+
+    // Skycoin core test vector 4 from TestAbnormalKeys2
+    memcpy(seckey, fromhex("2f5141f1b75747996c5de77c911dae062d16ae48799052c04ead20ccd5afa113"), sizeof(seckey));
+    generate_pubkey_from_seckey(seckey, pubkey);
+    ck_assert_mem_eq(pubkey, fromhex("03fe58baefc491a9dcf0939ab6252f81f6d9515105bd89c000bb7f2a694e8a8b72"), SHA256_DIGEST_LENGTH);
 }
 END_TEST
 
@@ -132,6 +152,103 @@ START_TEST(test_secp256k1Hash)
     memset(secp256k1Hash_digest, 0, SHA256_DIGEST_LENGTH);
     secp256k1Hash((const uint8_t*)seed, strlen(seed), secp256k1Hash_digest);
     ck_assert_mem_eq(secp256k1Hash_digest, fromhex("f3a7942899ed2723999288ea83f4f20908bf9deabc05bc8216339da4d3e02c0b"), SHA256_DIGEST_LENGTH);
+
+    // Skycoin core test vector 1 from Test_Secp256k1_Hash
+    memcpy(seed, (const char*)fromhex("90c56f5b8d78a46fb4cddf6fd9c6d88d6d2d7b0ec35917c7dac12c03b04e444e"), 32);
+    memset(secp256k1Hash_digest, 0, SHA256_DIGEST_LENGTH);
+    secp256k1Hash((const uint8_t*)seed, 32, secp256k1Hash_digest);
+    ck_assert_mem_eq(secp256k1Hash_digest, fromhex("a70c36286be722d8111e69e910ce4490005bbf9135b0ce8e7a59f84eee24b88b"), SHA256_DIGEST_LENGTH);
+
+    // Skycoin core test vector 2 from Test_Secp256k1_Hash
+    memcpy(seed, (const char*)fromhex("a3b08ccf8cbae4955c02f223be1f97d2bb41d92b7f0c516eb8467a17da1e6057"), 32);
+    memset(secp256k1Hash_digest, 0, SHA256_DIGEST_LENGTH);
+    secp256k1Hash((const uint8_t*)seed, 32, secp256k1Hash_digest);
+    ck_assert_mem_eq(secp256k1Hash_digest, fromhex("e9db072fe5817325504174253a056be7b53b512f1e588f576f1f5a82cdcad302"), SHA256_DIGEST_LENGTH);
+
+    // Skycoin core test vector 3 from Test_Secp256k1_Hash
+    memcpy(seed, (const char*)fromhex("7048eb8fa93cec992b93dc8e93c5543be34aad05239d4c036cf9e587bbcf7654"), 32);
+    memset(secp256k1Hash_digest, 0, SHA256_DIGEST_LENGTH);
+    secp256k1Hash((const uint8_t*)seed, 32, secp256k1Hash_digest);
+    ck_assert_mem_eq(secp256k1Hash_digest, fromhex("5e9133e83c4add2b0420d485e1dcda5c00e283c6509388ab8ceb583b0485c13b"), SHA256_DIGEST_LENGTH);
+
+	// Skycoin core test vector 4 from Test_Secp256k1_Hash
+	memcpy(seed, (const char*)fromhex("6d25375591bbfce7f601fc5eb40e4f3dde2e453dc4bf31595d8ec29e4370cd80"), 32);
+	memset(secp256k1Hash_digest, 0, SHA256_DIGEST_LENGTH);
+	secp256k1Hash((const uint8_t*)seed, 32, secp256k1Hash_digest);
+	ck_assert_mem_eq(secp256k1Hash_digest, fromhex("8d5579cd702c06c40fb98e1d55121ea0d29f3a6c42f5582b902ac243f29b571a"), SHA256_DIGEST_LENGTH);
+
+	// Skycoin core test vector 5 from Test_Secp256k1_Hash
+	memcpy(seed, (const char*)fromhex("7214b4c09f584c5ddff971d469df130b9a3c03e0277e92be159279de39462120"), 32);
+	memset(secp256k1Hash_digest, 0, SHA256_DIGEST_LENGTH);
+	secp256k1Hash((const uint8_t*)seed, 32, secp256k1Hash_digest);
+	ck_assert_mem_eq(secp256k1Hash_digest, fromhex("3a4e8c72921099a0e6a4e7f979df4c8bced63063097835cdfd5ee94548c9c41a"), SHA256_DIGEST_LENGTH);
+
+	// Skycoin core test vector 6 from Test_Secp256k1_Hash
+	memcpy(seed, (const char*)fromhex("b13e78392d5446ae304b5fc9d45b85f26996982b2c0c86138afdac8d2ea9016e"), 32);
+	memset(secp256k1Hash_digest, 0, SHA256_DIGEST_LENGTH);
+	secp256k1Hash((const uint8_t*)seed, 32, secp256k1Hash_digest);
+	ck_assert_mem_eq(secp256k1Hash_digest, fromhex("462efa1bf4f639ffaedb170d6fb8ba363efcb1bdf0c5aef0c75afb59806b8053"), SHA256_DIGEST_LENGTH);
+
+	// Skycoin core test vector 7 from Test_Secp256k1_Hash
+	memcpy(seed, (const char*)fromhex("9403bff4240a5999e17e0ab4a645d6942c3a7147c7834e092e461a4580249e6e"), 32);
+	memset(secp256k1Hash_digest, 0, SHA256_DIGEST_LENGTH);
+	secp256k1Hash((const uint8_t*)seed, 32, secp256k1Hash_digest);
+	ck_assert_mem_eq(secp256k1Hash_digest, fromhex("68dd702ea7c7352632876e9dc2333142fce857a542726e402bb480cad364f260"), SHA256_DIGEST_LENGTH);
+
+	// Skycoin core test vector 8 from Test_Secp256k1_Hash
+	memcpy(seed, (const char*)fromhex("2665312a3e3628f4df0b9bc6334f530608a9bcdd4d1eef174ecda99f51a6db94"), 32);
+	memset(secp256k1Hash_digest, 0, SHA256_DIGEST_LENGTH);
+	secp256k1Hash((const uint8_t*)seed, 32, secp256k1Hash_digest);
+	ck_assert_mem_eq(secp256k1Hash_digest, fromhex("5db72c31d575c332e60f890c7e68d59bd3d0ac53a832e06e821d819476e1f010"), SHA256_DIGEST_LENGTH);
+
+	// Skycoin core test vector 9 from Test_Secp256k1_Hash
+	memcpy(seed, (const char*)fromhex("6cb37532c80765b7c07698502a49d69351036f57a45a5143e33c57c236d841ca"), 32);
+	memset(secp256k1Hash_digest, 0, SHA256_DIGEST_LENGTH);
+	secp256k1Hash((const uint8_t*)seed, 32, secp256k1Hash_digest);
+	ck_assert_mem_eq(secp256k1Hash_digest, fromhex("0deb20ec503b4c678213979fd98018c56f24e9c1ec99af3cd84b43c161a9bb5c"), SHA256_DIGEST_LENGTH);
+
+	// Skycoin core test vector 10 from Test_Secp256k1_Hash
+	memcpy(seed, (const char*)fromhex("8654a32fa120bfdb7ca02c487469070eba4b5a81b03763a2185fdf5afd756f3c"), 32);
+	memset(secp256k1Hash_digest, 0, SHA256_DIGEST_LENGTH);
+	secp256k1Hash((const uint8_t*)seed, 32, secp256k1Hash_digest);
+	ck_assert_mem_eq(secp256k1Hash_digest, fromhex("36f3ede761aa683813013ffa84e3738b870ce7605e0a958ed4ffb540cd3ea504"), SHA256_DIGEST_LENGTH);
+
+	// Skycoin core test vector 11 from Test_Secp256k1_Hash
+	memcpy(seed, (const char*)fromhex("66d1945ceb6ef8014b1b6703cb624f058913e722f15d03225be27cb9d8aabe4a"), 32);
+	memset(secp256k1Hash_digest, 0, SHA256_DIGEST_LENGTH);
+	secp256k1Hash((const uint8_t*)seed, 32, secp256k1Hash_digest);
+	ck_assert_mem_eq(secp256k1Hash_digest, fromhex("6bcb4819a96508efa7e32ee52b0227ccf5fbe5539687aae931677b24f6d0bbbd"), SHA256_DIGEST_LENGTH);
+
+	// Skycoin core test vector 12 from Test_Secp256k1_Hash
+	memcpy(seed, (const char*)fromhex("22c7623bf0e850538329e3e6d9a6f9b1235350824a3feaad2580b7a853550deb"), 32);
+	memset(secp256k1Hash_digest, 0, SHA256_DIGEST_LENGTH);
+	secp256k1Hash((const uint8_t*)seed, 32, secp256k1Hash_digest);
+	ck_assert_mem_eq(secp256k1Hash_digest, fromhex("8bb257a1a17fd2233935b33441d216551d5ff1553d02e4013e03f14962615c16"), SHA256_DIGEST_LENGTH);
+
+	// Skycoin core test vector 13 from Test_Secp256k1_Hash
+	memcpy(seed, (const char*)fromhex("a5eebe3469d68c8922a1a8b5a0a2b55293b7ff424240c16feb9f51727f734516"), 32);
+	memset(secp256k1Hash_digest, 0, SHA256_DIGEST_LENGTH);
+	secp256k1Hash((const uint8_t*)seed, 32, secp256k1Hash_digest);
+	ck_assert_mem_eq(secp256k1Hash_digest, fromhex("d6b780983a63a3e4bcf643ee68b686421079c835a99eeba6962fe41bb355f8da"), SHA256_DIGEST_LENGTH);
+
+	// Skycoin core test vector 14 from Test_Secp256k1_Hash
+	memcpy(seed, (const char*)fromhex("479ec3b589b14aa7290b48c2e64072e4e5b15ce395d2072a5a18b0a2cf35f3fd"), 32);
+	memset(secp256k1Hash_digest, 0, SHA256_DIGEST_LENGTH);
+	secp256k1Hash((const uint8_t*)seed, 32, secp256k1Hash_digest);
+	ck_assert_mem_eq(secp256k1Hash_digest, fromhex("39c5f108e7017e085fe90acfd719420740e57768ac14c94cb020d87e36d06752"), SHA256_DIGEST_LENGTH);
+
+	// Skycoin core test vector 15 from Test_Secp256k1_Hash
+	memset(seed, 0, 256);
+	memcpy(seed, (const char*)fromhex("63952334b731ec91d88c54614925576f82e3610d009657368fc866e7b1efbe73"), 32);
+	memset(secp256k1Hash_digest, 0, SHA256_DIGEST_LENGTH);
+	secp256k1Hash((const uint8_t*)seed, 32, secp256k1Hash_digest);
+	ck_assert_mem_eq(secp256k1Hash_digest, fromhex("79f654976732106c0e4a97ab3b6d16f343a05ebfcc2e1d679d69d396e6162a77"), SHA256_DIGEST_LENGTH);
+
+	// Skycoin core test vector 16 from Test_Secp256k1_Hash
+	memcpy(seed, (const char*)fromhex("256472ee754ef6af096340ab1e161f58e85fb0cc7ae6e6866b9359a1657fa6c1"), 32);
+	memset(secp256k1Hash_digest, 0, SHA256_DIGEST_LENGTH);
+	secp256k1Hash((const uint8_t*)seed, 32, secp256k1Hash_digest);
+	ck_assert_mem_eq(secp256k1Hash_digest, fromhex("387883b86e2acc153aa334518cea48c0c481b573ccaacf17c575623c392f78b2"), SHA256_DIGEST_LENGTH);
 }
 END_TEST
 
@@ -193,19 +310,30 @@ START_TEST(test_generate_deterministic_key_pair_iterator)
     ck_assert_mem_eq(pubkey, fromhex("03a179e412d9d27e14ba647177648a871a7311f15a5312064c7abac1d72764081c"), 33);
     ck_assert_mem_eq(seckey, fromhex("7889f1d107dade4369bbb1ab6a55cf74a31d0524601398f03a57c5b0b1f5444b"), 32);
 
-    // Skycoin core test vector from TestGenerateSecretRetries
-    // This seed input generates an invalid secret key on the first attempt, and the code
-    // should regenerate secret keys until it finds a value one
+    // Skycoin core test vector 1 from TestDeterministicKeyPairIterator
     strcpy(seed, (const char*)fromhex("67c53b28b8c7b06be53b490c28c0a3b77724b5c31c4bf12b71cd44c6bb4586f3"));
     memset(pubkey, 0, sizeof(pubkey));
     memset(seckey, 0, sizeof(seckey));
-    generate_deterministic_key_pair_iterator((const uint8_t*)seed, strlen(seed), nextSeed, seckey, pubkey);
-    ck_assert_mem_eq(pubkey, fromhex("8da26362f073a32d6437cd97ed09e56f53fa96882afcdcdf1865b1035ace6f2f"), 33);
-    ck_assert_mem_eq(seckey, fromhex("020bba05e8cdbabcdccd078ba77305c728aa064407a6c617d5d0239a38fcdd8379"), 32);
+    generate_deterministic_key_pair_iterator((const uint8_t*)seed, 32, nextSeed, seckey, pubkey);
+    ck_assert_mem_eq(pubkey, fromhex("02c32556c48bfe944e4b8f6ecb6c884112c71a468247d338cbbdc9c561ab7c6d3d"), 33);
+    ck_assert_mem_eq(seckey, fromhex("68c751a58f48d656e4d3ec31f6c1016e6e36583ac2f63129f576b29e764469b5"), 32);
+
+    // Skycoin core test vector 2 from TestDeterministicKeyPairIterator
+    strcpy(seed, (const char*)fromhex("38363534613332666131323062666462376361303263343837343639303730656261346235613831623033373633613231383566646635616664373536663363"));
+    memset(pubkey, 0, sizeof(pubkey));
+    memset(seckey, 0, sizeof(seckey));
+	generate_deterministic_key_pair_iterator((const uint8_t*)seed, 64, nextSeed, seckey, pubkey);
+	memcpy(seed, nextSeed, 32);
+    for (int i = 1; i<1024; i++) {
+		generate_deterministic_key_pair_iterator((const uint8_t*)seed, 32, nextSeed, seckey, pubkey);
+    	memcpy(seed, nextSeed, 32);
+	}
+    ck_assert_mem_eq(pubkey, fromhex("0249964ac7e3fe1b2c182a2f10abe031784e374cc0c665a63bc76cc009a05bc7c6"), 33);
+    ck_assert_mem_eq(seckey, fromhex("10ba0325f1b8633ca463542950b5cd5f97753a9829ba23477c584e7aee9cfbd5"), 32);
 }
 END_TEST
 
-START_TEST(test_base58_address_from_pubkey)
+START_TEST(test_skycoin_address_from_pubkey)
 {
     uint8_t pubkey[33] = {0};
     char address[256] = {0};
@@ -899,7 +1027,7 @@ Suite* test_suite(void)
     tcase_add_test(tc, test_generate_key_pair_from_seed);
     tcase_add_test(tc, test_secp256k1Hash);
     tcase_add_test(tc, test_generate_deterministic_key_pair_iterator);
-    tcase_add_test(tc, test_base58_address_from_pubkey);
+    tcase_add_test(tc, test_skycoin_address_from_pubkey);
     tcase_add_test(tc, test_bitcoin_address_from_pubkey);
     tcase_add_test(tc, test_bitcoin_private_address_from_seckey);
     tcase_add_test(tc, test_compute_sha256sum);
