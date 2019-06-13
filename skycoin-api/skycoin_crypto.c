@@ -23,17 +23,17 @@
 
 extern void bn_print(const bignum256* a);
 
-void tohex(char* str, const uint8_t* buffer, int bufferLength)
+void tohex(char* str, const uint8_t* buffer, int buffer_length)
 {
     int i;
-    for (i = 0; i < bufferLength; ++i) {
+    for (i = 0; i < buffer_length; ++i) {
         sprintf(&str[2 * i], "%02x", buffer[i]);
     }
 }
 
-void tobuff(const char* str, uint8_t* buf, size_t bufferLength)
+void tobuff(const char* str, uint8_t* buf, size_t buffer_length)
 {
-    for (size_t i = 0; i < bufferLength; i++) {
+    for (size_t i = 0; i < buffer_length; i++) {
         uint8_t c = 0;
         if (str[i * 2] >= '0' && str[i * 2] <= '9') c += (str[i * 2] - '0') << 4;
         if ((str[i * 2] & ~0x20) >= 'A' && (str[i * 2] & ~0x20) <= 'F') c += (10 + (str[i * 2] & ~0x20) - 'A') << 4;
@@ -113,19 +113,19 @@ void ecdh_shared_secret(const uint8_t* secret_key, const uint8_t* remote_public_
     compute_sha256sum(ecdh_key, shared_secret, SKYCOIN_PUBKEY_LEN);
 }
 
-void secp256k1Hash(const uint8_t* seed, const size_t seed_length, uint8_t* secp256k1Hash_digest)
+void secp256k1sum(const uint8_t* seed, const size_t seed_length, uint8_t* digest)
 {
 	/*
 	SKYCOIN CIPHER AUDIT
 	Compare to function: secp256k1.Secp256k1Hash
 	*/
-    uint8_t seckey[SKYCOIN_SECKEY_LEN] = {0};		// generateKey(sha256(seed))
+    uint8_t seckey[SKYCOIN_SECKEY_LEN] = {0};							// generateKey(sha256(seed))
     uint8_t dummy_seckey[SKYCOIN_SECKEY_LEN] = {0};
-    uint8_t pubkey[SKYCOIN_PUBKEY_LEN] = {0};		// generateKey(sha256(sha256(seed))
-    uint8_t hash[SHA256_DIGEST_LENGTH] = {0};		// sha256(seed)
-    uint8_t hash2[SHA256_DIGEST_LENGTH] = {0};		// sha256(sha256(seed))
-    uint8_t ecdh_key[SKYCOIN_PUBKEY_LEN] = {0};		// ecdh(pubkey, seckey)
-    uint8_t secp256k1Hash[SHA256_DIGEST_LENGTH + SKYCOIN_PUBKEY_LEN] = {0}; // sha256(sha256(seed)+ecdh)
+    uint8_t pubkey[SKYCOIN_PUBKEY_LEN] = {0};							// generateKey(sha256(sha256(seed))
+    uint8_t hash[SHA256_DIGEST_LENGTH] = {0};							// sha256(seed)
+    uint8_t hash2[SHA256_DIGEST_LENGTH] = {0};							// sha256(sha256(seed))
+    uint8_t ecdh_key[SKYCOIN_PUBKEY_LEN] = {0};							// ecdh(pubkey, seckey)
+    uint8_t hash_ecdh[SHA256_DIGEST_LENGTH + SKYCOIN_PUBKEY_LEN] = {0}; // sha256(sha256(seed)+ecdh)
 
     // hash = sha256(seed)
     compute_sha256sum(seed, hash, seed_length);
@@ -143,13 +143,13 @@ void secp256k1Hash(const uint8_t* seed, const size_t seed_length, uint8_t* secp2
     ecdh(seckey, pubkey, ecdh_key);
 
     // sha256(hash + ecdh_key)
-    memcpy(secp256k1Hash, hash, sizeof(hash));
-    memcpy(&secp256k1Hash[SHA256_DIGEST_LENGTH], ecdh_key, sizeof(ecdh_key));
-    compute_sha256sum(secp256k1Hash, secp256k1Hash_digest, sizeof(secp256k1Hash));
+    memcpy(hash_ecdh, hash, sizeof(hash));
+    memcpy(&hash_ecdh[SHA256_DIGEST_LENGTH], ecdh_key, sizeof(ecdh_key));
+    compute_sha256sum(hash_ecdh, digest, sizeof(hash_ecdh));
 }
 
-// nextSeed should be 32 bytes (size of a secp256k1Hash digest)
-void generate_deterministic_key_pair_iterator(const uint8_t* seed, const size_t seed_length, uint8_t* nextSeed, uint8_t* seckey, uint8_t* pubkey)
+// next_seed should be 32 bytes (size of a secp256k1sum digest)
+void generate_deterministic_key_pair_iterator(const uint8_t* seed, const size_t seed_length, uint8_t* next_seed, uint8_t* seckey, uint8_t* pubkey)
 {
 	/*
 	SKYCOIN CIPHER AUDIT
@@ -162,12 +162,12 @@ void generate_deterministic_key_pair_iterator(const uint8_t* seed, const size_t 
     // If there are length restrictions imposed here, they must be enforced with a check
     uint8_t keypair_seed[256] = {0};
 
-    secp256k1Hash(seed, seed_length, seed1);
+    secp256k1sum(seed, seed_length, seed1);
 
     // AUDIT: buffer overflow if seed_length > 256 - SHA256_DIGEST_LENGTH
     memcpy(keypair_seed, seed, seed_length);
     memcpy(&keypair_seed[seed_length], seed1, SHA256_DIGEST_LENGTH);
-    memcpy(nextSeed, seed1, SHA256_DIGEST_LENGTH);
+    memcpy(next_seed, seed1, SHA256_DIGEST_LENGTH);
 
     compute_sha256sum(keypair_seed, seed2, seed_length + sizeof(seed1));
     generate_deterministic_key_pair(seed2, SHA256_DIGEST_LENGTH, seckey, pubkey);
@@ -230,53 +230,13 @@ void generate_skycoin_address_from_pubkey(const uint8_t* pubkey, char* b58addres
 
     // compute base58 address
     uint8_t digest[SHA256_DIGEST_LENGTH] = {0};
-    address[20] = 0; // version byte
+    address[RIPEMD160_DIGEST_LENGTH] = 0; // version byte
 
     // checksum
-    compute_sha256sum(address, digest, 21);
-    memcpy(&address[21], digest, 4);
+    compute_sha256sum(address, digest, RIPEMD160_DIGEST_LENGTH + 1);
+    memcpy(&address[RIPEMD160_DIGEST_LENGTH + 1], digest, SKYCOIN_ADDRESS_CHECKSUM_LENGTH);
 
     b58enc(b58address, size_b58address, address, sizeof(address));
-}
-
-void generate_bitcoin_address_from_pubkey(const uint8_t* pubkey, char* b58address, size_t* size_b58address)
-{
-	/*
-	SKYCOIN CIPHER AUDIT
-	https://github.com/skycoin/skycoin/wiki/Technical-background-of-version-0-Skycoin-addresses
-
-	Is this function necessary? Why don't we use trezor's bitcoin sources?
-	*/
-    uint8_t b1[SHA256_DIGEST_LENGTH] = {0};
-    uint8_t b2[25] = {0};
-    uint8_t h1[SHA256_DIGEST_LENGTH] = {0};
-    uint8_t b4[SHA256_DIGEST_LENGTH] = {0};
-    compute_sha256sum(pubkey, b1, SKYCOIN_PUBKEY_LEN);
-    ripemd160(b1, SHA256_DIGEST_LENGTH, &b2[1]);
-    compute_sha256sum(b2, h1, 21);
-    compute_sha256sum(h1, b4, SHA256_DIGEST_LENGTH);
-    memcpy(&b2[21], b4, 4);
-    b58enc(b58address, size_b58address, b2, sizeof(b2));
-}
-
-void generate_bitcoin_private_address_from_seckey(const uint8_t* seckey, char* address, size_t* size_address)
-{
-	/*
-	SKYCOIN CIPHER AUDIT
-	https://github.com/skycoin/skycoin/wiki/Technical-background-of-version-0-Skycoin-addresses
-
-	Is this function necessary? Why don't we use trezor's bitcoin sources?
-	*/
-    uint8_t b2[38] = {0};
-    uint8_t h1[SHA256_DIGEST_LENGTH] = {0};
-    uint8_t b3[SHA256_DIGEST_LENGTH] = {0};
-    memcpy(&b2[1], seckey, SKYCOIN_SECKEY_LEN);
-    b2[0] = 0x80;
-    b2[SKYCOIN_PUBKEY_LEN] = 0x01;
-    compute_sha256sum(b2, h1, 34);
-    compute_sha256sum(h1, b3, SHA256_DIGEST_LENGTH);
-    memcpy(&b2[34], b3, 4);
-    b58enc(address, size_address, b2, sizeof(b2));
 }
 
 // uses secp256k1 curve
