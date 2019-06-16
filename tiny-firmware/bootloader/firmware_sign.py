@@ -80,7 +80,7 @@ def check_signatures(data):
             skycoin = skycoin_crypto.SkycoinCrypto()
             pubkey = skycoin.RecoverPubkeyFromSignature(binascii.unhexlify(fingerprint), signature)
             pubkey = binascii.hexlify(pubkey)
-            
+
             if (pubkey == pk):
                 if indexes[x] in used:
                     print("Slot #%d signature: DUPLICATE" % (x + 1), binascii.hexlify(signature))
@@ -142,7 +142,7 @@ def sign(data):
 
     print("Skycoin signature:", binascii.hexlify(signature.value))
     if len(signature.value) != 64:
-        raise Exception("Signature lenght {} is not correct".format(len(signature.value)))
+        raise Exception("Signature length {} is not correct".format(len(signature.value)))
 
     return modify(data, slot, index, str(signature.value))
 

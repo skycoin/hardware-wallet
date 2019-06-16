@@ -173,6 +173,22 @@ void generate_deterministic_key_pair_iterator(const uint8_t* seed, const size_t 
     generate_deterministic_key_pair(seed2, SHA256_DIGEST_LENGTH, seckey, pubkey);
 }
 
+// priv_key 32 bytes private key
+// digest 32 bytes sha256 hash
+// sig 65 compact signature
+int ecdsa_skycoin_sign(const uint8_t* priv_key, const uint8_t* digest, uint8_t* sig) {
+	int ret;
+	const curve_info* curve = get_curve_by_name(SECP256K1_NAME);
+	uint8_t recid = 0;
+	ret = ecdsa_sign_digest(curve->params, priv_key, digest, sig, &recid, NULL);
+	if (recid > 4) {
+		// This should never happen; we can abort() here, as a sanity check
+		return -3;
+	}
+	sig[64] = recid;
+	return ret;
+}
+
 /**
  * @brief compute_sha256sum hash over buffer
  * @param buffer in data
@@ -237,85 +253,6 @@ void generate_skycoin_address_from_pubkey(const uint8_t* pubkey, char* b58addres
     memcpy(&address[RIPEMD160_DIGEST_LENGTH + 1], digest, SKYCOIN_ADDRESS_CHECKSUM_LENGTH);
 
     b58enc(b58address, size_b58address, address, sizeof(address));
-}
-
-// uses secp256k1 curve
-// priv_key is a 32 byte big endian stored number
-// sig is 65 bytes (compact signature)
-// digest is 32 bytes (sha256 hash)
-int ecdsa_skycoin_sign(const uint32_t nonce_value, const uint8_t* priv_key, const uint8_t* digest, uint8_t* sig)
-{
-	/*
-	SKYCOIN CIPHER AUDIT
-	Compare to functions: secp256k1.Sign, Signature.Sign
-
-	It appears that this function as written is adapted from ecdsa_sign_digest
-	*/
-    int i;
-    curve_point R;
-    bignum256 nonce, z, randk;
-    bignum256* s = &R.y;
-    uint8_t recid; // signature recovery byte
-
-    const curve_info* curve = get_curve_by_name(SECP256K1_NAME);
-
-    bn_read_be(digest, &z);
-
-    for (i = 0; i < 1000; i++) {
-        // generate random number nonce
-        // generate_k_random(&nonce, &curve->params->order);
-
-        // r = nonce*G
-        bn_read_uint32(nonce_value, &nonce);
-        scalar_multiply(curve->params, &nonce, &R);
-
-        recid = R.y.val[0] & 1;
-
-        // r = (rx mod n)
-        if (!bn_is_less(&R.x, &curve->params->order)) {
-            bn_subtract(&R.x, &curve->params->order, &R.x);
-            recid |= 2;
-        }
-        // if r is zero, we retry
-        if (bn_is_zero(&R.x)) {
-            continue;
-        }
-
-        bn_inverse(&nonce, &curve->params->order);     // (nonce*rand)^-1
-        bn_read_be(priv_key, s);                       // priv
-        bn_multiply(&R.x, s, &curve->params->order);   // R.x*priv
-        bn_add(s, &z);                                 // R.x*priv + z
-        bn_multiply(&nonce, s, &curve->params->order); // (nonce*rand)^-1 (R.x*priv + z)
-        bn_mod(s, &curve->params->order);
-
-        // if s is zero, we retry
-        if (bn_is_zero(s)) {
-            continue;
-        }
-
-        // if S > order/2 => S = -S
-        if (bn_is_less(&curve->params->order_half, s)) {
-            bn_subtract(&curve->params->order, s, s);
-            recid ^= 1;
-        }
-        // we are done, R.x and s is the result signature
-        bn_write_be(&R.x, sig);
-        bn_write_be(s, sig + 32);
-
-        sig[64] = recid;
-
-        memset(&nonce, 0, sizeof(nonce));
-        memset(&randk, 0, sizeof(randk));
-
-        return 0;
-    }
-
-    // Too many retries without a valid signature
-    // -> fail with an error
-    memset(&nonce, 0, sizeof(nonce));
-    memset(&randk, 0, sizeof(randk));
-
-    return -1;
 }
 
 void transaction_initZeroTransaction(Transaction* self)
