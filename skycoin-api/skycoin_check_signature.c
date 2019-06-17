@@ -19,16 +19,23 @@
 
 /*
 Compute uncompressed public key from compact signature.
-Returns 0 if verification succeeded
 
-pub_key: 65 bytes (uncompressed)
 sig: 65 bytes compact recoverable signature
 digest: 32 bytes sha256 digest
+pubkey: 33 bytes compress pubkey
 
 Returns 0 on failure, 1 on success
+
+Success means that the signature is valid and that a valid public key was
+recovered from the signed message.
+The caller must compare the recovered pubkey to the expected pubkey.
 */
-int verify_digest_recover(uint8_t* pub_key, const uint8_t* sig, const uint8_t* digest)
+int recover_pubkey_from_signed_digest(const uint8_t* digest, const uint8_t* sig, uint8_t* pubkey)
 {
+    /*
+    SKYCOIN CIPHER AUDIT
+	Compare to functions: RecoverPublicKey, Signature.Recover
+    */
 	const ecdsa_curve* curve = get_curve_by_name(SECP256K1_NAME)->params;
 
     bignum256 r, s, e;
@@ -45,10 +52,6 @@ int verify_digest_recover(uint8_t* pub_key, const uint8_t* sig, const uint8_t* d
     }
     uint8_t recid = sig[64];
 
-    /*
-    SKYCOIN CIPHER AUDIT
-	Compare to function: Signature.Recover
-    */
     // cp = R = k * G (k is secret nonce when signing)
     if (recid & 2) {
         bn_add(&r, &curve->order);
@@ -89,37 +92,14 @@ int verify_digest_recover(uint8_t* pub_key, const uint8_t* sig, const uint8_t* d
 
     // cp := (s * k - digest) * G = (r*priv) * G = r * Pub
     point_add(curve, &cp2, &cp);
-    pub_key[0] = 0x04;
-    bn_write_be(&cp.x, pub_key + 1);
-    bn_write_be(&cp.y, pub_key + 33);
+
+    // write compressed pubkey
+    if (bn_is_odd(&cp.y)) {
+    	pubkey[0] = 0x03;
+    } else {
+    	pubkey[0] = 0x02;
+    }
+    bn_write_be(&cp.x, pubkey + 1);
 
     return 1;
-}
-
-/*
-signature 65 bytes compact recoverable signature,
-message 32 bytes sha256 digest,
-pubkey 33 bytes compressed pubkey.
-Returns 0 on failure, 1 on success.
-
-Success means that the signature is valid and that a valid public key was
-recovered from the signed message.
-The caller must compare the recovered pubkey to the expected pubkey.
-*/
-int recover_pubkey_from_signed_digest(const uint8_t* message, const uint8_t* signature, uint8_t* pubkey)
-{
-    int res;
-    uint8_t long_pubkey[65];
-
-    res = verify_digest_recover(long_pubkey, signature, message);
-
-    // Compress the public key
-    memcpy(&pubkey[1], &long_pubkey[1], 32);
-    if (long_pubkey[64] % 2 == 0) {
-        pubkey[0] = 0x02;
-    } else {
-        pubkey[0] = 0x03;
-    }
-
-    return res;
 }

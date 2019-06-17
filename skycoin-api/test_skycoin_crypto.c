@@ -478,7 +478,6 @@ START_TEST(test_ecdsa_sign_digest_inner)
     uint8_t nonce[32];
     uint8_t seckey[32];
     uint8_t signature[65];
-    // uint8_t pubkey[33];
     bignum256 z, k, randk;
     uint8_t recid;
     const curve_info* curve = get_curve_by_name(SECP256K1_NAME);
@@ -532,9 +531,9 @@ END_TEST
 START_TEST(test_checkdigest)
 {
     ck_assert(is_sha256_hash_hex("02df09821cff4874198a1dbdc462d224bd99728eeed024185879225762376132"));
-    ck_assert(!is_sha256_hash_hex("02df09821cff4874198a1dbdc462d224bd99728eeed0241858792257623761"));    //too short
-    ck_assert(!is_sha256_hash_hex("02df09821cff4874198a1dbdc462d224bd99728eeed0241858792257623761256")); //too long
-    ck_assert(!is_sha256_hash_hex("02df09821cff4874198a1dbdc462d224bd99728eeed0241858792257623761r"));   //non hex digits
+    ck_assert(!is_sha256_hash_hex("02df09821cff4874198a1dbdc462d224bd99728eeed0241858792257623761"));    // too short
+    ck_assert(!is_sha256_hash_hex("02df09821cff4874198a1dbdc462d224bd99728eeed0241858792257623761256")); // too long
+    ck_assert(!is_sha256_hash_hex("02df09821cff4874198a1dbdc462d224bd99728eeed0241858792257623761r"));   // non hex digits
 }
 END_TEST
 
