@@ -210,12 +210,14 @@ ErrCode_t msgSkycoinCheckMessageSignatureImpl(SkycoinCheckMessageSignature* msg,
 {
     // NOTE(): -1 because the end of string ('\0')
     // /2 because the hex to buff conversion.
+    // TODO - why is this size dynamic? It is always 65 (SKYCOIN_SIG_LEN) bytes?
     uint8_t sign[(sizeof(msg->signature) - 1) / 2];
     // NOTE(): -1 because the end of string ('\0')
     char pubkeybase58[sizeof(msg->address) - 1];
-    uint8_t pubkey[33] = {0};
+    uint8_t pubkey[SKYCOIN_PUBKEY_LEN] = {0};
     // NOTE(): -1 because the end of string ('\0')
     // /2 because the hex to buff conversion.
+    // TODO - why is this size dynamic? It is always 32 (SHA256_DIGEST_LENGTH) bytes?
     uint8_t digest[(sizeof(msg->message) - 1) / 2] = {0};
     //     RESP_INIT(Success);
     if (is_sha256_hash_hex(msg->message)) {
@@ -225,7 +227,7 @@ ErrCode_t msgSkycoinCheckMessageSignatureImpl(SkycoinCheckMessageSignature* msg,
     }
     tobuff(msg->signature, sign, sizeof(sign));
 
-    ErrCode_t ret = recover_pubkey_from_signed_message((char*)digest, sign, pubkey) == 0 ? ErrOk : ErrFailed;
+    ErrCode_t ret = recover_pubkey_from_signed_digest(digest, sign, pubkey) ? ErrOk : ErrFailed;
 
     if (ret == ErrOk) {
         size_t pubkeybase58_size = sizeof(pubkeybase58);

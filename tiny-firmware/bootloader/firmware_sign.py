@@ -113,7 +113,7 @@ def sign(data):
     print("(blank private key removes the signature on given index)")
     secexp = raw_input()
     if secexp.strip() == '':
-        # Blank key,let's remove existing signature from slot
+        # Blank key, let's remove existing signature from slot
         return modify(data, slot, 0, '\x00' * 64)
     skycoin = skycoin_crypto.SkycoinCrypto()
     seckey = binascii.unhexlify(secexp)
@@ -135,16 +135,29 @@ def sign(data):
     if index == None:
         raise Exception("Unable to find private key index. Unknown private key?")
 
-    for i in range(10): #attempt 10 times until finding a signature with 64 bytes (the 65's byte will be assumed as 0)
-        signature = skycoin.EcdsaSkycoinSign(binascii.unhexlify(fingerprint), seckey, random.randint(1, 0xFFFFFFFF))
-        if len(signature.value) == 64:
+    # Generate a signature with a recovery byte of 0
+    # We only store a 64 byte signature in the bootloader, so we need to assume
+    # the recovery ID is a fixed value of 0
+    max_attempts = 100
+    i = 0
+    while i < max_attempts:
+        signature = skycoin.EcdsaSkycoinSign(seckey, binascii.unhexlify(fingerprint))
+        if signature.value[64] == 0:
             break
+        i += 1
 
-    print("Skycoin signature:", binascii.hexlify(signature.value))
-    if len(signature.value) != 64:
-        raise Exception("Signature length {} is not correct".format(len(signature.value)))
+    if i >= max_attempts:
+        # This should never occur, with max_attempts = 100
+        raise Exception("Failed to generate signature with recovery ID of 0")
 
-    return modify(data, slot, index, str(signature.value))
+    if len(signature.value) != 65:
+        raise Exception("Signature length {} is not 65 bytes".format(len(signature.value)))
+    if len(signature.value[64]) != 0:
+        raise Exception("Signature recovery ID is {}, not 0".format(len(signature.value[64])))
+
+    print("Skycoin signature:", binascii.hexlify(signature.value[:64]))
+
+    return modify(data, slot, index, str(signature.value[:64]))
 
 def main(args):
 

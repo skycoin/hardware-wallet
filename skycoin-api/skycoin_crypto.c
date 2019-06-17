@@ -175,7 +175,7 @@ void generate_deterministic_key_pair_iterator(const uint8_t* seed, const size_t 
 
 // priv_key 32 bytes private key
 // digest 32 bytes sha256 hash
-// sig 65 compact signature
+// sig 65 bytes compact recoverable signature
 int ecdsa_skycoin_sign(const uint8_t* priv_key, const uint8_t* digest, uint8_t* sig) {
 	int ret;
 	const curve_info* curve = get_curve_by_name(SECP256K1_NAME);
