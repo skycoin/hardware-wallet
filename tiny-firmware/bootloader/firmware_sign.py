@@ -135,29 +135,14 @@ def sign(data):
     if index == None:
         raise Exception("Unable to find private key index. Unknown private key?")
 
-    # Generate a signature with a recovery byte of 0
-    # We only store a 64 byte signature in the bootloader, so we need to assume
-    # the recovery ID is a fixed value of 0
-    max_attempts = 100
-    i = 0
-    while i < max_attempts:
-        signature = skycoin.SkycoinEcdsaSignDigest(seckey, binascii.unhexlify(fingerprint))
-        if signature.value[64] == 0:
-            break
-        i += 1
-
-    if i >= max_attempts:
-        # This should never occur, with max_attempts = 100
-        raise Exception("Failed to generate signature with recovery ID of 0")
+    signature = skycoin.SkycoinEcdsaSignDigest(seckey, binascii.unhexlify(fingerprint))
 
     if len(signature.value) != 65:
         raise Exception("Signature length {} is not 65 bytes".format(len(signature.value)))
-    if len(signature.value[64]) != 0:
-        raise Exception("Signature recovery ID is {}, not 0".format(len(signature.value[64])))
 
-    print("Skycoin signature:", binascii.hexlify(signature.value[:64]))
+    print("Skycoin signature:", binascii.hexlify(signature.value))
 
-    return modify(data, slot, index, str(signature.value[:64]))
+    return modify(data, slot, index, str(signature.value))
 
 def main(args):
 
