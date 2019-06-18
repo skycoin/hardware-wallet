@@ -30,20 +30,43 @@ before_script:
   - eval "./ci-scripts/install-${TRAVIS_OS_NAME}.sh"
   # Install linters
   - make install-linters
+
 script:
-  - find tiny-firmware/protob/nanopb/vendor/nanopb
+  - make check-protob
   - make lint
-  - make -C tiny-firmware/protob install-deps-nanopb
-  - make -C tiny-firmware/protob install-protoc
-  - make -C tiny-firmware/protob/nanopb/vendor/nanopb/generator/proto
+  - make -C tiny-firmware/protob build-c
   - make test
   - make clean
-  - find tiny-firmware/protob/nanopb/vendor/nanopb
   - make emulator
   - make clean
   - make full-firmware
-  - md5sum tiny-firmware/bootloader/combine/*.bin
-  - md5sum full-firmware-no-mem-protect.bin
+  - make clean
+
 notifications:
   # https://github.com/kvld/travisci-telegram TravisCI Telegram Bot integration
   webhooks: https://fathomless-fjord-24024.herokuapp.com/notify
+
+before_deploy:
+  - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then
+      make release;
+      VERSION_BOOTLOADER=$(cat tiny-firmware/bootloader/VERSION);
+      ID_VENDOR=12602;
+      ID_PRODUCT=1;
+      export COMBINED_VERSION=${VERSION_BOOTLOADER}-${TRAVIS_TAG}-${ID_VENDOR}-${ID_PRODUCT}-1;
+    else
+      make release-emulator;
+    fi
+
+deploy:
+  - provider: s3
+    access_key_id: $AWS_ACCESS_KEY_ID
+    secret_access_key: $AWS_SECRET_ACCESS_KEY
+    bucket: $AWS_BUCKET
+    skip_cleanup: true
+    local_dir: releases
+    upload-dir: skywallet
+    acl: private
+    region: $AWS_REGION
+    on:
+      repo: skycoin/hardware-wallet
+      branch: master

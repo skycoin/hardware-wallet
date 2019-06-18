@@ -23,27 +23,28 @@
 #include <SDL.h>
 #endif
 
-uint16_t buttonRead(void) {
-	uint16_t state = 0;
+uint16_t buttonRead(void)
+{
+    uint16_t state = 0;
 
 #if !HEADLESS
-	const uint8_t *scancodes = SDL_GetKeyboardState(NULL);
-	if (scancodes[SDL_SCANCODE_LEFT]) {
-		state |= BTN_PIN_NO;
-	}
-	if (scancodes[SDL_SCANCODE_RIGHT]) {
-		state |= BTN_PIN_YES;
-	}
-	if ( simulateButtonPress ) {
-		if ( buttonPressType == BTN_LEFT ) {
-			state |= BTN_PIN_NO;
-		} else if ( buttonPressType == BTN_RIGHT ) {
-			state |= BTN_PIN_YES;
-		} else if ( buttonPressType == BTN_LEFT_RIGHT ) {
-			state = BTN_PIN_NO | BTN_PIN_YES;
-		}
-	}
+    const uint8_t* scancodes = SDL_GetKeyboardState(NULL);
+    if (scancodes[SDL_SCANCODE_LEFT]) {
+        state |= BTN_PIN_NO;
+    }
+    if (scancodes[SDL_SCANCODE_RIGHT]) {
+        state |= BTN_PIN_YES;
+    }
+    if (simulateButtonPress) {
+        if (buttonPressType == BTN_LEFT) {
+            state |= BTN_PIN_NO;
+        } else if (buttonPressType == BTN_RIGHT) {
+            state |= BTN_PIN_YES;
+        } else if (buttonPressType == BTN_LEFT_RIGHT) {
+            state = BTN_PIN_NO | BTN_PIN_YES;
+        }
+    }
 #endif
 
-	return ~state;
+    return ~state;
 }

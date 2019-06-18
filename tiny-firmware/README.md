@@ -110,11 +110,11 @@ You can check the device is seen by your ST-LINK using this command:
 
     st-info --probe
 
-To flash the device on a microcontroller of STM32f2xx family the command is:
+To flash a full firmware build at `FULL_FIRMWARE_PATH` on a microcontroller of STM32f2xx family the command is:
 
-    st-flash write bootloader/combine/combined.bin 0x08000000;
+    st-flash write ${FULL_FIRMWARE_PATH} 0x08000000;
 
-You can also use the `st-skycoin` rule in the [main Makfile](https://github.com/skycoin/hardware-wallet/blob/master/Makefile)
+It is also possible to use the `st-flash` rule in the [main Makefile](https://github.com/skycoin/hardware-wallet/blob/master/Makefile). If `FULL_FIRMWARE_PATH` not set it's value defaults to `./full-firmware-no-mem-protect.bin`, which happens to be the output of `make full-firmware` command.
 
 ## 4. Firmware signature
 

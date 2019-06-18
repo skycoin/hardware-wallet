@@ -41,6 +41,8 @@ tiny-firmware/skycoin-emulator
 tiny-firmware/test_skycoin-emulator
 **/*.img
 **/*.bin
+releases/*
+
 # Debug files
 *.dSYM/
 *.su
