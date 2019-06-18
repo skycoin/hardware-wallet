@@ -110,7 +110,7 @@ ErrCode_t msgSkycoinSignMessageImpl(SkycoinSignMessage* msg, ResponseSkycoinSign
     if (fsm_getKeyPairAtIndex(1, pubkey, seckey, NULL, msg->address_n) != ErrOk) {
         return ErrInvalidValue;
     }
-    if (is_sha256_hash_hex(msg->message)) {
+    if (is_sha256_digest_hex(msg->message)) {
         writebuf_fromhexstr(msg->message, digest);
     } else {
         compute_sha256sum((const uint8_t *)msg->message, digest, strlen(msg->message));
@@ -219,7 +219,7 @@ ErrCode_t msgSkycoinCheckMessageSignatureImpl(SkycoinCheckMessageSignature* msg,
     // TODO - why is this size dynamic? It is always 32 (SHA256_DIGEST_LENGTH) bytes?
     uint8_t digest[(sizeof(msg->message) - 1) / 2] = {0};
     //     RESP_INIT(Success);
-    if (is_sha256_hash_hex(msg->message)) {
+    if (is_sha256_digest_hex(msg->message)) {
         tobuff(msg->message, digest, MIN(sizeof(digest), sizeof(msg->message)));
     } else {
         compute_sha256sum((const uint8_t *)msg->message, digest, strlen(msg->message));

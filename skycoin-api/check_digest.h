@@ -16,6 +16,6 @@
 #ifndef __SKYCOINAPI_CHECKDIGEST_H__
 #define __SKYCOINAPI_CHECKDIGEST_H__
 
-int is_sha256_hash_hex(char* digest);
+int is_sha256_digest_hex(char* digest);
 
 #endif // __SKYCOINAPI_CHECKDIGEST_H__

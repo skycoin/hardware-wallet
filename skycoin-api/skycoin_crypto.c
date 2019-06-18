@@ -83,29 +83,7 @@ void ecdh(const uint8_t* secret_key, const uint8_t* remote_public_key, uint8_t* 
     uint8_t mult[SKYCOIN_SIG_LEN] = {0};
     const curve_info* curve = get_curve_by_name(SECP256K1_NAME);
     ecdh_multiply(curve->params, secret_key, remote_public_key, mult); // 65
-
-    // Compress public key
     compress_pubkey(mult, ecdh_key);
-}
-
-/*
-secret_key: 32 bytes
-remote_public_key: SKYCOIN_PUBKEY_LEN bytes (compressed public key)
-shared_secret: 32 bytes (sha256 hash)
-
-Equivalent to:
-sha256(ecdh(secret, public))
-*/
-void ecdh_shared_secret(const uint8_t* secret_key, const uint8_t* remote_public_key, uint8_t* shared_secret)
-{
-	/*
-	SKYCOIN CIPHER AUDIT
-	Compare to function: UNKNOWN
-	Does this function have any purpose?
-	*/
-    uint8_t ecdh_key[SKYCOIN_PUBKEY_LEN] = {0};
-    ecdh(secret_key, remote_public_key, ecdh_key);
-    compute_sha256sum(ecdh_key, shared_secret, SKYCOIN_PUBKEY_LEN);
 }
 
 void secp256k1sum(const uint8_t* seed, const size_t seed_length, uint8_t* digest)

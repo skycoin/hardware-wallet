@@ -377,50 +377,6 @@ START_TEST(test_compute_sha256sum)
 }
 END_TEST
 
-START_TEST(test_compute_ecdh)
-{
-    uint8_t digest[SHA256_DIGEST_LENGTH] = {0};
-    uint8_t remote_pubkey[33];
-    uint8_t seckey[32];
-
-    memcpy(seckey, fromhex("8f609a12bdfc8572590c66763bb05ce609cc0fdcd0c563067e91c06bfd5f1027"), sizeof(seckey));
-    memcpy(remote_pubkey, fromhex("03008fa0a5668a567cb28ab45e4b6747f5592690c1d519c860f748f6762fa13103"), sizeof(remote_pubkey));
-    memset(digest, 0, SHA256_DIGEST_LENGTH);
-    ecdh_shared_secret(seckey, remote_pubkey, digest);
-    ck_assert_mem_eq(digest, fromhex("907d3c524abb561a80644cdb0cf48e6c71ce33ed6a2d5eed40a771bcf86bd081"), SHA256_DIGEST_LENGTH);
-
-    memcpy(seckey, fromhex("ec4c3702ae8dc5d3aaabc230d362f1ccc1ad2222353d006a057969bf2cc749c1"), sizeof(seckey));
-    memcpy(remote_pubkey, fromhex("03b5d8432d20e55590b3e1e74a86f4689a5c1f5e25cc58840741fe1ac044d5e65c"), sizeof(remote_pubkey));
-    memset(digest, 0, SHA256_DIGEST_LENGTH);
-    ecdh_shared_secret(seckey, remote_pubkey, digest);
-    ck_assert_mem_eq(digest, fromhex("c59b456353d0fbceadc06d7794c42ebf413ab952b29ecf6052d30c7c1a50acda"), SHA256_DIGEST_LENGTH);
-
-    memcpy(seckey, fromhex("19adca686f1ca7befc30af65765597a4d033ac7479850e79cef3ce5cb5b95da4"), sizeof(seckey));
-    memcpy(remote_pubkey, fromhex("0328bd053c69d9c3dd1e864098e503de9839e990c63c48d8a4d6011c423658c4a9"), sizeof(remote_pubkey));
-    memset(digest, 0, SHA256_DIGEST_LENGTH);
-    ecdh_shared_secret(seckey, remote_pubkey, digest);
-    ck_assert_mem_eq(digest, fromhex("1fd2c655bcf19202ee004a3e0ae8f5c64ad1c0ce3b69f32ba18da188bb4d1eea"), SHA256_DIGEST_LENGTH);
-
-    memcpy(seckey, fromhex("085d62c27a37889e02a183ee29962d5f4377831b4a70834ccea24a209e201404"), sizeof(seckey));
-    memcpy(remote_pubkey, fromhex("030684d74471053ac6395ef74a86f88daa25f501329734c837c8c79c600423b220"), sizeof(remote_pubkey));
-    memset(digest, 0, SHA256_DIGEST_LENGTH);
-    ecdh_shared_secret(seckey, remote_pubkey, digest);
-    ck_assert_mem_eq(digest, fromhex("4225281b8498f05e0eaac02be79ce72471c2ddd8c127908b1f717bf64177b287"), SHA256_DIGEST_LENGTH);
-
-    memcpy(seckey, fromhex("3c4289a9d884f74bd05c352fa1c08ce0d65955b59b24a572f46e02807dd42e62"), sizeof(seckey));
-    memcpy(remote_pubkey, fromhex("0223496e9caa207e0f8cc283e970b85f2831732d5e0be2bcf9fa366f7e064a25dd"), sizeof(remote_pubkey));
-    memset(digest, 0, SHA256_DIGEST_LENGTH);
-    ecdh_shared_secret(seckey, remote_pubkey, digest);
-    ck_assert_mem_eq(digest, fromhex("70e5d568b31ed601fcb7f3144888d0633938817ae85417de1fbd0d52e29b5d7c"), SHA256_DIGEST_LENGTH);
-
-    memcpy(seckey, fromhex("a7e130694166cdb95b1e1bbce3f21e4dbd63f46df42b48c5a1f8295033d57d04"), sizeof(seckey));
-    memcpy(remote_pubkey, fromhex("02683e90daa5b0dd195b69e01386390284d3b3723121ce213771d9a0815d12b86c"), sizeof(remote_pubkey));
-    memset(digest, 0, SHA256_DIGEST_LENGTH);
-    ecdh_shared_secret(seckey, remote_pubkey, digest);
-    ck_assert_mem_eq(digest, fromhex("9ab65c0e99605712aac66be1eccccb6dacb867ebaf2b1ebf96d3d92524f247fd"), SHA256_DIGEST_LENGTH);
-}
-END_TEST
-
 
 START_TEST(test_skycoin_ecdsa_verify_digest_recover)
 {
@@ -529,10 +485,10 @@ END_TEST
 
 START_TEST(test_checkdigest)
 {
-    ck_assert(is_sha256_hash_hex("02df09821cff4874198a1dbdc462d224bd99728eeed024185879225762376132"));
-    ck_assert(!is_sha256_hash_hex("02df09821cff4874198a1dbdc462d224bd99728eeed0241858792257623761"));    // too short
-    ck_assert(!is_sha256_hash_hex("02df09821cff4874198a1dbdc462d224bd99728eeed0241858792257623761256")); // too long
-    ck_assert(!is_sha256_hash_hex("02df09821cff4874198a1dbdc462d224bd99728eeed0241858792257623761r"));   // non hex digits
+    ck_assert(is_sha256_digest_hex("02df09821cff4874198a1dbdc462d224bd99728eeed024185879225762376132"));
+    ck_assert(!is_sha256_digest_hex("02df09821cff4874198a1dbdc462d224bd99728eeed0241858792257623761"));    // too short
+    ck_assert(!is_sha256_digest_hex("02df09821cff4874198a1dbdc462d224bd99728eeed0241858792257623761256")); // too long
+    ck_assert(!is_sha256_digest_hex("02df09821cff4874198a1dbdc462d224bd99728eeed0241858792257623761r"));   // non hex digits
 }
 END_TEST
 
@@ -955,12 +911,9 @@ Suite* test_suite(void)
     tcase_add_test(tc, test_generate_deterministic_key_pair_iterator);
     tcase_add_test(tc, test_skycoin_address_from_pubkey);
     tcase_add_test(tc, test_compute_sha256sum);
-    tcase_add_test(tc, test_compute_ecdh);
     tcase_add_test(tc, test_skycoin_ecdsa_verify_digest_recover);
     tcase_add_test(tc, test_base58_decode);
     tcase_add_test(tc, test_ecdsa_sign_digest_inner);
-    // tcase_add_test(tc, test_signature);
-    // tcase_add_test(tc, test_signature_force_low_s);
     tcase_add_test(tc, test_checkdigest);
     tcase_add_test(tc, test_addtransactioninput);
     suite_add_tcase(s, tc);
