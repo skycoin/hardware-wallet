@@ -44,6 +44,7 @@ INC += -I$(TOOLS_DIR)
 CFLAGS += -I$(MKFILE_DIR) $(INC)
 
 SRCS += skycoin_crypto.c
+SRCS += skycoin_signature.c
 SRCS += check_digest.c
 SRCS += $(shell ls $(TOOLS_DIR)/*.c)
 

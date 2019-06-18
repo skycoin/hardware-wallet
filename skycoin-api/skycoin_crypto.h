@@ -15,11 +15,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define SKYCOIN_PUBKEY_LEN 33
-#define SKYCOIN_SECKEY_LEN 32
-#define SKYCOIN_SIG_LEN 65
-#define SKYCOIN_ADDRESS_CHECKSUM_LENGTH 4
-
 typedef struct TransactionOutput {
     uint64_t coin;
     uint64_t hour;
@@ -44,16 +39,14 @@ void transaction_msgToSign(Transaction* self, uint8_t index, uint8_t* signature)
 void ecdh(const uint8_t* pub_key, const uint8_t* sec_key, uint8_t* ecdh_key);
 void secp256k1sum(const uint8_t* seed, const size_t seed_length, uint8_t* digest);
 void generate_deterministic_key_pair_iterator(const uint8_t* seed, const size_t seed_length, uint8_t* nextSeed, uint8_t* seckey, uint8_t* pubkey);
-void compute_sha256sum(const uint8_t* seed, uint8_t* digest /*size SHA256_DIGEST_LENGTH*/, size_t seed_length);
+void compute_sha256sum(const uint8_t* seed, uint8_t* digest, size_t seed_length);
 void add_sha256(const uint8_t* msg1, size_t msg1_len, const uint8_t* msg2, size_t msg2_len, uint8_t* out_digest);
 void generate_pubkey_from_seckey(const uint8_t* seckey, uint8_t* pubkey);
 void generate_deterministic_key_pair(const uint8_t* seed, const size_t seed_length, uint8_t* seckey, uint8_t* pubkey);
 void generate_skycoin_address_from_pubkey(const uint8_t* pubkey, char* address, size_t* size_address);
 int skycoin_ecdsa_sign_digest(const uint8_t* priv_key, const uint8_t* digest, uint8_t* sig);
-int skycoin_ecdsa_verify_digest_recover(const uint8_t* sig, const uint8_t* digest, uint8_t* pub_key);
-void tohex(char* str, const uint8_t* buffer, int bufferLength);
-void tobuff(const char* str, uint8_t* buf, size_t bufferLength);
+void tohex(char* str, const uint8_t* buffer, int buffer_length);
+void tobuff(const char* str, uint8_t* buf, size_t buffer_length);
 void writebuf_fromhexstr(const char* str, uint8_t* buf);
-void compress_pubkey(const uint8_t* long_pub_key, uint8_t* pub_key);
 
 #endif

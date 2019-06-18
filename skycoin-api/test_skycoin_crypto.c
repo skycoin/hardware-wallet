@@ -15,7 +15,9 @@
 
 #include "check_digest.h"
 #include "curves.h"
+#include "skycoin_constants.h"
 #include "skycoin_crypto.h"
+#include "skycoin_signature.h"
 #include "tools/base58.h"
 #include "tools/ecdsa.h"
 #include "tools/secp256k1.h"
