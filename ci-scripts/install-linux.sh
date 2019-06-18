@@ -15,7 +15,7 @@ cp src/.libs/*.so* src
 cd -
 
 # Install build tools
-sudo apt-get install -y build-essential curl unzip git python3 python3-pip python-protobuf gcc-arm-none-eabi libnewlib-arm-none-eabi
+sudo apt-get install -y build-essential curl unzip git python3 python3-pip python-protobuf gcc-arm-none-eabi
 
 # Install SDL
 sudo apt-get install -y libegl1-mesa-dev libgles2-mesa-dev libsdl2-dev libsdl2-image-dev
