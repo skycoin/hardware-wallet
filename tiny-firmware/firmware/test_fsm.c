@@ -44,7 +44,6 @@
 #include "reset.h"
 #include "rng.h"
 #include "setup.h"
-#include "skycoin_check_signature.h"
 #include "skycoin_crypto.h"
 #include "skyparams.h"
 #include "storage.h"

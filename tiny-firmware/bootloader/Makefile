@@ -18,7 +18,6 @@ OBJS += ../gen/fonts.o
 #end libskywallet.a
 
 #skycoin-crypto
-OBJS += $(TOP_DIR)vendor/skycoin-crypto/skycoin_check_signature.o
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/curves.o
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/hmac.o
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/secp256k1.o

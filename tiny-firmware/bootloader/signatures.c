@@ -24,7 +24,7 @@
 #include "bootloader.h"
 #include "sha2.h"
 #include "signatures.h"
-#include "skycoin_check_signature.h"
+#include "skycoin_crypto.h"
 
 #define PUBKEYS 5
 
@@ -87,7 +87,8 @@ int signatures_ok(uint8_t* store_hash)
     uint8_t sign3[65];
 
     memcpy(sign1, (const uint8_t*)FLASH_META_SIG1, 64);
-    if (!recover_pubkey_from_signed_digest(hash, sign1, pubkey1)) {
+    sign1[64] = 0;
+    if (skycoin_ecdsa_verify_digest_recover(sign1, (char*)hash, pubkey1)) {
 #if SIGNATURE_DEBUG
         displaySignatureDebug(hash, sign1, pubkey1, pubkey[sigindex1 - 1]);
 #endif
@@ -101,7 +102,8 @@ int signatures_ok(uint8_t* store_hash)
         return SIG_FAIL;
     }
     memcpy(sign2, (const uint8_t*)FLASH_META_SIG2, 64);
-    if (!recover_pubkey_from_signed_digest(hash, sign2, pubkey2)) {
+    sign2[64] = 0;
+    if (skycoin_ecdsa_verify_digest_recover(sign2, (char*)hash, pubkey2)) {
 #if SIGNATURE_DEBUG
         displaySignatureDebug(hash, sign2, pubkey2, pubkey[sigindex2 - 1]);
 #endif
@@ -115,7 +117,8 @@ int signatures_ok(uint8_t* store_hash)
         return SIG_FAIL;
     }
     memcpy(sign3, (const uint8_t*)FLASH_META_SIG3, 64);
-    if (!recover_pubkey_from_signed_digest(hash, sign3, pubkey3)) {
+    sign3[64] = 0;
+    if (skycoin_ecdsa_verify_digest_recover(sign3, (char*)hash, pubkey3)) {
 #if SIGNATURE_DEBUG
         displaySignatureDebug(hash, sign3, pubkey3, pubkey[sigindex3 - 1]);
 #endif

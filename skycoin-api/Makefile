@@ -45,7 +45,6 @@ CFLAGS += -I$(MKFILE_DIR) $(INC)
 
 SRCS += skycoin_crypto.c
 SRCS += check_digest.c
-SRCS += skycoin_check_signature.c
 SRCS += $(shell ls $(TOOLS_DIR)/*.c)
 
 OBJS   = $(SRCS:.c=.o)

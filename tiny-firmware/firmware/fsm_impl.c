@@ -32,7 +32,6 @@
 #include "recovery.h"
 #include "reset.h"
 #include "rng.h"
-#include "skycoin_check_signature.h"
 #include "skycoin_crypto.h"
 #include "skyparams.h"
 #include "skywallet.h"
@@ -116,7 +115,7 @@ ErrCode_t msgSkycoinSignMessageImpl(SkycoinSignMessage* msg, ResponseSkycoinSign
     } else {
         compute_sha256sum((const uint8_t *)msg->message, digest, strlen(msg->message));
     }
-    int res = ecdsa_skycoin_sign(seckey, digest, signature);
+    int res = skycoin_ecdsa_sign_digest(seckey, digest, signature);
     if (res == -2) {
     	// Fail due to empty digest
     	return ErrInvalidArg;
@@ -141,7 +140,7 @@ ErrCode_t msgSignTransactionMessageImpl(uint8_t* message_digest, uint32_t index,
     if (res != ErrOk) {
         return res;
     }
-    int signres = ecdsa_skycoin_sign(seckey, message_digest, signature);
+    int signres = skycoin_ecdsa_sign_digest(seckey, message_digest, signature);
     if (signres == -2) {
     	// Fail due to empty digest
     	return ErrInvalidArg;
@@ -211,7 +210,7 @@ ErrCode_t msgSkycoinCheckMessageSignatureImpl(SkycoinCheckMessageSignature* msg,
     // NOTE(): -1 because the end of string ('\0')
     // /2 because the hex to buff conversion.
     // TODO - why is this size dynamic? It is always 65 (SKYCOIN_SIG_LEN) bytes?
-    uint8_t sign[(sizeof(msg->signature) - 1) / 2];
+    uint8_t sig[(sizeof(msg->signature) - 1) / 2];
     uint8_t pubkey[SKYCOIN_PUBKEY_LEN] = {0};
     // NOTE(): -1 because the end of string ('\0')
     // /2 because the hex to buff conversion.
@@ -223,9 +222,9 @@ ErrCode_t msgSkycoinCheckMessageSignatureImpl(SkycoinCheckMessageSignature* msg,
     } else {
         compute_sha256sum((const uint8_t *)msg->message, digest, strlen(msg->message));
     }
-    tobuff(msg->signature, sign, sizeof(sign));
+    tobuff(msg->signature, sig, sizeof(sig));
     ErrCode_t ret = recover_pubkey_from_signed_digest(digest, sign, pubkey) ? ErrOk : ErrInvalidSignature;
-    if (ret != 1) {
+    ErrCode_t ret = (skycoin_ecdsa_verify_digest_recover(sig, digest, pubkey) == 0) ? ErrOk : ErrFailed;
         strncpy(failureResp->message, _("Unable to get pub key from signed message"), sizeof(failureResp->message));
         failureResp->has_message = true;
         return ret;
@@ -415,7 +414,7 @@ ErrCode_t msgTransactionSignImpl(TransactionSign* msg, ErrCode_t (*funcConfirmTx
     for (uint32_t i = 0; i < msg->nbIn; ++i) {
         uint8_t digest[32] = {0};
         transaction_msgToSign(&transaction, i, digest);
-        // Only sign inputs owned by Skywallet device
+        // Only sig inputs owned by Skywallet device
         if (msg->transactionIn[i].has_index) {
             if (msgSignTransactionMessageImpl(digest, msg->transactionIn[i].index, resp->signatures[resp->signatures_count]) != ErrOk) {
                 //fsm_sendFailure(FailureType_Failure_InvalidSignature, NULL);

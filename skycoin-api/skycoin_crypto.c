@@ -99,12 +99,7 @@ void ecdh(const uint8_t* secret_key, const uint8_t* remote_public_key, uint8_t* 
     ecdh_multiply(curve->params, secret_key, remote_public_key, mult); // 65
 
     // Compress public key
-    memcpy(&ecdh_key[1], &mult[1], SKYCOIN_PUBKEY_LEN-1);
-    if (mult[64] % 2 == 0) {
-        ecdh_key[0] = 0x02;
-    } else {
-        ecdh_key[0] = 0x03;
-    }
+    compress_pubkey(mult, ecdh_key);
 }
 
 /*
@@ -190,7 +185,8 @@ void generate_deterministic_key_pair_iterator(const uint8_t* seed, const size_t 
 // priv_key 32 bytes private key
 // digest 32 bytes sha256 hash
 // sig 65 bytes compact recoverable signature
-int ecdsa_skycoin_sign(const uint8_t* priv_key, const uint8_t* digest, uint8_t* sig) {
+int skycoin_ecdsa_sign_digest(const uint8_t* priv_key, const uint8_t* digest, uint8_t* sig)
+{
 	int ret;
 	const curve_info* curve = get_curve_by_name(SECP256K1_NAME);
 	uint8_t recid = 0;
@@ -201,6 +197,38 @@ int ecdsa_skycoin_sign(const uint8_t* priv_key, const uint8_t* digest, uint8_t* 
 	}
 	sig[64] = recid;
 	return ret;
+}
+
+// sig 65 bytes compact recoverable signature
+// digest 32 bytes sha256 hash
+// pub_key 33 bytes compressed pubkey
+// Returns 0 on success, 1 on failure
+// Caller must check that the recovered public key matches the signature's claimed owner
+int skycoin_ecdsa_verify_digest_recover(const uint8_t* sig, const uint8_t* digest, uint8_t* pub_key)
+{
+	uint8_t long_pub_key[65];
+	curve_point point;
+	const curve_info* curve = get_curve_by_name(SECP256K1_NAME);
+
+	int ret = ecdsa_verify_digest_recover(curve->params, long_pub_key, sig, digest, sig[64]);
+
+	// validate pubkey
+ 	if (!ecdsa_read_pubkey(curve->params, long_pub_key, &point)) {
+ 		return 1;
+ 	}
+
+ 	compress_pubkey(long_pub_key, pub_key);
+
+	return ret;
+}
+
+void compress_pubkey(const uint8_t* long_pub_key, uint8_t* pub_key) {
+	memcpy(pub_key + 1, long_pub_key + 1, 32);
+	if (long_pub_key[64] & 1) {
+		pub_key[0] = 0x03;
+	} else {
+		pub_key[0] = 0x02;
+	}
 }
 
 /**

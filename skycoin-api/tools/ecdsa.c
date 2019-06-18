@@ -996,6 +996,13 @@ int ecdsa_verify_double(const ecdsa_curve* curve, HasherType hasher_type, const 
 // returns 0 if verification succeeded
 int ecdsa_verify_digest_recover(const ecdsa_curve* curve, uint8_t* pub_key, const uint8_t* sig, const uint8_t* digest, int recid)
 {
+	/*
+	SKYCOIN CIPHER AUDIT
+	Compare to functions: RecoverPublicKey, Signature.Recover
+
+	Note: There is some difference in the math operations, but the result
+	is equivalent.
+	*/
     bignum256 r, s, e;
     curve_point cp, cp2;
 
@@ -1036,9 +1043,15 @@ int ecdsa_verify_digest_recover(const ecdsa_curve* curve, uint8_t* pub_key, cons
     point_add(curve, &cp2, &cp);
     // cp := r^{-1} * r * Pub = Pub
     point_multiply(curve, &r, &cp, &cp);
+
+    if (point_is_infinity(&cp)) {
+    	return 1;
+    }
+
     pub_key[0] = 0x04;
     bn_write_be(&cp.x, pub_key + 1);
     bn_write_be(&cp.y, pub_key + 33);
+
     return 0;
 }
 
