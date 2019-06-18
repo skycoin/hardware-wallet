@@ -85,10 +85,9 @@ int signatures_ok(uint8_t* store_hash)
     uint8_t sign1[65];
     uint8_t sign2[65];
     uint8_t sign3[65];
-    int ret;
 
     memcpy(sign1, (const uint8_t*)FLASH_META_SIG1, 64);
-    if (!recover_pubkey_from_signed_message((char*)hash, sign1, pubkey1)) {
+    if (!recover_pubkey_from_signed_digest(hash, sign1, pubkey1)) {
 #if SIGNATURE_DEBUG
         displaySignatureDebug(hash, sign1, pubkey1, pubkey[sigindex1 - 1]);
 #endif
@@ -102,7 +101,7 @@ int signatures_ok(uint8_t* store_hash)
         return SIG_FAIL;
     }
     memcpy(sign2, (const uint8_t*)FLASH_META_SIG2, 64);
-    if (!recover_pubkey_from_signed_message((char*)hash, sign2, pubkey2)) {
+    if (!recover_pubkey_from_signed_digest(hash, sign2, pubkey2)) {
 #if SIGNATURE_DEBUG
         displaySignatureDebug(hash, sign2, pubkey2, pubkey[sigindex2 - 1]);
 #endif
@@ -116,7 +115,7 @@ int signatures_ok(uint8_t* store_hash)
         return SIG_FAIL;
     }
     memcpy(sign3, (const uint8_t*)FLASH_META_SIG3, 64);
-    if (!recover_pubkey_from_signed_message((char*)hash, sign3, pubkey3)) {
+    if (!recover_pubkey_from_signed_digest(hash, sign3, pubkey3)) {
 #if SIGNATURE_DEBUG
         displaySignatureDebug(hash, sign3, pubkey3, pubkey[sigindex3 - 1]);
 #endif
