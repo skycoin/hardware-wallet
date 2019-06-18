@@ -77,13 +77,15 @@ void generate_deterministic_key_pair(const uint8_t* seed, const size_t seed_leng
 secret_key: 32 bytes
 remote_public_key: SKYCOIN_PUBKEY_LEN bytes (compressed public key)
 ecdh_key: SKYCOIN_PUBKEY_LEN bytes (compressed public key)
+
+Caller should verify that the ecdh_key is a valid pubkey
 */
-void ecdh(const uint8_t* secret_key, const uint8_t* remote_public_key, uint8_t* ecdh_key)
+void ecdh(const uint8_t* pub_key, const uint8_t* sec_key, uint8_t* ecdh_key)
 {
-    uint8_t mult[SKYCOIN_SIG_LEN] = {0};
+    uint8_t long_pub_key[65] = {0};
     const curve_info* curve = get_curve_by_name(SECP256K1_NAME);
-    ecdh_multiply(curve->params, secret_key, remote_public_key, mult); // 65
-    compress_pubkey(mult, ecdh_key);
+    ecdh_multiply(curve->params, sec_key, pub_key, long_pub_key);
+    compress_pubkey(long_pub_key, ecdh_key);
 }
 
 void secp256k1sum(const uint8_t* seed, const size_t seed_length, uint8_t* digest)
@@ -113,7 +115,7 @@ void secp256k1sum(const uint8_t* seed, const size_t seed_length, uint8_t* digest
     generate_deterministic_key_pair(hash2, SHA256_DIGEST_LENGTH, dummy_seckey, pubkey);
 
     // ecdh_key = ECDH(pubkey, seckey)
-    ecdh(seckey, pubkey, ecdh_key);
+    ecdh(pubkey, seckey, ecdh_key);
 
     // sha256(hash + ecdh_key)
     memcpy(hash_ecdh, hash, sizeof(hash));

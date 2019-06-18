@@ -117,8 +117,6 @@ START_TEST(test_secp256k1Hash)
     memset(digest, 0, SHA256_DIGEST_LENGTH);
     secp256k1sum((const uint8_t*)seed, strlen(seed), digest);
     ck_assert_mem_eq(digest, fromhex("5e81d46f56767496bc05ed177c5237cd4fe5013e617c726af43e1cba884f17d1"), SHA256_DIGEST_LENGTH);
-
-    strcpy(seed, "random_seed");
     memset(digest, 0, SHA256_DIGEST_LENGTH);
     secp256k1sum((const uint8_t*)seed, strlen(seed), digest);
     ck_assert_mem_eq(digest, fromhex("5e81d46f56767496bc05ed177c5237cd4fe5013e617c726af43e1cba884f17d1"), SHA256_DIGEST_LENGTH);
@@ -489,6 +487,63 @@ START_TEST(test_checkdigest)
     ck_assert(!is_sha256_digest_hex("02df09821cff4874198a1dbdc462d224bd99728eeed0241858792257623761"));    // too short
     ck_assert(!is_sha256_digest_hex("02df09821cff4874198a1dbdc462d224bd99728eeed0241858792257623761256")); // too long
     ck_assert(!is_sha256_digest_hex("02df09821cff4874198a1dbdc462d224bd99728eeed0241858792257623761r"));   // non hex digits
+}
+END_TEST
+
+
+START_TEST(test_ecdh)
+{
+    // Skycoin core test vectors from TestAbnormalKeys3
+	uint8_t pubkeys[4 * SKYCOIN_PUBKEY_LEN];
+	uint8_t seckeys[4 * SKYCOIN_SECKEY_LEN];
+	uint8_t ecdhkeys[4 * 4 * SKYCOIN_PUBKEY_LEN];
+
+	// vector 1
+	memcpy(seckeys, fromhex("08efb79385c9a8b0d1c6f5f6511be0c6f6c2902963d874a3a4bacc18802528d3"), SKYCOIN_SECKEY_LEN);
+	memcpy(pubkeys, fromhex("03c74332d6094b1f603d4902fc6b1aa09fb3ef81f3015a4000cc0077ff70543c16"), SKYCOIN_PUBKEY_LEN);
+	memcpy(ecdhkeys + SKYCOIN_PUBKEY_LEN * (4 * 0 + 1), fromhex("02e72655a3adf8308a078ee6fe948cf6baf95ef626b1e1fe6e434c737c7c2fef4e"), SKYCOIN_PUBKEY_LEN);
+	memcpy(ecdhkeys + SKYCOIN_PUBKEY_LEN * (4 * 0 + 2), fromhex("03222fe59be5a69c38364dd313bd077b8b1c2216804a4a727e0078b3c77778bc45"), SKYCOIN_PUBKEY_LEN);
+	memcpy(ecdhkeys + SKYCOIN_PUBKEY_LEN * (4 * 0 + 3), fromhex("021096aa98231eaa949542be029a1f3a93815e05e243c69e73d7449d719ff5d76d"), SKYCOIN_PUBKEY_LEN);
+
+	// vector 2
+	memcpy(seckeys + SKYCOIN_SECKEY_LEN, fromhex("78298d9ecdc0640c9ae6883201a53f4518055442642024d23c45858f45d0c3e6"), SKYCOIN_SECKEY_LEN);
+	memcpy(pubkeys + SKYCOIN_PUBKEY_LEN, fromhex("02fa3e6e0b1fb76e26dffe7b1e01fd02677fedfed23a59000092c706b04214bee3"), SKYCOIN_PUBKEY_LEN);
+	memcpy(ecdhkeys + SKYCOIN_PUBKEY_LEN * (4 * 1 + 0), fromhex("02e72655a3adf8308a078ee6fe948cf6baf95ef626b1e1fe6e434c737c7c2fef4e"), SKYCOIN_PUBKEY_LEN);
+	memcpy(ecdhkeys + SKYCOIN_PUBKEY_LEN * (4 * 1 + 2), fromhex("025617125b44ded369deed72f833535d56a3ed035afc44ff64fb7c65986f6ea2a5"), SKYCOIN_PUBKEY_LEN);
+	memcpy(ecdhkeys + SKYCOIN_PUBKEY_LEN * (4 * 1 + 3), fromhex("03849b3f906180cf27c161045e9da551a44476b0d4f7f29d668ba17569953d0a11"), SKYCOIN_PUBKEY_LEN);
+
+	// vector 3
+	memcpy(seckeys + SKYCOIN_SECKEY_LEN * 2, fromhex("04e04fe65bfa6ded50a12769a3bd83d7351b2dbff08c9bac14662b23a3294b9e"), SKYCOIN_SECKEY_LEN);
+	memcpy(pubkeys + SKYCOIN_PUBKEY_LEN * 2, fromhex("034f25c9400dd0f87a9c420b35b5a157d21caa086ef8fa00015bc3c8ab73a1cc4c"), SKYCOIN_PUBKEY_LEN);
+	memcpy(ecdhkeys + SKYCOIN_PUBKEY_LEN * (4 * 2 + 0), fromhex("03222fe59be5a69c38364dd313bd077b8b1c2216804a4a727e0078b3c77778bc45"), SKYCOIN_PUBKEY_LEN);
+	memcpy(ecdhkeys + SKYCOIN_PUBKEY_LEN * (4 * 2 + 1), fromhex("025617125b44ded369deed72f833535d56a3ed035afc44ff64fb7c65986f6ea2a5"), SKYCOIN_PUBKEY_LEN);
+	memcpy(ecdhkeys + SKYCOIN_PUBKEY_LEN * (4 * 2 + 3), fromhex("03fd41f8d279e2df640f17aef31c258a0a9aa6ddcaf4c4bc80f71dccff576b630c"), SKYCOIN_PUBKEY_LEN);
+
+	// vector 3
+	memcpy(seckeys + SKYCOIN_SECKEY_LEN * 3, fromhex("2f5141f1b75747996c5de77c911dae062d16ae48799052c04ead20ccd5afa113"), SKYCOIN_SECKEY_LEN);
+	memcpy(pubkeys + SKYCOIN_PUBKEY_LEN * 3, fromhex("03fe58baefc491a9dcf0939ab6252f81f6d9515105bd89c000bb7f2a694e8a8b72"), SKYCOIN_PUBKEY_LEN);
+	memcpy(ecdhkeys + SKYCOIN_PUBKEY_LEN * (4 * 3 + 0), fromhex("021096aa98231eaa949542be029a1f3a93815e05e243c69e73d7449d719ff5d76d"), SKYCOIN_PUBKEY_LEN);
+	memcpy(ecdhkeys + SKYCOIN_PUBKEY_LEN * (4 * 3 + 1), fromhex("03849b3f906180cf27c161045e9da551a44476b0d4f7f29d668ba17569953d0a11"), SKYCOIN_PUBKEY_LEN);
+	memcpy(ecdhkeys + SKYCOIN_PUBKEY_LEN * (4 * 3 + 2), fromhex("03fd41f8d279e2df640f17aef31c258a0a9aa6ddcaf4c4bc80f71dccff576b630c"), SKYCOIN_PUBKEY_LEN);
+
+	int i, j;
+	uint8_t pubkeya[SKYCOIN_PUBKEY_LEN];
+	uint8_t pubkeyb[SKYCOIN_PUBKEY_LEN];
+	for (i = 0; i < 4; i++) {
+		for (j = 0; j < 4; j++) {
+			if (i == j) {
+				continue;
+			}
+
+			memset(pubkeya, 0, SKYCOIN_PUBKEY_LEN);
+			memset(pubkeyb, 0, SKYCOIN_PUBKEY_LEN);
+			ecdh(pubkeys + SKYCOIN_PUBKEY_LEN * i, seckeys + SKYCOIN_SECKEY_LEN * j, pubkeya);
+			ecdh(pubkeys + SKYCOIN_PUBKEY_LEN * j, seckeys + SKYCOIN_SECKEY_LEN * i, pubkeyb);
+			int offset = SKYCOIN_PUBKEY_LEN * ((4 * i) + j);
+			ck_assert_mem_eq(ecdhkeys + (offset), pubkeya, SKYCOIN_PUBKEY_LEN);
+			ck_assert_mem_eq(pubkeya, pubkeyb, SKYCOIN_PUBKEY_LEN);
+		}
+	}
 }
 END_TEST
 
@@ -916,6 +971,7 @@ Suite* test_suite(void)
     tcase_add_test(tc, test_ecdsa_sign_digest_inner);
     tcase_add_test(tc, test_checkdigest);
     tcase_add_test(tc, test_addtransactioninput);
+    tcase_add_test(tc, test_ecdh);
     suite_add_tcase(s, tc);
 
     return s;

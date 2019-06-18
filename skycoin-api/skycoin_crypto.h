@@ -41,7 +41,7 @@ void transaction_addOutput(Transaction* self, uint32_t coin, uint32_t hour, char
 void transaction_innerHash(Transaction* self);
 void transaction_msgToSign(Transaction* self, uint8_t index, uint8_t* signature);
 
-void ecdh(const uint8_t* secret_key, const uint8_t* remote_public_key, uint8_t* ecdh_key /*should be size SHA256_DIGEST_LENGTH*/);
+void ecdh(const uint8_t* pub_key, const uint8_t* sec_key, uint8_t* ecdh_key);
 void secp256k1sum(const uint8_t* seed, const size_t seed_length, uint8_t* digest);
 void generate_deterministic_key_pair_iterator(const uint8_t* seed, const size_t seed_length, uint8_t* nextSeed, uint8_t* seckey, uint8_t* pubkey);
 void compute_sha256sum(const uint8_t* seed, uint8_t* digest /*size SHA256_DIGEST_LENGTH*/, size_t seed_length);
