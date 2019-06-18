@@ -225,8 +225,7 @@ ErrCode_t msgSkycoinCheckMessageSignatureImpl(SkycoinCheckMessageSignature* msg,
         compute_sha256sum((const uint8_t *)msg->message, digest, strlen(msg->message));
     }
     tobuff(msg->signature, sig, sizeof(sig));
-
-    ErrCode_t ret = (skycoin_ecdsa_verify_digest_recover(sig, digest, pubkey) == 0) ? ErrOk : ErrFailed;
+    ErrCode_t ret = (skycoin_ecdsa_verify_digest_recover(sig, digest, pubkey) == 0) ? ErrOk : ErrInvalidSignature;
 
     if (ret == ErrOk) {
         size_t pubkeybase58_size = sizeof(pubkeybase58);
