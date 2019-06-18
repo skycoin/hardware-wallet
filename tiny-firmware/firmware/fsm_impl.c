@@ -224,8 +224,8 @@ ErrCode_t msgSkycoinCheckMessageSignatureImpl(SkycoinCheckMessageSignature* msg,
         compute_sha256sum((const uint8_t *)msg->message, digest, strlen(msg->message));
     }
     tobuff(msg->signature, sign, sizeof(sign));
-    ErrCode_t ret = recover_pubkey_from_signed_digest((char*)digest, sign, pubkey) ? ErrOk : ErrInvalidSignature;
-    if (ret != ErrOk) {
+    ErrCode_t ret = recover_pubkey_from_signed_digest(digest, sign, pubkey) ? ErrOk : ErrInvalidSignature;
+    if (ret != 1) {
         strncpy(failureResp->message, _("Unable to get pub key from signed message"), sizeof(failureResp->message));
         failureResp->has_message = true;
         return ret;
@@ -246,7 +246,7 @@ ErrCode_t msgSkycoinCheckMessageSignatureImpl(SkycoinCheckMessageSignature* msg,
     }
     strncpy(failureResp->message, _("Address verification failed"), sizeof(failureResp->message));
     failureResp->has_message = true;
-    return ErrInvalidPubKey;
+    return ErrInvalidSignature;
 }
 
 ErrCode_t verifyLanguage(char* lang)
