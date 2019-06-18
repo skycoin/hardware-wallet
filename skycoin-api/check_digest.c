@@ -19,7 +19,9 @@ static bool matchhexdigit(char c)
     return ((c >= '0') && (c <= '9')) || ((c >= 'a') && (c <= 'f')) || ((c >= 'A') && (c <= 'F'));
 }
 
-int is_digest(char* digest)
+// is_sha256_hash_hex returns true if the digest array looks like a
+// hex-encoded sha256 hash
+int is_sha256_hash_hex(char* digest)
 {
     if (strlen(digest) != 64) {
         return false;

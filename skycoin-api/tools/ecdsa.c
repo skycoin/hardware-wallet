@@ -2,6 +2,7 @@
  * Copyright (c) 2013-2014 Tomas Dzetkulic
  * Copyright (c) 2013-2014 Pavol Rusnak
  * Copyright (c)      2015 Jochen Hoenicke
+ * Copyright (c)      2019 Skycoin Developers
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the "Software"),
@@ -696,68 +697,37 @@ int ecdsa_sign_double(const ecdsa_curve* curve, HasherType hasher_type, const ui
 // digest is 32 bytes of digest
 // is_canonical is an optional function that checks if the signature
 // conforms to additional coin-specific rules.
+// See https://github.com/trezor/trezor-crypto/commit/133c068f374871dcb84715bdd4db3dd69a2a6382
+// for an explanation of when is_canonical is used
 int ecdsa_sign_digest(const ecdsa_curve* curve, const uint8_t* priv_key, const uint8_t* digest, uint8_t* sig, uint8_t* pby, int (*is_canonical)(uint8_t by, uint8_t sig[64]))
 {
     int i;
-    curve_point R;
     bignum256 k, z, randk;
-    bignum256* s = &R.y;
-    uint8_t by; // signature recovery byte
     bn_read_be(digest, &z);
 
+    // message digest to sign must not be 0
+    if (bn_is_zero(&z)) {
+    	return -2;
+    }
+
     for (i = 0; i < 10000; i++) {
-        // generate random number k
+        // generate random number k (nonce)
         generate_k_random(&k, &curve->order);
+	    // generate another random number randk to randomize operations
+	    // to counter side-channel attacks.
+	    // This is not in the original ecdsa algorithm specification
+	    // and does not change the output of the algorithm. Its purpose is
+	    // introduce randomness in the numeric calculations to interfere with
+	    // timing attacks
+	    generate_k_random(&randk, &curve->order);
 
-        // compute k*G
-        scalar_multiply(curve, &k, &R);
-        by = R.y.val[0] & 1;
-        // r = (rx mod n)
-        if (!bn_is_less(&R.x, &curve->order)) {
-            bn_subtract(&R.x, &curve->order, &R.x);
-            by |= 2;
-        }
-        // if r is zero, we retry
-        if (bn_is_zero(&R.x)) {
-            continue;
-        }
+	    if (ecdsa_sign_digest_inner(curve, priv_key, &z, &k, &randk, sig, pby, is_canonical)) {
+	    	continue;
+	    }
 
-        // randomize operations to counter side-channel attacks
-        generate_k_random(&randk, &curve->order);
-        bn_multiply(&randk, &k, &curve->order); // k*rand
-        bn_inverse(&k, &curve->order);          // (k*rand)^-1
-        bn_read_be(priv_key, s);                // priv
-        bn_multiply(&R.x, s, &curve->order);    // R.x*priv
-        bn_add(s, &z);                          // R.x*priv + z
-        bn_multiply(&k, s, &curve->order);      // (k*rand)^-1 (R.x*priv + z)
-        bn_multiply(&randk, s, &curve->order);  // k^-1 (R.x*priv + z)
-        bn_mod(s, &curve->order);
-        // if s is zero, we retry
-        if (bn_is_zero(s)) {
-            continue;
-        }
-
-        // if S > order/2 => S = -S
-        if (bn_is_less(&curve->order_half, s)) {
-            bn_subtract(&curve->order, s, s);
-            by ^= 1;
-        }
-        // we are done, R.x and s is the result signature
-        bn_write_be(&R.x, sig);
-        bn_write_be(s, sig + 32);
-
-        // check if the signature is acceptable or retry
-        if (is_canonical && !is_canonical(by, sig)) {
-            continue;
-        }
-
-        if (pby) {
-            *pby = by;
-        }
-
-        memzero(&k, sizeof(k));
-        memzero(&randk, sizeof(randk));
-        return 0;
+	    memzero(&k, sizeof(k));
+	    memzero(&randk, sizeof(randk));
+	    return 0;
     }
 
     // Too many retries without a valid signature
@@ -765,6 +735,59 @@ int ecdsa_sign_digest(const ecdsa_curve* curve, const uint8_t* priv_key, const u
     memzero(&k, sizeof(k));
     memzero(&randk, sizeof(randk));
     return -1;
+}
+
+int ecdsa_sign_digest_inner(const ecdsa_curve* curve, const uint8_t* priv_key, bignum256* z, bignum256* k, bignum256* randk, uint8_t* sig, uint8_t* pby, int (*is_canonical)(uint8_t by, uint8_t sig[64]))
+{
+    curve_point R;
+    bignum256* s = &R.y;
+    uint8_t by; // signature recovery byte
+
+    // compute k*G
+    scalar_multiply(curve, k, &R);
+    by = R.y.val[0] & 1;
+    // r = (rx mod n)
+    if (!bn_is_less(&R.x, &curve->order)) {
+        bn_subtract(&R.x, &curve->order, &R.x);
+        by |= 2;
+    }
+    // if r is zero, we retry
+    if (bn_is_zero(&R.x)) {
+        return -1;
+    }
+
+    bn_multiply(randk, k, &curve->order); // k*rand
+    bn_inverse(k, &curve->order);         // (k*rand)^-1
+    bn_read_be(priv_key, s);              // priv
+    bn_multiply(&R.x, s, &curve->order);  // R.x*priv
+    bn_add(s, z);                         // R.x*priv + z
+    bn_multiply(k, s, &curve->order);     // (k*rand)^-1 (R.x*priv + z)
+    bn_multiply(randk, s, &curve->order); // k^-1 (R.x*priv + z)
+    bn_mod(s, &curve->order);
+    // if s is zero, we retry
+    if (bn_is_zero(s)) {
+        return -1;
+    }
+
+    // if S > order/2 => S = -S
+    if (bn_is_less(&curve->order_half, s)) {
+        bn_subtract(&curve->order, s, s);
+        by ^= 1;
+    }
+    // we are done, R.x and s is the result signature
+    bn_write_be(&R.x, sig);
+    bn_write_be(s, sig + 32);
+
+    // check if the signature is acceptable or retry
+    if (is_canonical && !is_canonical(by, sig)) {
+        return -1;
+    }
+
+    if (pby) {
+        *pby = by;
+    }
+
+    return 0;
 }
 
 void ecdsa_get_public_key33(const ecdsa_curve* curve, const uint8_t* priv_key, uint8_t* pub_key)

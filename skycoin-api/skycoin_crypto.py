@@ -8,11 +8,11 @@ class SkycoinCrypto(object):
     def __init__(self):
         self.lib = cdll.LoadLibrary(dir_path + '/libskycoin-crypto.so')
 
-    def EcdsaSkycoinSign(self, digest, seckey, seed=1):
-        signature = create_string_buffer(65)
-        self.lib.ecdsa_skycoin_sign(c_uint32(seed), seckey, digest, signature)
-        return signature
-    
+    def EcdsaSkycoinSign(self, seckey, digest):
+         signature = create_string_buffer(65)
+         ret = self.lib.ecdsa_skycoin_sign(seckey, digest, signature)
+         return ret, signature
+
     def ComputeSha256Sum(self, seed):
         digest = create_string_buffer(32)
         self.lib.compute_sha256sum(seed, digest, self.lib.strlen(seed))
@@ -26,10 +26,10 @@ class SkycoinCrypto(object):
     def Base58AddressFromPubkey(self, pubkey):
         address = create_string_buffer(36)
         address_size = c_size_t(36)
-        self.lib.generate_base58_address_from_pubkey(pubkey, address, byref(address_size))
+        self.lib.generate_skycoin_address_from_pubkey(pubkey, address, byref(address_size))
         return address
 
     def RecoverPubkeyFromSignature(self, message, signature):
         pubkey = create_string_buffer(33)
-        self.lib.recover_pubkey_from_signed_message(message, signature, pubkey)
-        return pubkey
+        ret = self.lib.recover_pubkey_from_signed_digest(message, signature, pubkey)
+        return bool(ret), pubkey

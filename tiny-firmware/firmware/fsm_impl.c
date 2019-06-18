@@ -104,46 +104,55 @@ ErrCode_t msgGenerateMnemonicImpl(GenerateMnemonic* msg, void (*random_buffer_fu
 ErrCode_t msgSkycoinSignMessageImpl(SkycoinSignMessage* msg, ResponseSkycoinSignMessage* resp)
 {
     CHECK_MNEMONIC_RET_ERR_CODE
-    uint8_t pubkey[33] = {0};
-    uint8_t seckey[32] = {0};
+    uint8_t pubkey[SKYCOIN_PUBKEY_LEN] = {0};
+    uint8_t seckey[SKYCOIN_SECKEY_LEN] = {0};
+    uint8_t digest[SHA256_DIGEST_LENGTH] = {0};
+    uint8_t signature[SKYCOIN_SIG_LEN];
     if (fsm_getKeyPairAtIndex(1, pubkey, seckey, NULL, msg->address_n) != ErrOk) {
         return ErrInvalidValue;
     }
-    uint8_t digest[32] = {0};
-    if (is_digest(msg->message)) {
+    if (is_sha256_hash_hex(msg->message)) {
         writebuf_fromhexstr(msg->message, digest);
     } else {
         compute_sha256sum((const uint8_t *)msg->message, digest, strlen(msg->message));
     }
-    uint8_t signature[65];
-    int res = ecdsa_skycoin_sign(random32(), seckey, digest, signature);
-    if (res) {
+    int res = ecdsa_skycoin_sign(seckey, digest, signature);
+    if (res == -2) {
+    	// Fail due to empty digest
+    	return ErrInvalidArg;
+    } else if (res) {
         // Too many retries without a valid signature
         // -> fail with an error
         return ErrFailed;
     }
-    const size_t hex_len = 2 * sizeof(signature);
+    const size_t hex_len = 2 * SKYCOIN_SIG_LEN;
     char signature_in_hex[hex_len];
-    tohex(signature_in_hex, signature, sizeof(signature));
+    tohex(signature_in_hex, signature, SKYCOIN_SIG_LEN);
     memcpy(resp->signed_message, signature_in_hex, hex_len);
     return ErrOk;
 }
 
 ErrCode_t msgSignTransactionMessageImpl(uint8_t* message_digest, uint32_t index, char* signed_message)
 {
-    uint8_t pubkey[33] = {0};
-    uint8_t seckey[32] = {0};
-    uint8_t signature[65];
+    uint8_t pubkey[SKYCOIN_PUBKEY_LEN] = {0};
+    uint8_t seckey[SKYCOIN_SECKEY_LEN] = {0};
+    uint8_t signature[SKYCOIN_SIG_LEN];
     ErrCode_t res = fsm_getKeyPairAtIndex(1, pubkey, seckey, NULL, index);
     if (res != ErrOk) {
         return res;
     }
-    if (ecdsa_skycoin_sign(random32(), seckey, message_digest, signature)) {
-        res = ErrFailed;
+    int signres = ecdsa_skycoin_sign(seckey, message_digest, signature);
+    if (signres == -2) {
+    	// Fail due to empty digest
+    	return ErrInvalidArg;
+    } else if (res) {
+        // Too many retries without a valid signature
+        // -> fail with an error
+        return ErrFailed;
     }
-    tohex(signed_message, signature, sizeof(signature));
+    tohex(signed_message, signature, SKYCOIN_SIG_LEN);
 #if EMULATOR
-    printf("Size_sign: %ld, sign58: %s\n", sizeof(signature) * 2, signed_message);
+    printf("Size_sign: %d, sig(hex): %s\n", SKYCOIN_SIG_LEN * 2, signed_message);
 #endif
     return res;
 }
@@ -159,7 +168,7 @@ ErrCode_t fsm_getKeyPairAtIndex(uint32_t nbAddress, uint8_t* pubkey, uint8_t* se
     }
     generate_deterministic_key_pair_iterator((const uint8_t*)mnemo, strlen(mnemo), nextSeed, seckey, pubkey);
     if (respSkycoinAddress != NULL && start_index == 0) {
-        generate_base58_address_from_pubkey(pubkey, respSkycoinAddress->addresses[0], &size_address);
+        generate_skycoin_address_from_pubkey(pubkey, respSkycoinAddress->addresses[0], &size_address);
         respSkycoinAddress->addresses_count++;
     }
     memcpy(seed, nextSeed, 32);
@@ -169,7 +178,7 @@ ErrCode_t fsm_getKeyPairAtIndex(uint32_t nbAddress, uint8_t* pubkey, uint8_t* se
         seed[32] = 0;
         if (respSkycoinAddress != NULL && ((i + 1) >= start_index)) {
             size_address = 36;
-            generate_base58_address_from_pubkey(pubkey, respSkycoinAddress->addresses[respSkycoinAddress->addresses_count], &size_address);
+            generate_skycoin_address_from_pubkey(pubkey, respSkycoinAddress->addresses[respSkycoinAddress->addresses_count], &size_address);
             respSkycoinAddress->addresses_count++;
         }
     }
@@ -201,20 +210,21 @@ ErrCode_t msgSkycoinCheckMessageSignatureImpl(SkycoinCheckMessageSignature* msg,
 {
     // NOTE(): -1 because the end of string ('\0')
     // /2 because the hex to buff conversion.
+    // TODO - why is this size dynamic? It is always 65 (SKYCOIN_SIG_LEN) bytes?
     uint8_t sign[(sizeof(msg->signature) - 1) / 2];
-    uint8_t pubkey[33] = {0};
+    uint8_t pubkey[SKYCOIN_PUBKEY_LEN] = {0};
     // NOTE(): -1 because the end of string ('\0')
     // /2 because the hex to buff conversion.
+    // TODO - why is this size dynamic? It is always 32 (SHA256_DIGEST_LENGTH) bytes?
     uint8_t digest[(sizeof(msg->message) - 1) / 2] = {0};
     //     RESP_INIT(Success);
-    if (is_digest(msg->message)) {
+    if (is_sha256_hash_hex(msg->message)) {
         tobuff(msg->message, digest, MIN(sizeof(digest), sizeof(msg->message)));
     } else {
         compute_sha256sum((const uint8_t *)msg->message, digest, strlen(msg->message));
     }
     tobuff(msg->signature, sign, sizeof(sign));
-    ErrCode_t ret = recover_pubkey_from_signed_message(
-                (char*)digest, sign, pubkey) == 0 ? ErrOk : ErrInvalidPubKey;
+    ErrCode_t ret = recover_pubkey_from_signed_digest(digest, sign, pubkey) ? ErrOk : ErrFailed;
     if (ret != ErrOk) {
         strncpy(failureResp->message, _("Unable to get pub key from signed message"), sizeof(failureResp->message));
         failureResp->has_message = true;
@@ -224,7 +234,7 @@ ErrCode_t msgSkycoinCheckMessageSignatureImpl(SkycoinCheckMessageSignature* msg,
         // NOTE(): -1 because the end of string ('\0')
         char pubkeybase58[sizeof(msg->address) - 1];
         size_t pubkeybase58_size = sizeof(pubkeybase58);
-        generate_base58_address_from_pubkey(pubkey, pubkeybase58, &pubkeybase58_size);
+        generate_skycoin_address_from_pubkey(pubkey, pubkeybase58, &pubkeybase58_size);
         if (memcmp(pubkeybase58, msg->address, pubkeybase58_size)) {
             strncpy(failureResp->message, _("Address does not match"), sizeof(failureResp->message));
             failureResp->has_message = true;
@@ -382,7 +392,7 @@ ErrCode_t msgTransactionSignImpl(TransactionSign* msg, ErrCode_t (*funcConfirmTx
             size_t size_address = 36;
             char address[36] = {0};
             fsm_getKeyPairAtIndex(1, pubkey, seckey, NULL, msg->transactionOut[i].address_index);
-            generate_base58_address_from_pubkey(pubkey, address, &size_address);
+            generate_skycoin_address_from_pubkey(pubkey, address, &size_address);
             if (strcmp(msg->transactionOut[i].address, address) != 0) {
 // fsm_sendFailure(FailureType_Failure_AddressGeneration, _("Wrong return address"));
 #if EMULATOR
@@ -403,7 +413,7 @@ ErrCode_t msgTransactionSignImpl(TransactionSign* msg, ErrCode_t (*funcConfirmTx
     CHECK_PIN_UNCACHED_RET_ERR_CODE
 
     for (uint32_t i = 0; i < msg->nbIn; ++i) {
-        uint8_t digest[32];
+        uint8_t digest[32] = {0};
         transaction_msgToSign(&transaction, i, digest);
         // Only sign inputs owned by Skywallet device
         if (msg->transactionIn[i].has_index) {
