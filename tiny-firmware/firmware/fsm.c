@@ -38,7 +38,6 @@
 #include "recovery.h"
 #include "reset.h"
 #include "rng.h"
-#include "skycoin_check_signature.h"
 #include "skycoin_crypto.h"
 #include "skyparams.h"
 #include "skywallet.h"

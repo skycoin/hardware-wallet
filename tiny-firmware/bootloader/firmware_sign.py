@@ -78,7 +78,7 @@ def check_signatures(data):
             pk = pubkeys[indexes[x]]
 
             skycoin = skycoin_crypto.SkycoinCrypto()
-            pubkey = skycoin.RecoverPubkeyFromSignature(binascii.unhexlify(fingerprint), signature)
+            pubkey = skycoin.SkycoinEcdsaVerifyDigestRecover(signature, binascii.unhexlify(fingerprint))
             pubkey = binascii.hexlify(pubkey)
 
             if (pubkey == pk):
@@ -141,7 +141,7 @@ def sign(data):
     max_attempts = 100
     i = 0
     while i < max_attempts:
-        signature = skycoin.EcdsaSkycoinSign(seckey, binascii.unhexlify(fingerprint))
+        signature = skycoin.SkycoinEcdsaSignDigest(seckey, binascii.unhexlify(fingerprint))
         if signature.value[64] == 0:
             break
         i += 1
