@@ -69,4 +69,4 @@ deploy:
     region: $AWS_REGION
     on:
       repo: skycoin/hardware-wallet
-      branch: master
+      tags: true
