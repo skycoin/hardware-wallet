@@ -149,7 +149,7 @@ proto:
 libopencm3:
 	cd vendor/libopencm3 && make
 
-sign: $(NAME).bin
+sign-firmware: $(NAME).bin
 	bootloader/firmware_sign.py -f $(NAME).bin
 
 include Makefile.include

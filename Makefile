@@ -166,10 +166,18 @@ tiny-firmware/bootloader/libskycoin-crypto.so:
 
 tiny-firmware/skyfirmware.bin: firmware-deps
 	rm -f tiny-firmware/memory.o tiny-firmware/gen/bitmaps.o # Force rebuild of these two files
-	REVERSE_BUTTONS=1 VERSION_MAJOR=$(VERSION_FIRMWARE_MAJOR) VERSION_MINOR=$(VERSION_FIRMWARE_MINOR) VERSION_PATCH=$(VERSION_FIRMWARE_PATCH) make -C tiny-firmware/ sign
+	REVERSE_BUTTONS=1 VERSION_MAJOR=$(VERSION_FIRMWARE_MAJOR) VERSION_MINOR=$(VERSION_FIRMWARE_MINOR) VERSION_PATCH=$(VERSION_FIRMWARE_PATCH) make -C tiny-firmware/ sign-firmware
 
-sign: tiny-firmware/bootloader/libskycoin-crypto.so tiny-firmware/skyfirmware.bin ## Sign skycoin wallet firmware
+sign: sign-firmware sign-bootloader-no-mem-protect ## Sign firmware and non mem protect bootloader
+
+sign-firmware: tiny-firmware/bootloader/libskycoin-crypto.so tiny-firmware/skyfirmware.bin ## Sign skycoin wallet firmware
 	tiny-firmware/bootloader/firmware_sign.py -s -f tiny-firmware/skyfirmware.bin
+
+sign-bootloader-mem-protect: tiny-firmware/bootloader/libskycoin-crypto.so tiny-firmware/skyfirmware.bin ## Sign mem protect bootloader
+	tiny-firmware/bootloader/firmware_sign.py -s -f bootloader-memory-protected.bin
+
+sign-bootloader-no-mem-protect: tiny-firmware/bootloader/libskycoin-crypto.so tiny-firmware/skyfirmware.bin ## Sign non mem protect bootloader
+	tiny-firmware/bootloader/firmware_sign.py -s -f skybootloader-no-memory-protect.bin
 
 full-firmware-mem-protect: bootloader-mem-protect firmware ## Build full firmware (RDP level 2)
 	cp bootloader-memory-protected.bin tiny-firmware/bootloader/combine/bl.bin
