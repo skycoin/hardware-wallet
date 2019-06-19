@@ -110,7 +110,7 @@ We are using python unit tests for the cryptography, so all the values are pre-c
 The list of the functions which are tested:
 - test_sign
 - test_sha256sum
-- test_generate_pubkey_from_seckey
+- test_generate_skycoin_pubkey_from_seckey
 - test_base58_address_from_pubkey
 - test_recover_pubkey_from_signed_digest
 This specific order is used because of the dependencies of the function.

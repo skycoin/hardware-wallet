@@ -15,18 +15,18 @@ class SkycoinCrypto(object):
 
     def ComputeSha256Sum(self, seed):
         digest = create_string_buffer(32)
-        self.lib.compute_sha256sum(seed, digest, self.lib.strlen(seed))
+        self.lib.sha256sum(seed, digest, self.lib.strlen(seed))
         return digest
 
-    def GeneratePubkeyFromSeckey(self, seckey):
+    def SkycoinPubkeyFromSeckey(self, seckey):
         pubkey = create_string_buffer(33)
-        self.lib.generate_pubkey_from_seckey(seckey, pubkey)
+        self.lib.skycoin_pubkey_from_seckey(seckey, pubkey)
         return pubkey
 
-    def Base58AddressFromPubkey(self, pubkey):
+    def SkycoinAddressFromPubkey(self, pubkey):
         address = create_string_buffer(36)
         address_size = c_size_t(36)
-        self.lib.generate_skycoin_address_from_pubkey(pubkey, address, byref(address_size))
+        self.lib.skycoin_address_from_pubkey(pubkey, address, byref(address_size))
         return address
 
     def SkycoinEcdsaVerifyDigestRecover(self, signature, digest):

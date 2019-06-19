@@ -44,7 +44,7 @@ def prepare(data):
     meta += b'\x00' * SLOTS  # signature index #1-#3
     meta += b'\x01'       # flags
     meta += b'\x00' * 52  # reserved
-    meta += b'\x00' * 64 * SLOTS  # signature #1-#3
+    meta += b'\x00' * 65 * SLOTS  # signature #1-#3
 
     if data[:4] == b'SKY1':
         # Replace existing header
@@ -70,7 +70,7 @@ def check_signatures(data):
 
     used = []
     for x in range(SLOTS):
-        signature = data[SIG_START + 64 * x:SIG_START + 64 * x + 64]
+        signature = data[SIG_START + 65 * x:SIG_START + 65 * x + 65]
 
         if indexes[x] == 0:
             print("Slot #%d" % (x + 1), 'is empty')
@@ -98,7 +98,7 @@ def modify(data, slot, index, signature):
     data = data[:INDEXES_START + slot - 1 ] + chr(index) + data[INDEXES_START + slot:]
 
     # Put signature to data
-    data = data[:SIG_START + 64 * (slot - 1) ] + signature + data[SIG_START + 64 * slot:]
+    data = data[:SIG_START + 65 * (slot - 1) ] + signature + data[SIG_START + 65 * slot:]
 
     return data
 
@@ -114,10 +114,10 @@ def sign(data):
     secexp = raw_input()
     if secexp.strip() == '':
         # Blank key, let's remove existing signature from slot
-        return modify(data, slot, 0, '\x00' * 64)
+        return modify(data, slot, 0, '\x00' * 65)
     skycoin = skycoin_crypto.SkycoinCrypto()
     seckey = binascii.unhexlify(secexp)
-    pubkey = skycoin.GeneratePubkeyFromSeckey(seckey)
+    pubkey = skycoin.SkycoinPubkeyFromSeckey(seckey)
     pubkey = binascii.hexlify(pubkey.value)
 
     to_sign = prepare(data)[256:] # without meta

@@ -15,7 +15,7 @@ class TestSkycoinCrypto(unittest.TestCase):
         self.assertEqual(65, len(sig))
         ret, pubkey = skycoin.SkycoinEcdsaVerifyDigestRecover(sig, digest)
         self.assertEqual(ret, 0)
-        expectPubkey = skycoin.GeneratePubkeyFromSeckey(seckey)
+        expectPubkey = skycoin.SkycoinPubkeyFromSeckey(seckey)
         self.assertEqual(binascii.hexlify(pubkey), binascii.hexlify(expectPubkey))
 
         digest = create_string_buffer(b'\x00\x1a\xa9\xe4\x16\xaf\xf5\xf3\xa3\xc7\xf9\xae\x08\x11\x75\x7c\xf5\x4f\x39\x3d\x50\xdf\x86\x1f\x5c\x33\x74\x79\x54\x34\x1a\xa7')
@@ -25,7 +25,7 @@ class TestSkycoinCrypto(unittest.TestCase):
         self.assertEqual(65, len(sig))
         ret, pubkey = skycoin.SkycoinEcdsaVerifyDigestRecover(sig, digest)
         self.assertEqual(ret, 0)
-        expectPubkey = skycoin.GeneratePubkeyFromSeckey(seckey)
+        expectPubkey = skycoin.SkycoinPubkeyFromSeckey(seckey)
         self.assertEqual(binascii.hexlify(pubkey), binascii.hexlify(expectPubkey))
 
     def test_sha256sum(self):
@@ -42,28 +42,28 @@ class TestSkycoinCrypto(unittest.TestCase):
         digest = skycoin.ComputeSha256Sum(seed)
         self.assertEqual(binascii.hexlify(digest), binascii.hexlify(b'\xa5\xda\xa8\xc9\xd0\x3a\x9e\xc5\x00\x08\x8b\xdf\x01\x23\xa9\xd8\x65\x72\x5b\x03\x89\x5b\x12\x91\xf2\x55\x00\x73\x72\x98\xe0\xa9'))
 
-    def test_generate_pubkey_from_seckey(self):
+    def test_generate_skycoin_pubkey_from_seckey(self):
         skycoin = SkycoinCrypto()
         seckey = create_string_buffer(b'\xa7\xe1\x30\x69\x41\x66\xcd\xb9\x5b\x1e\x1b\xbc\xe3\xf2\x1e\x4d\xbd\x63\xf4\x6d\xf4\x2b\x48\xc5\xa1\xf8\x29\x50\x33\xd5\x7d\x04')
-        pubkey = skycoin.GeneratePubkeyFromSeckey(seckey)
+        pubkey = skycoin.SkycoinPubkeyFromSeckey(seckey)
         self.assertEqual(binascii.hexlify(pubkey), binascii.hexlify(b'\x02\x44\x35\x0f\xaa\x76\x79\x9f\xec\x03\xde\x2f\x32\x4a\xcd\x07\x7f\xd1\xb6\x86\xc3\xa8\x9b\xab\xc0\xef\x47\x09\x6c\xcc\x5a\x13\xfa'))
 
         seckey = create_string_buffer(b'\x00\x1a\xa9\xe4\x16\xaf\xf5\xf3\xa3\xc7\xf9\xae\x08\x11\x75\x7c\xf5\x4f\x39\x3d\x50\xdf\x86\x1f\x5c\x33\x74\x79\x54\x34\x1a\xa7')
-        pubkey = skycoin.GeneratePubkeyFromSeckey(seckey)
+        pubkey = skycoin.SkycoinPubkeyFromSeckey(seckey)
         self.assertEqual(binascii.hexlify(pubkey), binascii.hexlify(b'\x02\xe5\xbe\x89\xfa\x16\x1b\xf6\xb0\xbc\x64\xec\x9e\xc7\xfe\x27\x31\x1f\xbb\x78\x94\x9c\x3e\xf9\x73\x9d\x4c\x73\xa8\x49\x20\xd6\xe1'))
 
         seckey = create_string_buffer(b'\xff\x67\x18\x60\xc5\x8a\xad\x3f\x76\x5d\x8a\xdd\x25\x04\x64\x12\xda\xbf\x64\x11\x86\x47\x2e\x15\x53\x43\x5e\x6e\x3c\x4a\x6f\xb0')
-        pubkey = skycoin.GeneratePubkeyFromSeckey(seckey)
+        pubkey = skycoin.SkycoinPubkeyFromSeckey(seckey)
         self.assertEqual(binascii.hexlify(pubkey), binascii.hexlify(b'\x03\x0e\x40\xdd\xa2\x1c\x27\x12\x6d\x82\x9b\x6a\xe5\x78\x16\xe1\x44\x0d\xcb\x2c\xc7\x3e\x37\xe8\x60\xaf\x26\xef\xf1\xec\x55\xed\x73'))
 
         seckey = create_string_buffer(b'\x84\xfd\xc6\x49\x96\x4b\xf2\x99\xa7\x87\xcb\x78\xcd\x97\x59\x10\xe1\x97\xdb\xdd\xd7\xdb\x77\x6e\xce\x54\x4f\x41\xc4\x4b\x30\x56')
-        pubkey = skycoin.GeneratePubkeyFromSeckey(seckey)
+        pubkey = skycoin.SkycoinPubkeyFromSeckey(seckey)
         self.assertEqual(binascii.hexlify(pubkey), binascii.hexlify(b'\x03\x58\x43\xe7\x22\x58\x69\x6b\x39\x1c\xf1\xd8\x98\xfc\x65\xf3\x1e\x66\x87\x6e\xa0\xc9\xe1\x01\xf8\xdd\xc3\xeb\xb4\xb8\x7d\xc5\xb0'))
 
     def test_base58_address_from_pubkey(self):
         skycoin = SkycoinCrypto()
         pubkey = create_string_buffer(b'\x02\xe5\xbe\x89\xfa\x16\x1b\xf6\xb0\xbc\x64\xec\x9e\xc7\xfe\x27\x31\x1f\xbb\x78\x94\x9c\x3e\xf9\x73\x9d\x4c\x73\xa8\x49\x20\xd6\xe1')
-        address = skycoin.Base58AddressFromPubkey(pubkey)
+        address = skycoin.SkycoinAddressFromPubkey(pubkey)
         self.assertEqual(address.value, b"2EVNa4CK9SKosT4j1GEn8SuuUUEAXaHAMbM")
         self.assertEqual(skycoin.lib.strlen(address), 35)
 
