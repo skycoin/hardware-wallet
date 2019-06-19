@@ -14,7 +14,6 @@
 #include <libopencm3/stm32/flash.h>
 
 
-#include "base58.h"
 #include "bip32.h"
 #include "bip39.h"
 #include "check_digest.h"
@@ -214,7 +213,7 @@ ErrCode_t msgSkycoinCheckMessageSignatureImpl(SkycoinCheckMessageSignature* msg,
     // TODO - why is this size dynamic? It is always 65 (SKYCOIN_SIG_LEN) bytes?
     uint8_t sig[(sizeof(msg->signature) - 1) / 2];
     // NOTE(): -1 because the end of string ('\0')
-    char pubkeybase58[sizeof(msg->address) - 1];
+    char address[sizeof(msg->address) - 1];
     uint8_t pubkey[SKYCOIN_PUBKEY_LEN] = {0};
     // NOTE(): -1 because the end of string ('\0')
     // /2 because the hex to buff conversion.
@@ -230,14 +229,14 @@ ErrCode_t msgSkycoinCheckMessageSignatureImpl(SkycoinCheckMessageSignature* msg,
     ErrCode_t ret = (skycoin_ecdsa_verify_digest_recover(sig, digest, pubkey) == 0) ? ErrOk : ErrInvalidSignature;
 
     if (ret == ErrOk) {
-        size_t pubkeybase58_size = sizeof(pubkeybase58);
-        skycoin_address_from_pubkey(pubkey, pubkeybase58, &pubkeybase58_size);
-        if (memcmp(pubkeybase58, msg->address, pubkeybase58_size)) {
+        size_t address_size = sizeof(address);
+        skycoin_address_from_pubkey(pubkey, address, &address_size);
+        if (memcmp(address, msg->address, address_size)) {
             strncpy(failureResp->message, _("Address does not match"), sizeof(failureResp->message));
             failureResp->has_message = true;
             ret = ErrInvalidSignature;
         } else {
-            memcpy(successResp->message, pubkeybase58, pubkeybase58_size);
+            memcpy(successResp->message, address, address_size);
             successResp->has_message = true;
         }
     } else {
