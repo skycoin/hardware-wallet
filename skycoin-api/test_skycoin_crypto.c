@@ -667,7 +667,7 @@ START_TEST(test_ecdsa_sign_digest_inner)
     uint8_t nonce[32];
     uint8_t seckey[32];
     uint8_t signature[65];
-    bignum256 z, k, randk;
+    bignum256 z, k;
     uint8_t recid;
     const curve_info* curve = get_curve_by_name(SECP256K1_NAME);
 
@@ -678,8 +678,7 @@ START_TEST(test_ecdsa_sign_digest_inner)
 
     bn_read_be(digest, &z);
     bn_read_be(nonce, &k);
-    bn_one(&randk); // the value of jitter does not affect the signature
-	res = ecdsa_sign_digest_inner(curve->params, seckey, &z, &k, &randk, signature, &recid, NULL);
+	res = ecdsa_sign_digest_inner(curve->params, seckey, &z, &k, signature, &recid, NULL);
 	ck_assert_int_eq(res, 0);
 	ck_assert_mem_eq(signature, fromhex("8c20a668be1b5a910205de46095023fe4823a3757f4417114168925f28193bff520ce833da9313d726f2a4d481e3195a5dd8e935a6c7f4dc260ed4c66ebe6da7"), SKYCOIN_SIG_LEN-1);
 	ck_assert_int_eq(recid, 0);
@@ -691,8 +690,7 @@ START_TEST(test_ecdsa_sign_digest_inner)
 
     bn_read_be(digest, &z);
     bn_read_be(nonce, &k);
-    bn_one(&randk); // the value of jitter does not affect the signature
-	res = ecdsa_sign_digest_inner(curve->params, seckey, &z, &k, &randk, signature, &recid, NULL);
+	res = ecdsa_sign_digest_inner(curve->params, seckey, &z, &k,  signature, &recid, NULL);
 	ck_assert_int_eq(res, 0);
 	ck_assert_mem_eq(signature, fromhex("98f9d784ba6c5c77bb7323d044c0fc9f2b27baa0a5b0718fe88596cc566819801ca662aaefd6cc958ba4604fea999db133a75bf34c13334dabac7124ff0cfcc1"), SKYCOIN_SIG_LEN-1);
 	ck_assert_int_eq(recid, 0);

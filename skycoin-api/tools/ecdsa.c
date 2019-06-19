@@ -702,7 +702,7 @@ int ecdsa_sign_double(const ecdsa_curve* curve, HasherType hasher_type, const ui
 int ecdsa_sign_digest(const ecdsa_curve* curve, const uint8_t* priv_key, const uint8_t* digest, uint8_t* sig, uint8_t* pby, int (*is_canonical)(uint8_t by, uint8_t sig[64]))
 {
     int i;
-    bignum256 k, z, randk;
+    bignum256 k, z;
     bn_read_be(digest, &z);
 
     // message digest to sign must not be 0
@@ -713,32 +713,24 @@ int ecdsa_sign_digest(const ecdsa_curve* curve, const uint8_t* priv_key, const u
     for (i = 0; i < 10000; i++) {
         // generate random number k (nonce)
         generate_k_random(&k, &curve->order);
-        // generate another random number randk to randomize operations
-        // to counter side-channel attacks.
-        // This is not in the original ecdsa algorithm specification
-        // and does not change the output of the algorithm. Its purpose is
-        // introduce randomness in the numeric calculations to interfere with
-        // timing attacks
-        generate_k_random(&randk, &curve->order);
 
-        if (ecdsa_sign_digest_inner(curve, priv_key, &z, &k, &randk, sig, pby, is_canonical)) {
+        if (ecdsa_sign_digest_inner(curve, priv_key, &z, &k, sig, pby, is_canonical)) {
             continue;
         }
 
         memzero(&k, sizeof(k));
-        memzero(&randk, sizeof(randk));
         return 0;
     }
 
     // Too many retries without a valid signature
     // -> fail with an error
     memzero(&k, sizeof(k));
-    memzero(&randk, sizeof(randk));
     return -1;
 }
 
-int ecdsa_sign_digest_inner(const ecdsa_curve* curve, const uint8_t* priv_key, bignum256* z, bignum256* k, bignum256* randk, uint8_t* sig, uint8_t* pby, int (*is_canonical)(uint8_t by, uint8_t sig[64]))
+int ecdsa_sign_digest_inner(const ecdsa_curve* curve, const uint8_t* priv_key, bignum256* z, bignum256* k, uint8_t* sig, uint8_t* pby, int (*is_canonical)(uint8_t by, uint8_t sig[64]))
 {
+    bignum256 randk;
     curve_point R;
     bignum256* s = &R.y;
     uint8_t by; // signature recovery byte
@@ -756,16 +748,26 @@ int ecdsa_sign_digest_inner(const ecdsa_curve* curve, const uint8_t* priv_key, b
         return -1;
     }
 
-    bn_multiply(randk, k, &curve->order); // k*rand
-    bn_inverse(k, &curve->order);         // (k*rand)^-1
-    bn_read_be(priv_key, s);              // priv
-    bn_multiply(&R.x, s, &curve->order);  // R.x*priv
-    bn_add(s, z);                         // R.x*priv + z
-    bn_multiply(k, s, &curve->order);     // (k*rand)^-1 (R.x*priv + z)
-    bn_multiply(randk, s, &curve->order); // k^-1 (R.x*priv + z)
+    // generate another random number randk to randomize operations
+    // to counter side-channel attacks.
+    // This is not in the original ecdsa algorithm specification
+    // and does not change the output of the algorithm. Its purpose is to
+    // introduce randomness in the numeric calculations to interfere with
+    // timing attacks
+    generate_k_random(&randk, &curve->order);
+
+    bn_multiply(&randk, k, &curve->order); // k*rand
+    bn_inverse(k, &curve->order);          // (k*rand)^-1
+    bn_read_be(priv_key, s);               // priv
+    bn_multiply(&R.x, s, &curve->order);   // R.x*priv
+    bn_add(s, z);                          // R.x*priv + z
+    bn_multiply(k, s, &curve->order);      // (k*rand)^-1 (R.x*priv + z)
+    bn_multiply(&randk, s, &curve->order); // k^-1 (R.x*priv + z)
     bn_mod(s, &curve->order);
     // if s is zero, we retry
     if (bn_is_zero(s)) {
+        memzero(&randk, sizeof(randk));
+        memzero(s, sizeof(*s));
         return -1;
     }
 
@@ -780,6 +782,8 @@ int ecdsa_sign_digest_inner(const ecdsa_curve* curve, const uint8_t* priv_key, b
 
     // check if the signature is acceptable or retry
     if (is_canonical && !is_canonical(by, sig)) {
+        memzero(&randk, sizeof(randk));
+        memzero(s, sizeof(*s));
         return -1;
     }
 
@@ -787,6 +791,8 @@ int ecdsa_sign_digest_inner(const ecdsa_curve* curve, const uint8_t* priv_key, b
         *pby = by;
     }
 
+    memzero(&randk, sizeof(randk));
+    memzero(s, sizeof(*s));
     return 0;
 }
 
