@@ -39,6 +39,8 @@ script:
   - make clean
   - make emulator
   - make clean
+  - make bootloader-mem-protect
+  - make bootloader-clean
   - make full-firmware
   - make clean
 
