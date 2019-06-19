@@ -1,3 +1,5 @@
+![hardware-wallet-logo](https://user-images.githubusercontent.com/8619106/56054900-b1f9b680-5d75-11e9-8deb-cf657cfd0c55.png)
+
 # Skycoin hardware wallet
 
 [![Build Status](https://travis-ci.com/skycoin/hardware-wallet.svg?branch=develop)](https://travis-ci.com/skycoin/hardware-wallet)
@@ -5,8 +7,9 @@
 ## Table of contents
 
 <!-- MarkdownTOC levels="1,2,3,4,5" autolink="true" bracket="round" -->
+
 - [Overview](#overview)
-- [FAQ](#FAQ)
+- [FAQ](#faq)
 - [Install tools](#install-tools)
 - [Build instructions:](#build-instructions)
   - [Build and run emulator](#build-and-run-emulator)
@@ -23,13 +26,14 @@
     - [Versioning combined binary builds](#versioning-combined-binary-builds)
     - [Versioning libraries](#versioning-libraries)
   - [Running tests](#running-tests)
-  - [Validate the TRNG](#Validate-the-TRNG)
-    - [Files description](#Files-description)
+  - [Validate the TRNG](#validate-the-trng)
+      - [Files description](#files-description)
   - [Releases](#releases)
     - [Skycoin firmware releases](#skycoin-firmware-releases)
     - [Update the version](#update-the-version)
     - [Pre-release testing](#pre-release-testing)
     - [Creating release builds](#creating-release-builds)
+
 <!-- /MarkdownTOC -->
 
 ## Overview
@@ -142,6 +146,8 @@ The firmware defines a contract enforced upon all client libraries communicating
 - **Minor version number** should be increased for releases adding incremental backwards-compatible changes to the firmware contract
 - **Patch version number** should be increased for bug fix releases and similar changes keeping firmware contract unchanged
 
+Firmware binary filename is `skywallet-firmware-v$(VERSION_FIRMWARE).bin` e.g. `skywallet-firmware-v1.7.0.bin` .
+
 #### Bootloader version scheme
 
 Bootloader versioning is independent and follows [semantic versioning](http://semver.org) rules.
@@ -149,6 +155,8 @@ Bootloader versioning is independent and follows [semantic versioning](http://se
 - **Major version number** indicates major changes in bootloader code
 - **Minor version number** is used for progressive backwards-compatible changes
 - **Patch version number** increased for bug fix releases
+
+Bootloader binary filename is `skywallet-bootloader-mem-protect-v$(VERSION_BOOTLOADER).bin` if compiled with memory protection enabled, else `skywallet-bootloader-no-memory-protect-v$(VERSION_BOOTLOADER).bin`. For instance, `skywallet-bootloader-mem-protect-v1.0.2.bin` or  `skywallet-bootloader-no-memory-protect-v1.0.2.bin` could be bootloader file names.
 
 #### Versioning combined binary builds
 
@@ -160,6 +168,8 @@ The project releases production-ready binaries combining firmware and bootloader
 - **Country Exit Code**: to cope with i18n and locale specific features. At present only a value of `en` is supported for English according to `ISO-639-1`.
 
 Version identifiers are strings including, in the same order, the numbers mentioned above separated by dots.
+
+Combined binary filename is `skywallet-full-mem-protect-$(COMBINED_VERSION).bin` if compiled with memory protection enabled, else `skywallet-full-no-mem-protect-$(COMBINED_VERSION).bin` e.g. `skywallet-full-no-mem-protect-102.170.1.1.bin` and `skywallet-full-mem-protect-102.107.1.1.bin`.
 
 #### Versioning libraries
 
