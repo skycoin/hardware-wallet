@@ -20,3 +20,5 @@ sudo apt-get install -y build-essential curl unzip git python3 python3-pip pytho
 # Install SDL
 sudo apt-get install -y libegl1-mesa-dev libgles2-mesa-dev libsdl2-dev libsdl2-image-dev
 
+#Install cccc
+sudo apt install cccc -y

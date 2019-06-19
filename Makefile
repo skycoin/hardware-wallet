@@ -6,7 +6,7 @@
 .PHONY: emulator run-emulator st-flash oflash
 .PHONY: bootloader-clean release-bootloader release-bootloader-mem-protect
 .PHONY: firmware-clean release-firmware
-.PHONY: release-combined release-combined-mem-protect
+.PHONY: release-combined release-combined-mem-protect check-converge
 
 UNAME_S ?= $(shell uname -s)
 
@@ -214,6 +214,9 @@ check-trng: ## Run test tools over random buffers
 
 check-protob: ## verify protob submodule hash
 	./ci-scripts/verify_protob_hash.sh
+
+check-coverage: ## Generate test coverage reports
+	cccc tiny-firmware/*.c --outdir=$(OUTDIR)
 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
