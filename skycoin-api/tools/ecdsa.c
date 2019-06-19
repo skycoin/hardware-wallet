@@ -252,36 +252,36 @@ void point_jacobian_add(const curve_point* p1, jacobian_curve_point* p2, const e
     assert(-3 <= a && a <= 0);
 
     /* First we bring p1 to the same denominator:
-	 * x1' := x1 * z2^2
-	 * y1' := y1 * z2^3
-	 */
+     * x1' := x1 * z2^2
+     * y1' := y1 * z2^3
+     */
     /*
-	 * lambda  = ((y1' - y2)/z2^3) / ((x1' - x2)/z2^2)
-	 *         = (y1' - y2) / (x1' - x2) z2
-	 * x3/z3^2 = lambda^2 - (x1' + x2)/z2^2
-	 * y3/z3^3 = 1/2 lambda * (2x3/z3^2 - (x1' + x2)/z2^2) + (y1'+y2)/z2^3
-	 *
-	 * For the special case x1=x2, y1=y2 (doubling) we have
-	 * lambda = 3/2 ((x2/z2^2)^2 + a) / (y2/z2^3)
-	 *        = 3/2 (x2^2 + a*z2^4) / y2*z2)
-	 *
-	 * to get rid of fraction we write lambda as
-	 * lambda = r / (h*z2)
-	 * with  r = is_doubling ? 3/2 x2^2 + az2^4 : (y1 - y2)
-	 *       h = is_doubling ?      y1+y2       : (x1 - x2)
-	 *
-	 * With z3 = h*z2  (the denominator of lambda)
-	 * we get x3 = lambda^2*z3^2 - (x1' + x2)/z2^2*z3^2
-	 *           = r^2 - h^2 * (x1' + x2)
-	 *    and y3 = 1/2 r * (2x3 - h^2*(x1' + x2)) + h^3*(y1' + y2)
-	 */
+     * lambda  = ((y1' - y2)/z2^3) / ((x1' - x2)/z2^2)
+     *         = (y1' - y2) / (x1' - x2) z2
+     * x3/z3^2 = lambda^2 - (x1' + x2)/z2^2
+     * y3/z3^3 = 1/2 lambda * (2x3/z3^2 - (x1' + x2)/z2^2) + (y1'+y2)/z2^3
+     *
+     * For the special case x1=x2, y1=y2 (doubling) we have
+     * lambda = 3/2 ((x2/z2^2)^2 + a) / (y2/z2^3)
+     *        = 3/2 (x2^2 + a*z2^4) / y2*z2)
+     *
+     * to get rid of fraction we write lambda as
+     * lambda = r / (h*z2)
+     * with  r = is_doubling ? 3/2 x2^2 + az2^4 : (y1 - y2)
+     *       h = is_doubling ?      y1+y2       : (x1 - x2)
+     *
+     * With z3 = h*z2  (the denominator of lambda)
+     * we get x3 = lambda^2*z3^2 - (x1' + x2)/z2^2*z3^2
+     *           = r^2 - h^2 * (x1' + x2)
+     *    and y3 = 1/2 r * (2x3 - h^2*(x1' + x2)) + h^3*(y1' + y2)
+     */
 
     /* h = x1 - x2
-	 * r = y1 - y2
-	 * x3 = r^2 - h^3 - 2*h^2*x2
-	 * y3 = r*(h^2*x2 - x3) - h^3*y2
-	 * z3 = h*z2
-	 */
+     * r = y1 - y2
+     * x3 = r^2 - h^3 - 2*h^2*x2
+     * y3 = r*(h^2*x2 - x3) - h^3*y2
+     * z3 = h*z2
+     */
 
     xz = p2->z;
     bn_multiply(&xz, &xz, prime); // xz = z2^2
@@ -367,28 +367,28 @@ void point_jacobian_double(jacobian_curve_point* p, const ecdsa_curve* curve)
 
     assert(-3 <= curve->a && curve->a <= 0);
     /* usual algorithm:
-	 *
-	 * lambda  = (3((x/z^2)^2 + a) / 2y/z^3) = (3x^2 + az^4)/2yz
-	 * x3/z3^2 = lambda^2 - 2x/z^2
-	 * y3/z3^3 = lambda * (x/z^2 - x3/z3^2) - y/z^3
-	 *
-	 * to get rid of fraction we set
-	 *  m = (3 x^2 + az^4) / 2
-	 * Hence,
-	 *  lambda = m / yz = m / z3
-	 *
-	 * With z3 = yz  (the denominator of lambda)
-	 * we get x3 = lambda^2*z3^2 - 2*x/z^2*z3^2
-	 *           = m^2 - 2*xy^2
-	 *    and y3 = (lambda * (x/z^2 - x3/z3^2) - y/z^3) * z3^3
-	 *           = m * (xy^2 - x3) - y^4
-	 */
+     *
+     * lambda  = (3((x/z^2)^2 + a) / 2y/z^3) = (3x^2 + az^4)/2yz
+     * x3/z3^2 = lambda^2 - 2x/z^2
+     * y3/z3^3 = lambda * (x/z^2 - x3/z3^2) - y/z^3
+     *
+     * to get rid of fraction we set
+     *  m = (3 x^2 + az^4) / 2
+     * Hence,
+     *  lambda = m / yz = m / z3
+     *
+     * With z3 = yz  (the denominator of lambda)
+     * we get x3 = lambda^2*z3^2 - 2*x/z^2*z3^2
+     *           = m^2 - 2*xy^2
+     *    and y3 = (lambda * (x/z^2 - x3/z3^2) - y/z^3) * z3^3
+     *           = m * (xy^2 - x3) - y^4
+     */
 
     /* m = (3*x^2 + a z^4) / 2
-	 * x3 = m^2 - 2*xy^2
-	 * y3 = m*(xy^2 - x3) - 8y^4
-	 * z3 = y*z
-	 */
+     * x3 = m^2 - 2*xy^2
+     * y3 = m*(xy^2 - x3) - 8y^4
+     * z3 = y*z
+     */
 
     m = p->x;
     bn_multiply(&m, &m, prime);
@@ -707,27 +707,27 @@ int ecdsa_sign_digest(const ecdsa_curve* curve, const uint8_t* priv_key, const u
 
     // message digest to sign must not be 0
     if (bn_is_zero(&z)) {
-    	return -2;
+        return -2;
     }
 
     for (i = 0; i < 10000; i++) {
         // generate random number k (nonce)
         generate_k_random(&k, &curve->order);
-	    // generate another random number randk to randomize operations
-	    // to counter side-channel attacks.
-	    // This is not in the original ecdsa algorithm specification
-	    // and does not change the output of the algorithm. Its purpose is
-	    // introduce randomness in the numeric calculations to interfere with
-	    // timing attacks
-	    generate_k_random(&randk, &curve->order);
+        // generate another random number randk to randomize operations
+        // to counter side-channel attacks.
+        // This is not in the original ecdsa algorithm specification
+        // and does not change the output of the algorithm. Its purpose is
+        // introduce randomness in the numeric calculations to interfere with
+        // timing attacks
+        generate_k_random(&randk, &curve->order);
 
-	    if (ecdsa_sign_digest_inner(curve, priv_key, &z, &k, &randk, sig, pby, is_canonical)) {
-	    	continue;
-	    }
+        if (ecdsa_sign_digest_inner(curve, priv_key, &z, &k, &randk, sig, pby, is_canonical)) {
+            continue;
+        }
 
-	    memzero(&k, sizeof(k));
-	    memzero(&randk, sizeof(randk));
-	    return 0;
+        memzero(&k, sizeof(k));
+        memzero(&randk, sizeof(randk));
+        return 0;
     }
 
     // Too many retries without a valid signature
@@ -792,12 +792,12 @@ int ecdsa_sign_digest_inner(const ecdsa_curve* curve, const uint8_t* priv_key, b
 
 void ecdsa_get_public_key33(const ecdsa_curve* curve, const uint8_t* priv_key, uint8_t* pub_key)
 {
-	/*
+    /*
     SKYCOIN CIPHER AUDIT
-	Skycoin cipher audit comparison
-	Function: GeneratePublicKey
-	File: src/cipher/secp256k1-go/secp256k1-go2/ec.go
-	*/
+    Skycoin cipher audit comparison
+    Function: GeneratePublicKey
+    File: src/cipher/secp256k1-go/secp256k1-go2/ec.go
+    */
 
     curve_point R;
     bignum256 k;
@@ -806,8 +806,8 @@ void ecdsa_get_public_key33(const ecdsa_curve* curve, const uint8_t* priv_key, u
 
     /*
     SKYCOIN CIPHER AUDIT
-	Compare to function: ECmultGen()
-	*/
+    Compare to function: ECmultGen()
+    */
     // compute k*G
     scalar_multiply(curve, &k, &R);
 
@@ -835,10 +835,10 @@ void ecdsa_get_public_key65(const ecdsa_curve* curve, const uint8_t* priv_key, u
 {
     /*
     SKYCOIN CIPHER AUDIT
-	Not used by Skycoin.
-	Skycoin only uses compressed public keys (33 bytes long).
-	Keep this function for future Bitcoin use.
-	*/
+    Not used by Skycoin.
+    Skycoin only uses compressed public keys (33 bytes long).
+    Keep this function for future Bitcoin use.
+    */
     curve_point R;
     bignum256 k;
 
@@ -871,9 +871,9 @@ void ecdsa_get_pubkeyhash(const uint8_t* pub_key, HasherType hasher_type, uint8_
 {
     /*
     SKYCOIN CIPHER AUDIT
-	This looks like Bitcoin's AddressFromPubkey.
-	Bitcoin's AddressFromPubkey is different from Skycoin's, so don't use this for Skycoin.
-	*/
+    This looks like Bitcoin's AddressFromPubkey.
+    Bitcoin's AddressFromPubkey is different from Skycoin's, so don't use this for Skycoin.
+    */
 
     uint8_t h[HASHER_DIGEST_LENGTH];
     if (pub_key[0] == 0x04) { // uncompressed format
@@ -889,14 +889,14 @@ void ecdsa_get_pubkeyhash(const uint8_t* pub_key, HasherType hasher_type, uint8_
 
 void uncompress_coords(const ecdsa_curve* curve, uint8_t odd, const bignum256* x, bignum256* y)
 {
-	/*
-	SKYCOIN CIPHER AUDIT
-	Compare to function: XY.SetXO
-	RESULT:
-	This looks very similar to XY.SetXO, with these differences:
-	- The first operation in XY.SetXO is a Sqr(), which is missing here
-	- The bn_subi() operation here, is not in XY.SetXO
-	*/
+    /*
+    SKYCOIN CIPHER AUDIT
+    Compare to function: XY.SetXO
+    RESULT:
+    This looks very similar to XY.SetXO, with these differences:
+    - The first operation in XY.SetXO is a Sqr(), which is missing here
+    - The bn_subi() operation here, is not in XY.SetXO
+    */
 
     // y^2 = x^3 + a*x + b
     memcpy(y, x, sizeof(bignum256));      // y is x
@@ -996,13 +996,13 @@ int ecdsa_verify_double(const ecdsa_curve* curve, HasherType hasher_type, const 
 // returns 0 if verification succeeded
 int ecdsa_verify_digest_recover(const ecdsa_curve* curve, uint8_t* pub_key, const uint8_t* sig, const uint8_t* digest, int recid)
 {
-	/*
-	SKYCOIN CIPHER AUDIT
-	Compare to functions: RecoverPublicKey, Signature.Recover
+    /*
+    SKYCOIN CIPHER AUDIT
+    Compare to functions: RecoverPublicKey, Signature.Recover
 
-	Note: There is some difference in the math operations, but the result
-	is equivalent.
-	*/
+    Note: There is some difference in the math operations, but the result
+    is equivalent.
+    */
     bignum256 r, s, e;
     curve_point cp, cp2;
 
@@ -1045,7 +1045,7 @@ int ecdsa_verify_digest_recover(const ecdsa_curve* curve, uint8_t* pub_key, cons
     point_multiply(curve, &r, &cp, &cp);
 
     if (point_is_infinity(&cp)) {
-    	return 1;
+        return 1;
     }
 
     pub_key[0] = 0x04;
