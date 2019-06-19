@@ -413,7 +413,7 @@ ErrCode_t msgTransactionSignImpl(TransactionSign* msg, ErrCode_t (*funcConfirmTx
     for (uint32_t i = 0; i < msg->nbIn; ++i) {
         uint8_t digest[32] = {0};
         transaction_msgToSign(&transaction, i, digest);
-        // Only sig inputs owned by Skywallet device
+        // Only sign inputs owned by Skywallet device
         if (msg->transactionIn[i].has_index) {
             if (msgSignTransactionMessageImpl(digest, msg->transactionIn[i].index, resp->signatures[resp->signatures_count]) != ErrOk) {
                 //fsm_sendFailure(FailureType_Failure_InvalidSignature, NULL);
