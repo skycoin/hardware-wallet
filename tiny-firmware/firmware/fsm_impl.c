@@ -409,6 +409,11 @@ ErrCode_t msgTransactionSignImpl(TransactionSign* msg, ErrCode_t (*funcConfirmTx
                 //layoutHome();
                 return ErrInvalidSignature;
             }
+        } else {
+            // Null sig
+            uint8_t signature[65];
+            memset(signature, 0, sizeof(signature));
+            tohex(resp->signatures[resp->signatures_count], signature, sizeof(signature));
         }
         resp->signatures_count++;
 #if EMULATOR
