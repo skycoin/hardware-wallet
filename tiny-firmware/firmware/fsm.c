@@ -39,6 +39,7 @@
 #include "reset.h"
 #include "rng.h"
 #include "skycoin_crypto.h"
+#include "skycoin_signature.h"
 #include "skyparams.h"
 #include "skywallet.h"
 #include "storage.h"

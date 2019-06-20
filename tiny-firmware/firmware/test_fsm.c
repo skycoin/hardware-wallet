@@ -45,6 +45,7 @@
 #include "rng.h"
 #include "setup.h"
 #include "skycoin_crypto.h"
+#include "skycoin_signature.h"
 #include "skyparams.h"
 #include "storage.h"
 #include "test_fsm.h"

@@ -118,8 +118,8 @@ ErrCode_t msgSkycoinSignMessageImpl(SkycoinSignMessage* msg, ResponseSkycoinSign
     }
     int res = skycoin_ecdsa_sign_digest(seckey, digest, signature);
     if (res == -2) {
-    	// Fail due to empty digest
-    	return ErrInvalidArg;
+        // Fail due to empty digest
+        return ErrInvalidArg;
     } else if (res) {
         // Too many retries without a valid signature
         // -> fail with an error
@@ -143,8 +143,8 @@ ErrCode_t msgSignTransactionMessageImpl(uint8_t* message_digest, uint32_t index,
     }
     int signres = skycoin_ecdsa_sign_digest(seckey, message_digest, signature);
     if (signres == -2) {
-    	// Fail due to empty digest
-    	return ErrInvalidArg;
+        // Fail due to empty digest
+        return ErrInvalidArg;
     } else if (res) {
         // Too many retries without a valid signature
         // -> fail with an error
@@ -212,6 +212,7 @@ ErrCode_t msgSkycoinCheckMessageSignatureImpl(SkycoinCheckMessageSignature* msg,
     // /2 because the hex to buff conversion.
     // TODO - why is this size dynamic? It is always 65 (SKYCOIN_SIG_LEN) bytes?
     uint8_t sig[(sizeof(msg->signature) - 1) / 2];
+    // NOTE(): -1 because the end of string ('\0')
     char address[sizeof(msg->address) - 1];
     uint8_t pubkey[SKYCOIN_PUBKEY_LEN] = {0};
     // NOTE(): -1 because the end of string ('\0')
@@ -226,22 +227,23 @@ ErrCode_t msgSkycoinCheckMessageSignatureImpl(SkycoinCheckMessageSignature* msg,
     }
     tobuff(msg->signature, sig, sizeof(sig));
     ErrCode_t ret = (skycoin_ecdsa_verify_digest_recover(sig, digest, pubkey) == 0) ? ErrOk : ErrInvalidSignature;
-        return ret;
+
+    if (ret == ErrOk) {
         size_t address_size = sizeof(address);
         skycoin_address_from_pubkey(pubkey, address, &address_size);
         if (memcmp(address, msg->address, address_size)) {
-        char pubkeybase58[sizeof(msg->address) - 1];
             strncpy(failureResp->message, _("Address does not match"), sizeof(failureResp->message));
             failureResp->has_message = true;
-            return ErrAddressGeneration;
+            ret = ErrInvalidSignature;
+        } else {
+            memcpy(successResp->message, address, address_size);
+            successResp->has_message = true;
         }
-        memcpy(successResp->message, address, address_size);
-        successResp->has_message = true;
-        return ErrOk;
+    } else {
+        strncpy(failureResp->message, _("Unable to get pub key from signed message"), sizeof(failureResp->message));
+        failureResp->has_message = true;
     }
-    strncpy(failureResp->message, _("Address verification failed"), sizeof(failureResp->message));
-    failureResp->has_message = true;
-    return ErrInvalidSignature;
+    return ret;
 }
 
 ErrCode_t verifyLanguage(char* lang)
@@ -417,11 +419,6 @@ ErrCode_t msgTransactionSignImpl(TransactionSign* msg, ErrCode_t (*funcConfirmTx
                 //layoutHome();
                 return ErrInvalidSignature;
             }
-        } else {
-            // Null sig
-            uint8_t signature[65];
-            memset(signature, 0, sizeof(signature));
-            tohex(resp->signatures[resp->signatures_count], signature, sizeof(signature));
         }
         resp->signatures_count++;
 #if EMULATOR
