@@ -322,6 +322,7 @@ void fsm_msgSkycoinCheckMessageSignature(SkycoinCheckMessageSignature* msg)
             msg_ptr = successResp;
             layoutRawMessage("Verification success");
             break;
+        case ErrAddressGeneration:
         case ErrInvalidSignature:
             failureResp->code = FailureType_Failure_InvalidSignature;
             layoutRawMessage("Wrong signature");
