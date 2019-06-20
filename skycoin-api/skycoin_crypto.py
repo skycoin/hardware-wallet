@@ -18,6 +18,13 @@ class SkycoinCrypto(object):
         self.lib.sha256sum(seed, digest, self.lib.strlen(seed))
         return digest
 
+    def KeyPair(self):
+        seed = os.urandom(32)
+        sec_key = create_string_buffer(32)
+        pub_key = create_string_buffer(33)
+        self.lib.deterministic_key_pair_iterator(seed, 32, seed, sec_key, pub_key)
+        return sec_key, pub_key
+
     def SkycoinPubkeyFromSeckey(self, seckey):
         pubkey = create_string_buffer(33)
         self.lib.skycoin_pubkey_from_seckey(seckey, pubkey)
