@@ -118,8 +118,8 @@ ErrCode_t msgSkycoinSignMessageImpl(SkycoinSignMessage* msg, ResponseSkycoinSign
     }
     int res = skycoin_ecdsa_sign_digest(seckey, digest, signature);
     if (res == -2) {
-    	// Fail due to empty digest
-    	return ErrInvalidArg;
+        // Fail due to empty digest
+        return ErrInvalidArg;
     } else if (res) {
         // Too many retries without a valid signature
         // -> fail with an error
@@ -143,8 +143,8 @@ ErrCode_t msgSignTransactionMessageImpl(uint8_t* message_digest, uint32_t index,
     }
     int signres = skycoin_ecdsa_sign_digest(seckey, message_digest, signature);
     if (signres == -2) {
-    	// Fail due to empty digest
-    	return ErrInvalidArg;
+        // Fail due to empty digest
+        return ErrInvalidArg;
     } else if (res) {
         // Too many retries without a valid signature
         // -> fail with an error
@@ -419,11 +419,6 @@ ErrCode_t msgTransactionSignImpl(TransactionSign* msg, ErrCode_t (*funcConfirmTx
                 //layoutHome();
                 return ErrInvalidSignature;
             }
-        } else {
-            // Null sig
-            uint8_t signature[65];
-            memset(signature, 0, sizeof(signature));
-            tohex(resp->signatures[resp->signatures_count], signature, sizeof(signature));
         }
         resp->signatures_count++;
 #if EMULATOR

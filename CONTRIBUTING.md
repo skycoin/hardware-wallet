@@ -6,7 +6,7 @@
 First of all you need to connect ST-LINK programmer to the hw to be able to change firmware and bootloader.
 After the opening of the HW case, you can see 6 unconnected pins for of the bootloader.
 Look at the back of the device and you will see that the #1 hole is marked by a square.
-The rest are all circular. From the square the holes are 3v3, SWDIO, SWCLK, SWO, GND and RST. 
+The rest are all circular. From the square the holes are 3v3, SWDIO, SWCLK, SWO, GND and RST.
 Connect the 3V3, GND, SWCLK and SWDIO to the appropriate pins on the ST-LINK
 
 ### Building and loading bootloader and firmware
@@ -25,7 +25,7 @@ To build you project you need to execute the following commands:
 These are the main dependencies of the project which can be executed with the one following command ```c
 make combined-release-mem-protect VERSION_FIRMWARE=1.1.0 VERSION_BOOTLOADER=1.2.0```
 
-Now combined file with bootloader and firmware lies in the directory 
+Now combined file with bootloader and firmware lies in the directory
 `hardware-wallet/tiny-firmware/bootloader/combine/`
 To flash the previous version and load the new one you need to run the following command.
 `make st-flash`
@@ -35,7 +35,7 @@ NOTE: To load it properly you need to connect your HW with 6 pins and microB to 
 ## CLA signing policies
 Every contributor needs to sign the CLA. Upon creating a PR, you will be asked to agree to the Individual Contributor License Agreement, covering the fundamental legal questions around contributing to a Skycoin repo. Agreeing to the CLA is mandatory.
 
-You can read more about contributing the contributing to all skycoin repositories [here](https://github.com/skycoin/skycoin/wiki/). 
+You can read more about contributing the contributing to all skycoin repositories [here](https://github.com/skycoin/skycoin/wiki/).
 
 ## Quick overview
 
@@ -99,7 +99,7 @@ Testing is performed on top of [check framework](https://libcheck.github.io/chec
 
 ###  Test writing procedure
 
-There are a few tests which are executed with  `make test` on the Hardware wallet.  
+There are a few tests which are executed with  `make test` on the Hardware wallet.
 - Proof of cryptography correctness
 - Test of the firmware
 
@@ -110,9 +110,9 @@ We are using python unit tests for the cryptography, so all the values are pre-c
 The list of the functions which are tested:
 - test_sign
 - test_sha256sum
-- test_generate_pubkey_from_seckey
+- test_generate_skycoin_pubkey_from_seckey
 - test_base58_address_from_pubkey
-- test_recover_pubkey_from_signed_message
+- test_recover_pubkey_from_signed_digest
 This specific order is used because of the dependencies of the function.
 #### Firmware test
 This part of the test consist of:
@@ -139,13 +139,13 @@ Tests that PIN matrix layout works well and checks input with wrong digits.
 ## Relationship to other projects
 
 - [Hardware wallet daemon](https://github.com/skycoin/hardware-wallet-daemon)
-The hardware wallet daemon provides an HTTP API to interface with the wallets supported by skycoin. It uses the go bindings provided by the hardware wallet GO library. 
+The hardware wallet daemon provides an HTTP API to interface with the wallets supported by skycoin. It uses the go bindings provided by the hardware wallet GO library.
 
 - [Hardware wallet protobuffer](https://github.com/skycoin/hardware-wallet-protob)
 Protocol Buffer schemas for Skycoin hardware wallet communication and scripts for supporting multiple programming languages.
 
 - [Hardware wallet GO library](https://github.com/skycoin/hardware-wallet-go)
   Go bindings and CLI tool for the Skycoin hardware wallet.
-  
+
 - [Hardware wallet JS library](https://github.com/skycoin/hardware-wallet-js)
   Javascript interface for the Skycoin hardware wallet
