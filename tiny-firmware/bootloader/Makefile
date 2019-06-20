@@ -35,7 +35,6 @@ OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/ecdsa.small.o
 # OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/secp256k1.small.o
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/sha2.small.o
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/memzero.small.o
-#OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/ecdsa.o
 
 CFLAGS += -DUSE_PRECOMPUTED_IV=0
 CFLAGS += -DUSE_PRECOMPUTED_CP=0

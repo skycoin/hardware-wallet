@@ -212,6 +212,7 @@ ErrCode_t msgSkycoinCheckMessageSignatureImpl(SkycoinCheckMessageSignature* msg,
     // /2 because the hex to buff conversion.
     // TODO - why is this size dynamic? It is always 65 (SKYCOIN_SIG_LEN) bytes?
     uint8_t sig[(sizeof(msg->signature) - 1) / 2];
+    // NOTE(): -1 because the end of string ('\0')
     char address[sizeof(msg->address) - 1];
     uint8_t pubkey[SKYCOIN_PUBKEY_LEN] = {0};
     // NOTE(): -1 because the end of string ('\0')
@@ -226,22 +227,26 @@ ErrCode_t msgSkycoinCheckMessageSignatureImpl(SkycoinCheckMessageSignature* msg,
     }
     tobuff(msg->signature, sig, sizeof(sig));
     ErrCode_t ret = (skycoin_ecdsa_verify_digest_recover(sig, digest, pubkey) == 0) ? ErrOk : ErrInvalidSignature;
-        return ret;
-        size_t address_size = sizeof(address);
-        skycoin_address_from_pubkey(pubkey, address, &address_size);
-        if (memcmp(address, msg->address, address_size)) {
-        char pubkeybase58[sizeof(msg->address) - 1];
-            strncpy(failureResp->message, _("Address does not match"), sizeof(failureResp->message));
-            failureResp->has_message = true;
-            return ErrAddressGeneration;
-        }
-        memcpy(successResp->message, address, address_size);
-        successResp->has_message = true;
-        return ErrOk;
+    if (ret != ErrOk) {
+        strncpy(failureResp->message, _("Address recovery failed"), sizeof(failureResp->message));
+        failureResp->has_message = true;
+        return ErrInvalidSignature;
     }
-    strncpy(failureResp->message, _("Address verification failed"), sizeof(failureResp->message));
-    failureResp->has_message = true;
-    return ErrInvalidSignature;
+    if (!verify_pub_key(pubkey)) {
+        strncpy(failureResp->message, _("Can not verify pub key"), sizeof(failureResp->message));
+        failureResp->has_message = true;
+        return ErrAddressGeneration;
+    }
+    size_t address_size = sizeof(address);
+    skycoin_address_from_pubkey(pubkey, address, &address_size);
+    if (memcmp(address, msg->address, address_size)) {
+        strncpy(failureResp->message, _("Address does not match"), sizeof(failureResp->message));
+        failureResp->has_message = true;
+        return ErrInvalidSignature;
+    }
+    memcpy(successResp->message, address, address_size);
+    successResp->has_message = true;
+    return ErrOk;
 }
 
 ErrCode_t verifyLanguage(char* lang)

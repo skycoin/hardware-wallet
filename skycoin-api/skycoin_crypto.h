@@ -50,7 +50,7 @@ void tohex(char* str, const uint8_t* buffer, int buffer_length);
 void tobuff(const char* str, uint8_t* buf, size_t buffer_length);
 void writebuf_fromhexstr(const char* str, uint8_t* buf);
 
- * @brief verify_pub_key ec secp256k1
+ /* @brief verify_pub_key ec secp256k1
  * @param pub_key pub key to b verified
  * @return true if the verification success
  */
