@@ -24,4 +24,4 @@ sudo apt-get install -y libegl1-mesa-dev libgles2-mesa-dev libsdl2-dev libsdl2-i
 sudo apt-get install cccc -y
 
 ##INstall cgov
-sudo apt-get install lcov ggcov gcovr
+sudo apt-get install lcov -y
