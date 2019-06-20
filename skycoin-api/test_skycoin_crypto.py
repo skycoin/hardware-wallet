@@ -3,6 +3,12 @@ from skycoin_crypto import *
 
 
 class TestSkycoinCrypto(unittest.TestCase):
+    def test_key_pair(self):
+        skycoin = SkycoinCrypto()
+        sec_key, pub_key = skycoin.KeyPair()
+        gen_pub_key = skycoin.SkycoinPubkeyFromSeckey(sec_key)
+        self.assertEqual(binascii.hexlify(pub_key), binascii.hexlify(gen_pub_key))
+
     def test_sign(self):
         skycoin = SkycoinCrypto()
         digest = create_string_buffer(b'\x00\x1a\xa9\xe4\x16\xaf\xf5\xf3\xa3\xc7\xf9\xae\x08\x11\x75\x7c\xf5\x4f\x39\x3d\x50\xdf\x86\x1f\x5c\x33\x74\x79\x54\x34\x1a\xa7')
