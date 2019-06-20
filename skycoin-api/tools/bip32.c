@@ -43,24 +43,6 @@
 #endif
 #include "memzero.h"
 
-const curve_info ed25519_info = {
-    .bip32_name = "ed25519 seed",
-    .params = NULL,
-    .hasher_type = HASHER_SHA2,
-};
-
-const curve_info ed25519_sha3_info = {
-    .bip32_name = "ed25519-sha3 seed",
-    .params = NULL,
-    .hasher_type = HASHER_SHA2,
-};
-
-const curve_info curve25519_info = {
-    .bip32_name = "curve25519 seed",
-    .params = NULL,
-    .hasher_type = HASHER_SHA2,
-};
-
 int hdnode_from_xpub(uint32_t depth, uint32_t child_num, const uint8_t* chain_code, const uint8_t* public_key, const char* curve, HDNode* out)
 {
     const curve_info* info = get_curve_by_name(curve);
@@ -154,27 +136,4 @@ void hdnode_fill_public_key(HDNode* node)
     if (node->curve->params) {
         ecdsa_get_public_key33(node->curve->params, node->private_key, node->public_key);
     }
-}
-
-const curve_info* get_curve_by_name(const char* curve_name)
-{
-    if (curve_name == 0) {
-        return 0;
-    }
-    if (strcmp(curve_name, SECP256K1_NAME) == 0) {
-        return &secp256k1_info;
-    }
-    if (strcmp(curve_name, SECP256K1_DECRED_NAME) == 0) {
-        return &secp256k1_decred_info;
-    }
-    if (strcmp(curve_name, ED25519_NAME) == 0) {
-        return &ed25519_info;
-    }
-    if (strcmp(curve_name, ED25519_SHA3_NAME) == 0) {
-        return &ed25519_sha3_info;
-    }
-    if (strcmp(curve_name, CURVE25519_NAME) == 0) {
-        return &curve25519_info;
-    }
-    return 0;
 }

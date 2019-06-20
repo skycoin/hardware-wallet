@@ -54,7 +54,7 @@ sudo apt-get install protobuf-compiler python-protobuf golang-goprotobuf-dev
 On Mac OS
 
 ```
-brew install protobuf --with-python
+brew install protobuf
 go get -u github.com/golang/protobuf/{proto,protoc-gen-go}
 ```
 
@@ -97,7 +97,7 @@ Restart your machine or force your udev kernel module to [reload the rules](http
 
     export REVERSE_SCREEN=1
     export REVERSE_BUTTONS=1 # need to be changed in the project Makefile if you are using it
-    
+
 Disable the signature checking
 
 Change SIGNATURE_PROTECT to 0 in the [project Makfile](https://github.com/skycoin/hardware-wallet/blob/master/Makefile)
@@ -146,7 +146,7 @@ The it will ask you to provide a secret key that must correspond to one of the f
 
 #### Recombine the firmware and the bootloader
 
-See [README.md](https://github.com/skycoin/hardware-wallet/blob/master/README.md): Run `make full-firmware` from repository home. 
+See [README.md](https://github.com/skycoin/hardware-wallet/blob/master/README.md): Run `make full-firmware` from repository home.
 
 Then you can re-flash the firmware for instance with st-skycoin alias.
 

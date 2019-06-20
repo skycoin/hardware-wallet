@@ -38,8 +38,8 @@
 #include "recovery.h"
 #include "reset.h"
 #include "rng.h"
-#include "skycoin_check_signature.h"
 #include "skycoin_crypto.h"
+#include "skycoin_signature.h"
 #include "skyparams.h"
 #include "skywallet.h"
 #include "storage.h"
@@ -322,6 +322,7 @@ void fsm_msgSkycoinCheckMessageSignature(SkycoinCheckMessageSignature* msg)
             msg_ptr = successResp;
             layoutRawMessage("Verification success");
             break;
+        case ErrAddressGeneration:
         case ErrInvalidSignature:
             failureResp->code = FailureType_Failure_InvalidSignature;
             layoutRawMessage("Wrong signature");
