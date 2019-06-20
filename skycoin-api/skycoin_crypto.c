@@ -108,9 +108,11 @@ void secp256k1sum(const uint8_t* seed, const size_t seed_length, uint8_t* digest
     sha256sum(seed, hash, seed_length);
 
     // seckey = deriveSecKey(hash)
-    // AUDIT: This should be deterministicKeyPairIteratorStep(), which performs sha256() in a loop,
-    // each time checking that the resulting secret key is valid. This code is missing that.
-    sha256sum(hash, seckey, sizeof(hash));
+    // TODO: AUDIT: This should be deterministicKeyPairIteratorStep(),
+    // which performs sha256() in a loop,
+    // each time checking that the resulting secret key is valid.
+    // This code is missing that.
+    deterministic_key_pair_iterator_step(hash, SHA256_DIGEST_LENGTH, seckey, pubkey);
 
     // pubkey = derivePubKey(sha256(hash))
     sha256sum(hash, hash2, sizeof(hash));
@@ -137,7 +139,7 @@ void deterministic_key_pair_iterator(const uint8_t* seed, const size_t seed_leng
     uint8_t seed1[SHA256_DIGEST_LENGTH] = {0};
     uint8_t seed2[SHA256_DIGEST_LENGTH] = {0};
 
-    // AUDIT: Why 256 here? seed can be any length in the skycoin cipher code.
+    // TODO: AUDIT: Why 256 here? seed can be any length in the skycoin cipher code.
     // If there are length restrictions imposed here, they must be enforced with a check
     uint8_t keypair_seed[256] = {0};
 
@@ -151,7 +153,7 @@ void deterministic_key_pair_iterator(const uint8_t* seed, const size_t seed_leng
     printf("seed1: %s\n", buf);
     #endif
 
-    // AUDIT: buffer overflow if seed_length > 256 - SHA256_DIGEST_LENGTH
+    // TODO: AUDIT: buffer overflow if seed_length > 256 - SHA256_DIGEST_LENGTH
     memcpy(keypair_seed, seed, seed_length);
     memcpy(&keypair_seed[seed_length], seed1, SHA256_DIGEST_LENGTH);
     memcpy(next_seed, seed1, SHA256_DIGEST_LENGTH);

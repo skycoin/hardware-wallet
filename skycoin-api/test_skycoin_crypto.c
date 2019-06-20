@@ -73,6 +73,15 @@ START_TEST(test_skycoin_pubkey_from_seckey)
     skycoin_pubkey_from_seckey(seckey, pubkey);
     ck_assert_mem_eq(pubkey, fromhex("03b17c7b7c564385be66f9c1b9da6a0b5aea56f0cb70548e6528a2f4f7b27245d8"), SKYCOIN_PUBKEY_LEN);
 
+    // Skycoin core test vectors from TestSigSignRecover
+    memcpy(seckey, fromhex("597e27368656cab3c82bfcf2fb074cefd8b6101781a27709ba1b326b738d2c5a"), sizeof(seckey));
+    skycoin_pubkey_from_seckey(seckey, pubkey);
+    ck_assert_mem_eq(pubkey, fromhex("02df09821cff4874198a1dbdc462d224bd99728eeed024185879225762376132c7"), SKYCOIN_PUBKEY_LEN);
+
+    memcpy(seckey, fromhex("67a331669081d22624f16512ea61e1d44cb3f26af3333973d17e0e8d03733b78"), sizeof(seckey));
+    skycoin_pubkey_from_seckey(seckey, pubkey);
+    ck_assert_mem_eq(pubkey, fromhex("0270b763664593c5f84dfb20d23ef79530fc317e5ee2ece0d9c50f432f62426ff9"), SKYCOIN_PUBKEY_LEN);
+
     // Skycoin core test vector 1 from TestAbnormalKeys2
     memcpy(seckey, fromhex("08efb79385c9a8b0d1c6f5f6511be0c6f6c2902963d874a3a4bacc18802528d3"), sizeof(seckey));
     skycoin_pubkey_from_seckey(seckey, pubkey);
@@ -656,6 +665,31 @@ START_TEST(test_skycoin_ecdsa_verify_digest_recover)
     memcpy(signature, fromhex("d201ec2b29ce3cf3e6048296188adff4b5dfcb337c1d1157f28654e445bb940b4e47d6b0c7ba43d072bf8618775f123a435e8d1a150cb39bbb1aa80da8c57ea100"), SKYCOIN_SIG_LEN);
     res = skycoin_ecdsa_verify_digest_recover(signature, message, pubkey);
     ck_assert_int_eq(res, 1);
+
+    // Skycoin core test vectors from TestSigSignRecover
+    memcpy(message, fromhex("001aa9e416aff5f3a3c7f9ae0811757cf54f393d50df861f5c33747954341aa7"), SHA256_DIGEST_LENGTH);
+    memcpy(signature, fromhex("79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f8179804641a7472bb90647fa60b4d30aef8c7279e4b68226f7b2713dab712ef122f8b01"), SKYCOIN_SIG_LEN);
+    res = skycoin_ecdsa_verify_digest_recover(signature, message, pubkey);
+    ck_assert_int_eq(res, 0);
+    ck_assert_mem_eq(pubkey, fromhex("02df09821cff4874198a1dbdc462d224bd99728eeed024185879225762376132c7"), SKYCOIN_PUBKEY_LEN);
+
+    memcpy(message, fromhex("001aa9e416aff5f3a3c7f9ae0811757cf54f393d50df861f5c33747954341aa7"), SHA256_DIGEST_LENGTH);
+    memcpy(signature, fromhex("ee38f27be5f3c4b8db875c0ffbc0232e93f622d16ede888508a4920ab51c3c9906ea7426c5e251e4bea76f06f554fa7798a49b7968b400fa981c51531a5748d801"), SKYCOIN_SIG_LEN);
+    res = skycoin_ecdsa_verify_digest_recover(signature, message, pubkey);
+    ck_assert_int_eq(res, 0);
+    ck_assert_mem_eq(pubkey, fromhex("02df09821cff4874198a1dbdc462d224bd99728eeed024185879225762376132c7"), SKYCOIN_PUBKEY_LEN);
+
+    memcpy(message, fromhex("001aa9e416aff5f3a3c7f9ae0811757cf54f393d50df861f5c33747954341aa7"), SHA256_DIGEST_LENGTH);
+    memcpy(signature, fromhex("d4d869ad39cb3a64fa1980b47d1f19bd568430d3f929e01c00f1e5b7c6840ba85e08d5781986ee72d1e8ebd4dd050386a64eee0256005626d2acbe3aefee9e2500"), SKYCOIN_SIG_LEN);
+    res = skycoin_ecdsa_verify_digest_recover(signature, message, pubkey);
+    ck_assert_int_eq(res, 0);
+    ck_assert_mem_eq(pubkey, fromhex("02df09821cff4874198a1dbdc462d224bd99728eeed024185879225762376132c7"), SKYCOIN_PUBKEY_LEN);
+
+    memcpy(message, fromhex("001aa9e416aff5f3a3c7f9ae0811757cf54f393d50df861f5c33747954341aa7"), SHA256_DIGEST_LENGTH);
+    memcpy(signature, fromhex("eeee743d79b40aaa52d9eeb48791b0ae81a2f425bf99cdbc84180e8ed429300d457e8d669dbff1716b123552baf6f6f0ef67f16c1d9ccd44e6785d424002212601"), SKYCOIN_SIG_LEN);
+    res = skycoin_ecdsa_verify_digest_recover(signature, message, pubkey);
+    ck_assert_int_eq(res, 0);
+    ck_assert_mem_eq(pubkey, fromhex("0270b763664593c5f84dfb20d23ef79530fc317e5ee2ece0d9c50f432f62426ff9"), SKYCOIN_PUBKEY_LEN);
 }
 END_TEST
 
@@ -663,10 +697,10 @@ START_TEST(test_ecdsa_sign_digest_inner)
 {
     // Tests ecdsa_sign_digest_inner against known test vectors from skycoin core
     int res;
-    uint8_t digest[32];
+    uint8_t digest[SHA256_DIGEST_LENGTH];
     uint8_t nonce[32];
-    uint8_t seckey[32];
-    uint8_t signature[65];
+    uint8_t seckey[SKYCOIN_SECKEY_LEN];
+    uint8_t signature[SKYCOIN_SIG_LEN];
     bignum256 z, k;
     uint8_t recid;
     const curve_info* curve = get_curve_by_name(SECP256K1_NAME);
@@ -680,7 +714,7 @@ START_TEST(test_ecdsa_sign_digest_inner)
     bn_read_be(nonce, &k);
     res = ecdsa_sign_digest_inner(curve->params, seckey, &z, &k, signature, &recid, NULL);
     ck_assert_int_eq(res, 0);
-    ck_assert_mem_eq(signature, fromhex("8c20a668be1b5a910205de46095023fe4823a3757f4417114168925f28193bff520ce833da9313d726f2a4d481e3195a5dd8e935a6c7f4dc260ed4c66ebe6da7"), SKYCOIN_SIG_LEN-1);
+    ck_assert_mem_eq(signature, fromhex("8c20a668be1b5a910205de46095023fe4823a3757f4417114168925f28193bff520ce833da9313d726f2a4d481e3195a5dd8e935a6c7f4dc260ed4c66ebe6da7"), 64);
     ck_assert_int_eq(recid, 0);
 
     // Skycoin core test vector: TestSigSign
@@ -692,7 +726,7 @@ START_TEST(test_ecdsa_sign_digest_inner)
     bn_read_be(nonce, &k);
     res = ecdsa_sign_digest_inner(curve->params, seckey, &z, &k,  signature, &recid, NULL);
     ck_assert_int_eq(res, 0);
-    ck_assert_mem_eq(signature, fromhex("98f9d784ba6c5c77bb7323d044c0fc9f2b27baa0a5b0718fe88596cc566819801ca662aaefd6cc958ba4604fea999db133a75bf34c13334dabac7124ff0cfcc1"), SKYCOIN_SIG_LEN-1);
+    ck_assert_mem_eq(signature, fromhex("98f9d784ba6c5c77bb7323d044c0fc9f2b27baa0a5b0718fe88596cc566819801ca662aaefd6cc958ba4604fea999db133a75bf34c13334dabac7124ff0cfcc1"), 64);
     ck_assert_int_eq(recid, 0);
 
     bignum256 sigr, sigs;
@@ -711,6 +745,90 @@ START_TEST(test_ecdsa_sign_digest_inner)
     ck_assert_int_eq(res, 1);
     res = bn_is_equal(&sigs, &refs);
     ck_assert_int_eq(res, 1);
+}
+END_TEST
+
+START_TEST(test_sign_recover)
+{
+    int res;
+    uint8_t digest[SHA256_DIGEST_LENGTH];
+    uint8_t nonce[32];
+    uint8_t seckey[SKYCOIN_SECKEY_LEN];
+    uint8_t signature[SKYCOIN_SIG_LEN];
+    uint8_t pubkey[SKYCOIN_PUBKEY_LEN];
+    bignum256 z, k;
+    uint8_t recid = -1;
+    const curve_info* curve = get_curve_by_name(SECP256K1_NAME);
+
+    // Skycoin core test vectors from TestSigSignRecover
+    recid = -1;
+    memset(nonce, 0, sizeof(nonce));
+    memcpy(seckey, fromhex("597e27368656cab3c82bfcf2fb074cefd8b6101781a27709ba1b326b738d2c5a"), sizeof(seckey));
+    memcpy(digest, fromhex("001aa9e416aff5f3a3c7f9ae0811757cf54f393d50df861f5c33747954341aa7"), SHA256_DIGEST_LENGTH);
+    memcpy(nonce, fromhex("0000000000000000000000000000000000000000000000000000000000000001"), 32);
+
+    bn_read_be(digest, &z);
+    bn_read_be(nonce, &k);
+    res = ecdsa_sign_digest_inner(curve->params, seckey, &z, &k, signature, &recid, NULL);
+    ck_assert_int_eq(res, 0);
+    ck_assert_mem_eq(signature, fromhex("79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f8179804641a7472bb90647fa60b4d30aef8c7279e4b68226f7b2713dab712ef122f8b"), 64);
+    ck_assert_int_eq(recid, 1);
+
+    signature[64] = recid;
+    res = skycoin_ecdsa_verify_digest_recover(signature, digest, pubkey);
+    ck_assert_int_eq(res, 0);
+    ck_assert_mem_eq(pubkey, fromhex("02df09821cff4874198a1dbdc462d224bd99728eeed024185879225762376132c7"), SKYCOIN_PUBKEY_LEN);
+
+    recid = -1;
+    memset(nonce, 0, sizeof(nonce));
+    memcpy(seckey, fromhex("597e27368656cab3c82bfcf2fb074cefd8b6101781a27709ba1b326b738d2c5a"), sizeof(seckey));
+    memcpy(digest, fromhex("001aa9e416aff5f3a3c7f9ae0811757cf54f393d50df861f5c33747954341aa7"), SHA256_DIGEST_LENGTH);
+    memcpy(nonce, fromhex("000000000000000000000000000000000000000000000000000000000000fe25"), 32);
+    bn_read_be(digest, &z);
+    bn_read_be(nonce, &k);
+    res = ecdsa_sign_digest_inner(curve->params, seckey, &z, &k, signature, &recid, NULL);
+    ck_assert_int_eq(res, 0);
+    ck_assert_mem_eq(signature, fromhex("ee38f27be5f3c4b8db875c0ffbc0232e93f622d16ede888508a4920ab51c3c9906ea7426c5e251e4bea76f06f554fa7798a49b7968b400fa981c51531a5748d8"), 64);
+    ck_assert_int_eq(recid, 1);
+
+    signature[64] = recid;
+    res = skycoin_ecdsa_verify_digest_recover(signature, digest, pubkey);
+    ck_assert_int_eq(res, 0);
+    ck_assert_mem_eq(pubkey, fromhex("02df09821cff4874198a1dbdc462d224bd99728eeed024185879225762376132c7"), SKYCOIN_PUBKEY_LEN);
+
+    recid = -1;
+    memset(nonce, 0, sizeof(nonce));
+    memcpy(seckey, fromhex("597e27368656cab3c82bfcf2fb074cefd8b6101781a27709ba1b326b738d2c5a"), sizeof(seckey));
+    memcpy(digest, fromhex("001aa9e416aff5f3a3c7f9ae0811757cf54f393d50df861f5c33747954341aa7"), SHA256_DIGEST_LENGTH);
+    memcpy(nonce, fromhex("00000000000000000000000000000000000000000000000000000000fe250100"), 32);
+    bn_read_be(digest, &z);
+    bn_read_be(nonce, &k);
+    res = ecdsa_sign_digest_inner(curve->params, seckey, &z, &k, signature, &recid, NULL);
+    ck_assert_int_eq(res, 0);
+    ck_assert_mem_eq(signature, fromhex("d4d869ad39cb3a64fa1980b47d1f19bd568430d3f929e01c00f1e5b7c6840ba85e08d5781986ee72d1e8ebd4dd050386a64eee0256005626d2acbe3aefee9e25"), 64);
+    ck_assert_int_eq(recid, 0);
+
+    signature[64] = recid;
+    res = skycoin_ecdsa_verify_digest_recover(signature, digest, pubkey);
+    ck_assert_int_eq(res, 0);
+    ck_assert_mem_eq(pubkey, fromhex("02df09821cff4874198a1dbdc462d224bd99728eeed024185879225762376132c7"), SKYCOIN_PUBKEY_LEN);
+
+    recid = -1;
+    memset(nonce, 0, sizeof(nonce));
+    memcpy(seckey, fromhex("67a331669081d22624f16512ea61e1d44cb3f26af3333973d17e0e8d03733b78"), sizeof(seckey));
+    memcpy(digest, fromhex("001aa9e416aff5f3a3c7f9ae0811757cf54f393d50df861f5c33747954341aa7"), SHA256_DIGEST_LENGTH);
+    memcpy(nonce, fromhex("000000000000000000000000000000000000000000000000000000001e2501ac"), 32);
+    bn_read_be(digest, &z);
+    bn_read_be(nonce, &k);
+	res = ecdsa_sign_digest_inner(curve->params, seckey, &z, &k, signature, &recid, NULL);
+    ck_assert_int_eq(res, 0);
+    ck_assert_mem_eq(signature, fromhex("eeee743d79b40aaa52d9eeb48791b0ae81a2f425bf99cdbc84180e8ed429300d457e8d669dbff1716b123552baf6f6f0ef67f16c1d9ccd44e6785d4240022126"), 64);
+    ck_assert_int_eq(recid, 1);
+
+    signature[64] = recid;
+    res = skycoin_ecdsa_verify_digest_recover(signature, digest, pubkey);
+    ck_assert_int_eq(res, 0);
+    ck_assert_mem_eq(pubkey, fromhex("0270b763664593c5f84dfb20d23ef79530fc317e5ee2ece0d9c50f432f62426ff9"), SKYCOIN_PUBKEY_LEN);
 }
 END_TEST
 
@@ -1202,6 +1320,7 @@ Suite* test_suite(void)
     tcase_add_test(tc, test_skycoin_ecdsa_verify_digest_recover);
     tcase_add_test(tc, test_base58_decode);
     tcase_add_test(tc, test_ecdsa_sign_digest_inner);
+    tcase_add_test(tc, test_sign_recover);
     tcase_add_test(tc, test_checkdigest);
     tcase_add_test(tc, test_addtransactioninput);
     tcase_add_test(tc, test_ecdh);

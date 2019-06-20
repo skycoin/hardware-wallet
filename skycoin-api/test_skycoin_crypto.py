@@ -4,9 +4,6 @@ from skycoin_crypto import *
 
 class TestSkycoinCrypto(unittest.TestCase):
     def test_sign(self):
-        # TODO Rewrite this test
-        # The signatures will be random every time, the only thing you can do
-        # is verify that the signature is valid or not valid
         skycoin = SkycoinCrypto()
         digest = create_string_buffer(b'\x00\x1a\xa9\xe4\x16\xaf\xf5\xf3\xa3\xc7\xf9\xae\x08\x11\x75\x7c\xf5\x4f\x39\x3d\x50\xdf\x86\x1f\x5c\x33\x74\x79\x54\x34\x1a\xa7')
         seckey = create_string_buffer(b'\x59\x7e\x27\x36\x86\x56\xca\xb3\xc8\x2b\xfc\xf2\xfb\x07\x4c\xef\xd8\xb6\x10\x17\x81\xa2\x77\x09\xba\x1b\x32\x6b\x73\x8d\x2c\x5a')
@@ -17,6 +14,7 @@ class TestSkycoinCrypto(unittest.TestCase):
         self.assertEqual(ret, 0)
         expectPubkey = skycoin.SkycoinPubkeyFromSeckey(seckey)
         self.assertEqual(binascii.hexlify(pubkey), binascii.hexlify(expectPubkey))
+        self.assertEqual(binascii.hexlify(pubkey), "02df09821cff4874198a1dbdc462d224bd99728eeed024185879225762376132c7")
 
         digest = create_string_buffer(b'\x00\x1a\xa9\xe4\x16\xaf\xf5\xf3\xa3\xc7\xf9\xae\x08\x11\x75\x7c\xf5\x4f\x39\x3d\x50\xdf\x86\x1f\x5c\x33\x74\x79\x54\x34\x1a\xa7')
         seckey = create_string_buffer(b'\x67\xa3\x31\x66\x90\x81\xd2\x26\x24\xf1\x65\x12\xea\x61\xe1\xd4\x4c\xb3\xf2\x6a\xf3\x33\x39\x73\xd1\x7e\x0e\x8d\x03\x73\x3b\x78')
@@ -27,6 +25,7 @@ class TestSkycoinCrypto(unittest.TestCase):
         self.assertEqual(ret, 0)
         expectPubkey = skycoin.SkycoinPubkeyFromSeckey(seckey)
         self.assertEqual(binascii.hexlify(pubkey), binascii.hexlify(expectPubkey))
+        self.assertEqual(binascii.hexlify(pubkey), "0270b763664593c5f84dfb20d23ef79530fc317e5ee2ece0d9c50f432f62426ff9")
 
     def test_sha256sum(self):
         skycoin = SkycoinCrypto()
