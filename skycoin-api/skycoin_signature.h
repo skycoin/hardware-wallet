@@ -9,13 +9,13 @@
  *
  */
 
-/* Code inspired by
- * https://github.com/kokke/tiny-regex-c/blob/master/re.c
- * */
+#ifndef SKYCOIN_SIGNATURE_H
+#define SKYCOIN_SIGNATURE_H
 
-#ifndef __SKYCOINAPI_CHECKDIGEST_H__
-#define __SKYCOINAPI_CHECKDIGEST_H__
+#include <stddef.h>
+#include <stdint.h>
 
-int is_sha256_digest_hex(char* digest);
+int skycoin_ecdsa_verify_digest_recover(const uint8_t* sig, const uint8_t* digest, uint8_t* pub_key);
+void compress_pubkey(const uint8_t* long_pub_key, uint8_t* pub_key);
 
-#endif // __SKYCOINAPI_CHECKDIGEST_H__
+#endif

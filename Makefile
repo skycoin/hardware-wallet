@@ -1,8 +1,9 @@
 .DEFAULT_GOAL := help
 .PHONY: clean-lib clean
 .PHONY: build-deps firmware-deps bootloader bootloader-mem-protect
+.PHONY: check check-version check-trng check-protob test check-ver
 .PHONY: firmware sign full-firmware-mem-protect full-firmware
-.PHONY: emulator run-emulator st-flash
+.PHONY: emulator run-emulator st-flash oflash
 .PHONY: bootloader-clean release-bootloader release-bootloader-mem-protect
 .PHONY: firmware-clean release-firmware
 .PHONY: release-combined release-combined-mem-protect
@@ -22,7 +23,7 @@ VERSION_BOOTLOADER       =$(shell cat tiny-firmware/bootloader/VERSION | tr -d v
 VERSION_BOOTLOADER_MAJOR =$(shell echo $(VERSION_BOOTLOADER) | cut -d. -f1)
 VERSION_BOOTLOADER_MINOR =$(shell echo $(VERSION_BOOTLOADER) | cut -d. -f2)
 VERSION_BOOTLOADER_PATCH =$(shell echo $(VERSION_BOOTLOADER) | cut -d. -f3)
-VERSION_FIRMWARE_RAW     =$(shell ./ci-scripts/version.sh)
+VERSION_FIRMWARE_RAW     =$(shell cat tiny-firmware/VERSION)
 VERSION_FIRMWARE_MAJOR   =$(shell echo $(VERSION_FIRMWARE_RAW) | tr -d v | cut -d. -f1)
 VERSION_FIRMWARE_MINOR   =$(shell echo $(VERSION_FIRMWARE_RAW) | cut -d. -f2)
 VERSION_FIRMWARE_PATCH   =$(shell echo $(VERSION_FIRMWARE_RAW) | cut -d. -f3)
@@ -150,6 +151,7 @@ release-combined-mem-protect: release-bootloader-mem-protect release-firmware ##
 	mv tiny-firmware/bootloader/combine/combined.bin releases/skywallet-full-mem-protect-$(COMBINED_VERSION).bin
 
 release: release-combined release-combined-mem-protect release-emulator ## Create a release for production
+	@cp tiny-firmware/VERSION releases/version.txt
 
 release-sign: release # Create detached signatures for all the generated files for release
 	gpg --armor --detach-sign releases/skywallet-firmware-v$(VERSION_FIRMWARE).bin
@@ -193,7 +195,7 @@ run-emulator: emulator ## Run wallet emulator
 test: ## Run all project test suites.
 	export LIBRARY_PATH="$(MKFILE_DIR)/skycoin-api/:$$LIBRARY_PATH"
 	export $(LD_VAR)="$(MKFILE_DIR)/skycoin-api/:$$$(LD_VAR)"
-	make -C skycoin-api/ test
+	PYTHON=$(PYTHON) make -C skycoin-api/ test
 	VERSION_MAJOR=$(VERSION_FIRMWARE_MAJOR) VERSION_MINOR=$(VERSION_FIRMWARE_MINOR) VERSION_PATCH=$(VERSION_FIRMWARE_PATCH) make emulator
 	EMULATOR=1 VERSION_MAJOR=$(VERSION_FIRMWARE_MAJOR) VERSION_MINOR=$(VERSION_FIRMWARE_MINOR) VERSION_PATCH=$(VERSION_FIRMWARE_PATCH) make -C tiny-firmware/ test
 
@@ -202,6 +204,10 @@ st-flash: ## Deploy (flash) firmware on physical wallet
 
 oflash: full-firmware
 	openocd -f openocd.cfg
+
+check-ver:
+	echo "Bootloader : $(VERSION_BOOTLOADER_MAJOR).$(VERSION_BOOTLOADER_MINOR).$(VERSION_BOOTLOADER_PATCH)"
+	echo "Firmware   : $(VERSION_FIRMWARE_MAJOR).$(VERSION_FIRMWARE_MINOR).$(VERSION_FIRMWARE_PATCH)"
 
 check-trng: ## Run test tools over random buffers
 	make -C trng-test trng-generate-buffers
