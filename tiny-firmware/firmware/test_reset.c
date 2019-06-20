@@ -48,7 +48,7 @@ void take_storage_snapshot(void)
     storage_snapshot.passphrase_protection = storage_hasPassphraseProtection();
 }
 
-void assert_storage_matches_snapshot(char* msg)
+void assert_storage_snapshot_eq(char* msg)
 {
     ck_assert_msg(storage_snapshot.has_mnemonic == storage_hasMnemonic(), msg);
     if (storage_snapshot.has_mnemonic) {
@@ -70,7 +70,7 @@ void assert_storage_matches_snapshot(char* msg)
     ck_assert_msg(storage_snapshot.passphrase_protection == storage_hasPassphraseProtection(), msg);
 }
 
-START_TEST(test_reset_invalid_strength)
+START_TEST(test_reset_initWithInvalidStrength)
 {
     storage_wipe();
     take_storage_snapshot();
@@ -90,12 +90,12 @@ START_TEST(test_reset_invalid_strength)
             for (pin_protection = true; pin_protection_count < 2; ++pin_protection_count, pin_protection = false) {
                 int skip_backup_count = 0;
                 for (skip_backup = true; skip_backup_count < 2; ++skip_backup_count, skip_backup = false) {
-		    fprintf(stderr, "Loop %d", ++cnt);
+                    fprintf(stderr, "Loop %d", ++cnt);
                     reset_init(display_random, 160, passphrase_protection, pin_protection, "english", "lbl", skip_backup);
                     char testMsg[256];
                     sprintf(testMsg, "Invoke reset_init with display_random=%d strength=%d passphrase=%d pin=%d lang=%s label=%s skip_backup=%d",
                             display_random, 160, passphrase_protection, pin_protection, "english", "lbl", skip_backup);
-		    assert_storage_matches_snapshot(testMsg);
+                    assert_storage_snapshot_eq(testMsg);
                 }
             }
         }
@@ -103,8 +103,35 @@ START_TEST(test_reset_invalid_strength)
 }
 END_TEST
 
+START_TEST(test_reset_initNoPin)
+{
+    storage_wipe();
+    take_storage_snapshot();
+
+    reset_init_ex(false, 128, true, false, "english", "L", true, NULL);
+    ck_assert_str_eq(storage_getLanguage(), "english");
+    ck_assert_msg(storage_getPassphraseProtection(), "Passphrase protection should be active");
+    ck_assert_str_eq(storage_getLabel(), "L");
+}
+END_TEST
+
+START_TEST(test_reset_initNoLabel)
+{
+    storage_wipe();
+    take_storage_snapshot();
+
+    reset_init_ex(false, 128, true, false, "english", "", true, NULL);
+    ck_assert_str_eq(storage_getLabel(), storage_snapshot.label);
+}
+END_TEST
+
 /*
-START_TEST(test_reset_)
+START_TEST(test_reset_initWrongPin)
+{
+}
+END_TEST
+
+START_TEST(test_reset_initCorrectPin)
 {
 }
 END_TEST
@@ -112,7 +139,9 @@ END_TEST
 
 TCase *add_reset_tests(TCase *tc) {
     // FIXME: test cases for reset_init_ex with display_random=true (needs mocking of button ACK)
-    tcase_add_test(tc, test_reset_invalid_strength);
+    tcase_add_test(tc, test_reset_initWithInvalidStrength);
+    tcase_add_test(tc, test_reset_initNoPin);
+    tcase_add_test(tc, test_reset_initNoLabel);
     return tc;
 }
 
