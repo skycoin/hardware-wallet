@@ -118,7 +118,7 @@ def sign(data):
     skycoin = skycoin_crypto.SkycoinCrypto()
     seckey = binascii.unhexlify(secexp)
     pubkey = skycoin.SkycoinPubkeyFromSeckey(seckey)
-    pubkey = binascii.hexlify(pubkey.value)
+    pubkey = binascii.hexlify(pubkey)
 
     to_sign = prepare(data)[256:] # without meta
     fingerprint = hashlib.sha256(to_sign).hexdigest()
@@ -137,12 +137,9 @@ def sign(data):
 
     signature = skycoin.SkycoinEcdsaSignDigest(seckey, binascii.unhexlify(fingerprint))
 
-    if len(signature.value) != 65:
-        raise Exception("Signature length {} is not 65 bytes".format(len(signature.value)))
+    print("Skycoin signature:", binascii.hexlify(signature))
 
-    print("Skycoin signature:", binascii.hexlify(signature.value))
-
-    return modify(data, slot, index, str(signature.value))
+    return modify(data, slot, index, signature)
 
 def main(args):
 

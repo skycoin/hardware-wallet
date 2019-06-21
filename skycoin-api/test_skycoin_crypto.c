@@ -652,15 +652,18 @@ START_TEST(test_skycoin_address_from_pubkey)
     char address[256] = {0};
     size_t size_address = sizeof(address);
     memcpy(pubkey, fromhex("02e5be89fa161bf6b0bc64ec9ec7fe27311fbb78949c3ef9739d4c73a84920d6e1"), 33);
-    skycoin_address_from_pubkey(pubkey, address, &size_address);
+    int ok = skycoin_address_from_pubkey(pubkey, address, &size_address);
+    ck_assert_int_eq(ok, 1);
     ck_assert_str_eq(address, "2EVNa4CK9SKosT4j1GEn8SuuUUEAXaHAMbM");
 
     memcpy(pubkey, fromhex("030e40dda21c27126d829b6ae57816e1440dcb2cc73e37e860af26eff1ec55ed73"), 33);
-    skycoin_address_from_pubkey(pubkey, address, &size_address);
+    ok = skycoin_address_from_pubkey(pubkey, address, &size_address);
+    ck_assert_int_eq(ok, 1);
     ck_assert_str_eq(address, "2EKq1QXRmfe7jsWzNdYsmyoz8q3VkwkLsDJ");
 
     memcpy(pubkey, fromhex("035843e72258696b391cf1d898fc65f31e66876ea0c9e101f8ddc3ebb4b87dc5b0"), 33);
-    skycoin_address_from_pubkey(pubkey, address, &size_address);
+    ok = skycoin_address_from_pubkey(pubkey, address, &size_address);
+    ck_assert_int_eq(ok, 1);
     ck_assert_str_eq(address, "5UgkXRHrf5XRk41BFq1DVyeFZHTQXirhUu");
 }
 END_TEST
