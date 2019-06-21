@@ -227,7 +227,7 @@ check-coverage-cccc: ## Generate test coverage reports HTML
 	cccc skycoin-api/*.c --outdir=$(OUTDIR)/skycoin-api
 
 check-coverage: emulator ## Generate test coverage reports console
-	make -C skycoin-api coverage
+	# make -C skycoin-api coverage
 	EMULATOR=1 VERSION_MAJOR=$(VERSION_FIRMWARE_MAJOR) VERSION_MINOR=$(VERSION_FIRMWARE_MINOR) VERSION_PATCH=$(VERSION_FIRMWARE_PATCH) make -C tiny-firmware coverage
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
