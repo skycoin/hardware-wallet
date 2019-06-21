@@ -118,7 +118,9 @@ END_TEST
 START_TEST(test_reset_initNoLabel)
 {
     storage_wipe();
+    ck_assert_str_ne("", storage_getLabel());
     take_storage_snapshot();
+    ck_assert_str_ne("", storage_snapshot.label);
 
     reset_init_ex(false, 128, true, false, "english", "", true, NULL);
     ck_assert_str_eq(storage_getLabel(), storage_snapshot.label);
