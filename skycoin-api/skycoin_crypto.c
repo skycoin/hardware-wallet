@@ -79,28 +79,28 @@ void skycoin_pubkey_from_seckey(const uint8_t* seckey, uint8_t* pubkey)
 // returns 0 if valid
 int seckey_is_valid(const ecdsa_curve* curve, const uint8_t* seckey)
 {
-	/*
-	SKYCOIN CIPHER AUDIT
-	Compare to function: SeckeyIsValid
+    /*
+    SKYCOIN CIPHER AUDIT
+    Compare to function: SeckeyIsValid
 
-	Note: In SeckeyIsValid, it checks that seckey is not a negative value.
-	This isn't necessary here because seckey can never be valid; bignum256 is unsigned.
-	*/
-	bignum256 z;
+    Note: In SeckeyIsValid, it checks that seckey is not a negative value.
+    This isn't necessary here because seckey can never be valid; bignum256 is unsigned.
+    */
+    bignum256 z;
 
-	bn_read_be(seckey, &z);
+    bn_read_be(seckey, &z);
 
-	// must not be zero
-	if (bn_is_zero(&z)) {
-		return -1;
-	}
+    // must not be zero
+    if (bn_is_zero(&z)) {
+        return -1;
+    }
 
-	// must be less than order of curve
-	if (!bn_is_less(&z, &curve->order)) {
-		return -2;
-	}
+    // must be less than order of curve
+    if (!bn_is_less(&z, &curve->order)) {
+        return -2;
+    }
 
-	return 0;
+    return 0;
 }
 
 /*
@@ -115,26 +115,25 @@ int deterministic_key_pair_iterator_step(const uint8_t* digest, uint8_t* seckey,
     Compare to function: secp256k1.GenerateDeterministicKeyPair
     */
 
-	const curve_info* curve = get_curve_by_name(SECP256K1_NAME);
+    const curve_info* curve = get_curve_by_name(SECP256K1_NAME);
 
-	memcpy(seckey, digest, SHA256_DIGEST_LENGTH);
+    memcpy(seckey, digest, SHA256_DIGEST_LENGTH);
     while (1) {
-	    sha256sum(seckey, seckey, SHA256_DIGEST_LENGTH);
-	    if (0 != seckey_is_valid(curve->params, seckey)) {
-	    	// This has approximately 1^-128 chance of occuring
-	    	continue;
-	    }
+        sha256sum(seckey, seckey, SHA256_DIGEST_LENGTH);
+        if (0 != seckey_is_valid(curve->params, seckey)) {
+            continue;
+        }
 
-	    skycoin_pubkey_from_seckey(seckey, pubkey);
-	    if (!pubkey_is_valid(curve->params, pubkey)) {
-		    // TODO: if pubkey is invalid, FAIL/PANIC
-	    	return -1;
-	    }
+        skycoin_pubkey_from_seckey(seckey, pubkey);
+        if (!pubkey_is_valid(curve->params, pubkey)) {
+            // TODO: if pubkey is invalid, FAIL/PANIC
+            return -1;
+        }
 
-	    break;
-	}
+        break;
+    }
 
-	return 0;
+    return 0;
 }
 
 /*
@@ -151,7 +150,7 @@ int ecdh(const uint8_t* pub_key, const uint8_t* sec_key, uint8_t* ecdh_key)
     const curve_info* curve = get_curve_by_name(SECP256K1_NAME);
     int ret = ecdh_multiply(curve->params, sec_key, pub_key, long_pub_key);
     if (ret != 0) {
-    	return ret;
+        return ret;
     }
     compress_pubkey(long_pub_key, ecdh_key);
     return 0;
@@ -178,24 +177,24 @@ int secp256k1sum(const uint8_t* seed, const size_t seed_length, uint8_t* digest)
 
     // seckey, _ = deterministic_key_pair_iterator_step(hash)
     if (0 != deterministic_key_pair_iterator_step(hash, seckey, pubkey)) {
-    	// TODO: abort() on failure
-    	return -1;
+        // TODO: abort() on failure
+        return -1;
     }
 
     // _, pubkey = deterministic_key_pair_iterator_step(sha256(hash))
     // This value usually equals the seckey generated above, but not always (1^-128 probability)
     sha256sum(hash, hash2, sizeof(hash));
     if (0 != deterministic_key_pair_iterator_step(hash2, dummy_seckey, pubkey)) {
-    	// TODO: abort() on failure
-    	return -2;
+        // TODO: abort() on failure
+        return -2;
     }
 
     // ecdh_key = ECDH(pubkey, seckey)
     // Note: we don't care if the ecdh_key is a valid public key, we're only
     // using the bytes to salt the hash
     if (0 != ecdh(pubkey, seckey, ecdh_key)) {
-    	// TODO: abort() on failure
-    	return -3;
+        // TODO: abort() on failure
+        return -3;
     }
 
     // sha256(hash + ecdh_key)
@@ -220,7 +219,7 @@ int deterministic_key_pair_iterator(const uint8_t* seed, const size_t seed_lengt
     uint8_t seed2[SHA256_DIGEST_LENGTH] = {0};
 
     if (0 != secp256k1sum(seed, seed_length, next_seed)) {
-    	return -1;
+        return -1;
     }
 
     #if DEBUG_DETERMINISTIC_KEY_PAIR_ITERATOR
@@ -239,7 +238,7 @@ int deterministic_key_pair_iterator(const uint8_t* seed, const size_t seed_lengt
     #endif
 
     if (0 != deterministic_key_pair_iterator_step(seed2, seckey, pubkey)) {
-    	return -1;
+        return -1;
     }
 
     #if DEBUG_DETERMINISTIC_KEY_PAIR_ITERATOR

@@ -111,7 +111,7 @@ END_TEST
 
 START_TEST(test_secp256k1Hash)
 {
-	int ret;
+    int ret;
     char seed[256] = "seed";
     uint8_t digest[SHA256_DIGEST_LENGTH] = {0};
     ret = secp256k1sum((const uint8_t*)seed, strlen(seed), digest);
@@ -280,7 +280,7 @@ END_TEST
 
 START_TEST(test_deterministic_key_pair_iterator)
 {
-	int ret;
+    int ret;
     char seed[256] = {0};
     uint8_t seckey[32] = {0};
     uint8_t pubkey[33] = {0};
@@ -888,7 +888,7 @@ START_TEST(test_sign_recover)
     memcpy(nonce, fromhex("000000000000000000000000000000000000000000000000000000001e2501ac"), 32);
     bn_read_be(digest, &z);
     bn_read_be(nonce, &k);
-	res = ecdsa_sign_digest_inner(curve->params, seckey, &z, &k, signature, &recid, NULL);
+    res = ecdsa_sign_digest_inner(curve->params, seckey, &z, &k, signature, &recid, NULL);
     ck_assert_int_eq(res, 0);
     ck_assert_mem_eq(signature, fromhex("eeee743d79b40aaa52d9eeb48791b0ae81a2f425bf99cdbc84180e8ed429300d457e8d669dbff1716b123552baf6f6f0ef67f16c1d9ccd44e6785d4240022126"), 64);
     ck_assert_int_eq(recid, 1);

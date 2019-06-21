@@ -167,7 +167,7 @@ ErrCode_t fsm_getKeyPairAtIndex(uint32_t nbAddress, uint8_t* pubkey, uint8_t* se
         return ErrInvalidArg;
     }
     if (0 != deterministic_key_pair_iterator((const uint8_t*)mnemo, strlen(mnemo), nextSeed, seckey, pubkey)) {
-    	return ErrFailed;
+        return ErrFailed;
     }
     if (respSkycoinAddress != NULL && start_index == 0) {
         skycoin_address_from_pubkey(pubkey, respSkycoinAddress->addresses[0], &size_address);
@@ -176,7 +176,7 @@ ErrCode_t fsm_getKeyPairAtIndex(uint32_t nbAddress, uint8_t* pubkey, uint8_t* se
     memcpy(seed, nextSeed, 32);
     for (uint32_t i = 0; i < nbAddress + start_index - 1; ++i) {
         if (0 != deterministic_key_pair_iterator(seed, 32, nextSeed, seckey, pubkey)) {
-        	return ErrFailed;
+            return ErrFailed;
         }
         memcpy(seed, nextSeed, 32);
         seed[32] = 0;
