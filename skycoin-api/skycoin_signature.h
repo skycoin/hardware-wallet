@@ -15,7 +15,10 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "ecdsa.h"
+
 int skycoin_ecdsa_verify_digest_recover(const uint8_t* sig, const uint8_t* digest, uint8_t* pub_key);
 void compress_pubkey(const uint8_t* long_pub_key, uint8_t* pub_key);
+int pubkey_is_valid(const ecdsa_curve *curve, const uint8_t* pub_key);
 
 #endif
