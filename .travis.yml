@@ -41,7 +41,8 @@ script:
   - make clean
   - make full-firmware
   - make clean
-  - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then make check-converge ; fi
+  - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then make check-converge-cccc ; fi
+  - make check-converge
 
 notifications:
   # https://github.com/kvld/travisci-telegram TravisCI Telegram Bot integration

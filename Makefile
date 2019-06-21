@@ -215,8 +215,17 @@ check-trng: ## Run test tools over random buffers
 check-protob: ## verify protob submodule hash
 	./ci-scripts/verify_protob_hash.sh
 
-check-coverage: ## Generate test coverage reports
-	cccc tiny-firmware/*.c --outdir=$(OUTDIR)
+check-coverage-cccc: ## Generate test coverage reports
+	make clean
+	mkdir -p $(OUTDIR)/tiny-firmware
+	mkdir -p $(OUTDIR)/skycoin-api
+	cccc tiny-firmware/*.c --outdir=$(OUTDIR)/tiny-firmware
+	cccc skycoin-api/*.c --outdir=$(OUTDIR)/skycoin-api
+	# make -C skycoin-api coverage
+	# make -C tiny-firmware coverage
 
+check-coverage: emulator
+	# make -C skycoin-api coverage
+	EMULATOR=1 VERSION_MAJOR=$(VERSION_FIRMWARE_MAJOR) VERSION_MINOR=$(VERSION_FIRMWARE_MINOR) VERSION_PATCH=$(VERSION_FIRMWARE_PATCH) make -C tiny-firmware coverage
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
