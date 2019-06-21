@@ -44,10 +44,11 @@ script:
   - make full-firmware
   - make clean
   - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then make check-coverage-cccc ; fi
-  - make check-converge
+  - make check-coverage
 
 notifications:
   # https://github.com/kvld/travisci-telegram TravisCI Telegram Bot integration
+  email: false
   webhooks: https://fathomless-fjord-24024.herokuapp.com/notify
 
 before_deploy:
