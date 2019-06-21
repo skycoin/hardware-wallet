@@ -25,6 +25,20 @@
 
 extern void bn_print(const bignum256* a);
 
+bool verify_pub_key(const uint8_t* pub_key) {
+    const curve_info *info = get_curve_by_name(SECP256K1_NAME);
+    if (!info) {
+        return false;
+    }
+    const ecdsa_curve* curve = info->params;
+    curve_point point;
+    int res = ecdsa_read_pubkey(curve, pub_key, &point);
+    memset(&point, 0, sizeof(point));
+    if (res) {
+        return true;
+    }
+    return false;
+}
 void tohex(char* str, const uint8_t* buffer, int buffer_length)
 {
     int i;

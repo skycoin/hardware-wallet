@@ -118,8 +118,8 @@ ErrCode_t msgSkycoinSignMessageImpl(SkycoinSignMessage* msg, ResponseSkycoinSign
     }
     int res = skycoin_ecdsa_sign_digest(seckey, digest, signature);
     if (res == -2) {
-    	// Fail due to empty digest
-    	return ErrInvalidArg;
+        // Fail due to empty digest
+        return ErrInvalidArg;
     } else if (res) {
         // Too many retries without a valid signature
         // -> fail with an error
@@ -143,8 +143,8 @@ ErrCode_t msgSignTransactionMessageImpl(uint8_t* message_digest, uint32_t index,
     }
     int signres = skycoin_ecdsa_sign_digest(seckey, message_digest, signature);
     if (signres == -2) {
-    	// Fail due to empty digest
-    	return ErrInvalidArg;
+        // Fail due to empty digest
+        return ErrInvalidArg;
     } else if (res) {
         // Too many retries without a valid signature
         // -> fail with an error
@@ -231,23 +231,26 @@ ErrCode_t msgSkycoinCheckMessageSignatureImpl(SkycoinCheckMessageSignature* msg,
     }
     tobuff(msg->signature, sig, sizeof(sig));
     ErrCode_t ret = (skycoin_ecdsa_verify_digest_recover(sig, digest, pubkey) == 0) ? ErrOk : ErrInvalidSignature;
-
-    if (ret == ErrOk) {
-        size_t address_size = sizeof(address);
-        skycoin_address_from_pubkey(pubkey, address, &address_size);
-        if (memcmp(address, msg->address, address_size)) {
-            strncpy(failureResp->message, _("Address does not match"), sizeof(failureResp->message));
-            failureResp->has_message = true;
-            ret = ErrInvalidSignature;
-        } else {
-            memcpy(successResp->message, address, address_size);
-            successResp->has_message = true;
-        }
-    } else {
-        strncpy(failureResp->message, _("Unable to get pub key from signed message"), sizeof(failureResp->message));
+    if (ret != ErrOk) {
+        strncpy(failureResp->message, _("Address recovery failed"), sizeof(failureResp->message));
         failureResp->has_message = true;
+        return ErrInvalidSignature;
     }
-    return ret;
+    if (!verify_pub_key(pubkey)) {
+        strncpy(failureResp->message, _("Can not verify pub key"), sizeof(failureResp->message));
+        failureResp->has_message = true;
+        return ErrAddressGeneration;
+    }
+    size_t address_size = sizeof(address);
+    skycoin_address_from_pubkey(pubkey, address, &address_size);
+    if (memcmp(address, msg->address, address_size)) {
+        strncpy(failureResp->message, _("Address does not match"), sizeof(failureResp->message));
+        failureResp->has_message = true;
+        return ErrInvalidSignature;
+    }
+    memcpy(successResp->message, address, address_size);
+    successResp->has_message = true;
+    return ErrOk;
 }
 
 ErrCode_t verifyLanguage(char* lang)

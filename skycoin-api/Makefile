@@ -84,6 +84,7 @@ test_skycoin_crypto: test_skycoin_crypto.o libskycoin-crypto.so
 
 test: test_skycoin_crypto ## Run test suite for Skycoin cipher library for firmware
 	./test_skycoin_crypto
+	$(PYTHON) ./test_skycoin_crypto.py
 
 clean: ## Delete all temporary files
 	rm -f $(MKFILE_DIR)/*.o test_skycoin_crypto
