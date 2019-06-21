@@ -43,7 +43,7 @@ script:
   - make bootloader-clean
   - make full-firmware
   - make clean
-  - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then make check-converge-cccc ; fi
+  - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then make check-coverage-cccc ; fi
   - make check-converge
 
 notifications:
