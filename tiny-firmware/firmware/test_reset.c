@@ -110,7 +110,7 @@ START_TEST(test_reset_initNoPin)
 
     reset_init_ex(false, 128, true, false, "english", "L", true, NULL);
     ck_assert_str_eq(storage_getLanguage(), "english");
-    ck_assert_msg(storage_getPassphraseProtection(), "Passphrase protection should be active");
+    ck_assert_msg(storage_hasPassphraseProtection(), "Passphrase protection should be active");
     ck_assert_str_eq(storage_getLabel(), "L");
 }
 END_TEST
