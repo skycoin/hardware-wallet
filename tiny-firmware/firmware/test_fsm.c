@@ -44,8 +44,8 @@
 #include "reset.h"
 #include "rng.h"
 #include "setup.h"
-#include "skycoin_check_signature.h"
 #include "skycoin_crypto.h"
+#include "skycoin_signature.h"
 #include "skyparams.h"
 #include "storage.h"
 #include "test_fsm.h"
@@ -187,21 +187,20 @@ START_TEST(test_msgSkycoinCheckMessageSignatureOk)
     ResponseSkycoinSignMessage* respSign = (ResponseSkycoinSignMessage*)(void*)msg_resp_sign;
     msgSkycoinSignMessageImpl(&msgSign, respSign);
     SkycoinCheckMessageSignature checkMsg = SkycoinCheckMessageSignature_init_zero;
-    strncpy(checkMsg.message, msgSign.message, sizeof(checkMsg.message));
+    memcpy(checkMsg.message, msgSign.message, sizeof(checkMsg.message));
     memcpy(checkMsg.address, respAddress->addresses[0], sizeof(checkMsg.address));
     memcpy(checkMsg.signature, respSign->signed_message, sizeof(checkMsg.signature));
-    uint8_t msg_success_resp_check[MSG_OUT_SIZE] __attribute__((aligned)) = {0};
-    uint8_t msg_fail_resp_check[MSG_OUT_SIZE] __attribute__((aligned)) = {0};
-    Success* successRespCheck = (Success*)(void*)msg_success_resp_check;
-    Failure* failRespCheck = (Failure*)(void*)msg_fail_resp_check;
-    err = msgSkycoinCheckMessageSignatureImpl(&checkMsg, successRespCheck, failRespCheck);
+    Success successRespCheck = Success_init_zero;
+    Failure failRespCheck = Failure_init_zero;
+    err = msgSkycoinCheckMessageSignatureImpl(
+                &checkMsg, &successRespCheck, &failRespCheck);
 
     // NOTE(): Then
     ck_assert_int_eq(ErrOk, err);
-    ck_assert(successRespCheck->has_message);
+    ck_assert(successRespCheck.has_message);
     int address_diff = strncmp(
         respAddress->addresses[0],
-        successRespCheck->message,
+        successRespCheck.message,
         sizeof(respAddress->addresses[0]));
     if (address_diff) {
         fprintf(stderr, "\nrespAddress->addresses[0]: ");
@@ -209,12 +208,31 @@ START_TEST(test_msgSkycoinCheckMessageSignatureOk)
             fprintf(stderr, "%c", respAddress->addresses[0][i]);
         }
         fprintf(stderr, "\nrespCheck->message: ");
-        for (size_t i = 0; i < sizeof(successRespCheck->message); ++i) {
-            fprintf(stderr, "%c", successRespCheck->message[i]);
+        for (size_t i = 0; i < sizeof(successRespCheck.message); ++i) {
+            fprintf(stderr, "%c", successRespCheck.message[i]);
         }
         fprintf(stderr, "\n");
     }
     ck_assert_int_eq(0, address_diff);
+}
+END_TEST
+
+START_TEST(test_msgSkycoinCheckMessageSignatureCanNotGetPubKey)
+{
+    // NOTE Given
+    SkycoinCheckMessageSignature checkMsg = SkycoinCheckMessageSignature_init_zero;
+    strncpy(checkMsg.message, "msgSign.message", sizeof(checkMsg.message));
+    strncpy(checkMsg.address, "respAddress->addresses[0]", sizeof(checkMsg.address));
+    strncpy(checkMsg.signature, "respSign->signed_message", sizeof(checkMsg.signature));
+    Success successRespCheck = Success_init_zero;
+    Failure failRespCheck = Failure_init_zero;
+
+    // NOTE When
+    ErrCode_t err = msgSkycoinCheckMessageSignatureImpl(
+                &checkMsg, &successRespCheck, &failRespCheck);
+
+    // NOTE Then
+    ck_assert_int_eq(ErrInvalidSignature, err);
 }
 END_TEST
 
@@ -1236,6 +1254,7 @@ TCase* add_fsm_tests(TCase* tc)
     tcase_add_test(tc, test_msgGenerateMnemonicImplOk);
     tcase_add_test(tc, test_msgGenerateMnemonicImplShouldFailIfItWasDone);
     tcase_add_test(tc, test_msgSkycoinCheckMessageSignatureOk);
+    tcase_add_test(tc, test_msgSkycoinCheckMessageSignatureCanNotGetPubKey);
     tcase_add_test(tc, test_msgGenerateMnemonicImplShouldFailForWrongSeedCount);
     tcase_add_test(tc, test_msgSkycoinCheckMessageSignatureFailedAsExpectedForInvalidSignedMessage);
     tcase_add_test(tc, test_msgSkycoinCheckMessageSignatureFailedAsExpectedForInvalidMessage);

@@ -75,6 +75,7 @@ int ecdsa_uncompress_pubkey(const ecdsa_curve* curve, const uint8_t* pub_key, ui
 int ecdsa_sign(const ecdsa_curve* curve, HasherType hasher_type, const uint8_t* priv_key, const uint8_t* msg, uint32_t msg_len, uint8_t* sig, uint8_t* pby, int (*is_canonical)(uint8_t by, uint8_t sig[64]));
 int ecdsa_sign_double(const ecdsa_curve* curve, HasherType hasher_type, const uint8_t* priv_key, const uint8_t* msg, uint32_t msg_len, uint8_t* sig, uint8_t* pby, int (*is_canonical)(uint8_t by, uint8_t sig[64]));
 int ecdsa_sign_digest(const ecdsa_curve* curve, const uint8_t* priv_key, const uint8_t* digest, uint8_t* sig, uint8_t* pby, int (*is_canonical)(uint8_t by, uint8_t sig[64]));
+int ecdsa_sign_digest_inner(const ecdsa_curve* curve, const uint8_t* priv_key, bignum256* z, bignum256* k, uint8_t* sig, uint8_t* pby, int (*is_canonical)(uint8_t by, uint8_t sig[64]));
 void ecdsa_get_public_key33(const ecdsa_curve* curve, const uint8_t* priv_key, uint8_t* pub_key);
 void ecdsa_get_public_key65(const ecdsa_curve* curve, const uint8_t* priv_key, uint8_t* pub_key);
 void ecdsa_get_pubkeyhash(const uint8_t* pub_key, HasherType hasher_type, uint8_t* pubkeyhash);

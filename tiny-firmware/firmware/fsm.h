@@ -25,9 +25,9 @@
 
 // message functions
 
-void fsm_sendSuccess(const char* text);
+void fsm_sendSuccess(const char* text, MessageType* msgtype);
 
-void fsm_sendFailure(FailureType code, const char* text);
+void fsm_sendFailure(FailureType code, const char* text, MessageType* msgtype);
 
 void fsm_msgInitialize(Initialize* msg);
 void fsm_msgGetFeatures(GetFeatures* msg);

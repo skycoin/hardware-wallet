@@ -31,6 +31,7 @@
 
 extern const ecdsa_curve secp256k1;
 extern const curve_info secp256k1_info;
-extern const curve_info secp256k1_decred_info;
+
+const curve_info* get_curve_by_name(const char* curve_name);
 
 #endif

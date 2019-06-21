@@ -65,14 +65,14 @@ void reset_init_ex(bool display_random, uint32_t _strength, bool passphrase_prot
 
         layoutDialogSwipe(&bmp_icon_info, _("Cancel"), _("Continue"), NULL, _("Internal entropy:"), ent_str[0], ent_str[1], ent_str[2], ent_str[3], NULL);
         if (!protectButton(ButtonRequestType_ButtonRequest_ResetDevice, false)) {
-            fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
+            fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL, 0);
             layoutHome();
             return;
         }
     }
 
     if (pin_protection && !protectChangePinEx(funcRequestPin)) {
-        fsm_sendFailure(FailureType_Failure_PinMismatch, NULL);
+        fsm_sendFailure(FailureType_Failure_PinMismatch, NULL, 0);
         layoutHome();
         return;
     }
@@ -111,7 +111,7 @@ static char current_word[10];
 void reset_backup(bool separated)
 {
     if (!storage_needsBackup()) {
-        fsm_sendFailure(FailureType_Failure_UnexpectedMessage, _("Seed already backed up"));
+        fsm_sendFailure(FailureType_Failure_UnexpectedMessage, _("Seed already backed up"), 0);
         return;
     }
 
@@ -144,7 +144,7 @@ void reset_backup(bool separated)
                     session_clear(true);
                 }
                 layoutHome();
-                fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
+                fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL, 0);
                 return;
             }
             word_pos++;
@@ -155,7 +155,7 @@ void reset_backup(bool separated)
 
     if (!separated) {
         storage_update();
-        fsm_sendSuccess(_("Device successfully initialized"));
+        fsm_sendSuccess(_("Device successfully initialized"), 0);
     }
     layoutHome();
 }
