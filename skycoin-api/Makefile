@@ -44,9 +44,8 @@ INC += -I$(TOOLS_DIR)
 CFLAGS += -I$(MKFILE_DIR) $(INC)
 
 SRCS += skycoin_crypto.c
+SRCS += skycoin_signature.c
 SRCS += check_digest.c
-SRCS += skycoin_check_signature.c
-SRCS += skycoin_check_signature_tools.c
 SRCS += $(shell ls $(TOOLS_DIR)/*.c)
 
 OBJS   = $(SRCS:.c=.o)
@@ -54,7 +53,7 @@ OBJS   = $(SRCS:.c=.o)
 %.o: %.c %.h
 	$(CC) $(CFLAGS) -o $@ -c $<
 
-LIBS_DARWIN += 
+LIBS_DARWIN +=
 TESTLIBS_DARWIN += -L$(CHECK_PATH)/lib -lcheck
 LIBS_LINUX += -L/usr/local/lib/ -lm -lrt
 TESTLIBS_LINUX += -L$(CHECK_PATH)/src -lcheck
@@ -85,6 +84,7 @@ test_skycoin_crypto: test_skycoin_crypto.o libskycoin-crypto.so
 
 test: test_skycoin_crypto ## Run test suite for Skycoin cipher library for firmware
 	./test_skycoin_crypto
+	$(PYTHON) ./test_skycoin_crypto.py
 
 clean: ## Delete all temporary files
 	rm -f $(MKFILE_DIR)/*.o test_skycoin_crypto

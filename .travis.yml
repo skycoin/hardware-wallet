@@ -39,6 +39,8 @@ script:
   - make clean
   - make emulator
   - make clean
+  - make bootloader-mem-protect
+  - make bootloader-clean
   - make full-firmware
   - make clean
   - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then make check-converge-cccc ; fi
@@ -71,4 +73,4 @@ deploy:
     region: $AWS_REGION
     on:
       repo: skycoin/hardware-wallet
-      branch: master
+      tags: true
