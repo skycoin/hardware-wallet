@@ -22,8 +22,10 @@ pubkeys = {
     5: '033bdf377502789d27a1d534775392af97a93333181b9736395b3db687ceffc473',
 }
 
+SIG_LEN = 65
+RESERVED_LEN = 49
 INDEXES_START = len('SKY1') + struct.calcsize('<I')
-SIG_START = INDEXES_START + SLOTS + 1 + 52
+SIG_START = INDEXES_START + SLOTS + 1 + RESERVED_LEN
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Commandline tool for signing Trezor firmware.')
@@ -41,10 +43,10 @@ def prepare(data):
         meta += data[4:4 + struct.calcsize('<I')]
     else:
         meta += struct.pack('<I', len(data))  # length of the code
-    meta += b'\x00' * SLOTS  # signature index #1-#3
-    meta += b'\x01'       # flags
-    meta += b'\x00' * 52  # reserved
-    meta += b'\x00' * 65 * SLOTS  # signature #1-#3
+    meta += b'\x00' * SLOTS         # signature index #1-#3
+    meta += b'\x01'                 # flags
+    meta += b'\x00' * RESERVED_LEN  # reserved
+    meta += b'\x00' * SIG_LEN * SLOTS    # signature #1-#3
 
     if data[:4] == b'SKY1':
         # Replace existing header
@@ -70,7 +72,7 @@ def check_signatures(data):
 
     used = []
     for x in range(SLOTS):
-        signature = data[SIG_START + 65 * x:SIG_START + 65 * x + 65]
+        signature = data[SIG_START + SIG_LEN * x:SIG_START + SIG_LEN * x + SIG_LEN]
 
         if indexes[x] == 0:
             print("Slot #%d" % (x + 1), 'is empty')
@@ -98,7 +100,7 @@ def modify(data, slot, index, signature):
     data = data[:INDEXES_START + slot - 1 ] + chr(index) + data[INDEXES_START + slot:]
 
     # Put signature to data
-    data = data[:SIG_START + 65 * (slot - 1) ] + signature + data[SIG_START + 65 * slot:]
+    data = data[:SIG_START + SIG_LEN * (slot - 1) ] + signature + data[SIG_START + SIG_LEN * slot:]
 
     return data
 
@@ -114,7 +116,7 @@ def sign(data):
     secexp = raw_input()
     if secexp.strip() == '':
         # Blank key, let's remove existing signature from slot
-        return modify(data, slot, 0, '\x00' * 65)
+        return modify(data, slot, 0, '\x00' * SIG_LEN)
     skycoin = skycoin_crypto.SkycoinCrypto()
     seckey = binascii.unhexlify(secexp)
     pubkey = skycoin.SkycoinPubkeyFromSeckey(seckey)
