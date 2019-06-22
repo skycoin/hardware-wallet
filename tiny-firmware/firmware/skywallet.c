@@ -18,7 +18,7 @@
  * along with this library.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "skywallet.h"
+#include "tiny-firmware/firmware/skywallet.h"
 #include "tiny-firmware/oled.h"
 #include "tiny-firmware/gen/bitmaps.h"
 #include "tiny-firmware/util.h"
@@ -27,12 +27,12 @@
 #include "tiny-firmware/rng.h"
 #include "tiny-firmware/timer.h"
 #include "tiny-firmware/buttons.h"
-#include "usb.h"
-#include "storage.h"
-#include "layout2.h"
-#include "gettext.h"
-#include "fastflash.h"
-#include "factory_test.h"
+#include "tiny-firmware/firmware/usb.h"
+#include "tiny-firmware/firmware/storage.h"
+#include "tiny-firmware/firmware/layout2.h"
+#include "tiny-firmware/firmware/gettext.h"
+#include "tiny-firmware/firmware/fastflash.h"
+#include "tiny-firmware/firmware/factory_test.h"
 
 /* Screen timeout */
 uint32_t system_millis_lock_start;

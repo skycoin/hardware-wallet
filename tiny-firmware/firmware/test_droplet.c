@@ -11,9 +11,9 @@
 
 #include <check.h>
 
-#include "droplet.h"
-#include "skyparams.h"
-#include "test_droplet.h"
+#include "tiny-firmware/firmware/droplet.h"
+#include "tiny-firmware/firmware/skyparams.h"
+#include "tiny-firmware/firmware/test_droplet.h"
 
 START_TEST(test_droplet_all_digits)
 {

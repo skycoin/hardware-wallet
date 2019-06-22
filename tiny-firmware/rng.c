@@ -21,7 +21,7 @@
 #include <libopencm3/stm32/f2/rng.h>
 #include <libopencm3/stm32/memorymap.h>
 
-#include "rng.h"
+#include "tiny-firmware/rng.h"
 
 #if !EMULATOR
 uint32_t random32(void)

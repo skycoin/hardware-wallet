@@ -18,7 +18,7 @@
  * along with this library.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "memory.h"
+#include "tiny-firmware/memory.h"
 #include "sha2.h"
 #include <libopencm3/stm32/flash.h>
 #include <stdint.h>

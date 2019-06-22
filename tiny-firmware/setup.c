@@ -25,9 +25,9 @@
 #include <libopencm3/stm32/rng.h>
 #include <libopencm3/stm32/spi.h>
 
-#include "layout.h"
-#include "rng.h"
-#include "util.h"
+#include "tiny-firmware/layout.h"
+#include "tiny-firmware/rng.h"
+#include "tiny-firmware/util.h"
 
 uint32_t __stack_chk_guard;
 

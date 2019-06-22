@@ -18,20 +18,19 @@
  * along with this library.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "reset.h"
-#include "storage.h"
+#include "tiny-firmware/firmware/reset.h"
+#include "tiny-firmware/firmware/storage.h"
 #include "tiny-firmware/rng.h"
 #include "sha2.h"
-#include "storage.h"
-#include "fsm.h"
+#include "tiny-firmware/firmware/fsm.h"
 #include "types.pb.h"
-#include "protect.h"
+#include "tiny-firmware/firmware/protect.h"
 #include "bip39.h"
 #include "tiny-firmware/util.h"
-#include "gettext.h"
-#include "entropy.h"
-#include "layout2.h"
-#include "messages.h"
+#include "tiny-firmware/firmware/gettext.h"
+#include "tiny-firmware/firmware/entropy.h"
+#include "tiny-firmware/firmware/layout2.h"
+#include "tiny-firmware/firmware/messages.h"
 
 uint32_t strength;
 uint8_t int_entropy[32];

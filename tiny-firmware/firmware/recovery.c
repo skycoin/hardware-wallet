@@ -18,21 +18,20 @@
  * along with this library.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "recovery.h"
+#include "tiny-firmware/firmware/recovery.h"
 #include "bip39.h"
-#include "fsm.h"
-#include "gettext.h"
-#include "layout2.h"
+#include "tiny-firmware/firmware/fsm.h"
+#include "tiny-firmware/firmware/gettext.h"
+#include "tiny-firmware/firmware/layout2.h"
 #include "memzero.h"
-#include "messages.h"
-#include "protect.h"
-#include "recovery-table.h"
-#include "storage.h"
+#include "tiny-firmware/firmware/messages.h"
+#include "tiny-firmware/firmware/protect.h"
+#include "tiny-firmware/firmware/recovery-table.h"
+#include "tiny-firmware/firmware/storage.h"
 #include "types.pb.h"
-#include "messages.h"
 #include "tiny-firmware/rng.h"
 #include "tiny-firmware/oled.h"
-#include "usb.h"
+#include "tiny-firmware/firmware/usb.h"
 #include <ctype.h>
 
 /* number of words expected in the new seed */

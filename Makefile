@@ -17,6 +17,8 @@ PIPARGS  ?=
 MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 MKFILE_DIR  := $(dir $(MKFILE_PATH))
 
+CFLAGS += -I$(MKFILE_DIR)
+
 FULL_FIRMWARE_PATH ?= releases/full-firmware-no-mem-protect.bin
 
 VERSION_BOOTLOADER       =$(shell cat tiny-firmware/bootloader/VERSION | tr -d v)
@@ -103,12 +105,12 @@ generate-bitmaps:
 
 bootloader: firmware-deps ## Build bootloader (RDP level 0)
 	rm -f tiny-firmware/memory.o tiny-firmware/gen/bitmaps.o # Force rebuild of these two files
-	MEMORY_PROTECT=0 SIGNATURE_PROTECT=1 REVERSE_BUTTONS=1 VERSION_MAJOR=$(VERSION_BOOTLOADER_MAJOR) VERSION_MINOR=$(VERSION_BOOTLOADER_MINOR) VERSION_PATCH=$(VERSION_BOOTLOADER_PATCH) make -C tiny-firmware/bootloader/ align
+	MEMORY_PROTECT=0 SIGNATURE_PROTECT=1 REVERSE_BUTTONS=1 VERSION_MAJOR=$(VERSION_BOOTLOADER_MAJOR) VERSION_MINOR=$(VERSION_BOOTLOADER_MINOR) VERSION_PATCH=$(VERSION_BOOTLOADER_PATCH) GLOBAL_PATH=$(MKFILE_DIR) make -C tiny-firmware/bootloader/ align
 	mv tiny-firmware/bootloader/bootloader.bin skybootloader-no-memory-protect.bin
 
 bootloader-mem-protect: firmware-deps ## Build bootloader (RDP level 2)
 	rm -f tiny-firmware/memory.o tiny-firmware/gen/bitmaps.o # Force rebuild of these two files
-	MEMORY_PROTECT=1 SIGNATURE_PROTECT=1 REVERSE_BUTTONS=1 VERSION_MAJOR=$(VERSION_BOOTLOADER_MAJOR) VERSION_MINOR=$(VERSION_BOOTLOADER_MINOR) VERSION_PATCH=$(VERSION_BOOTLOADER_PATCH) make -C tiny-firmware/bootloader/ align
+	MEMORY_PROTECT=1 SIGNATURE_PROTECT=1 REVERSE_BUTTONS=1 VERSION_MAJOR=$(VERSION_BOOTLOADER_MAJOR) VERSION_MINOR=$(VERSION_BOOTLOADER_MINOR) VERSION_PATCH=$(VERSION_BOOTLOADER_PATCH) GLOBAL_PATH=$(MKFILE_DIR) make -C tiny-firmware/bootloader/ align
 	mv tiny-firmware/bootloader/bootloader.bin bootloader-memory-protected.bin
 
 firmware: tiny-firmware/skyfirmware.bin ## Build skycoin wallet firmware
@@ -166,7 +168,7 @@ tiny-firmware/bootloader/libskycoin-crypto.so:
 
 tiny-firmware/skyfirmware.bin: firmware-deps
 	rm -f tiny-firmware/memory.o tiny-firmware/gen/bitmaps.o # Force rebuild of these two files
-	REVERSE_BUTTONS=1 VERSION_MAJOR=$(VERSION_FIRMWARE_MAJOR) VERSION_MINOR=$(VERSION_FIRMWARE_MINOR) VERSION_PATCH=$(VERSION_FIRMWARE_PATCH) make -C tiny-firmware/ sign
+	REVERSE_BUTTONS=1 VERSION_MAJOR=$(VERSION_FIRMWARE_MAJOR) VERSION_MINOR=$(VERSION_FIRMWARE_MINOR) VERSION_PATCH=$(VERSION_FIRMWARE_PATCH) GLOBAL_PATH=$(MKFILE_DIR) make -C tiny-firmware/ sign
 
 sign: tiny-firmware/bootloader/libskycoin-crypto.so tiny-firmware/skyfirmware.bin ## Sign skycoin wallet firmware
 	tiny-firmware/bootloader/firmware_sign.py -s -f tiny-firmware/skyfirmware.bin
@@ -184,8 +186,8 @@ full-firmware: bootloader firmware ## Build full firmware (RDP level 0)
 	mv tiny-firmware/bootloader/combine/combined.bin releases/full-firmware-no-mem-protect.bin
 
 emulator: build-deps ## Build emulator
-	EMULATOR=1 VERSION_MAJOR=$(VERSION_FIRMWARE_MAJOR) VERSION_MINOR=$(VERSION_FIRMWARE_MINOR) VERSION_PATCH=$(VERSION_FIRMWARE_PATCH) make -C tiny-firmware/emulator/
-	EMULATOR=1 VERSION_MAJOR=$(VERSION_FIRMWARE_MAJOR) VERSION_MINOR=$(VERSION_FIRMWARE_MINOR) VERSION_PATCH=$(VERSION_FIRMWARE_PATCH) make -C tiny-firmware/
+	EMULATOR=1 VERSION_MAJOR=$(VERSION_FIRMWARE_MAJOR) VERSION_MINOR=$(VERSION_FIRMWARE_MINOR) VERSION_PATCH=$(VERSION_FIRMWARE_PATCH) GLOBAL_PATH=$(MKFILE_DIR) make -C tiny-firmware/emulator/
+	EMULATOR=1 VERSION_MAJOR=$(VERSION_FIRMWARE_MAJOR) VERSION_MINOR=$(VERSION_FIRMWARE_MINOR) VERSION_PATCH=$(VERSION_FIRMWARE_PATCH) GLOBAL_PATH=$(MKFILE_DIR) make -C tiny-firmware/
 	mv tiny-firmware/skycoin-emulator emulator
 
 run-emulator: emulator ## Run wallet emulator
@@ -195,8 +197,8 @@ test: ## Run all project test suites.
 	export LIBRARY_PATH="$(MKFILE_DIR)/skycoin-api/:$$LIBRARY_PATH"
 	export $(LD_VAR)="$(MKFILE_DIR)/skycoin-api/:$$$(LD_VAR)"
 	make -C skycoin-api/ test
-	VERSION_MAJOR=$(VERSION_FIRMWARE_MAJOR) VERSION_MINOR=$(VERSION_FIRMWARE_MINOR) VERSION_PATCH=$(VERSION_FIRMWARE_PATCH) make emulator
-	EMULATOR=1 VERSION_MAJOR=$(VERSION_FIRMWARE_MAJOR) VERSION_MINOR=$(VERSION_FIRMWARE_MINOR) VERSION_PATCH=$(VERSION_FIRMWARE_PATCH) make -C tiny-firmware/ test
+	VERSION_MAJOR=$(VERSION_FIRMWARE_MAJOR) VERSION_MINOR=$(VERSION_FIRMWARE_MINOR) VERSION_PATCH=$(VERSION_FIRMWARE_PATCH) GLOBAL_PATH=$(MKFILE_DIR) make emulator
+	EMULATOR=1 VERSION_MAJOR=$(VERSION_FIRMWARE_MAJOR) VERSION_MINOR=$(VERSION_FIRMWARE_MINOR) VERSION_PATCH=$(VERSION_FIRMWARE_PATCH) GLOBAL_PATH=$(MKFILE_DIR) make -C tiny-firmware/ test
 
 st-flash: ## Deploy (flash) firmware on physical wallet
 	st-flash write $(FULL_FIRMWARE_PATH) 0x08000000

@@ -22,8 +22,8 @@
 
 #include <string.h>
 
-#include "oled.h"
-#include "util.h"
+#include "tiny-firmware/oled.h"
+#include "tiny-firmware/util.h"
 
 #define OLED_SETCONTRAST 0x81
 #define OLED_DISPLAYALLON_RESUME 0xA4

@@ -19,7 +19,7 @@
 
 #include <string.h>
 
-#include "layout2.h"
+#include "tiny-firmware/firmware/layout2.h"
 #include "tiny-firmware/oled.h"
 #include "tiny-firmware/rng.h"
 

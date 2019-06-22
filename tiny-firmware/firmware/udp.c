@@ -19,9 +19,9 @@
 
 #include <stdint.h>
 
-#include "usb.h"
+#include "tiny-firmware/firmware/usb.h"
 
-#include "messages.h"
+#include "tiny-firmware/firmware/messages.h"
 #include "tiny-firmware/timer.h"
 
 static volatile char tiny = 0;

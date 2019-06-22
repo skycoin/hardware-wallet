@@ -9,9 +9,9 @@
  *
  */
 
-#include "swtimer.h"
+#include "tiny-firmware/firmware/swtimer.h"
 #include "tiny-firmware/timer.h"
-#include "timerimpl.h"
+#include "tiny-firmware/firmware/timerimpl.h"
 
 TIMER sw_timers[MAX_TIMERS];
 

@@ -24,15 +24,14 @@
 
 #include <string.h>
 
-#include "usb.h"
+#include <tiny-firmware/bootloader/usb.h>
 
-#include "bootloader.h"
-#include "signatures.h"
+#include <tiny-firmware/bootloader/bootloader.h>
+#include <tiny-firmware/bootloader/signatures.h>
 #include "sha2.h"
 #include "ecdsa.h"
 #include "secp256k1.h"
 #include "memzero.h"
-
 #include "tiny-firmware/buttons.h"
 #include "tiny-firmware/oled.h"
 #include "tiny-firmware/rng.h"

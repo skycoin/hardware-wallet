@@ -9,7 +9,7 @@
  *
  */
 
-#include "fsm_impl.h"
+#include <tiny-firmware/firmware/fsm_impl.h>
 
 #include <libopencm3/stm32/flash.h>
 #include <stdio.h>
@@ -19,31 +19,25 @@
 #include "bip32.h"
 #include "bip39.h"
 #include "check_digest.h"
-#include "droplet.h"
-#include "entropy.h"
-#include "fsm.h"
-#include "fsm_impl.h"
-#include "gettext.h"
-#include "layout2.h"
-#include "messages.h"
-#include "storage.h"
-#include "tiny-firmware/rng.h"
-#include "tiny-firmware/oled.h"
-#include "protect.h"
-#include "recovery.h"
-#include "reset.h"
-#include "tiny-firmware/memory.h"
-#include "usb.h"
-#include "tiny-firmware/util.h"
-#include "base58.h"
-#include "gettext.h"
+#include <tiny-firmware/firmware/droplet.h>
+#include <tiny-firmware/firmware/entropy.h>
+#include <tiny-firmware/firmware/fsm.h>
+#include <tiny-firmware/firmware/fsm_impl.h>
+#include <tiny-firmware/firmware/gettext.h>
+#include <tiny-firmware/firmware/layout2.h>
+#include <tiny-firmware/firmware/messages.h>
+#include <tiny-firmware/firmware/storage.h>
+#include <tiny-firmware/rng.h>
+#include <tiny-firmware/oled.h>
+#include <tiny-firmware/firmware/protect.h>
+#include <tiny-firmware/firmware/recovery.h>
+#include <tiny-firmware/firmware/reset.h>
+#include <tiny-firmware/memory.h>
+#include <tiny-firmware/firmware/usb.h>
+#include <tiny-firmware/util.h>
 #include "skycoin_crypto.h"
 #include "skycoin_check_signature.h"
-#include "check_digest.h"
-#include "fsm_impl.h"
-#include "droplet.h"
-#include "skyparams.h"
-#include "entropy.h"
+#include <tiny-firmware/firmware/skyparams.h>
 
 #define MNEMONIC_STRENGTH_12 128
 #define MNEMONIC_STRENGTH_24 256

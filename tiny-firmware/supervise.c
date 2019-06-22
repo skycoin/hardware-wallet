@@ -17,8 +17,8 @@
  * along with this library.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "supervise.h"
-#include "memory.h"
+#include "tiny-firmware/supervise.h"
+#include "tiny-firmware/memory.h"
 #include <libopencm3/stm32/flash.h>
 #include <stdint.h>
 

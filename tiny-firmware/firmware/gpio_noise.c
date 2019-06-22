@@ -9,7 +9,7 @@
  *
  */
 
-#include "gpio_noise.h"
+#include <tiny-firmware/firmware/gpio_noise.h>
 #include <libopencm3/stm32/gpio.h>
 
 #ifdef EMULATOR
