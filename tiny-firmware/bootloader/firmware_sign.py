@@ -15,23 +15,15 @@ except:
 
 SLOTS = 3
 
-pubkeys = {
-    1: '024291e2425a2fc7ec7bd75c8128726ca8cfb7ce9c04ae8186b66c3516f0f80cd2',
-    2: '03e592cb31c3c2cc9b3810e5c78298280b0cc785cd7f28e36e135aa8a0fc74d081',
-    3: '03b155df34b4c0879fdd6bde2acb9c7a45e93aa0bd0c697f6292dc3d1cb4c596d6',
-    4: '026d1d2e1c4af5a2c89e8e4c8bf724034d0252eb8b9179fc6eec9ceb8bb1734997',
-    5: '033bdf377502789d27a1d534775392af97a93333181b9736395b3db687ceffc473',
-}
-
 INDEXES_START = len('SKY1') + struct.calcsize('<I')
 SIG_START = INDEXES_START + SLOTS + 1 + 52
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Commandline tool for signing Skycoin firmware.')
-    parser.add_argument('-f', '--file', dest='path', help="Firmware file to modify")
+    parser.add_argument('-f', '--file', dest='path', help="Firmware file to modify", required=True)
     parser.add_argument('-s', '--sign', dest='sign', action='store_true', help="Add signature to firmware slot")
-    parser.add_argument('-sk', '--secret-key', dest='secret_key', help="Secret key in hexadecimal")
-    parser.add_argument('-pk', '--public-key', dest='public_key', help="Public key in exadecimal")
+    parser.add_argument('-sk', '--secret-key', dest='sec_key', help="Secret key in hexadecimal")
+    parser.add_argument('-pk', '--pub-keys', dest='pub_keys', nargs='+', help="Public key in exadecimal", required=True)
 
     return parser.parse_args()
 
