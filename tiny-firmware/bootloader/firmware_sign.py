@@ -50,23 +50,18 @@ def prepare(data):
 
     return out
 
-def check_signatures(data, pk=None):
+def check_signatures(data, pubkeys):
     # Analyses given firmware and prints out
     # status of included signatures. Return True on success False on failed.
-
-    to_sign = prepare(data)[256:] # without meta
-    fingerprint = hashlib.sha256(to_sign).hexdigest()
-    print("Firmware fingerprint:", fingerprint)
-    if not pk is None:
-        skycoin = skycoin_crypto.SkycoinCrypto()
-        pubkey = skycoin.RecoverPubkeyFromSignature(binascii.unhexlify(fingerprint), signature)
-        pubkey = binascii.hexlify(pubkey)
-        return pubkey == pk
-
     try:
         indexes = [ ord(x) for x in data[INDEXES_START:INDEXES_START + SLOTS] ]
     except:
         indexes = [ x for x in data[INDEXES_START:INDEXES_START + SLOTS] ]
+
+    to_sign = prepare(data)[256:] # without meta
+    fingerprint = hashlib.sha256(to_sign).hexdigest()
+    print("Firmware fingerprint:", fingerprint)
+
     used = []
     for x in range(SLOTS):
         signature = data[SIG_START + 65 * x:SIG_START + 65 * x + 65]
@@ -77,7 +72,9 @@ def check_signatures(data, pk=None):
             pk = pubkeys[indexes[x]]
 
             skycoin = skycoin_crypto.SkycoinCrypto()
-            pubkey = skycoin.SkycoinEcdsaVerifyDigestRecover(signature, binascii.unhexlify(fingerprint))
+            ret, pubkey = skycoin.SkycoinEcdsaVerifyDigestRecover(signature, binascii.unhexlify(fingerprint))
+            if ret != 0:
+                return False
             pubkey = binascii.hexlify(pubkey)
 
             if (pubkey == pk):
@@ -129,14 +126,16 @@ def sign(data, pubkeys, secexp, slot):
     if index == None:
         raise Exception("Unable to find private key index. Unknown private key?")
 
-    signature = skycoin.SkycoinEcdsaSignDigest(seckey, binascii.unhexlify(fingerprint))
+    ret, signature = skycoin.SkycoinEcdsaSignDigest(seckey, binascii.unhexlify(fingerprint))
+    if ret != 0:
+        raise Exeption("Error signing message digest")
 
-    if len(signature.value) != 65:
-        raise Exception("Signature length {} is not 65 bytes".format(len(signature.value)))
+    if len(signature) != 65:
+        raise Exception("Signature length {} is not 65 bytes".format(len(signature)))
 
-    print("Skycoin signature:", binascii.hexlify(signature.value))
+    print("Skycoin signature:", binascii.hexlify(signature))
 
-    return modify(data, slot, index, str(signature.value))
+    return modify(data, slot, index, str(signature))
 
 def main(args):
     pubkeys = {}
