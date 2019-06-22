@@ -62,9 +62,9 @@ def check_signatures(data):
     # status of included signatures
 
     try:
-        indexes = [ ord(x) for x in data[INDEXES_START:INDEXES_START + SLOTS] ]
+        indexes = [ord(x) for x in data[INDEXES_START:INDEXES_START + SLOTS]]
     except:
-        indexes = [ x for x in data[INDEXES_START:INDEXES_START + SLOTS] ]
+        indexes = [x for x in data[INDEXES_START:INDEXES_START + SLOTS]]
 
     to_sign = prepare(data)[256:] # without meta
     fingerprint = hashlib.sha256(to_sign).hexdigest()
