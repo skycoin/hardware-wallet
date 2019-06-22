@@ -103,22 +103,14 @@ def modify(data, slot, index, signature):
 
     return data
 
-def sign(data, secexp=None):
-    # Ask for index and private key and signs the firmware
-
-    slot = int(raw_input('Enter signature slot (1-%d): ' % SLOTS))
+def sign(data, pubkeys, secexp, slot):
     if slot < 1 or slot > SLOTS:
         raise Exception("Invalid slot")
-
-    if not secexp:
-        print("Paste SECEXP (in hex) and press Enter:")
-        print("(blank private key removes the signature on given index)")
-        secexp = raw_input()
-        if secexp.strip() == '':
+    if secexp.strip() == '':
         # Blank key, let's remove existing signature from slot
         return modify(data, slot, 0, '\x00' * 65)
-    skycoin = skycoin_crypto.SkycoinCrypto()
     seckey = binascii.unhexlify(secexp)
+    skycoin = skycoin_crypto.SkycoinCrypto()
     pubkey = skycoin.SkycoinPubkeyFromSeckey(seckey)
     pubkey = binascii.hexlify(pubkey.value)
 
@@ -147,11 +139,12 @@ def sign(data, secexp=None):
     return modify(data, slot, index, str(signature.value))
 
 def main(args):
-
-    if not args.path:
-        raise Exception("-f/--file is required")
-
-    data = open(args.path, 'rb').read()
+    pubkeys = {}
+    for idx, pub_key in enumerate(args.pub_keys):
+        pubkeys[idx + 1] = pub_key
+    fp = open(args.path, 'rb')
+    data = fp.read()
+    fp.close()
     assert len(data) % 4 == 0
 
     if data[:4] != b'SKY1':
@@ -162,19 +155,21 @@ def main(args):
         raise Exception("Firmware header expected")
 
     print("Firmware size %d bytes" % len(data))
-
-    match = check_signatures(data, None if not args.public_key else args.public_key)
-    if not match:
-        fp.close()
-        sys.exit(-1)
-
     if args.sign:
-        data = sign(data, None if not args.secret_key else args.secret_key)
-        match  = check_signatures(data, None if not args.public_key else args.public_key)
-        if not match:
-            fp.close()
-            sys.exit(-1)
-
+        # Ask for index and private key and signs the firmware
+        slot = int(raw_input('Enter signature slot (1-%d): ' % SLOTS))
+        if not args.sec_key:
+            print("Paste SECEXP (in hex) and press Enter:")
+            print("(blank private key removes the signature on given index)")
+            secexp = raw_input()
+        else:
+            secexp = args.sec_key
+        data = sign(data, pubkeys, secexp, slot)
+        if not check_signatures(data, pubkeys):
+            raise Exception("Invalid signature, hard fail")
+    else:
+        if not check_signatures(data, pubkeys):
+            raise Exception("Invalid signature")
     fp = open(args.path, 'wb')
     fp.write(data)
     fp.close()
