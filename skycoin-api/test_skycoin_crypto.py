@@ -20,7 +20,7 @@ class TestSkycoinCrypto(unittest.TestCase):
         self.assertEqual(ret, 0)
         expectPubkey = skycoin.SkycoinPubkeyFromSeckey(seckey)
         self.assertEqual(binascii.hexlify(pubkey), binascii.hexlify(expectPubkey))
-        self.assertEqual(binascii.hexlify(pubkey), "02df09821cff4874198a1dbdc462d224bd99728eeed024185879225762376132c7")
+        self.assertEqual(binascii.hexlify(pubkey), b"02df09821cff4874198a1dbdc462d224bd99728eeed024185879225762376132c7")
 
         digest = create_string_buffer(b'\x00\x1a\xa9\xe4\x16\xaf\xf5\xf3\xa3\xc7\xf9\xae\x08\x11\x75\x7c\xf5\x4f\x39\x3d\x50\xdf\x86\x1f\x5c\x33\x74\x79\x54\x34\x1a\xa7')
         seckey = create_string_buffer(b'\x67\xa3\x31\x66\x90\x81\xd2\x26\x24\xf1\x65\x12\xea\x61\xe1\xd4\x4c\xb3\xf2\x6a\xf3\x33\x39\x73\xd1\x7e\x0e\x8d\x03\x73\x3b\x78')
@@ -31,7 +31,7 @@ class TestSkycoinCrypto(unittest.TestCase):
         self.assertEqual(ret, 0)
         expectPubkey = skycoin.SkycoinPubkeyFromSeckey(seckey)
         self.assertEqual(binascii.hexlify(pubkey), binascii.hexlify(expectPubkey))
-        self.assertEqual(binascii.hexlify(pubkey), "0270b763664593c5f84dfb20d23ef79530fc317e5ee2ece0d9c50f432f62426ff9")
+        self.assertEqual(binascii.hexlify(pubkey), b"0270b763664593c5f84dfb20d23ef79530fc317e5ee2ece0d9c50f432f62426ff9")
 
     def test_sha256sum(self):
         skycoin = SkycoinCrypto()
@@ -103,14 +103,14 @@ class TestSkycoinCrypto(unittest.TestCase):
         signature = create_string_buffer(b'\xd2\xa8\xec\x2b\x29\xce\x3c\xf3\xe6\x04\x82\x96\x18\x8a\xdf\xf4\xb5\xdf\xcb\x33\x7c\x1d\x11\x57\xf2\x86\x54\xe4\x45\xbb\x94\x0b\x4e\x47\xd6\xb0\xc7\xba\x43\xd0\x72\xbf\x86\x18\x77\x5f\x12\x3a\x43\x5e\x8d\x1a\x15\x0c\xb3\x9b\xbb\x1a\xa8\x0d\xa8\xc5\x7e\xa1')
         ret, pubkey = skycoin.SkycoinEcdsaVerifyDigestRecover(signature, fingerprint)
         self.assertEqual(ret, 0)
-        self.assertEqual(binascii.hexlify(pubkey), '03c0b0e24d55255f7aefe3da7a947a63028b573f45356a9c22e9a3c103fd00c3d1')
+        self.assertEqual(binascii.hexlify(pubkey), b'03c0b0e24d55255f7aefe3da7a947a63028b573f45356a9c22e9a3c103fd00c3d1')
 
         # Skycoin core test vector: TestSigRecover2 2
         fingerprint = create_string_buffer(b'\x17\x6b\x81\x62\x3c\xf9\x8f\x45\x87\x9f\x3a\x48\xfa\x34\xaf\x77\xdd\xe4\x4b\x2f\xfa\x0d\xdd\x2b\xf9\xed\xb3\x86\xf7\x6e\xc0\xef')
         signature = create_string_buffer(b'\xd2\xa8\xec\x2b\x20\xce\x3c\xf3\xe6\x04\x82\x96\x18\x8a\xdf\xf4\xb5\xdf\xcb\x33\x7c\x1d\x11\x57\xf2\x86\x54\xe4\x45\xbb\x94\x0b\x4e\x47\xd6\xb0\xc7\xba\x43\xd0\x72\xbf\x86\x18\x77\x5f\x12\x3a\x43\x5e\x8d\x1a\x15\x0c\xb3\x9b\xbb\x1a\xa8\x0d\xa8\xc5\x7e\xa1')
         ret, pubkey = skycoin.SkycoinEcdsaVerifyDigestRecover(signature, fingerprint)
         self.assertEqual(ret, 0)
-        self.assertEqual(binascii.hexlify(pubkey), '03cee91b6d329e00c344ad5d67cfd00d885ec36e8975b5d9097738939cb8c08b31')
+        self.assertEqual(binascii.hexlify(pubkey), b'03cee91b6d329e00c344ad5d67cfd00d885ec36e8975b5d9097738939cb8c08b31')
 
         # Skycoin core test vector: TestSigRecover2 3
         fingerprint = create_string_buffer(b'\x17\x6b\x81\x62\x3c\xf9\x8f\x45\x87\x9f\x3a\x48\xfa\x34\xaf\x77\xdd\xe4\x4b\x2f\xfa\x0d\xdd\x2b\xf9\xed\xb3\x86\xf7\x6e\xc0\xef')
