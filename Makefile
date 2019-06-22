@@ -8,6 +8,12 @@
 .PHONY: firmware-clean release-firmware
 .PHONY: release-combined release-combined-mem-protect
 
+FIRMWARE_SIGNATURE_PUB_KEY1 ?= 024291e2425a2fc7ec7bd75c8128726ca8cfb7ce9c04ae8186b66c3516f0f80cd2
+FIRMWARE_SIGNATURE_PUB_KEY2 ?= 03e592cb31c3c2cc9b3810e5c78298280b0cc785cd7f28e36e135aa8a0fc74d081
+FIRMWARE_SIGNATURE_PUB_KEY3 ?= 03b155df34b4c0879fdd6bde2acb9c7a45e93aa0bd0c697f6292dc3d1cb4c596d6
+FIRMWARE_SIGNATURE_PUB_KEY4 ?= 026d1d2e1c4af5a2c89e8e4c8bf724034d0252eb8b9179fc6eec9ceb8bb1734997
+FIRMWARE_SIGNATURE_PUB_KEY5 ?= 033bdf377502789d27a1d534775392af97a93333181b9736395b3db687ceffc473
+
 UNAME_S ?= $(shell uname -s)
 
 PYTHON   ?= /usr/bin/python
@@ -167,18 +173,10 @@ tiny-firmware/bootloader/libskycoin-crypto.so:
 
 tiny-firmware/skyfirmware.bin: firmware-deps
 	rm -f tiny-firmware/memory.o tiny-firmware/gen/bitmaps.o # Force rebuild of these two files
-	REVERSE_BUTTONS=1 VERSION_MAJOR=$(VERSION_FIRMWARE_MAJOR) VERSION_MINOR=$(VERSION_FIRMWARE_MINOR) VERSION_PATCH=$(VERSION_FIRMWARE_PATCH) make -C tiny-firmware/ sign-firmware
+	REVERSE_BUTTONS=1 VERSION_MAJOR=$(VERSION_FIRMWARE_MAJOR) VERSION_MINOR=$(VERSION_FIRMWARE_MINOR) VERSION_PATCH=$(VERSION_FIRMWARE_PATCH) make -C tiny-firmware/ sign
 
-sign: sign-firmware sign-bootloader-no-mem-protect ## Sign firmware and non mem protect bootloader
-
-sign-firmware: tiny-firmware/bootloader/libskycoin-crypto.so tiny-firmware/skyfirmware.bin ## Sign skycoin wallet firmware
-	tiny-firmware/bootloader/firmware_sign.py -s -f tiny-firmware/skyfirmware.bin
-
-sign-bootloader-mem-protect: tiny-firmware/bootloader/libskycoin-crypto.so tiny-firmware/skyfirmware.bin ## Sign mem protect bootloader
-	tiny-firmware/bootloader/firmware_sign.py -s -f bootloader-memory-protected.bin
-
-sign-bootloader-no-mem-protect: tiny-firmware/bootloader/libskycoin-crypto.so tiny-firmware/skyfirmware.bin ## Sign non mem protect bootloader
-	tiny-firmware/bootloader/firmware_sign.py -s -f skybootloader-no-memory-protect.bin
+sign: tiny-firmware/bootloader/libskycoin-crypto.so tiny-firmware/skyfirmware.bin ## Sign skycoin wallet firmware
+	FIRMWARE_SIGNATURE_PUB_KEY1=$(FIRMWARE_SIGNATURE_PUB_KEY1) FIRMWARE_SIGNATURE_PUB_KEY2=$(FIRMWARE_SIGNATURE_PUB_KEY2) FIRMWARE_SIGNATURE_PUB_KEY3=$(FIRMWARE_SIGNATURE_PUB_KEY3) FIRMWARE_SIGNATURE_PUB_KEY4=$(FIRMWARE_SIGNATURE_PUB_KEY4) FIRMWARE_SIGNATURE_PUB_KEY5=$(FIRMWARE_SIGNATURE_PUB_KEY5) make -C tiny-firmware sign
 
 full-firmware-mem-protect: bootloader-mem-protect firmware ## Build full firmware (RDP level 2)
 	cp bootloader-memory-protected.bin tiny-firmware/bootloader/combine/bl.bin
