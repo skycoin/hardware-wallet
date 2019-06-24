@@ -36,4 +36,8 @@ void random_permute(char* buf, size_t len);
   #define RAND32_FUNC random32
 #endif
 
+#ifndef RAND_FUNC
+  #define RAND_FUNC random_buffer
+#endif
+
 #endif

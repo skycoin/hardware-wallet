@@ -1,4 +1,7 @@
 /**
+ * This file is part of the Skycoin project, https://skycoin.net/
+ *
+ * Copyright (C) 2018-2019 Skycoin Project
  * Copyright (c) 2013-2014 Tomas Dzetkulic
  * Copyright (c) 2013-2014 Pavol Rusnak
  *
@@ -25,6 +28,7 @@
 
 #ifndef RAND_PLATFORM_INDEPENDENT
 
+#include <string.h>
 #include <stdio.h>
 #ifdef _WIN32
 #include <time.h>
@@ -69,12 +73,15 @@ uint32_t random_uniform(uint32_t n)
 
 void __attribute__((weak)) random_buffer(uint8_t* buf, size_t len)
 {
-    uint32_t r = 0;
-    for (size_t i = 0; i < len; i++) {
-        if (i % 4 == 0) {
-            r = random32();
-        }
-        buf[i] = (r >> ((i % 4) * 8)) & 0xFF;
+    uint32_t *ptr = (uint32_t *) &buf;
+    size_t remaining = len;
+
+    for (; remaining >= 4; ++ptr, remaining -= 4) {
+        *ptr = random32();
+    }
+    if (remaining > 0) {
+        uint32_t r = random32();
+        memcpy((void *) ptr, (void *) &r, remaining);
     }
 }
 
