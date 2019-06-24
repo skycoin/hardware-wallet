@@ -15,8 +15,10 @@ except:
 
 SLOTS = 3
 
+SIG_LEN = 65
+RESERVED_LEN = 49
 INDEXES_START = len('SKY1') + struct.calcsize('<I')
-SIG_START = INDEXES_START + SLOTS + 1 + 52
+SIG_START = INDEXES_START + SLOTS + 1 + RESERVED_LEN
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Commandline tool for signing Skycoin firmware.')
@@ -36,10 +38,10 @@ def prepare(data):
         meta += data[4:4 + struct.calcsize('<I')]
     else:
         meta += struct.pack('<I', len(data))  # length of the code
-    meta += b'\x00' * SLOTS  # signature index #1-#3
-    meta += b'\x01'       # flags
-    meta += b'\x00' * 52  # reserved
-    meta += b'\x00' * 65 * SLOTS  # signature #1-#3
+    meta += b'\x00' * SLOTS         # signature index #1-#3
+    meta += b'\x01'                 # flags
+    meta += b'\x00' * RESERVED_LEN  # reserved
+    meta += b'\x00' * SIG_LEN * SLOTS    # signature #1-#3
 
     if data[:4] == b'SKY1':
         # Replace existing header
@@ -54,9 +56,9 @@ def check_signatures(data, pubkeys):
     # Analyses given firmware and prints out
     # status of included signatures. Return True on success False on failed.
     try:
-        indexes = [ ord(x) for x in data[INDEXES_START:INDEXES_START + SLOTS] ]
+        indexes = [ord(x) for x in data[INDEXES_START:INDEXES_START + SLOTS]]
     except:
-        indexes = [ x for x in data[INDEXES_START:INDEXES_START + SLOTS] ]
+        indexes = [x for x in data[INDEXES_START:INDEXES_START + SLOTS]]
 
     to_sign = prepare(data)[256:] # without meta
     fingerprint = hashlib.sha256(to_sign).hexdigest()
@@ -64,7 +66,7 @@ def check_signatures(data, pubkeys):
 
     used = []
     for x in range(SLOTS):
-        signature = data[SIG_START + 65 * x:SIG_START + 65 * x + 65]
+        signature = data[SIG_START + SIG_LEN * x:SIG_START + SIG_LEN * x + SIG_LEN]
 
         if indexes[x] == 0:
             print("Slot #%d" % (x + 1), 'is empty')
@@ -96,7 +98,7 @@ def modify(data, slot, index, signature):
     data = data[:INDEXES_START + slot - 1 ] + chr(index) + data[INDEXES_START + slot:]
 
     # Put signature to data
-    data = data[:SIG_START + 65 * (slot - 1) ] + signature + data[SIG_START + 65 * slot:]
+    data = data[:SIG_START + SIG_LEN * (slot - 1) ] + signature + data[SIG_START + SIG_LEN * slot:]
 
     return data
 
@@ -105,11 +107,11 @@ def sign(data, pubkeys, secexp, slot):
         raise Exception("Invalid slot")
     if secexp.strip() == '':
         # Blank key, let's remove existing signature from slot
-        return modify(data, slot, 0, '\x00' * 65)
+        return modify(data, slot, 0, '\x00' * SIG_LEN)
     seckey = binascii.unhexlify(secexp)
     skycoin = skycoin_crypto.SkycoinCrypto()
     pubkey = skycoin.SkycoinPubkeyFromSeckey(seckey)
-    pubkey = binascii.hexlify(pubkey.value)
+    pubkey = binascii.hexlify(pubkey)
 
     to_sign = prepare(data)[256:] # without meta
     fingerprint = hashlib.sha256(to_sign).hexdigest()
@@ -130,12 +132,9 @@ def sign(data, pubkeys, secexp, slot):
     if ret != 0:
         raise Exeption("Error signing message digest")
 
-    if len(signature) != 65:
-        raise Exception("Signature length {} is not 65 bytes".format(len(signature)))
-
     print("Skycoin signature:", binascii.hexlify(signature))
 
-    return modify(data, slot, index, str(signature))
+    return modify(data, slot, index, signature)
 
 def main(args):
     pubkeys = {}
