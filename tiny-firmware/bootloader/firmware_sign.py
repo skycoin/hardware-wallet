@@ -1,4 +1,6 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 from __future__ import print_function
 import argparse
 import hashlib
@@ -77,7 +79,7 @@ def check_signatures(data, pubkeys):
             pubkey = skycoin.SkycoinEcdsaVerifyDigestRecover(signature, binascii.unhexlify(fingerprint))
             pubkey = binascii.hexlify(pubkey)
 
-            if (pubkey == pk):
+            if (pubkey.decode('utf-8') == pk):
                 if indexes[x] in used:
                     print("Slot #%d signature: DUPLICATE" % (x + 1), binascii.hexlify(signature))
                 else:
@@ -93,7 +95,7 @@ def modify(data, slot, index, signature):
     # Replace signature in data
 
     # Put index to data
-    data = data[:INDEXES_START + slot - 1 ] + chr(index) + data[INDEXES_START + slot:]
+    data = data[:INDEXES_START + slot - 1 ] + bytes([index]) + data[INDEXES_START + slot:]
 
     # Put signature to data
     data = data[:SIG_START + SIG_LEN * (slot - 1) ] + signature + data[SIG_START + SIG_LEN * slot:]
@@ -105,11 +107,11 @@ def sign(data, pubkeys, secexp, slot):
         raise Exception("Invalid slot")
     if secexp.strip() == '':
         # Blank key, let's remove existing signature from slot
-        return modify(data, slot, 0, '\x00' * SIG_LEN)
+        return modify(data, slot, 0, b'\x00' * SIG_LEN)
     seckey = binascii.unhexlify(secexp)
     skycoin = skycoin_crypto.SkycoinCrypto()
     pubkey = skycoin.SkycoinPubkeyFromSeckey(seckey)
-    pubkey = binascii.hexlify(pubkey)
+    pubkey = binascii.hexlify(pubkey).decode('utf-8')
 
     to_sign = prepare(data)[256:] # without meta
     fingerprint = hashlib.sha256(to_sign).hexdigest()
