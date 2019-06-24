@@ -136,11 +136,8 @@ def sign(data, pubkeys, secexp, slot):
 
     return modify(data, slot, index, signature)
 
-def main(args):
-    pubkeys = {}
-    for idx, pub_key in enumerate(args.pub_keys):
-        pubkeys[idx + 1] = pub_key
-    fp = open(args.path, 'rb')
+def get_data(path):
+    fp = open(path, 'rb')
     data = fp.read()
     fp.close()
     assert len(data) % 4 == 0
@@ -153,6 +150,13 @@ def main(args):
         raise Exception("Firmware header expected")
 
     print("Firmware size %d bytes" % len(data))
+    return data
+
+def main(args):
+    pubkeys = {}
+    for idx, pub_key in enumerate(args.pub_keys):
+        pubkeys[idx + 1] = pub_key
+    data = get_data(args.path)
     if args.sign:
         # Ask for index and private key and signs the firmware
         slot = int(raw_input('Enter signature slot (1-%d): ' % SLOTS))
