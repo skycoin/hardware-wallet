@@ -167,8 +167,9 @@ def main(args):
         else:
             secexp = args.sec_key
         data = sign(data, pubkeys, secexp, slot)
-        if not check_signatures(data, pubkeys):
-            raise Exception("Invalid signature, hard fail")
+        if len(secexp) != 0:
+            if not check_signatures(data, pubkeys):
+                raise Exception("Invalid signature, hard fail")
     else:
         if not check_signatures(data, pubkeys):
             raise Exception("Invalid signature")
