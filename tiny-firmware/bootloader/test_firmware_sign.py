@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 import binascii
@@ -19,7 +19,7 @@ class TestSignFirmware(unittest.TestCase):
         }
         slot = 1
         data = firmware_sign.get_data(filename)
-        data = firmware_sign.sign(data, pubkeys, binascii.hexlify(sec_key), slot)
+        data = firmware_sign.sign(data, pubkeys, binascii.hexlify(sec_key).decode('utf-8'), slot)
         self.assertTrue(firmware_sign.check_signatures(data, pubkeys), 'Signature should be checked')
 
     def test_sign_firmware_fail_as_expected_for_invalid_pub_key(self):
@@ -30,7 +30,7 @@ class TestSignFirmware(unittest.TestCase):
         }
         slot = 1
         data = firmware_sign.get_data(filename)
-        data = firmware_sign.sign(data, pubkeys, binascii.hexlify(sec_key), slot)
+        data = firmware_sign.sign(data, pubkeys, binascii.hexlify(sec_key).decode('utf-8'), slot)
         mutable_str = list(pubkeys[1])
         # NOTE hack pub key
         mutable_str[1], mutable_str[10] = mutable_str[10], mutable_str[1]
@@ -45,7 +45,7 @@ class TestSignFirmware(unittest.TestCase):
         }
         slot = 1
         data = firmware_sign.get_data(filename)
-        data = firmware_sign.sign(data, pubkeys, binascii.hexlify(sec_key), slot)
+        data = firmware_sign.sign(data, pubkeys, binascii.hexlify(sec_key).decode('utf-8'), slot)
         signed = data
         mutable_data = bytearray(signed)
         # NOTE hack data
