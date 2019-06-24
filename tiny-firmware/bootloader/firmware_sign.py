@@ -88,7 +88,7 @@ def check_signatures(data, pubkeys):
             else:
                 print("Slot #%d signature: INVALID" % (x + 1), binascii.hexlify(signature))
                 return False
-    return True
+    return len(used) > 0
 
 
 def modify(data, slot, index, signature):
