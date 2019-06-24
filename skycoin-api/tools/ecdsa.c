@@ -39,6 +39,10 @@
 // #include "rfc6979.h"
 #include "memzero.h"
 
+#ifndef RAND32_FUNC
+  #define RAND32_FUNC random32
+#endif
+
 // Set cp2 = cp1
 void point_copy(const curve_point* cp1, curve_point* cp2)
 {
@@ -199,9 +203,9 @@ static void generate_k_random(bignum256* k, const bignum256* prime)
     do {
         int i;
         for (i = 0; i < 8; i++) {
-            k->val[i] = random32() & 0x3FFFFFFF;
+            k->val[i] = RAND32_FUNC() & 0x3FFFFFFF;
         }
-        k->val[8] = random32() & 0xFFFF;
+        k->val[8] = RAND32_FUNC() & 0xFFFF;
         // check that k is in range and not zero.
     } while (bn_is_zero(k) || !bn_is_less(k, prime));
 }
