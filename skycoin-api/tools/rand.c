@@ -24,11 +24,12 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <string.h>
+
 #include "rand.h"
 
 #ifndef RAND_PLATFORM_INDEPENDENT
 
-#include <string.h>
 #include <stdio.h>
 #ifdef _WIN32
 #include <time.h>
@@ -73,7 +74,7 @@ uint32_t random_uniform(uint32_t n)
 
 void __attribute__((weak)) random_buffer(uint8_t* buf, size_t len)
 {
-    uint32_t *ptr = (uint32_t *) &buf;
+    uint32_t *ptr = (uint32_t *) buf;
     size_t remaining = len;
 
     for (; remaining >= 4; ++ptr, remaining -= 4) {
