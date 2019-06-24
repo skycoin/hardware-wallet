@@ -39,10 +39,6 @@
 // #include "rfc6979.h"
 #include "memzero.h"
 
-#ifndef RAND32_FUNC
-  #define RAND32_FUNC random32
-#endif
-
 // Set cp2 = cp1
 void point_copy(const curve_point* cp1, curve_point* cp2)
 {

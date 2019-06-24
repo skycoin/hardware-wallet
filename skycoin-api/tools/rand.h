@@ -32,4 +32,8 @@ uint32_t random_uniform(uint32_t n);
 void random_buffer(uint8_t* buf, size_t len);
 void random_permute(char* buf, size_t len);
 
+#ifndef RAND32_FUNC
+  #define RAND32_FUNC random32
+#endif
+
 #endif
