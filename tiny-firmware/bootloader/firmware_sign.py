@@ -74,9 +74,7 @@ def check_signatures(data, pubkeys):
             pk = pubkeys[indexes[x]]
 
             skycoin = skycoin_crypto.SkycoinCrypto()
-            ret, pubkey = skycoin.SkycoinEcdsaVerifyDigestRecover(signature, binascii.unhexlify(fingerprint))
-            if ret != 0:
-                return False
+            pubkey = skycoin.SkycoinEcdsaVerifyDigestRecover(signature, binascii.unhexlify(fingerprint))
             pubkey = binascii.hexlify(pubkey)
 
             if (pubkey == pk):
@@ -128,9 +126,7 @@ def sign(data, pubkeys, secexp, slot):
     if index == None:
         raise Exception("Unable to find private key index. Unknown private key?")
 
-    ret, signature = skycoin.SkycoinEcdsaSignDigest(seckey, binascii.unhexlify(fingerprint))
-    if ret != 0:
-        raise Exeption("Error signing message digest")
+    signature = skycoin.SkycoinEcdsaSignDigest(seckey, binascii.unhexlify(fingerprint))
 
     print("Skycoin signature:", binascii.hexlify(signature))
 
