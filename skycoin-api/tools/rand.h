@@ -40,4 +40,10 @@ void random_permute(char* buf, size_t len);
   #define RAND_FUNC random_buffer
 #endif
 
+#define STRING2(x) #x
+#define STRING(x) STRING2(x)
+
+#pragma message (__FILE__ "[" STRING(__LINE__) "]: Random 32-bits function " STRING(RAND32_FUNC))
+#pragma message (__FILE__ "[" STRING(__LINE__) "]: Random buffer function " STRING(RAND_FUNC))
+
 #endif
