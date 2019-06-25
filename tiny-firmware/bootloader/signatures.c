@@ -22,7 +22,6 @@
 #include <string.h>
 
 #include "sha2.h"
-#include "skycoin_check_signature.h"
 #include <tiny-firmware/bootloader/signatures.h>
 #include <tiny-firmware/bootloader/bootloader.h>
 #include "skycoin_constants.h"

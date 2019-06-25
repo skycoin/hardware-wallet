@@ -41,7 +41,6 @@
 #include "base58.h"
 #include "tiny-firmware/firmware/gettext.h"
 #include "skycoin_crypto.h"
-#include "skycoin_check_signature.h"
 #include "check_digest.h"
 #include "tiny-firmware/firmware/fsm_impl.h"
 #include "tiny-firmware/firmware/droplet.h"

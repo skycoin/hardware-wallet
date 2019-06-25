@@ -34,8 +34,9 @@
 #include <tiny-firmware/memory.h>
 #include <tiny-firmware/firmware/usb.h>
 #include <tiny-firmware/util.h>
+#include "skycoin_constants.h"
 #include "skycoin_crypto.h"
-#include "skycoin_check_signature.h"
+#include "skycoin_signature.h"
 #include <tiny-firmware/firmware/skyparams.h>
 
 #define MNEMONIC_STRENGTH_12 128
