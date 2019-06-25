@@ -65,11 +65,12 @@ LDSCRIPT = bootloader-memory.ld
 LDLIBS   += -lopencm3_stm32f2
 
 pub_keys.h:
-	./generate-pubkeys-cfile.py -pk $(FIRMWARE_SIGNATURE_PUB_KEY1) $(FIRMWARE_SIGNATURE_PUB_KEY2) $(FIRMWARE_SIGNATURE_PUB_KEY3) $(FIRMWARE_SIGNATURE_PUB_KEY4) $(FIRMWARE_SIGNATURE_PUB_KEY5)
+	./generate-pubkeys-cfile.py -pk $(FIRMWARE_SIGNATURE_PUB_KEYs)
 
 include ../Makefile.include
 
 align: $(NAME).bin
 	./firmware_align.py $(NAME).bin
+
 clean::
 	rm -f pub_keys.h

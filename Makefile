@@ -13,6 +13,7 @@ FIRMWARE_SIGNATURE_PUB_KEY2 ?= 03e592cb31c3c2cc9b3810e5c78298280b0cc785cd7f28e36
 FIRMWARE_SIGNATURE_PUB_KEY3 ?= 03b155df34b4c0879fdd6bde2acb9c7a45e93aa0bd0c697f6292dc3d1cb4c596d6
 FIRMWARE_SIGNATURE_PUB_KEY4 ?= 026d1d2e1c4af5a2c89e8e4c8bf724034d0252eb8b9179fc6eec9ceb8bb1734997
 FIRMWARE_SIGNATURE_PUB_KEY5 ?= 033bdf377502789d27a1d534775392af97a93333181b9736395b3db687ceffc473
+FIRMWARE_SIGNATURE_PUB_KEYs = "$(FIRMWARE_SIGNATURE_PUB_KEY1) $(FIRMWARE_SIGNATURE_PUB_KEY2) $(FIRMWARE_SIGNATURE_PUB_KEY3) $(FIRMWARE_SIGNATURE_PUB_KEY4) $(FIRMWARE_SIGNATURE_PUB_KEY5)"
 
 UNAME_S ?= $(shell uname -s)
 
@@ -109,12 +110,12 @@ generate-bitmaps:
 
 bootloader: firmware-deps ## Build bootloader (RDP level 0)
 	rm -f tiny-firmware/memory.o tiny-firmware/gen/bitmaps.o # Force rebuild of these two files
-	MEMORY_PROTECT=0 SIGNATURE_PROTECT=1 REVERSE_BUTTONS=1 VERSION_MAJOR=$(VERSION_BOOTLOADER_MAJOR) VERSION_MINOR=$(VERSION_BOOTLOADER_MINOR) VERSION_PATCH=$(VERSION_BOOTLOADER_PATCH) make -C tiny-firmware/bootloader/ align
+	FIRMWARE_SIGNATURE_PUB_KEYs=$(FIRMWARE_SIGNATURE_PUB_KEYs) MEMORY_PROTECT=0 SIGNATURE_PROTECT=1 REVERSE_BUTTONS=1 VERSION_MAJOR=$(VERSION_BOOTLOADER_MAJOR) VERSION_MINOR=$(VERSION_BOOTLOADER_MINOR) VERSION_PATCH=$(VERSION_BOOTLOADER_PATCH) make -C tiny-firmware/bootloader/ align
 	mv tiny-firmware/bootloader/bootloader.bin skybootloader-no-memory-protect.bin
 
 bootloader-mem-protect: firmware-deps ## Build bootloader (RDP level 2)
 	rm -f tiny-firmware/memory.o tiny-firmware/gen/bitmaps.o # Force rebuild of these two files
-	MEMORY_PROTECT=1 SIGNATURE_PROTECT=1 REVERSE_BUTTONS=1 VERSION_MAJOR=$(VERSION_BOOTLOADER_MAJOR) VERSION_MINOR=$(VERSION_BOOTLOADER_MINOR) VERSION_PATCH=$(VERSION_BOOTLOADER_PATCH) make -C tiny-firmware/bootloader/ align
+	FIRMWARE_SIGNATURE_PUB_KEYs=$(FIRMWARE_SIGNATURE_PUB_KEYs) MEMORY_PROTECT=1 SIGNATURE_PROTECT=1 REVERSE_BUTTONS=1 VERSION_MAJOR=$(VERSION_BOOTLOADER_MAJOR) VERSION_MINOR=$(VERSION_BOOTLOADER_MINOR) VERSION_PATCH=$(VERSION_BOOTLOADER_PATCH) make -C tiny-firmware/bootloader/ align
 	mv tiny-firmware/bootloader/bootloader.bin bootloader-memory-protected.bin
 
 firmware: tiny-firmware/skyfirmware.bin ## Build skycoin wallet firmware
@@ -176,7 +177,7 @@ tiny-firmware/skyfirmware.bin: firmware-deps
 	REVERSE_BUTTONS=1 VERSION_MAJOR=$(VERSION_FIRMWARE_MAJOR) VERSION_MINOR=$(VERSION_FIRMWARE_MINOR) VERSION_PATCH=$(VERSION_FIRMWARE_PATCH) make -C tiny-firmware/ sign
 
 sign: tiny-firmware/bootloader/libskycoin-crypto.so tiny-firmware/skyfirmware.bin ## Sign skycoin wallet firmware
-	FIRMWARE_SIGNATURE_PUB_KEY1=$(FIRMWARE_SIGNATURE_PUB_KEY1) FIRMWARE_SIGNATURE_PUB_KEY2=$(FIRMWARE_SIGNATURE_PUB_KEY2) FIRMWARE_SIGNATURE_PUB_KEY3=$(FIRMWARE_SIGNATURE_PUB_KEY3) FIRMWARE_SIGNATURE_PUB_KEY4=$(FIRMWARE_SIGNATURE_PUB_KEY4) FIRMWARE_SIGNATURE_PUB_KEY5=$(FIRMWARE_SIGNATURE_PUB_KEY5) make -C tiny-firmware sign
+	FIRMWARE_SIGNATURE_PUB_KEYs=$(FIRMWARE_SIGNATURE_PUB_KEYs) make -C tiny-firmware sign
 
 full-firmware-mem-protect: bootloader-mem-protect firmware ## Build full firmware (RDP level 2)
 	cp bootloader-memory-protected.bin tiny-firmware/bootloader/combine/bl.bin
