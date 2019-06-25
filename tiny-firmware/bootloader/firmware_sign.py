@@ -26,6 +26,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Commandline tool for signing Skycoin firmware.')
     parser.add_argument('-f', '--file', dest='path', help="Firmware file to modify", required=True)
     parser.add_argument('-s', '--sign', dest='sign', action='store_true', help="Add signature to firmware slot")
+    parser.add_argument('-S', '--slot', type=int, dest='slot', help="Set slot")
     parser.add_argument('-sk', '--secret-key', dest='sec_key', help="Secret key in hexadecimal")
     parser.add_argument('-pk', '--pub-keys', dest='pub_keys', nargs='+', help="Public key in exadecimal", required=True)
 
@@ -157,7 +158,10 @@ def main(args):
     data = get_data(args.path)
     if args.sign:
         # Ask for index and private key and signs the firmware
-        slot = int(raw_input('Enter signature slot (1-%d): ' % SLOTS))
+        if not args.slot:
+            slot = int(raw_input('Enter signature slot (1-%d): ' % SLOTS))
+        else:
+            slot = args.slot
         if not args.sec_key:
             print("Paste SECEXP (in hex) and press Enter:")
             print("(blank private key removes the signature on given index)")
