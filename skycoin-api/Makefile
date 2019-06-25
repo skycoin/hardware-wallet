@@ -57,7 +57,7 @@ LIBS_DARWIN +=
 TESTLIBS_DARWIN += -L$(CHECK_PATH)/lib -lcheck
 LIBS_LINUX += -L/usr/local/lib/ -lm -lrt
 TESTLIBS_LINUX += -L$(CHECK_PATH)/src -lcheck
-
+LIBC_LIBS = `pkg-config --cflags --libs check`
 ifeq ($(UNAME_S), Linux)
 	LIBS=$(LIBS_LINUX)
 	TESTLIBS=$(TESTLIBS_LINUX)
@@ -93,10 +93,8 @@ clean: ## Delete all temporary files
 	rm -f $(MKFILE_DIR)/tools/*.o
 	rm -f $(MKFILE_DIR)/*.a
 
-coverage: skycoin_crypto.o $(OBJS)
-	$(CC) -rdynamic -shared $(CFLAGS) $(OBJS) -o libskycoin-crypto.so
-	$(AR) rcs libskycoin-crypto.a skycoin_crypto.o $(OBJS)
-	$(CC) $(OBJS) -L. -lskycoin-crypto $(LIBS) $(TESTLIBS) -fprofile-arcs -ftest-coverage test_skycoin_crypto.c
+coverage:
+	$(CC) -I. -Itools $(LIBC_LIBS) -fprofile-arcs -ftest-coverage test_skycoin_crypto.c
 	gcov -n -b $(SRCS) 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'

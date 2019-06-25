@@ -25,3 +25,6 @@ sudo apt-get install cccc -y
 
 ##INstall cgov
 sudo apt-get install lcov -y
+
+##INstall 
+sudo apt install lib32z1 lib32ncurses5

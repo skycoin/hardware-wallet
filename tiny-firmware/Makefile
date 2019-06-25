@@ -167,5 +167,5 @@ clean::
 	cd protob && make clean-c
 
 coverage: all
-	gcc -I. -Ivendor/libopencm3/include -Ivendor/libopencm3/include/libopencm3/cm3 -Ivendor/skycoin-crypto/tools -Igen -Ifirmware -fprofile-arcs -ftest-coverage *.c
+	gcc $(CFLAGS) *.o -Ivendor/skycoin-crypto/tools -Igen -Ifirmware -fprofile-arcs -ftest-coverage *.c
 	#gcov -n -b *.c
