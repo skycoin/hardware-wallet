@@ -94,7 +94,7 @@ clean: ## Delete all temporary files
 	rm -f $(MKFILE_DIR)/*.a
 
 coverage:
-	$(CC) -I. -Itools $(LIBC_LIBS) -fprofile-arcs -ftest-coverage test_skycoin_crypto.c
+	$(CC) -I. -Itools $(TESTLIBS) -fprofile-arcs -ftest-coverage test_skycoin_crypto.c
 	gcov -n -b $(SRCS) 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
