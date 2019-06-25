@@ -80,3 +80,5 @@ skycoin-api/*.gcno
 skycoin-api/*.gcda
 tiny-firmware/*.gcno
 tiny-firmware/*.gcda
+
+check-*
