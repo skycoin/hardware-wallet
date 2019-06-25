@@ -4,6 +4,7 @@ set -x
 
 sudo apt-get update
 
+sudo apt-get install -qq gcc-6 g++-6
 # Install libcheck check C testing framework
 wget -c https://github.com/libcheck/check/releases/download/0.12.0/check-0.12.0.tar.gz
 tar -xzf check-0.12.0.tar.gz

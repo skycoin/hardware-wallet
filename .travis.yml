@@ -13,6 +13,8 @@ matrix:
     - os: osx
 
 before_script:
+
+  - eval "CC=gcc-6 && CXX=g++-6"
   - sh "./tiny-firmware/protob/ci-scripts/install-${TRAVIS_OS_NAME}.sh" ;
   # Define env vars for Linux builds
   - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then
