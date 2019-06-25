@@ -202,8 +202,7 @@ run-emulator: emulator ## Run wallet emulator
 test: ## Run all project test suites.
 	make -C . clean
 	make -C . firmware
-	make -C skycoin-api/ clean
-	make -C skycoin-api/ libskycoin-crypto.so
+	make -C . tiny-firmware/bootloader/libskycoin-crypto.so
 	export LIBRARY_PATH="$(MKFILE_DIR)/skycoin-api/:$$LIBRARY_PATH"
 	export $(LD_VAR)="$(MKFILE_DIR)/skycoin-api/:$$$(LD_VAR)"
 	./tiny-firmware/bootloader/firmware_sign.py -f ./tiny-firmware/skyfirmware.bin -pk $(FIRMWARE_SIGNATURE_PUB_KEYs) -s -sk $(FIRMWARE_SIGNATURE_SEC_KEY) -S 2
@@ -214,9 +213,9 @@ test: ## Run all project test suites.
 	make -C skycoin-api/ clean
 	make -C skycoin-api/ libskycoin-crypto.so
 	./tiny-firmware/bootloader/test_firmware_sign.py
-	make -C . clean
 	make -C skycoin-api/ libskycoin-crypto.so
 	make -C skycoin-api/ test
+	make -C . clean
 	VERSION_MAJOR=$(VERSION_FIRMWARE_MAJOR) VERSION_MINOR=$(VERSION_FIRMWARE_MINOR) VERSION_PATCH=$(VERSION_FIRMWARE_PATCH) make emulator
 	EMULATOR=1 VERSION_MAJOR=$(VERSION_FIRMWARE_MAJOR) VERSION_MINOR=$(VERSION_FIRMWARE_MINOR) VERSION_PATCH=$(VERSION_FIRMWARE_PATCH) make -C tiny-firmware/ test
 

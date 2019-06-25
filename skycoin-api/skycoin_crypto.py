@@ -2,7 +2,7 @@ from ctypes import cdll, c_char_p, c_uint32, c_size_t, byref, addressof, create_
 import binascii
 import os
 
-dir_path = os.path.dirname(os.path.realpath(__file__))
+dir_path = os.path.dirname(os.path.abspath(__file__))
 
 class SkycoinCryptoException(Exception):
     pass
