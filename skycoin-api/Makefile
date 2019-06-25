@@ -46,14 +46,12 @@ OBJS   = $(SRCS:.c=.o)
 
 LIBS_DARWIN +=
 LIBS_LINUX += -L/usr/local/lib/ -lm -lrt
-LIBC_LIBS = `pkg-config --cflags --libs check`
+TESTLIBS = `pkg-config --cflags --libs check`
 ifeq ($(UNAME_S), Linux)
 	LIBS=$(LIBS_LINUX)
-	TESTLIBS=$(LIBC_LIBS)
 endif
 ifeq ($(UNAME_S), Darwin)
 	LIBS=$(LIBS_DARWIN)
-	TESTLIBS=$(LIBC_LIBS)
 endif
 
 
@@ -83,7 +81,7 @@ clean: ## Delete all temporary files
 	rm -f $(MKFILE_DIR)/*.a
 
 coverage:
-	$(CC) $(OBJS) -I. -Itools $(TESTLIBS) -fprofile-arcs -ftest-coverage test_skycoin_crypto.c
+	$(CC) $(OBJS) -I. -I../tiny-firmware/firmware  -Itools $(TESTLIBS) -fprofile-arcs -ftest-coverage test_skycoin_crypto.c
 	gcov -n -b $(SRCS) 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
