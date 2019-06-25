@@ -40,7 +40,6 @@
 #include "tiny-firmware/firmware/reset.h"
 #include "tiny-firmware/rng.h"
 #include "tiny-firmware/setup.h"
-#include "skycoin_check_signature.h"
 #include "skycoin_crypto.h"
 #include "tiny-firmware/firmware/skyparams.h"
 #include "tiny-firmware/firmware/storage.h"
