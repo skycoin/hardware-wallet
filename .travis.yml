@@ -1,4 +1,6 @@
 language: c
+c:
+ - "6.4"
 matrix:
   include:
     - os: linux
