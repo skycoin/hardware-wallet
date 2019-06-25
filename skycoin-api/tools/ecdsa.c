@@ -198,10 +198,11 @@ static void generate_k_random(bignum256* k, const bignum256* prime)
 {
     do {
         int i;
+        RAND_FUNC((uint8_t *) &k->val, sizeof(k->val));
         for (i = 0; i < 8; i++) {
-            k->val[i] = RAND32_FUNC() & 0x3FFFFFFF;
+            k->val[i] &= 0x3FFFFFFF;
         }
-        k->val[8] = RAND32_FUNC() & 0xFFFF;
+        k->val[8] &= 0xFFFF;
         // check that k is in range and not zero.
     } while (bn_is_zero(k) || !bn_is_less(k, prime));
 }

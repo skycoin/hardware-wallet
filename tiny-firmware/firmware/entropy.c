@@ -195,6 +195,13 @@ void __attribute__((weak)) random_salted_buffer(uint8_t* buf, size_t len)
     bptr = tptr = NULL;
 }
 
+uint32_t __attribute__((weak)) random32_salted(void)
+{
+    uint32_t retval;
+    random_salted_buffer((uint8_t *) &retval, sizeof(uint32_t));
+    return retval;
+}
+
 extern uint8_t int_entropy[32];
 
 void set_external_entropy(uint8_t* entropy, size_t len)

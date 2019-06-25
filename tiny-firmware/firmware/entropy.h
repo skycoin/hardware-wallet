@@ -71,4 +71,9 @@ void check_entropy(void);
  */
 void random_salted_buffer(uint8_t* buf, size_t len);
 
+/**
+ * @brief random32_salted random 32 bit integer salted with values of entropy buffer
+ */
+uint32_t random32_salted(void);
+
 #endif // __TINYFIRMWARE_FIRMWARE_ENTROPY__
