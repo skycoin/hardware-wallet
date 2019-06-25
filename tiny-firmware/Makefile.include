@@ -42,10 +42,6 @@ else
 	CFLAGS += -DCONFIDENTIAL='__attribute__((section("confidential")))'
 endif
 
-# Use salted random buffers to build skycoin-api
-CFLAGS += -DRAND_FUNC=random_salted_buffer
-CFLAGS += -DRAND32_FUNC=random32_salted
-
 else
 PREFIX   ?= arm-none-eabi-
 CC       := $(PREFIX)gcc
