@@ -40,8 +40,8 @@ script:
   - make bootloader-clean
   - make full-firmware
   - make clean
-  - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then make check-coverage-cccc ; fi
-  - make check-coverage
+  # - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then make check-coverage-cccc ; fi
+  # - make check-coverage
 
 notifications:
   # https://github.com/kvld/travisci-telegram TravisCI Telegram Bot integration
