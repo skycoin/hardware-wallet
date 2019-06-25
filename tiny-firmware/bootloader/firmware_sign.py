@@ -22,8 +22,10 @@ pubkeys = {
     5: '033bdf377502789d27a1d534775392af97a93333181b9736395b3db687ceffc473',
 }
 
+SIG_LEN = 65
+RESERVED_LEN = 49
 INDEXES_START = len('SKY1') + struct.calcsize('<I')
-SIG_START = INDEXES_START + SLOTS + 1 + 52
+SIG_START = INDEXES_START + SLOTS + 1 + RESERVED_LEN
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Commandline tool for signing Trezor firmware.')
@@ -41,10 +43,10 @@ def prepare(data):
         meta += data[4:4 + struct.calcsize('<I')]
     else:
         meta += struct.pack('<I', len(data))  # length of the code
-    meta += b'\x00' * SLOTS  # signature index #1-#3
-    meta += b'\x01'       # flags
-    meta += b'\x00' * 52  # reserved
-    meta += b'\x00' * 64 * SLOTS  # signature #1-#3
+    meta += b'\x00' * SLOTS         # signature index #1-#3
+    meta += b'\x01'                 # flags
+    meta += b'\x00' * RESERVED_LEN  # reserved
+    meta += b'\x00' * SIG_LEN * SLOTS    # signature #1-#3
 
     if data[:4] == b'SKY1':
         # Replace existing header
@@ -60,9 +62,9 @@ def check_signatures(data):
     # status of included signatures
 
     try:
-        indexes = [ ord(x) for x in data[INDEXES_START:INDEXES_START + SLOTS] ]
+        indexes = [ord(x) for x in data[INDEXES_START:INDEXES_START + SLOTS]]
     except:
-        indexes = [ x for x in data[INDEXES_START:INDEXES_START + SLOTS] ]
+        indexes = [x for x in data[INDEXES_START:INDEXES_START + SLOTS]]
 
     to_sign = prepare(data)[256:] # without meta
     fingerprint = hashlib.sha256(to_sign).hexdigest()
@@ -70,7 +72,7 @@ def check_signatures(data):
 
     used = []
     for x in range(SLOTS):
-        signature = data[SIG_START + 64 * x:SIG_START + 64 * x + 64]
+        signature = data[SIG_START + SIG_LEN * x:SIG_START + SIG_LEN * x + SIG_LEN]
 
         if indexes[x] == 0:
             print("Slot #%d" % (x + 1), 'is empty')
@@ -78,9 +80,9 @@ def check_signatures(data):
             pk = pubkeys[indexes[x]]
 
             skycoin = skycoin_crypto.SkycoinCrypto()
-            pubkey = skycoin.RecoverPubkeyFromSignature(binascii.unhexlify(fingerprint), signature)
+            pubkey = skycoin.SkycoinEcdsaVerifyDigestRecover(signature, binascii.unhexlify(fingerprint))
             pubkey = binascii.hexlify(pubkey)
-            
+
             if (pubkey == pk):
                 if indexes[x] in used:
                     print("Slot #%d signature: DUPLICATE" % (x + 1), binascii.hexlify(signature))
@@ -98,7 +100,7 @@ def modify(data, slot, index, signature):
     data = data[:INDEXES_START + slot - 1 ] + chr(index) + data[INDEXES_START + slot:]
 
     # Put signature to data
-    data = data[:SIG_START + 64 * (slot - 1) ] + signature + data[SIG_START + 64 * slot:]
+    data = data[:SIG_START + SIG_LEN * (slot - 1) ] + signature + data[SIG_START + SIG_LEN * slot:]
 
     return data
 
@@ -113,12 +115,12 @@ def sign(data):
     print("(blank private key removes the signature on given index)")
     secexp = raw_input()
     if secexp.strip() == '':
-        # Blank key,let's remove existing signature from slot
-        return modify(data, slot, 0, '\x00' * 64)
+        # Blank key, let's remove existing signature from slot
+        return modify(data, slot, 0, '\x00' * SIG_LEN)
     skycoin = skycoin_crypto.SkycoinCrypto()
     seckey = binascii.unhexlify(secexp)
-    pubkey = skycoin.GeneratePubkeyFromSeckey(seckey)
-    pubkey = binascii.hexlify(pubkey.value)
+    pubkey = skycoin.SkycoinPubkeyFromSeckey(seckey)
+    pubkey = binascii.hexlify(pubkey)
 
     to_sign = prepare(data)[256:] # without meta
     fingerprint = hashlib.sha256(to_sign).hexdigest()
@@ -135,16 +137,11 @@ def sign(data):
     if index == None:
         raise Exception("Unable to find private key index. Unknown private key?")
 
-    for i in range(10): #attempt 10 times until finding a signature with 64 bytes (the 65's byte will be assumed as 0)
-        signature = skycoin.EcdsaSkycoinSign(binascii.unhexlify(fingerprint), seckey, random.randint(1, 0xFFFFFFFF))
-        if len(signature.value) == 64:
-            break
+    signature = skycoin.SkycoinEcdsaSignDigest(seckey, binascii.unhexlify(fingerprint))
 
-    print("Skycoin signature:", binascii.hexlify(signature.value))
-    if len(signature.value) != 64:
-        raise Exception("Signature lenght {} is not correct".format(len(signature.value)))
+    print("Skycoin signature:", binascii.hexlify(signature))
 
-    return modify(data, slot, index, str(signature.value))
+    return modify(data, slot, index, signature)
 
 def main(args):
 

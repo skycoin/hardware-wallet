@@ -29,7 +29,7 @@
 
 #define CHECK_INITIALIZED                                          \
     if (!storage_isInitialized()) {                                \
-        fsm_sendFailure(FailureType_Failure_NotInitialized, NULL); \
+        fsm_sendFailure(FailureType_Failure_NotInitialized, NULL, 0); \
         return;                                                    \
     }
 
@@ -40,7 +40,7 @@
 
 #define CHECK_NOT_INITIALIZED                                                                                        \
     if (storage_isInitialized()) {                                                                                   \
-        fsm_sendFailure(FailureType_Failure_UnexpectedMessage, _("Device is already initialized. Use Wipe first.")); \
+        fsm_sendFailure(FailureType_Failure_UnexpectedMessage, _("Device is already initialized. Use Wipe first."), 0); \
         return;                                                                                                      \
     }
 
@@ -73,7 +73,7 @@
 
 #define CHECK_PARAM(cond, errormsg)                                 \
     if (!(cond)) {                                                  \
-        fsm_sendFailure(FailureType_Failure_DataError, (errormsg)); \
+        fsm_sendFailure(FailureType_Failure_DataError, (errormsg), 0); \
         layoutHome();                                               \
         return;                                                     \
     }
@@ -85,7 +85,7 @@
 
 #define CHECK_PRECONDITION(cond, errormsg)                          \
     if (!(cond)) {                                                  \
-        fsm_sendFailure(FailureType_Failure_DataError, (errormsg)); \
+        fsm_sendFailure(FailureType_Failure_DataError, (errormsg), 0); \
         layoutHome();                                               \
         return;                                                     \
     }
@@ -97,7 +97,7 @@
 
 #define CHECK_BUTTON_PROTECT                                                  \
     if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) { \
-        fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);           \
+        fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL, 0);           \
         layoutHome();                                                         \
         return;                                                               \
     }
@@ -110,7 +110,7 @@
 
 #define CHECK_MNEMONIC                                                              \
     if (storage_hasMnemonic() == false) {                                           \
-        fsm_sendFailure(FailureType_Failure_AddressGeneration, "Mnemonic not set"); \
+        fsm_sendFailure(FailureType_Failure_AddressGeneration, "Mnemonic not set", 0); \
         layoutHome();                                                               \
         return;                                                                     \
     }
@@ -122,21 +122,21 @@
 
 #define CHECK_INPUTS(msg)                                                                           \
     if ((msg)->nbIn > 8) {                                                                          \
-        fsm_sendFailure(FailureType_Failure_InvalidSignature, _("Cannot have more than 8 inputs")); \
+        fsm_sendFailure(FailureType_Failure_InvalidSignature, _("Cannot have more than 8 inputs"), 0); \
         layoutHome();                                                                               \
         return;                                                                                     \
     }
 
 #define CHECK_OUTPUTS(msg)                                                                           \
     if ((msg)->nbOut > 8) {                                                                          \
-        fsm_sendFailure(FailureType_Failure_InvalidSignature, _("Cannot have more than 8 outputs")); \
+        fsm_sendFailure(FailureType_Failure_InvalidSignature, _("Cannot have more than 8 outputs"), 0); \
         layoutHome();                                                                                \
         return;                                                                                      \
     }
 
 #define CHECK_MNEMONIC_CHECKSUM                                                                     \
     if (!mnemonic_check(msg->mnemonic)) {                                                           \
-        fsm_sendFailure(FailureType_Failure_DataError, _("Mnemonic with wrong checksum provided")); \
+        fsm_sendFailure(FailureType_Failure_DataError, _("Mnemonic with wrong checksum provided"), 0); \
         layoutHome();                                                                               \
         return;                                                                                     \
     }

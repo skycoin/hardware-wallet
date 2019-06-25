@@ -167,7 +167,7 @@ static void recovery_done(void)
             storage_setMnemonic(new_mnemonic);
             memzero(new_mnemonic, sizeof(new_mnemonic));
             storage_update();
-            fsm_sendSuccess(_("Device recovered"));
+            fsm_sendSuccess(_("Device recovered"), 0);
         } else {
             // Inform the user about new mnemonic correctness (as well as whether it is the same as the current one).
             bool match = (storage_isInitialized() && storage_containsMnemonic(new_mnemonic));
@@ -178,7 +178,7 @@ static void recovery_done(void)
                     _("and MATCHES"),
                     _("the one in the device."), NULL, NULL, NULL);
                 protectButton(ButtonRequestType_ButtonRequest_Other, true);
-                fsm_sendSuccess(_("The seed is valid and matches the one in the device"));
+                fsm_sendSuccess(_("The seed is valid and matches the one in the device"), 0);
             } else {
                 layoutDialog(&bmp_icon_error, NULL, _("Confirm"), NULL,
                     _("The seed is valid"),
@@ -186,7 +186,7 @@ static void recovery_done(void)
                     _("the one in the device."), NULL, NULL, NULL);
                 protectButton(ButtonRequestType_ButtonRequest_Other, true);
                 fsm_sendFailure(FailureType_Failure_DataError,
-                    _("The seed is valid but does not match the one in the device"));
+                    _("The seed is valid but does not match the one in the device"), 0);
             }
         }
     } else {
@@ -199,7 +199,7 @@ static void recovery_done(void)
                 _("The seed is"), _("INVALID!"), NULL, NULL, NULL, NULL);
             protectButton(ButtonRequestType_ButtonRequest_Other, true);
         }
-        fsm_sendFailure(FailureType_Failure_DataError, _("Invalid seed, are words in correct order?"));
+        fsm_sendFailure(FailureType_Failure_DataError, _("Invalid seed, are words in correct order?"), 0);
     }
     awaiting_word = 0;
     layoutHome();
@@ -455,7 +455,7 @@ void recovery_init(uint32_t _word_count, bool passphrase_protection, bool pin_pr
 
     if (!dry_run) {
         if (pin_protection && !protectChangePin()) {
-            fsm_sendFailure(FailureType_Failure_PinMismatch, NULL);
+            fsm_sendFailure(FailureType_Failure_PinMismatch, NULL, 0);
             layoutHome();
             return;
         }
@@ -483,7 +483,7 @@ static void recovery_scrambledword(const char* word)
             if (!dry_run) {
                 session_clear(true);
             }
-            fsm_sendFailure(FailureType_Failure_ProcessError, _("Wrong word retyped"));
+            fsm_sendFailure(FailureType_Failure_ProcessError, _("Wrong word retyped"), 0);
             layoutHome();
             return;
         }
@@ -501,7 +501,7 @@ static void recovery_scrambledword(const char* word)
             if (!dry_run) {
                 session_clear(true);
             }
-            fsm_sendFailure(FailureType_Failure_DataError, _("Word not found in a wordlist"));
+            fsm_sendFailure(FailureType_Failure_DataError, _("Word not found in a wordlist"), 0);
             layoutHome();
             return;
         }
@@ -528,7 +528,7 @@ void recovery_word(const char* word)
         recovery_scrambledword(word);
         break;
     default:
-        fsm_sendFailure(FailureType_Failure_UnexpectedMessage, _("Not in Recovery mode"));
+        fsm_sendFailure(FailureType_Failure_UnexpectedMessage, _("Not in Recovery mode"), 0);
         break;
     }
 }

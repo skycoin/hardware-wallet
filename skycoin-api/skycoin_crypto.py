@@ -4,32 +4,58 @@ import os
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
+class SkycoinCryptoException(Exception):
+    pass
+
 class SkycoinCrypto(object):
     def __init__(self):
         self.lib = cdll.LoadLibrary(dir_path + '/libskycoin-crypto.so')
 
-    def EcdsaSkycoinSign(self, digest, seckey, seed=1):
+    def SkycoinEcdsaSignDigest(self, seckey, digest):
+        if len(seckey) != 32:
+            raise ValueError('seckey must be 32 bytes')
+        if len(digest) != 32:
+            raise ValueError('digest must be 32 bytes')
+
         signature = create_string_buffer(65)
-        self.lib.ecdsa_skycoin_sign(c_uint32(seed), seckey, digest, signature)
-        return signature
-    
-    def ComputeSha256Sum(self, seed):
-        digest = create_string_buffer(32)
-        self.lib.compute_sha256sum(seed, digest, self.lib.strlen(seed))
-        return digest
+        ret = self.lib.skycoin_ecdsa_sign_digest(seckey, digest, signature)
+        if ret:
+            raise SkycoinCryptoException('skycoin_ecdsa_sign_digest failed with error code {}'.format(ret))
+        if len(signature.raw) != 65:
+            raise SkycoinCryptoException("signature length {} is not 65 bytes".format(len(signature.raw)))
+        return signature.raw
 
-    def GeneratePubkeyFromSeckey(self, seckey):
+    def SkycoinPubkeyFromSeckey(self, seckey):
+        if len(seckey) != 32:
+            raise ValueError('seckey must be 32 bytes')
+
         pubkey = create_string_buffer(33)
-        self.lib.generate_pubkey_from_seckey(seckey, pubkey)
-        return pubkey
+        self.lib.skycoin_pubkey_from_seckey(seckey, pubkey)
+        return pubkey.raw
 
-    def Base58AddressFromPubkey(self, pubkey):
+    def SkycoinAddressFromPubkey(self, pubkey):
+        if len(pubkey) != 33:
+            raise ValueError('pubkey must be 33 bytes')
+
         address = create_string_buffer(36)
         address_size = c_size_t(36)
-        self.lib.generate_base58_address_from_pubkey(pubkey, address, byref(address_size))
-        return address
+        ok = self.lib.skycoin_address_from_pubkey(pubkey, address, byref(address_size))
+        if not ok:
+            raise SkycoinCryptoException('skycoin_address_from_pubkey failed')
+        return address.value # .value treats it as a NUL terminated string
 
-    def RecoverPubkeyFromSignature(self, message, signature):
+    def SkycoinEcdsaVerifyDigestRecover(self, signature, digest):
+        if len(signature) != 65:
+            raise ValueError('signature must be 65 bytes')
+        if len(digest) != 32:
+            raise ValueError('digest must be 32 bytes')
+
         pubkey = create_string_buffer(33)
-        self.lib.recover_pubkey_from_signed_message(message, signature, pubkey)
-        return pubkey
+        ret = self.lib.skycoin_ecdsa_verify_digest_recover(signature, digest, pubkey)
+        if ret:
+            raise SkycoinCryptoException('skycoin_ecdsa_verify_digest_recover failed with error code {}'.format(ret))
+
+        pk = bytearray(pubkey.raw)
+        if len(pk) != 33:
+            raise SkycoinCryptoException('recovered pubkey length {} is not 33 bytes'.format(len(pk)))
+        return pk

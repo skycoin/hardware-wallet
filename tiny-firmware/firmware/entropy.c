@@ -132,14 +132,14 @@ void entropy_salt_mix_256(uint8_t* in, size_t in_len, uint8_t* buf)
 void entropy_mix_256(const uint8_t* in, size_t in_len, uint8_t* out_mixed_entropy)
 {
     uint8_t val1[SHA256_DIGEST_LENGTH] = {0};
-    compute_sha256sum(in, val1, in_len);
+    sha256sum(in, val1, in_len);
     uint8_t val2[SHA256_DIGEST_LENGTH] = {0};
-    add_sha256(
+    sha256sum_two(
         val1, sizeof(val1),
         entropy_mixer_prev_val, sizeof(entropy_mixer_prev_val),
         val2);
     uint8_t val3[SHA256_DIGEST_LENGTH] = {0};
-    add_sha256(val1, sizeof(val1), val2, sizeof(val2), val3);
+    sha256sum_two(val1, sizeof(val1), val2, sizeof(val2), val3);
     memset(val1, 0, sizeof(val1));
     memcpy(entropy_mixer_prev_val, val3, sizeof(entropy_mixer_prev_val));
     memset(val3, 0, sizeof(val1));

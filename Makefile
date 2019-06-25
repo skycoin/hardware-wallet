@@ -153,6 +153,7 @@ release-combined-mem-protect: release-bootloader-mem-protect release-firmware ##
 	mv tiny-firmware/bootloader/combine/combined.bin releases/skywallet-full-mem-protect-$(COMBINED_VERSION).bin
 
 release: release-combined release-combined-mem-protect release-emulator ## Create a release for production
+	@cp tiny-firmware/VERSION releases/version.txt
 
 release-sign: release # Create detached signatures for all the generated files for release
 	gpg --armor --detach-sign releases/skywallet-firmware-v$(VERSION_FIRMWARE).bin
@@ -196,9 +197,10 @@ run-emulator: emulator ## Run wallet emulator
 test: ## Run all project test suites.
 	export LIBRARY_PATH="$(MKFILE_DIR)/skycoin-api/:$$LIBRARY_PATH"
 	export $(LD_VAR)="$(MKFILE_DIR)/skycoin-api/:$$$(LD_VAR)"
-	make -C skycoin-api/ test
+	PYTHON=$(PYTHON) make -C skycoin-api/ test
 	VERSION_MAJOR=$(VERSION_FIRMWARE_MAJOR) VERSION_MINOR=$(VERSION_FIRMWARE_MINOR) VERSION_PATCH=$(VERSION_FIRMWARE_PATCH) GLOBAL_PATH=$(MKFILE_DIR) make emulator
 	EMULATOR=1 VERSION_MAJOR=$(VERSION_FIRMWARE_MAJOR) VERSION_MINOR=$(VERSION_FIRMWARE_MINOR) VERSION_PATCH=$(VERSION_FIRMWARE_PATCH) GLOBAL_PATH=$(MKFILE_DIR) make -C tiny-firmware/ test
+
 
 st-flash: ## Deploy (flash) firmware on physical wallet
 	st-flash write $(FULL_FIRMWARE_PATH) 0x08000000

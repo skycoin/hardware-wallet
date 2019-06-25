@@ -50,120 +50,135 @@
 
 // Utils
 
-#define CASE_SEND_FAILURE(type, fail, msg) \
+#define CASE_SEND_FAILURE_FORMSG(type, fail, msg, msgtype) \
     case type:                             \
-        fsm_sendFailure(fail, msg);        \
+        fsm_sendFailure(fail, msg, msgtype);        \
         break;
 
-void fsm_sendResponseFromErrCode(ErrCode_t err, const char *successMsg, const char *failMsg) {
+#define CASE_SEND_FAILURE(type, fail, msg) CASE_SEND_FAILURE_FORMSG(type, fail, msg, 0)
+
+void fsm_sendResponseFromErrCode(ErrCode_t err, const char* successMsg, const char* failMsg, MessageType* msgtype)
+{
     FailureType failure;
     switch (err) {
-        case ErrOk:
-            if (successMsg == NULL) {
-                successMsg = _("Success");
-            }
-            fsm_sendSuccess(successMsg);
-            return;
-        case ErrFailed:
-            failure = FailureType_Failure_FirmwareError;
-            break;
-        case ErrInvalidArg:
-            failure = FailureType_Failure_DataError;
-            if (failMsg == NULL) {
-                failMsg = _("Invalid argument");
-            }
-            break;
-        case ErrPreconditionFailed:
-            failure = FailureType_Failure_DataError;
-            if (failMsg == NULL) {
-                failMsg = _("Precondition failed");
-            }
-            break;
-        case ErrIndexValue:
-            failure = FailureType_Failure_DataError;
-            if (failMsg == NULL) {
-                failMsg = _("Index out of bounds");
-            }
-            break;
-        case ErrInvalidValue:
-            failure = FailureType_Failure_ProcessError;
-            break;
-        case ErrNotImplemented:
-            failure = FailureType_Failure_FirmwareError;
-            if (failMsg == NULL) {
-                failMsg = _("Not Implemented");
-            }
-            break;
-        case ErrInvalidChecksum:
-            failure = FailureType_Failure_DataError;
-            if (failMsg == NULL) {
-                failMsg = _("Invalid checksum");
-            }
-            break;
-        case ErrPinRequired:
-            failure = FailureType_Failure_PinExpected;
-            break;
-        case ErrPinMismatch:
-            failure = FailureType_Failure_PinMismatch;
-            break;
-        case ErrPinCancelled:
-            failure = FailureType_Failure_PinCancelled;
-            break;
-        case ErrActionCancelled:
-            failure = FailureType_Failure_ActionCancelled;
-            break;
-        case ErrNotInitialized:
-            failure = FailureType_Failure_NotInitialized;
-            break;
-        case ErrMnemonicRequired:
-            failure = FailureType_Failure_AddressGeneration;
-            if (failMsg == NULL) {
-                failMsg = _("Mnemonic required");
-            }
-            break;
-        case ErrAddressGeneration:
-            failure = FailureType_Failure_AddressGeneration;
-            break;
-        case ErrTooManyAddresses:
-            failure = FailureType_Failure_AddressGeneration;
-            if (failMsg == NULL) {
-                failMsg = _("Too many addresses requested");
-            }
-            break;
-        case ErrUnfinishedBackup:
-            // FIXME: FailureType_Failure_ProcessError ?
-            failure = FailureType_Failure_ActionCancelled;
-            if (failMsg == NULL) {
-                failMsg = _("Backup operation did not finish properly.");
-            }
-            break;
-        case ErrUnexpectedMessage:
-            failure = FailureType_Failure_UnexpectedMessage;
-            break;
-        case ErrSignPreconditionFailed:
-        case ErrInvalidSignature:
-            failure = FailureType_Failure_InvalidSignature;
-            break;
-        default:
-            failure = FailureType_Failure_FirmwareError;
-            failMsg = _("Unexpected firmware error");
-            break;
+    case ErrOk:
+        if (successMsg == NULL) {
+            successMsg = _("Success");
+        }
+        fsm_sendSuccess(successMsg, msgtype);
+        return;
+    case ErrFailed:
+        failure = FailureType_Failure_FirmwareError;
+        break;
+    case ErrInvalidArg:
+        failure = FailureType_Failure_DataError;
+        if (failMsg == NULL) {
+            failMsg = _("Invalid argument");
+        }
+        break;
+    case ErrPreconditionFailed:
+        failure = FailureType_Failure_DataError;
+        if (failMsg == NULL) {
+            failMsg = _("Precondition failed");
+        }
+        break;
+    case ErrIndexValue:
+        failure = FailureType_Failure_DataError;
+        if (failMsg == NULL) {
+            failMsg = _("Index out of bounds");
+        }
+        break;
+    case ErrInvalidValue:
+        failure = FailureType_Failure_ProcessError;
+        break;
+    case ErrNotImplemented:
+        failure = FailureType_Failure_FirmwareError;
+        if (failMsg == NULL) {
+            failMsg = _("Not Implemented");
+        }
+        break;
+    case ErrInvalidChecksum:
+        failure = FailureType_Failure_DataError;
+        if (failMsg == NULL) {
+            failMsg = _("Invalid checksum");
+        }
+        break;
+    case ErrPinRequired:
+        failure = FailureType_Failure_PinExpected;
+        break;
+    case ErrPinMismatch:
+        failure = FailureType_Failure_PinMismatch;
+        break;
+    case ErrPinCancelled:
+        failure = FailureType_Failure_PinCancelled;
+        break;
+    case ErrActionCancelled:
+        failure = FailureType_Failure_ActionCancelled;
+        break;
+    case ErrNotInitialized:
+        failure = FailureType_Failure_NotInitialized;
+        break;
+    case ErrMnemonicRequired:
+        failure = FailureType_Failure_AddressGeneration;
+        if (failMsg == NULL) {
+            failMsg = _("Mnemonic required");
+        }
+        break;
+    case ErrAddressGeneration:
+        failure = FailureType_Failure_AddressGeneration;
+        break;
+    case ErrTooManyAddresses:
+        failure = FailureType_Failure_AddressGeneration;
+        if (failMsg == NULL) {
+            failMsg = _("Too many addresses requested");
+        }
+        break;
+    case ErrUnfinishedBackup:
+        // FIXME: FailureType_Failure_ProcessError ?
+        failure = FailureType_Failure_ActionCancelled;
+        if (failMsg == NULL) {
+            failMsg = _("Backup operation did not finish properly.");
+        }
+        break;
+    case ErrUnexpectedMessage:
+        failure = FailureType_Failure_UnexpectedMessage;
+        break;
+    case ErrSignPreconditionFailed:
+        failure = FailureType_Failure_InvalidSignature;
+        break;
+    case ErrInvalidSignature:
+        if (failMsg == NULL) {
+            failMsg = _("Invalid signature.");
+        }
+        failure = FailureType_Failure_InvalidSignature;
+        break;
+    default:
+        failure = FailureType_Failure_FirmwareError;
+        failMsg = _("Unexpected firmware error");
+        break;
     }
-    fsm_sendFailure(failure, failMsg);
+    fsm_sendFailure(failure, failMsg, msgtype);
 }
 
 extern uint8_t msg_resp[MSG_OUT_SIZE] __attribute__((aligned));
 
-void fsm_sendSuccess(const char *text) {
+void fsm_sendSuccess(const char* text, MessageType* msgtype)
+{
     RESP_INIT(Success);
     if (text) {
         resp->has_message = true;
         strlcpy(resp->message, text, sizeof(resp->message));
     }
+    if (msgtype) {
+      resp->has_msg_type = true;
+      resp->msg_type = *msgtype;
+    } else {
+      resp->has_msg_type = false;
+    }
     msg_write(MessageType_MessageType_Success, resp);
 }
-
-void fsm_sendFailure(FailureType code, const char *text) {
+void fsm_sendFailure(FailureType code, const char* text, MessageType* msgtype)
+{
     if (protectAbortedByInitialize) {
         fsm_msgInitialize((Initialize *) 0);
         protectAbortedByInitialize = false;
@@ -172,6 +187,12 @@ void fsm_sendFailure(FailureType code, const char *text) {
     RESP_INIT(Failure);
     resp->has_code = true;
     resp->code = code;
+    if (msgtype) {
+      resp->has_msg_type = true;
+      resp->msg_type = *msgtype;
+    } else {
+      resp->has_msg_type = false;
+    }
     if (text == NULL) {
         switch (code) {
             case FailureType_Failure_UnexpectedMessage:
@@ -245,6 +266,7 @@ void fsm_msgInitialize(Initialize *msg) {
 
 void fsm_msgApplySettings(ApplySettings *msg) {
     CHECK_PIN
+    MessageType msgtype = MessageType_MessageType_ApplySettings;
     msg->has_label = msg->has_label && strlen(msg->label);
     msg->has_language = msg->has_language && strlen(msg->language);
     if (msg->has_label) {
@@ -278,7 +300,7 @@ void fsm_msgApplySettings(ApplySettings *msg) {
         default:
             break;
     }
-    fsm_sendResponseFromErrCode(err, _("Settings applied"), failMsg);
+    fsm_sendResponseFromErrCode(err, _("Settings applied"), failMsg, &msgtype);
     layoutHome();
 }
 
@@ -292,22 +314,25 @@ void fsm_msgGetFeatures(GetFeatures *msg) {
 void fsm_msgSkycoinCheckMessageSignature(SkycoinCheckMessageSignature *msg) {
     GET_MSG_POINTER(Success, successResp);
     GET_MSG_POINTER(Failure, failureResp);
+    uint16_t msg_id = MessageType_MessageType_Failure;
+    void *msg_ptr = failureResp;
     switch (msgSkycoinCheckMessageSignatureImpl(msg, successResp, failureResp)) {
         case ErrOk:
-            msg_write(MessageType_MessageType_Success, successResp);
+            msg_id = MessageType_MessageType_Success;
+            msg_ptr = successResp;
             layoutRawMessage("Verification success");
-            return;
+            break;
+        case ErrAddressGeneration:
         case ErrInvalidSignature:
             failureResp->code = FailureType_Failure_InvalidSignature;
-            msg_write(MessageType_MessageType_Failure, failureResp);
             layoutRawMessage("Wrong signature");
             break;
         default:
-            failureResp->code = FailureType_Failure_FirmwareError;
+            strncpy(failureResp->message, _("Firmware error."), sizeof(failureResp->message));
             layoutHome();
             break;
     }
-    msg_write(MessageType_MessageType_Failure, failureResp);
+    msg_write(msg_id, msg_ptr);
 }
 
 ErrCode_t requestConfirmTransaction(char *strCoin, char *strHour, TransactionSign *msg, uint32_t i) {
@@ -325,40 +350,41 @@ void fsm_msgTransactionSign(TransactionSign *msg) {
     CHECK_INPUTS(msg)
     CHECK_OUTPUTS(msg)
 
+    MessageType msgtype = MessageType_MessageType_TransactionSign;
     RESP_INIT(ResponseTransactionSign);
     ErrCode_t err = msgTransactionSignImpl(msg, &requestConfirmTransaction, resp);
     char *failMsg = NULL;
     switch (err) {
-        case ErrOk:
-            msg_write(MessageType_MessageType_ResponseTransactionSign, resp);
-            break;
-        case ErrAddressGeneration:
-            failMsg = _("Wrong return address");
-            // fall through
-        default:
-            fsm_sendResponseFromErrCode(err, NULL, failMsg);
-            break;
+    case ErrOk:
+        msg_write(MessageType_MessageType_ResponseTransactionSign, resp);
+        break;
+    case ErrAddressGeneration:
+        failMsg = _("Wrong return address");
+        // fall through
+    default:
+        fsm_sendResponseFromErrCode(err, NULL, failMsg, &msgtype);
+        break;
     }
     layoutHome();
 }
 
-void fsm_msgSkycoinSignMessage(SkycoinSignMessage *msg) {
+void fsm_msgSkycoinSignMessage(SkycoinSignMessage* msg)
+{
+    CHECK_MNEMONIC
     RESP_INIT(ResponseSkycoinSignMessage);
     CHECK_PIN_UNCACHED
 
+    MessageType msgtype = MessageType_MessageType_SkycoinSignMessage;
     ResponseSkycoinAddress respAddr;
     uint8_t seckey[32] = {0};
     uint8_t pubkey[33] = {0};
     ErrCode_t err = fsm_getKeyPairAtIndex(1, pubkey, seckey, &respAddr, msg->address_n);
     if (err != ErrOk) {
-        fsm_sendResponseFromErrCode(err, NULL, _("Unable to get keys pair"));
+        fsm_sendResponseFromErrCode(err, NULL, _("Unable to get keys pair"), &msgtype);
         layoutHome();
         return;
     }
-
-    CHECK_MNEMONIC
-    layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"),
-                      _("sign message using"), _("this address?"), respAddr.addresses[0], NULL, NULL);
+    layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"), _("sign message using"), _("this address?"), respAddr.addresses[0], NULL, NULL);
     CHECK_BUTTON_PROTECT
 
             err = msgSkycoinSignMessageImpl(msg, resp);
@@ -370,12 +396,13 @@ void fsm_msgSkycoinSignMessage(SkycoinSignMessage *msg) {
         if (err == ErrMnemonicRequired) {
             failMsg = _("Mnemonic not set");
         }
-        fsm_sendResponseFromErrCode(err, NULL, failMsg);
+        fsm_sendResponseFromErrCode(err, NULL, failMsg, &msgtype);
         layoutHome();
     }
 }
-
-void fsm_msgSkycoinAddress(SkycoinAddress *msg) {
+void fsm_msgSkycoinAddress(SkycoinAddress* msg)
+{
+    MessageType msgtype = MessageType_MessageType_SkycoinAddress;
     RESP_INIT(ResponseSkycoinAddress);
     char *failMsg = NULL;
     ErrCode_t err = msgSkycoinAddressImpl(msg, resp);
@@ -406,11 +433,13 @@ void fsm_msgSkycoinAddress(SkycoinAddress *msg) {
         default:
             break;
     }
-    fsm_sendResponseFromErrCode(err, NULL, failMsg);
+    fsm_sendResponseFromErrCode(err, NULL, failMsg, &msgtype);
     layoutHome();
 }
 
-void fsm_msgPing(Ping *msg) {
+void fsm_msgPing(Ping* msg)
+{
+    MessageType msgtype = MessageType_MessageType_Ping;
     if (msg->has_button_protection && msg->button_protection) {
         layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"),
                           _("answer to ping?"), NULL, NULL, NULL, NULL);
@@ -419,19 +448,20 @@ void fsm_msgPing(Ping *msg) {
 
     ErrCode_t err = msgPingImpl(msg);
     if (err != ErrOk) {
-        fsm_sendResponseFromErrCode(err, NULL, NULL);
+        fsm_sendResponseFromErrCode(err, NULL, NULL, &msgtype);
     }
     layoutHome();
 }
 
 void fsm_msgChangePin(ChangePin *msg) {
     bool removal = msg->has_remove && msg->remove;
+    MessageType msgtype = MessageType_MessageType_ChangePin;
     if (removal) {
         if (storage_hasPin()) {
             layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"),
                               _("remove current PIN?"), NULL, NULL, NULL, NULL);
         } else {
-            fsm_sendSuccess(_("PIN removed"));
+            fsm_sendSuccess(_("PIN removed"), &msgtype);
             return;
         }
     } else {
@@ -447,21 +477,22 @@ void fsm_msgChangePin(ChangePin *msg) {
     CHECK_BUTTON_PROTECT
             CHECK_PIN_UNCACHED
 
-    fsm_sendResponseFromErrCode(msgChangePinImpl(msg, &requestPin), (removal) ? _("PIN removed") : _("PIN changed"),
-                                NULL);
+    fsm_sendResponseFromErrCode(msgChangePinImpl(msg, &requestPin), (removal) ? _("PIN removed") : _("PIN changed"), NULL, &msgtype);
     layoutHome();
 }
 
-void fsm_msgWipeDevice(WipeDevice *msg) {
-    layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"),
-                      _("wipe the device?"), NULL, _("All data will be lost."), NULL, NULL);
-    ErrCode_t err = protectButton(ButtonRequestType_ButtonRequest_WipeDevice, false) ? msgWipeDeviceImpl(msg)
-                                                                                     : ErrActionCancelled;
-    fsm_sendResponseFromErrCode(err, _("Device wiped"), NULL);
+void fsm_msgWipeDevice(WipeDevice* msg)
+{
+    MessageType msgtype = MessageType_MessageType_WipeDevice;
+    layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"), _("wipe the device?"), NULL, _("All data will be lost."), NULL, NULL);
+    ErrCode_t err = protectButton(ButtonRequestType_ButtonRequest_WipeDevice, false) ? msgWipeDeviceImpl(msg) : ErrActionCancelled;
+    fsm_sendResponseFromErrCode(err, _("Device wiped"), NULL, &msgtype);
     layoutHome();
 }
 
-void fsm_msgGenerateMnemonic(GenerateMnemonic *msg) {
+void fsm_msgGenerateMnemonic(GenerateMnemonic* msg)
+{
+    MessageType msgtype = MessageType_MessageType_GenerateMnemonic;
     GET_MSG_POINTER(EntropyRequest, entropy_request);
     switch (msgGenerateMnemonicImpl(msg, &random_salted_buffer)) {
         CASE_SEND_FAILURE(ErrNotInitialized, FailureType_Failure_UnexpectedMessage,
@@ -471,15 +502,15 @@ void fsm_msgGenerateMnemonic(GenerateMnemonic *msg) {
         CASE_SEND_FAILURE(ErrInvalidValue, FailureType_Failure_ProcessError,
                           _("Device could not generate a valid Mnemonic"))
         CASE_SEND_FAILURE(ErrInvalidChecksum, FailureType_Failure_DataError, _("Mnemonic with wrong checksum provided"))
-        case ErrEntropyRequired:
-            msg_write(MessageType_MessageType_EntropyRequest, entropy_request);
-            break;
-        case ErrOk:
-            fsm_sendSuccess(_("Mnemonic successfully configured"));
-            break;
-        default:
-            fsm_sendFailure(FailureType_Failure_FirmwareError, _("Mnemonic generation failed"));
-            break;
+    case ErrEntropyRequired:
+        msg_write(MessageType_MessageType_EntropyRequest, entropy_request);
+        break;
+    case ErrOk:
+        fsm_sendSuccess(_("Mnemonic successfully configured"), &msgtype);
+        break;
+    default:
+        fsm_sendFailure(FailureType_Failure_FirmwareError, _("Mnemonic generation failed"), &msgtype);
+        break;
     }
     layoutHome();
 }
@@ -489,9 +520,10 @@ void fsm_msgSetMnemonic(SetMnemonic *msg) {
     layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("I take the risk"), NULL, _("Writing seed"),
                       _("is not recommended."), _("Continue only if you"), _("know what you are"), _("doing!"), NULL);
     CHECK_BUTTON_PROTECT
+    MessageType msgtype = MessageType_MessageType_GenerateMnemonic;
     ErrCode_t err = msgSetMnemonicImpl(msg);
-    char *failMsg = (err == ErrInvalidValue) ? _("Mnemonic with wrong checksum provided") : NULL;
-    fsm_sendResponseFromErrCode(err, msg->mnemonic, failMsg);
+    char* failMsg = (err == ErrInvalidValue) ? _("Mnemonic with wrong checksum provided") : NULL;
+    fsm_sendResponseFromErrCode(err, msg->mnemonic, failMsg, &msgtype);
     layoutHome();
 }
 
@@ -501,13 +533,14 @@ void fsm_msgGetRawEntropy(GetRawEntropy *msg) {
                       _("send entropy?"), NULL, NULL, NULL, NULL);
     CHECK_BUTTON_PROTECT
 #endif // DISABLE_GETENTROPY_CONFIRM
+    MessageType msgtype = MessageType_MessageType_GetRawEntropy;
     RESP_INIT(Entropy);
     ErrCode_t ret = msgGetEntropyImpl(msg, resp, &random_buffer);
     if (ret == ErrOk) {
         msg_write(MessageType_MessageType_Entropy, resp);
     } else {
         fsm_sendResponseFromErrCode(
-                ret, NULL, _("Get raw entropy not implemented"));
+            ret, NULL, _("Get raw entropy not implemented"), &msgtype);
     }
     layoutHome();
 }
@@ -518,6 +551,7 @@ void fsm_msgGetMixedEntropy(GetMixedEntropy *_msg) {
                       _("send entropy?"), NULL, NULL, NULL, NULL);
     CHECK_BUTTON_PROTECT
 #endif // DISABLE_GETENTROPY_CONFIRM
+    MessageType msgtype = MessageType_MessageType_GetMixedEntropy;
     RESP_INIT(Entropy);
     GetRawEntropy msg;
     msg.size = _msg->size;
@@ -526,20 +560,20 @@ void fsm_msgGetMixedEntropy(GetMixedEntropy *_msg) {
         msg_write(MessageType_MessageType_Entropy, resp);
     } else {
         fsm_sendResponseFromErrCode(
-                ret, NULL, _("Get mixed entropy not implemented"));
+            ret, NULL, _("Get mixed entropy not implemented"), &msgtype);
     }
     layoutHome();
 }
 
 void fsm_msgLoadDevice(LoadDevice *msg) {
     CHECK_NOT_INITIALIZED
-    layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("I take the risk"), NULL, _("Loading private seed"),
-                      _("is not recommended."), _("Continue only if you"), _("know what you are"), _("doing!"), NULL);
+    MessageType msgtype = MessageType_MessageType_LoadDevice;
+    layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("I take the risk"), NULL, _("Loading private seed"), _("is not recommended."), _("Continue only if you"), _("know what you are"), _("doing!"), NULL);
     CHECK_BUTTON_PROTECT
 
     ErrCode_t err = msgLoadDeviceImpl(msg);
-    char *failMsg = (err == ErrInvalidValue) ? _("Mnemonic with wrong checksum provided") : NULL;
-    fsm_sendResponseFromErrCode(err, _("Device loaded"), failMsg);
+    char* failMsg = (err == ErrInvalidValue) ? _("Mnemonic with wrong checksum provided") : NULL;
+    fsm_sendResponseFromErrCode(err, _("Device loaded"), failMsg, &msgtype);
     layoutHome();
 }
 
@@ -568,19 +602,19 @@ ErrCode_t confirmBackup(void) {
 
 void fsm_msgBackupDevice(BackupDevice *msg) {
     CHECK_INITIALIZED
-            CHECK_PIN_UNCACHED
+    CHECK_PIN_UNCACHED
+    MessageType msgtype = MessageType_MessageType_BackupDevice;
     ErrCode_t err = msgBackupDeviceImpl(msg, &confirmBackup);
     switch (err) {
-        case ErrOk:
-            fsm_sendSuccess(_("Device backed up!"));
-            break;
+    case ErrOk:
+        fsm_sendSuccess(_("Device backed up!"), &msgtype);
+        break;
         CASE_SEND_FAILURE(ErrUnexpectedMessage, FailureType_Failure_UnexpectedMessage, _("Seed already backed up"))
         CASE_SEND_FAILURE(ErrActionCancelled, FailureType_Failure_ActionCancelled, NULL)
-        CASE_SEND_FAILURE(ErrUnfinishedBackup, FailureType_Failure_ActionCancelled,
-                          _("Backup operation did not finish properly."))
-        default:
-            fsm_sendFailure(FailureType_Failure_FirmwareError, _("Unexpected failure"));
-            break;
+        CASE_SEND_FAILURE(ErrUnfinishedBackup, FailureType_Failure_ActionCancelled, _("Backup operation did not finish properly."))
+    default:
+        fsm_sendFailure(FailureType_Failure_FirmwareError, _("Unexpected failure"), &msgtype);
+        break;
     }
     if (err != ErrActionCancelled) {
         layoutHome();
@@ -594,7 +628,10 @@ ErrCode_t confirmRecovery(void) {
     return ErrOk;
 }
 
-void fsm_msgRecoveryDevice(RecoveryDevice *msg) {
+
+void fsm_msgRecoveryDevice(RecoveryDevice* msg)
+{
+    MessageType msgtype = MessageType_MessageType_RecoveryDevice;
     ErrCode_t err = msgRecoveryDeviceImpl(msg, &confirmRecovery);
     switch (err) {
         CASE_SEND_FAILURE(ErrPinRequired, FailureType_Failure_PinExpected, _("Expected pin"))
@@ -603,9 +640,10 @@ void fsm_msgRecoveryDevice(RecoveryDevice *msg) {
         CASE_SEND_FAILURE(ErrInitialized, FailureType_Failure_UnexpectedMessage, _("Device it's not inizialized"))
         CASE_SEND_FAILURE(ErrInvalidArg, FailureType_Failure_DataError, _("Invalid word count"))
         CASE_SEND_FAILURE(ErrActionCancelled, FailureType_Failure_ActionCancelled, NULL)
-        default:
-            fsm_sendFailure(FailureType_Failure_FirmwareError, _("Unexpected failure"));
-            break;
+
+    default:
+        fsm_sendFailure(FailureType_Failure_FirmwareError, _("Unexpected failure"), &msgtype);
+        break;
     }
     if (err != ErrActionCancelled && err != ErrOk) {
         layoutHome();
@@ -616,21 +654,23 @@ void fsm_msgWordAck(WordAck *msg) {
     recovery_word(msg->word);
 }
 
-void fsm_msgCancel(Cancel *msg) {
-    (void) msg;
+void fsm_msgCancel(Cancel* msg)
+{
+    MessageType msgtype = MessageType_MessageType_Cancel;
+    (void)msg;
     recovery_abort();
-    fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
+    fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL, &msgtype);
 }
-
-void fsm_msgEntropyAck(EntropyAck *msg) {
+void fsm_msgEntropyAck(EntropyAck* msg)
+{
+    MessageType msgtype = MessageType_MessageType_EntropyAck;
     switch (msgEntropyAckImpl(msg)) {
-        CASE_SEND_FAILURE(ErrUnexpectedMessage, FailureType_Failure_UnexpectedMessage, _("Unexpected entropy ack msg."))
-        case ErrOk:
-            fsm_sendSuccess(_("Recived entropy"));
-            break;
-        default:
-            fsm_sendFailure(FailureType_Failure_FirmwareError, _("Entropy ack failed."));
-            break;
+        CASE_SEND_FAILURE_FORMSG(ErrUnexpectedMessage, FailureType_Failure_UnexpectedMessage, _("Unexpected entropy ack msg."), &msgtype)
+    case ErrOk:
+        fsm_sendSuccess(_("Received entropy"), &msgtype);
+        break;
+    default:
+        fsm_sendFailure(FailureType_Failure_FirmwareError, _("Entropy ack failed."), &msgtype);
+        break;
     }
-    layoutHome();
 }

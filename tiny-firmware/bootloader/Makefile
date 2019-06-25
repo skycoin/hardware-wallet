@@ -18,10 +18,10 @@ OBJS += ../gen/fonts.o
 #end libskywallet.a
 
 #skycoin-crypto
-OBJS += $(TOP_DIR)vendor/skycoin-crypto/skycoin_check_signature.o
-OBJS += $(TOP_DIR)vendor/skycoin-crypto/skycoin_check_signature_tools.o
+OBJS += $(TOP_DIR)vendor/skycoin-crypto/skycoin_signature.o
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/curves.o
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/hmac.o
+OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/secp256k1.o
 # OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/bip32.o
 
 #end skycoin-crypto
@@ -31,7 +31,7 @@ OBJS += signatures.o
 OBJS += usb.o
 
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/bignum.small.o
-# OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/ecdsa.small.o
+OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/ecdsa.small.o
 # OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/secp256k1.small.o
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/sha2.small.o
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/memzero.small.o
