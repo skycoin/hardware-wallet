@@ -226,7 +226,7 @@ check-coverage-cccc: ## Generate test coverage reports HTML
 	cccc tiny-firmware/*.c --outdir=$(OUTDIR)/tiny-firmware
 	cccc skycoin-api/*.c --outdir=$(OUTDIR)/skycoin-api
 
-check-coverage: emulator ## Generate test coverage reports console
+check-coverage: clean emulator ## Generate test coverage reports console
 	$(LD_VAR)="$(MKFILE_DIR)/skycoin-api/:$$$(LD_VAR)" LIBRARY_PATH="$(MKFILE_DIR)/skycoin-api/:$$LIBRARY_PATH" EMULATOR=1 VERSION_MAJOR=$(VERSION_FIRMWARE_MAJOR) VERSION_MINOR=$(VERSION_FIRMWARE_MINOR) VERSION_PATCH=$(VERSION_FIRMWARE_PATCH) make -C skycoin-api coverage
 	$(LD_VAR)="$(MKFILE_DIR)/skycoin-api/:$$$(LD_VAR)" LIBRARY_PATH="$(MKFILE_DIR)/skycoin-api/:$$LIBRARY_PATH" EMULATOR=1 VERSION_MAJOR=$(VERSION_FIRMWARE_MAJOR) VERSION_MINOR=$(VERSION_FIRMWARE_MINOR) VERSION_PATCH=$(VERSION_FIRMWARE_PATCH) make -C tiny-firmware coverage
 help:
