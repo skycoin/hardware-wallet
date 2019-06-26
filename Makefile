@@ -178,13 +178,13 @@ tiny-firmware/skyfirmware.bin: firmware-deps
 sign: tiny-firmware/bootloader/libskycoin-crypto.so tiny-firmware/skyfirmware.bin ## Sign skycoin wallet firmware
 	FIRMWARE_SIGNATURE_PUB_KEY1=$(FIRMWARE_SIGNATURE_PUB_KEY1) FIRMWARE_SIGNATURE_PUB_KEY2=$(FIRMWARE_SIGNATURE_PUB_KEY2) FIRMWARE_SIGNATURE_PUB_KEY3=$(FIRMWARE_SIGNATURE_PUB_KEY3) FIRMWARE_SIGNATURE_PUB_KEY4=$(FIRMWARE_SIGNATURE_PUB_KEY4) FIRMWARE_SIGNATURE_PUB_KEY5=$(FIRMWARE_SIGNATURE_PUB_KEY5) make -C tiny-firmware sign
 
-full-firmware-mem-protect: bootloader-mem-protect firmware ## Build full firmware (RDP level 2)
+full-firmware-mem-protect: firmware bootloader-mem-protect ## Build full firmware (RDP level 2)
 	cp bootloader-memory-protected.bin tiny-firmware/bootloader/combine/bl.bin
 	cp tiny-firmware/skyfirmware.bin tiny-firmware/bootloader/combine/fw.bin
 	cd tiny-firmware/bootloader/combine/ ; $(PYTHON) prepare.py
 	mv tiny-firmware/bootloader/combine/combined.bin releases/full-firmware-memory-protected.bin
 
-full-firmware: bootloader firmware ## Build full firmware (RDP level 0)
+full-firmware: firmware bootloader ## Build full firmware (RDP level 0)
 	cp skybootloader-no-memory-protect.bin tiny-firmware/bootloader/combine/bl.bin
 	cp tiny-firmware/skyfirmware.bin tiny-firmware/bootloader/combine/fw.bin
 	cd tiny-firmware/bootloader/combine/ ; $(PYTHON) prepare.py
