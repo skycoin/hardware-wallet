@@ -56,6 +56,9 @@ ErrCode_t msgEntropyAckImpl(EntropyAck* msg)
 {
     _Static_assert(EXTERNAL_ENTROPY_MAX_SIZE == sizeof(msg->entropy.bytes),
         "External entropy size does not match.");
+    if (msg->entropy.size > sizeof(msg->entropy.bytes)) {
+      return ErrInvalidArg;
+    }
     if (!msg->has_entropy) {
         return ErrEntropyNotNeeded;
     }
@@ -103,6 +106,9 @@ ErrCode_t msgGenerateMnemonicImpl(GenerateMnemonic* msg, void (*random_buffer_fu
 
 ErrCode_t msgSkycoinSignMessageImpl(SkycoinSignMessage* msg, ResponseSkycoinSignMessage* resp)
 {
+    // NOTE: twise the SKYCOIN_SIG_LEN because the hex format
+    _Static_assert(sizeof(resp->signed_message) >= 2 * SKYCOIN_SIG_LEN,
+                   "hex SKYCOIN_SIG_LEN do not fit in the response");
     CHECK_MNEMONIC_RET_ERR_CODE
     uint8_t pubkey[SKYCOIN_PUBKEY_LEN] = {0};
     uint8_t seckey[SKYCOIN_SECKEY_LEN] = {0};
@@ -159,21 +165,34 @@ ErrCode_t msgSignTransactionMessageImpl(uint8_t* message_digest, uint32_t index,
 
 ErrCode_t fsm_getKeyPairAtIndex(uint32_t nbAddress, uint8_t* pubkey, uint8_t* seckey, ResponseSkycoinAddress* respSkycoinAddress, uint32_t start_index)
 {
+    if (respSkycoinAddress == NULL) {
+        return ErrInvalidArg;
+    }
     const char* mnemo = storage_getFullSeed();
     uint8_t seed[33] = {0};
     uint8_t nextSeed[SHA256_DIGEST_LENGTH] = {0};
     size_t size_address = 36;
+    _Static_assert(
+            sizeof(respSkycoinAddress->addresses[0]) == 36,
+            "invalid address bffer size");
     if (mnemo == NULL || nbAddress == 0) {
         return ErrInvalidArg;
     }
     if (0 != deterministic_key_pair_iterator((const uint8_t*)mnemo, strlen(mnemo), nextSeed, seckey, pubkey)) {
         return ErrFailed;
     }
-    if (respSkycoinAddress != NULL && start_index == 0) {
+    respSkycoinAddress->addresses_count = 0;
+    if (start_index == 0) {
         skycoin_address_from_pubkey(pubkey, respSkycoinAddress->addresses[0], &size_address);
         respSkycoinAddress->addresses_count++;
     }
     memcpy(seed, nextSeed, 32);
+    size_t max_addresses =
+            sizeof(respSkycoinAddress->addresses)
+            / sizeof(respSkycoinAddress->addresses[0]);
+    if (nbAddress + start_index - 1 > max_addresses) {
+        return ErrInvalidArg;
+    }
     for (uint32_t i = 0; i < nbAddress + start_index - 1; ++i) {
         if (0 != deterministic_key_pair_iterator(seed, 32, nextSeed, seckey, pubkey)) {
             return ErrFailed;
@@ -354,6 +373,12 @@ ErrCode_t msgGetFeaturesImpl(Features* resp)
 
 ErrCode_t msgTransactionSignImpl(TransactionSign* msg, ErrCode_t (*funcConfirmTxn)(char*, char*, TransactionSign*, uint32_t), ResponseTransactionSign* resp)
 {
+    if (msg->nbIn > sizeof(msg->transactionIn)) {
+        return ErrInvalidArg;
+    }
+    if (msg->nbOut > sizeof(msg->transactionOut)) {
+        return ErrInvalidArg;
+    }
 #if EMULATOR
     printf("%s: %d. nbOut: %d\n",
         _("Transaction signed nbIn"),
@@ -416,7 +441,7 @@ ErrCode_t msgTransactionSignImpl(TransactionSign* msg, ErrCode_t (*funcConfirmTx
 
     CHECK_PIN_UNCACHED_RET_ERR_CODE
 
-    for (uint32_t i = 0; i < msg->nbIn; ++i) {
+    for (uint8_t i = 0; i < msg->nbIn; ++i) {
         uint8_t digest[32] = {0};
         transaction_msgToSign(&transaction, i, digest);
         // Only sign inputs owned by Skywallet device
