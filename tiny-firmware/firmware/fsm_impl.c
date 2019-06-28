@@ -369,10 +369,10 @@ ErrCode_t msgGetFeaturesImpl(Features* resp)
 
 ErrCode_t msgTransactionSignImpl(TransactionSign* msg, ErrCode_t (*funcConfirmTxn)(char*, char*, TransactionSign*, uint32_t), ResponseTransactionSign* resp)
 {
-    if (msg->nbIn > sizeof(msg->transactionIn)) {
+    if (msg->nbIn > sizeof(msg->transactionIn)/sizeof(*msg->transactionIn)) {
         return ErrInvalidArg;
     }
-    if (msg->nbOut > sizeof(msg->transactionOut)) {
+    if (msg->nbOut > sizeof(msg->transactionOut)/sizeof(*msg->transactionOut)) {
         return ErrInvalidArg;
     }
 #if EMULATOR
