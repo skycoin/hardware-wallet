@@ -1335,5 +1335,6 @@ TCase* add_fsm_tests(TCase* tc)
     tcase_add_test(tc, test_transactionSign8);
     tcase_add_test(tc, test_transactionSign9);
     tcase_add_test(tc, test_transactionSign10);
+    tcase_add_test(tc, test_transactionSignCheckEdges);
     return tc;
 }
