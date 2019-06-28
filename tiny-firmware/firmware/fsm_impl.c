@@ -165,9 +165,6 @@ ErrCode_t msgSignTransactionMessageImpl(uint8_t* message_digest, uint32_t index,
 
 ErrCode_t fsm_getKeyPairAtIndex(uint32_t nbAddress, uint8_t* pubkey, uint8_t* seckey, ResponseSkycoinAddress* respSkycoinAddress, uint32_t start_index)
 {
-    if (respSkycoinAddress == NULL) {
-        return ErrInvalidArg;
-    }
     const char* mnemo = storage_getFullSeed();
     uint8_t seed[33] = {0};
     uint8_t nextSeed[SHA256_DIGEST_LENGTH] = {0};
@@ -181,8 +178,7 @@ ErrCode_t fsm_getKeyPairAtIndex(uint32_t nbAddress, uint8_t* pubkey, uint8_t* se
     if (0 != deterministic_key_pair_iterator((const uint8_t*)mnemo, strlen(mnemo), nextSeed, seckey, pubkey)) {
         return ErrFailed;
     }
-    respSkycoinAddress->addresses_count = 0;
-    if (start_index == 0) {
+    if (respSkycoinAddress != NULL && start_index == 0) {
         skycoin_address_from_pubkey(pubkey, respSkycoinAddress->addresses[0], &size_address);
         respSkycoinAddress->addresses_count++;
     }
