@@ -164,6 +164,20 @@ START_TEST(test_msgSkycoinSignMessageReturnIsInHex)
 }
 END_TEST
 
+START_TEST(test_msgSkycoinSignMessageCheckMaxAddresses)
+{
+    forceGenerateMnemonic();
+    char raw_msg[] = {"32018964c1ac8c2a536b59dd830a80b9d4ce3bb1ad6a182c13b36240ebf4ec11"};
+    SkycoinSignMessage msg = SkycoinSignMessage_init_zero;
+    msg.address_n = 101;
+    strncpy(msg.message, raw_msg, sizeof(msg.message));
+    RESP_INIT(ResponseSkycoinSignMessage);
+    ck_assert_int_eq(ErrInvalidValue, msgSkycoinSignMessageImpl(&msg, resp));
+    msg.address_n = 100;
+    ck_assert_int_eq(ErrOk, msgSkycoinSignMessageImpl(&msg, resp));
+}
+END_TEST
+
 START_TEST(test_msgSkycoinCheckMessageSignatureOk)
 {
     // NOTE(): Given
@@ -1246,11 +1260,45 @@ START_TEST(test_transactionSign10)
 }
 END_TEST
 
+START_TEST(test_transactionSignCheckEdges)
+{
+    SkycoinTransactionInput transactionInputs[1] = {
+        {.hashIn = "4c12fdd28bd580989892b0518f51de3add96b5efb0f54f0cd6115054c682e1f1",
+            .has_index = true,
+            .index = 0}};
+
+    SkycoinTransactionOutput transactionOutputs[1] = {
+        {.address = "2iNNt6fm9LszSWe51693BeyNUKX34pPaLx8",
+            .coin = 1000000,
+            .hour = 0}};
+
+    SetMnemonic nemonic = SetMnemonic_init_zero;
+    char raw_mnemonic[] = {
+        "cloud flower upset remain green metal below cup stem infant art thank"};
+    memcpy(nemonic.mnemonic, raw_mnemonic, sizeof(raw_mnemonic));
+    ck_assert_int_eq(msgSetMnemonicImpl(&nemonic), ErrOk);
+
+    TransactionSign msg = TransactionSign_init_zero;
+    msg.transactionIn[0] = transactionInputs[0];
+    msg.transactionOut[0] = transactionOutputs[0];
+    msg.nbIn = 8;
+    msg.nbOut = 8;
+    ResponseTransactionSign resp = ResponseTransactionSign_init_default;
+    ck_assert_int_eq(ErrOk, msgTransactionSignImpl(&msg, funcConfirmTxn, &resp));
+    msg.nbIn = 9;
+    ck_assert_int_eq(ErrInvalidArg, msgTransactionSignImpl(&msg, funcConfirmTxn, &resp));
+    msg.nbIn = 8;
+    msg.nbOut = 9;
+    ck_assert_int_eq(ErrInvalidArg, msgTransactionSignImpl(&msg, funcConfirmTxn, &resp));
+}
+END_TEST
+
 // define test cases
 TCase* add_fsm_tests(TCase* tc)
 {
     tcase_add_checked_fixture(tc, setup_tc_fsm, teardown_tc_fsm);
     tcase_add_test(tc, test_msgSkycoinSignMessageReturnIsInHex);
+    tcase_add_test(tc, test_msgSkycoinSignMessageCheckMaxAddresses);
     tcase_add_test(tc, test_msgGenerateMnemonicImplOk);
     tcase_add_test(tc, test_msgGenerateMnemonicImplShouldFailIfItWasDone);
     tcase_add_test(tc, test_msgSkycoinCheckMessageSignatureOk);
