@@ -21,7 +21,6 @@
 
 // Accumulated entropy pool
 static uint8_t entropy_mixer_prev_val[SHA256_DIGEST_LENGTH] = {0};
-static size_t entropy_mixer_index = 0;
 
 void entropy_mix_256(const uint8_t* in, size_t in_len, uint8_t* out_mixed_entropy)
 {
