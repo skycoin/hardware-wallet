@@ -21,6 +21,7 @@
 
 // Accumulated entropy pool
 static uint8_t entropy_mixer_prev_val[SHA256_DIGEST_LENGTH] = {0};
+static size_t entropy_mixer_index = 0;
 
 void entropy_mix_256(const uint8_t* in, size_t in_len, uint8_t* out_mixed_entropy)
 {
@@ -52,12 +53,15 @@ void entropy_mix_n(const uint8_t* in, size_t in_len, uint8_t* out_mixed_entropy)
          i -= SHA256_DIGEST_LENGTH, iptr += SHA256_DIGEST_LENGTH, optr += SHA256_DIGEST_LENGTH) {
         entropy_mix_256(iptr, SHA256_DIGEST_LENGTH, optr);
     }
+    uint8_t padding[SHA256_DIGEST_LENGTH] = {0};
+    // Buffer padding
     if (i > 0) {
-        uint8_t tmp[SHA256_DIGEST_LENGTH] = {0};
-        entropy_mix_256(iptr, i, tmp);
-        memcpy(optr, &tmp, i);
-        memset(&tmp, 0, sizeof(tmp));
+        memcpy(padding, iptr, i);
     }
+    uint8_t tmp[SHA256_DIGEST_LENGTH] = {0};
+    entropy_mix_256(iptr, SHA256_DIGEST_LENGTH, tmp);
+    memcpy(optr, &tmp, i);
+    memset(&tmp, 0, sizeof(tmp));
     iptr = optr = NULL;
 }
 
