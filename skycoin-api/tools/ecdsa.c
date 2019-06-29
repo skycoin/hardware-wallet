@@ -32,7 +32,7 @@
 #include "bignum.h"
 #include "ecdsa.h"
 #include "hmac.h"
-#include "entropypool.h"
+#include "rand.h"
 #include "ripemd160.h"
 #include "secp256k1.h"
 #include "sha2.h"
@@ -198,11 +198,10 @@ static void generate_k_random(bignum256* k, const bignum256* prime)
 {
     do {
         int i;
-        random_salted_buffer((uint8_t *) &k->val, sizeof(k->val));
         for (i = 0; i < 8; i++) {
-            k->val[i] &= 0x3FFFFFFF;
+            k->val[i] = random32() & 0x3FFFFFFF;
         }
-        k->val[8] &= 0xFFFF;
+        k->val[8] = random32() & 0xFFFF;
         // check that k is in range and not zero.
     } while (bn_is_zero(k) || !bn_is_less(k, prime));
 }

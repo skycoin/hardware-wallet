@@ -27,6 +27,7 @@
 #include <string.h>
 
 #include "rand.h"
+#include "entropypool.h"
 
 #ifndef RAND_PLATFORM_INDEPENDENT
 
@@ -37,7 +38,8 @@
 #include <assert.h>
 #endif
 
-uint32_t random32(void)
+// This function is not compiled in firmware
+uint32_t __attribute__((weak)) _random32(void)
 {
 #ifdef _WIN32
     static int initialized = 0;
@@ -64,26 +66,35 @@ uint32_t random32(void)
 // The following code is platform independent
 //
 
-uint32_t random_uniform(uint32_t n)
-{
-    uint32_t x, max = 0xFFFFFFFF - (0xFFFFFFFF % n);
-    while ((x = random32()) >= max)
-        ;
-    return x / (max / n);
-}
-
-void __attribute__((weak)) random_buffer(uint8_t* buf, size_t len)
+void __attribute__((weak)) _random_buffer(uint8_t* buf, size_t len)
 {
     uint32_t *ptr = (uint32_t *) buf;
     size_t remaining = len;
 
     for (; remaining >= 4; ++ptr, remaining -= 4) {
-        *ptr = random32();
+        *ptr = _random32();
     }
     if (remaining > 0) {
-        uint32_t r = random32();
+        uint32_t r = _random32();
         memcpy((void *) ptr, (void *) &r, remaining);
     }
+}
+
+uint32_t random32(void)
+{
+    return random32_salted();
+}
+
+void random_buffer(uint8_t* buf, size_t len)
+{
+    return random_salted_buffer(buf, len);
+}
+
+uint32_t random_uniform(uint32_t n)
+{
+    uint32_t x, max = 0xFFFFFFFF - (0xFFFFFFFF % n);
+    while ((x = random32()) >= max) {}
+    return x / (max / n);
 }
 
 void random_permute(char* str, size_t len)
@@ -95,3 +106,4 @@ void random_permute(char* str, size_t len)
         str[i] = t;
     }
 }
+

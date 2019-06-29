@@ -61,9 +61,9 @@ void entropy_mix_n(const uint8_t* in, size_t in_len, uint8_t* out_mixed_entropy)
     iptr = optr = NULL;
 }
 
-void __attribute__((weak)) random_salted_buffer(uint8_t* buf, size_t len)
+void random_salted_buffer(uint8_t* buf, size_t len)
 {
-    random_buffer(buf, len);
+    _random_buffer(buf, len);
 
     uint8_t tmp[SHA256_DIGEST_LENGTH] = {0};
     uint8_t *bptr, *tptr;
@@ -86,7 +86,7 @@ void __attribute__((weak)) random_salted_buffer(uint8_t* buf, size_t len)
     bptr = tptr = NULL;
 }
 
-uint32_t __attribute__((weak)) random32_salted(void)
+uint32_t random32_salted(void)
 {
     uint32_t retval;
     random_salted_buffer((uint8_t *) &retval, sizeof(uint32_t));
