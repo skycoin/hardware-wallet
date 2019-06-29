@@ -551,7 +551,7 @@ void fsm_msgGetMixedEntropy(GetMixedEntropy* _msg)
     RESP_INIT(Entropy);
     GetRawEntropy msg;
     msg.size = _msg->size;
-    ErrCode_t ret = msgGetEntropyImpl(&msg, resp, &random_salted_buffer);
+    ErrCode_t ret = msgGetEntropyImpl(&msg, resp, &random_buffer);
     if (ret == ErrOk) {
         msg_write(MessageType_MessageType_Entropy, resp);
     } else {
