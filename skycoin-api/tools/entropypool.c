@@ -59,7 +59,7 @@ void entropy_mix_n(const uint8_t* in, size_t in_len, uint8_t* out_mixed_entropy)
         memcpy(padding, iptr, i);
     }
     uint8_t tmp[SHA256_DIGEST_LENGTH] = {0};
-    entropy_mix_256(iptr, SHA256_DIGEST_LENGTH, tmp);
+    entropy_mix_256(padding, SHA256_DIGEST_LENGTH, tmp);
     memcpy(optr, &tmp, i);
     memset(&tmp, 0, sizeof(tmp));
     iptr = optr = NULL;
