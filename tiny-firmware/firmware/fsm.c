@@ -531,7 +531,7 @@ void fsm_msgGetRawEntropy(GetRawEntropy* msg)
 #endif // DISABLE_GETENTROPY_CONFIRM
     MessageType msgtype = MessageType_MessageType_GetRawEntropy;
     RESP_INIT(Entropy);
-    ErrCode_t ret = msgGetEntropyImpl(msg, resp, &random_buffer);
+    ErrCode_t ret = msgGetEntropyImpl(msg, resp, &_random_buffer);
     if (ret == ErrOk) {
         msg_write(MessageType_MessageType_Entropy, resp);
     } else {
