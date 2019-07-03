@@ -153,7 +153,7 @@ START_TEST(test_msgSkycoinSignMessageReturnIsInHex)
     SkycoinSignMessage msg = SkycoinSignMessage_init_zero;
     strncpy(msg.message, raw_msg, sizeof(msg.message));
     RESP_INIT(ResponseSkycoinSignMessage);
-    msgSkycoinSignMessageImpl(&msg, resp);
+    ck_assert_int_eq(ErrOk, msgSkycoinSignMessageImpl(&msg, resp));
     // NOTE(): ecdsa signature have 65 bytes,
     // 2 for each one in hex = 130
     // TODO(): this kind of "dependency" is not maintainable.
@@ -199,7 +199,7 @@ START_TEST(test_msgSkycoinCheckMessageSignatureOk)
     // NOTE(): When
     uint8_t msg_resp_sign[MSG_OUT_SIZE] __attribute__((aligned)) = {0};
     ResponseSkycoinSignMessage* respSign = (ResponseSkycoinSignMessage*)(void*)msg_resp_sign;
-    msgSkycoinSignMessageImpl(&msgSign, respSign);
+    ck_assert_int_eq(ErrOk, msgSkycoinSignMessageImpl(&msgSign, respSign));
     SkycoinCheckMessageSignature checkMsg = SkycoinCheckMessageSignature_init_zero;
     memcpy(checkMsg.message, msgSign.message, sizeof(checkMsg.message));
     memcpy(checkMsg.address, respAddress->addresses[0], sizeof(checkMsg.address));
@@ -287,7 +287,7 @@ START_TEST(test_msgSkycoinCheckMessageSignatureFailedAsExpectedForInvalidSignedM
     // NOTE(): When
     uint8_t msg_resp_sign[MSG_OUT_SIZE] __attribute__((aligned)) = {0};
     ResponseSkycoinSignMessage* respSign = (ResponseSkycoinSignMessage*)(void*)msg_resp_sign;
-    msgSkycoinSignMessageImpl(&msgSign, respSign);
+    ck_assert_int_eq(ErrOk, msgSkycoinSignMessageImpl(&msgSign, respSign));
     // NOTE(denisaostaq@gmail.com): An attacker change our msg signature.
     random_shuffle(respSign->signed_message, sizeof(respSign->signed_message));
     SkycoinCheckMessageSignature checkMsg = SkycoinCheckMessageSignature_init_zero;
@@ -333,7 +333,7 @@ START_TEST(test_msgSkycoinCheckMessageSignatureFailedAsExpectedForInvalidMessage
     // NOTE(): When
     uint8_t msg_resp_sign[MSG_OUT_SIZE] __attribute__((aligned)) = {0};
     ResponseSkycoinSignMessage* respSign = (ResponseSkycoinSignMessage*)(void*)msg_resp_sign;
-    msgSkycoinSignMessageImpl(&msgSign, respSign);
+    ck_assert_int_eq(ErrOk, msgSkycoinSignMessageImpl(&msgSign, respSign));
     // NOTE(denisaostaq@gmail.com): An attacker change our msg(hash).
     random_shuffle(msgSign.message, sizeof(msgSign.message));
     SkycoinCheckMessageSignature checkMsg = SkycoinCheckMessageSignature_init_zero;
