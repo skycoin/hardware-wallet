@@ -2,27 +2,27 @@ NAME  = bootloader
 BOOTLOADER = 1
 
 #libskywallet.a
-OBJS += ../startup.o
-OBJS += ../buttons.o
-OBJS += ../layout.o
-OBJS += ../oled.o
-OBJS += ../rng.o
-OBJS += ../serialno.o
-OBJS += ../setup.o
-OBJS += ../supervise.o
-OBJS += ../timer.o
-OBJS += ../util.o
-OBJS += ../memory.o
+OBJS += startup.o
+OBJS += buttons.o
+OBJS += layout.o
+OBJS += oled.o
+OBJS += rng.o
+OBJS += serialno.o
+OBJS += setup.o
+OBJS += supervise.o
+OBJS += timer.o
+OBJS += util.o
+OBJS += memory.o
 OBJS += ../gen/bitmaps.o
 OBJS += ../gen/fonts.o
 #end libskywallet.a
 
 #skycoin-crypto
-OBJS += $(TOP_DIR)vendor/skycoin-crypto/skycoin_signature.o
-OBJS += $(TOP_DIR)vendor/skycoin-crypto/skycoin_crypto.o
-OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/curves.o
-OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/hmac.o
-OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/secp256k1.o
+OBJS += $(TOP_DIR)vendor/skycoin-crypto/skycoin_signature.small.o
+OBJS += $(TOP_DIR)vendor/skycoin-crypto/skycoin_crypto.small.o
+OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/curves.small.o
+OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/hmac.small.o
+OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/secp256k1.small.o
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/rand.o
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/entropypool.o
 # OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/bip32.o
@@ -65,3 +65,12 @@ include ../Makefile.include
 
 align: $(NAME).bin
 	./firmware_align.py $(NAME).bin
+
+%.o: ../%.c
+	$(CC) $(CFLAGS) -MMD -MP -o $@ -c $<
+
+%.o: ../%.s
+	$(AS) $(CPUFLAGS) -o $@ $<
+
+clean::
+	rm -rf *.o
