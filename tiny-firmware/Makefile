@@ -165,3 +165,7 @@ clean::
 	rm -f *.log
 	rm -f *.srec
 	cd protob && make clean-c
+
+coverage: all
+	gcc $(CFLAGS) *.o -Ivendor/skycoin-crypto/tools -Igen -Ifirmware -fprofile-arcs -ftest-coverage *.c
+	#gcov -n -b *.c

@@ -31,15 +31,6 @@ CFLAGS   += $(OPTFLAGS) \
             -Wformat-security \
             -Werror
 
-ifneq ($(CHECK_PATH),)
-ifeq ($(UNAME_S), Linux)
-	TESTINC+=-isystem $(CHECK_PATH)/src
-	TESTINC+=-isystem $(CHECK_PATH)
-endif
-ifeq ($(UNAME_S), Darwin)
-	TESTINC+=-isystem $(CHECK_PATH)/include
-endif
-endif
 INC += -I$(TOOLS_DIR)
 CFLAGS += -I$(MKFILE_DIR) $(INC)
 
@@ -54,17 +45,15 @@ OBJS   = $(SRCS:.c=.o)
 	$(CC) $(CFLAGS) -o $@ -c $<
 
 LIBS_DARWIN +=
-TESTLIBS_DARWIN += -L$(CHECK_PATH)/lib -lcheck
 LIBS_LINUX += -L/usr/local/lib/ -lm -lrt
-TESTLIBS_LINUX += -L$(CHECK_PATH)/src -lcheck
-
+TESTLIBS = `pkg-config --cflags --libs check`
+CC_VERSION = $(shell $(CC) -dumpversion)
+STDC_FLAG = $(python -c "if tuple(map(int, '$(CC_VERSION)'.split('.'))) < (6,): print('-std=C99'")
 ifeq ($(UNAME_S), Linux)
 	LIBS=$(LIBS_LINUX)
-	TESTLIBS=$(TESTLIBS_LINUX)
 endif
 ifeq ($(UNAME_S), Darwin)
 	LIBS=$(LIBS_DARWIN)
-	TESTLIBS=$(TESTLIBS_DARWIN)
 endif
 
 
@@ -93,6 +82,9 @@ clean: ## Delete all temporary files
 	rm -f $(MKFILE_DIR)/tools/*.o
 	rm -f $(MKFILE_DIR)/*.a
 
+coverage:
+	$(CC) -L$(OBJS) -I. -I../tiny-firmware/firmware  -Itools $(TESTLIBS) -fprofile-arcs -ftest-coverage test_skycoin_crypto.c
+	gcov -n -b $(SRCS) 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 

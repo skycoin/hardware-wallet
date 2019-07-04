@@ -11,20 +11,15 @@ matrix:
     - os: osx
 
 before_script:
+
+  - eval "CC=gcc-6 && CXX=g++-6"
   - sh "./tiny-firmware/protob/ci-scripts/install-${TRAVIS_OS_NAME}.sh" ;
   # Define env vars for Linux builds
   - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then
     ls -l /usr/local/bin/protoc ;
-    export CHECK_PATH="$(pwd)/check-0.12.0" ;
-    export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${CHECK_PATH}/src" ;
     export PATH="/usr/local/bin:$(pwd)/protoc/bin:$PATH" ;
     echo "PATH=$PATH";
     echo "PIP=$PIP";
-    fi
-  # Define env vars for osx builds
-  - if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
-    export CHECK_PATH="$(brew --prefix check)" ;
-    export DYLD_LIBRARY_PATH="${DYLD_LIBRARY_PATH}:${CHECK_PATH}/lib" ;
     fi
   # Install OS-specific test and build dependencies
   - eval "./ci-scripts/install-${TRAVIS_OS_NAME}.sh"
@@ -43,9 +38,12 @@ script:
   - make bootloader-clean
   - make full-firmware
   - make clean
+  # - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then make check-coverage-cccc ; fi
+  # - make check-coverage
 
 notifications:
   # https://github.com/kvld/travisci-telegram TravisCI Telegram Bot integration
+  email: false
   webhooks: https://fathomless-fjord-24024.herokuapp.com/notify
 
 before_deploy:

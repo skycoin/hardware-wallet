@@ -71,3 +71,14 @@ test_skycoin_crypto
 # IDE
 .vscode
 .idea
+
+# Not include folder cccc
+.cccc
+
+# File check-coverage
+skycoin-api/*.gcno
+skycoin-api/*.gcda
+tiny-firmware/*.gcno
+tiny-firmware/*.gcda
+
+check-*
