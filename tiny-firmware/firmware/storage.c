@@ -518,7 +518,7 @@ const char* storage_getFullSeed(void)
     if (!storage_hasPassphraseProtection()) {
         return storage_getMnemonic();
     }
-    if (sessionPassphraseCached || protectPassphrase()) {
+    if ((sessionPassphraseCached || protectPassphrase()) && strlen(sessionPassphrase) > 0) {
         sprintf(sessionSeed, "%s %s", storage_getMnemonic(), sessionPassphrase);
         return sessionSeed;
     }

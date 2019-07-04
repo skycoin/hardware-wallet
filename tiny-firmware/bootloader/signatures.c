@@ -42,11 +42,23 @@ static const uint8_t* const pubkey[PUBKEYS] = {
 #if SIGNATURE_DEBUG
 static void displaySignatureDebug(const uint8_t* hash, const uint8_t* signature, const uint8_t* pubk, const uint8_t* stored_pubkey)
 {
+    uint8_t buf[32];
+    memset(buf, 0, 32);
+
     layout32bits(hash, "Hash");
+
     layout32bits(signature, "Signature[0-31]");
-    layout32bits(signature + 32, "Signature[32-64]");
-    layout32bits(pubk, "Computed Pub");
-    layout32bits(stored_pubkey, "Pubkey");
+    layout32bits(signature + 32, "Signature[32-63]");
+    buf[0] = signature[64];
+    layout32bits(buf, "Signature[64]");
+
+    layout32bits(pubk, "Computed Pub[0-31]");
+    buf[0] = pubk[32];
+    layout32bits(buf, "Computed Pub[32]");
+
+    layout32bits(stored_pubkey, "Pubkey[0-31]");
+    buf[0] = stored_pubkey[32];
+    layout32bits(buf, "Pubkey[32]");
 }
 #endif
 

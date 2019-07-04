@@ -680,6 +680,70 @@ START_TEST(test_msgSkycoinAddressesStartIndex)
 }
 END_TEST
 
+void setPassphrase(char *passphrase) {
+    ApplySettings msg = ApplySettings_init_zero;
+    msg.has_use_passphrase = true;
+    msg.use_passphrase = true;
+    ck_assert_int_eq(msgApplySettingsImpl(&msg), ErrOk);
+    session_cachePassphrase(passphrase);
+}
+
+START_TEST(test_msgSkycoinAddressesAllEmptyPassphrase)
+{
+    storage_wipe();
+    SetMnemonic msgSeed = SetMnemonic_init_zero;
+    SkycoinAddress msgAddr = SkycoinAddress_init_zero;
+    RESP_INIT(ResponseSkycoinAddress);
+
+    strncpy(msgSeed.mnemonic, TEST_MANY_ADDRESS_SEED, sizeof(msgSeed.mnemonic));
+    ck_assert_int_eq(msgSetMnemonicImpl(&msgSeed), ErrOk);
+
+    setPassphrase("");
+
+    msgAddr.address_n = 99;
+    msgAddr.has_start_index = false;
+    msgAddr.has_confirm_address = false;
+
+    ck_assert_int_eq(msgSkycoinAddressImpl(&msgAddr, resp), ErrOk);
+    ck_assert_int_eq(resp->addresses_count, msgAddr.address_n);
+    int i;
+    char test_msg[256];
+    for (i = 0; i < resp->addresses_count; ++i) {
+        sprintf(test_msg, "Check %d-th address , expected %s got %s", i, TEST_MANY_ADDRESSES[i], resp->addresses[i]);
+        ck_assert_msg(strcmp(resp->addresses[i], TEST_MANY_ADDRESSES[i]) == 0, test_msg);
+    }
+}
+END_TEST
+
+START_TEST(test_msgSkycoinAddressesStartIndexEmptyPassphrase)
+{
+    storage_wipe();
+    SetMnemonic msgSeed = SetMnemonic_init_zero;
+    SkycoinAddress msgAddr = SkycoinAddress_init_zero;
+    RESP_INIT(ResponseSkycoinAddress);
+
+    strncpy(msgSeed.mnemonic, TEST_MANY_ADDRESS_SEED, sizeof(msgSeed.mnemonic));
+    ck_assert_int_eq(msgSetMnemonicImpl(&msgSeed), ErrOk);
+
+    setPassphrase("");
+
+    msgAddr.has_start_index = true;
+    msgAddr.start_index = random32() % 100;
+    msgAddr.address_n = random32() % (100 - msgAddr.start_index) + 1;
+    ck_assert_uint_ge(msgAddr.address_n, 1);
+    msgAddr.has_confirm_address = false;
+
+    ck_assert_int_eq(msgSkycoinAddressImpl(&msgAddr, resp), ErrOk);
+    ck_assert_int_eq(resp->addresses_count, msgAddr.address_n);
+    int i, index;
+    char test_msg[256];
+    for (i = 0, index = msgAddr.start_index; i < resp->addresses_count; ++i, ++index) {
+        sprintf(test_msg, "Check %d-th address , expected %s got %s", index, TEST_MANY_ADDRESSES[index], resp->addresses[i]);
+        ck_assert_msg(strcmp(resp->addresses[i], TEST_MANY_ADDRESSES[index]) == 0, test_msg);
+    }
+}
+END_TEST
+
 START_TEST(test_msgSkycoinAddressesTooMany)
 {
     SetMnemonic msgSeed = SetMnemonic_init_zero;
@@ -1311,6 +1375,8 @@ TCase* add_fsm_tests(TCase* tc)
     tcase_add_test(tc, test_msgChangePinRemoveSuccess);
     tcase_add_test(tc, test_msgSkycoinAddressesAll);
     tcase_add_test(tc, test_msgSkycoinAddressesStartIndex);
+    tcase_add_test(tc, test_msgSkycoinAddressesAllEmptyPassphrase);
+    tcase_add_test(tc, test_msgSkycoinAddressesStartIndexEmptyPassphrase);
     tcase_add_test(tc, test_msgSkycoinAddressesTooMany);
     tcase_add_test(tc, test_msgSkycoinAddressesFailWithoutMnemonic);
     tcase_add_test(tc, test_msgTransactionSign1);
