@@ -1367,8 +1367,6 @@ TCase* add_fsm_tests(TCase* tc)
     tcase_add_test(tc, test_msgApplySettingsNoSettingsFailure);
     tcase_add_test(tc, test_msgFeaturesLabelDefaultsToDeviceId);
     tcase_add_test(tc, test_msgEntropyAckChgMixerNotInternal);
-    tcase_add_test(tc, test_msgEntropyAckImplFailAsExpectedForSyncProblemInProtocol);
-    tcase_add_test(tc, test_msgGenerateMnemonicEntropyAckSequenceShouldBeOk);
     tcase_add_test(tc, test_msgChangePinSuccess);
     tcase_add_test(tc, test_msgChangePinSecondRejected);
     tcase_add_test(tc, test_msgChangePinEditSuccess);
