@@ -583,12 +583,15 @@ ErrCode_t msgRecoveryDeviceImpl(RecoveryDevice* msg, ErrCode_t (*funcConfirmReco
             return err;
         }
     }
+    char current_label[DEVICE_LABEL_SIZE];
+    strncpy(current_label, storage_getLabel(), sizeof(current_label));
+
     recovery_init(
         msg->has_word_count ? msg->word_count : 12,
         msg->has_passphrase_protection && msg->passphrase_protection,
         msg->has_pin_protection && msg->pin_protection,
         msg->has_language ? msg->language : 0,
-        msg->has_label ? msg->label : 0,
+        (msg->has_label && msg->label && strlen(msg->label) > 0)? msg->label: current_label,
         dry_run);
     return ErrOk;
 }
