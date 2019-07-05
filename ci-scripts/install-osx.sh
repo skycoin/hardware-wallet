@@ -14,9 +14,6 @@ brew install md5sha1sum curl unzip python gcc-arm-none-eabi
 # Install SDL
 brew install  sdl2_image sdl2 mesa mesalib-glw
 
-# Install lcov
-brew install lcov
-
 echo 'Available versions (gcc)'
 brew list --versions gcc
 echo 'Creating gcc@64 formula'
