@@ -172,7 +172,5 @@ clean::
 	rm -f *.srec
 	cd protob && make clean-c
 
-coverage: all
-
 coverage: test
 	gcov -n -b $(SRCS)

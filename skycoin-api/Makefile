@@ -32,6 +32,15 @@ CFLAGS   += $(OPTFLAGS) \
             -Wformat-security \
             -Werror
 
+ifneq ($(CHECK_PATH),)
+ifeq ($(UNAME_S), Linux)
+	TESTINC+=-isystem $(CHECK_PATH)/src
+	TESTINC+=-isystem $(CHECK_PATH)
+endif
+ifeq ($(UNAME_S), Darwin)
+	TESTINC+=-isystem $(CHECK_PATH)/include
+endif
+endif
 INC += -I$(TOOLS_DIR)
 CFLAGS += -I$(MKFILE_DIR) $(INC)
 
@@ -46,12 +55,13 @@ OBJS   = $(SRCS:.c=.o)
 	$(CC) $(CFLAGS) -o $@ -c $<
 
 LIBS_DARWIN +=
+TESTLIBS_DARWIN += -L$(CHECK_PATH)/lib -lcheck
 LIBS_LINUX += -L/usr/local/lib/ -lm -lrt
-TESTLIBS = `pkg-config --cflags --libs check`
-CC_VERSION = $(shell $(CC) -dumpversion)
-STDC_FLAG = $(python -c "if tuple(map(int, '$(CC_VERSION)'.split('.'))) < (6,): print('-std=C99'")
+TESTLIBS_LINUX += -L$(CHECK_PATH)/src -lcheck
+
 ifeq ($(UNAME_S), Linux)
 	LIBS=$(LIBS_LINUX)
+	TESTLIBS=$(TESTLIBS_LINUX)
 endif
 ifeq ($(COVERAGE), 1)
 	CFLAGS += -fprofile-arcs -ftest-coverage
@@ -59,6 +69,7 @@ ifeq ($(COVERAGE), 1)
 endif
 ifeq ($(UNAME_S), Darwin)
 	LIBS=$(LIBS_DARWIN)
+	TESTLIBS=$(TESTLIBS_DARWIN)
 endif
 
 
