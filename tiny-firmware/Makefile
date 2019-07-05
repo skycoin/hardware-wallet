@@ -114,6 +114,12 @@ CFLAGS += -Wno-int-to-pointer-cast
 
 CFLAGS   += -include $(TOP_DIR)emulator/emulator.h
 CFLAGS   += -include stdio.h
+ifeq ($(COVERAGE), 1)
+	CFLAGS += -fprofile-arcs -ftest-coverage
+	LDLIBS+=-lgcov --coverage
+	SRCS  = $(OBJS:.o=.c)
+	SRCS += $(TEST_OBJS:.o=.c)
+endif
 
 ifeq ($(HEADLESS),1)
 CFLAGS   += -DHEADLESS=1
@@ -167,5 +173,6 @@ clean::
 	cd protob && make clean-c
 
 coverage: all
-	gcc $(CFLAGS) *.o -Ivendor/skycoin-crypto/tools -Igen -Ifirmware -fprofile-arcs -ftest-coverage *.c
-	#gcov -n -b *.c
+
+coverage: test
+	gcov -n -b $(SRCS)

@@ -5,6 +5,7 @@ UNAME_S     ?= $(shell uname -s)
 MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 MKFILE_DIR  := $(dir $(MKFILE_PATH))
 TOOLS_DIR   := $(MKFILE_DIR)/tools
+COVERAGE ?= 0
 
 CC       ?= gcc
 
@@ -52,6 +53,10 @@ STDC_FLAG = $(python -c "if tuple(map(int, '$(CC_VERSION)'.split('.'))) < (6,): 
 ifeq ($(UNAME_S), Linux)
 	LIBS=$(LIBS_LINUX)
 endif
+ifeq ($(COVERAGE), 1)
+	CFLAGS += -fprofile-arcs -ftest-coverage
+	TESTLIBS+=-lgcov --coverage
+endif
 ifeq ($(UNAME_S), Darwin)
 	LIBS=$(LIBS_DARWIN)
 endif
@@ -82,9 +87,9 @@ clean: ## Delete all temporary files
 	rm -f $(MKFILE_DIR)/tools/*.o
 	rm -f $(MKFILE_DIR)/*.a
 
-coverage:
-	$(CC) -L$(OBJS) -I. -I../tiny-firmware/firmware  -Itools $(TESTLIBS) -fprofile-arcs -ftest-coverage test_skycoin_crypto.c
-	gcov -n -b $(SRCS) 
+coverage: test_skycoin_crypto
+	gcov -n -b $(SRCS) test_skycoin_crypto.c
+
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
