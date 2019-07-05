@@ -230,7 +230,7 @@ check-coverage: clean ## Generate test coverage reports HTML
 	COVERAGE=1 EMULATOR=1 VERSION_MAJOR=$(VERSION_FIRMWARE_MAJOR) VERSION_MINOR=$(VERSION_FIRMWARE_MINOR) VERSION_PATCH=$(VERSION_FIRMWARE_PATCH) make -C $(MKFILE_DIR)/tiny-firmware/ coverage
 	lcov -c --directory . --no-external --output-file coverage/coverage.info
 	lcov --remove ./coverage/coverage.info -o ./coverage/coverage_filtered.info '*tiny-firmware/protob/nanopb/vendor/nanopb*'
-	genhtml ./coverage/coverage_filtered.info --output-directory coverage/
+	genhtml --title "Code coverage report for hardware wallet." ./coverage/coverage_filtered.info --output-directory coverage/
 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
