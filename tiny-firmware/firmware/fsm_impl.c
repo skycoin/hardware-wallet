@@ -591,7 +591,7 @@ ErrCode_t msgRecoveryDeviceImpl(RecoveryDevice* msg, ErrCode_t (*funcConfirmReco
         msg->has_passphrase_protection && msg->passphrase_protection,
         msg->has_pin_protection && msg->pin_protection,
         msg->has_language ? msg->language : 0,
-        (msg->has_label && msg->label && strlen(msg->label) > 0)? msg->label: current_label,
+        (msg->has_label && strlen(msg->label) > 0)? msg->label: current_label,
         dry_run);
     return ErrOk;
 }
