@@ -76,9 +76,8 @@ test_skycoin_crypto
 .cccc
 
 # File check-coverage
-skycoin-api/*.gcno
-skycoin-api/*.gcda
-tiny-firmware/*.gcno
-tiny-firmware/*.gcda
+**/*.gcda
+**/*.gcno
+coverage/
 
 check-*
