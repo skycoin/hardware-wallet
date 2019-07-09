@@ -830,6 +830,9 @@ START_TEST(test_msgTransactionSign1)
     Success success_resp = Success_init_default;
     ErrCode_t check_sign = msgSkycoinCheckMessageSignatureImpl(
         &msg_s, &success_resp, &failure_resp);
+    if (failure_resp.has_message) {
+        printf("\n\nfailure_resp %s\n\n", failure_resp.message);
+    }
     ck_assert_int_eq(check_sign, ErrOk);
 }
 END_TEST
