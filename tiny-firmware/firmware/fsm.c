@@ -671,3 +671,21 @@ void fsm_msgEntropyAck(EntropyAck* msg)
         break;
     }
 }
+
+void fsm_msgSignTx(SignTx* msg)
+{
+    (void)msg;
+    RESP_INIT(TxRequest);
+    resp->request_type = TxRequest_RequestType_TXINPUT;
+    resp->has_details = true;
+    resp->details.has_request_index = true;
+    resp->details.request_index = 1;
+    msg_write(MessageType_MessageType_TxRequest, resp);
+    return;
+}
+
+void fsm_msgTxAck(TxAck* msg)
+{
+    (void)msg;
+    return;
+}
