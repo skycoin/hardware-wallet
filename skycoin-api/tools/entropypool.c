@@ -42,28 +42,6 @@ void entropy_mix_256(const uint8_t* in, size_t in_len, uint8_t* out_mixed_entrop
     memset(val2, 0, sizeof(val1));
 }
 
-void entropy_mix_n(const uint8_t* in, size_t in_len, uint8_t* out_mixed_entropy)
-{
-    uint8_t* iptr = (uint8_t*)in;
-    uint8_t* optr;
-    size_t i;
-    for (i = in_len, optr = out_mixed_entropy;
-         i >= SHA256_DIGEST_LENGTH;
-         i -= SHA256_DIGEST_LENGTH, iptr += SHA256_DIGEST_LENGTH, optr += SHA256_DIGEST_LENGTH) {
-        entropy_mix_256(iptr, SHA256_DIGEST_LENGTH, optr);
-    }
-    uint8_t padding[SHA256_DIGEST_LENGTH] = {0};
-    // Buffer padding
-    if (i > 0) {
-        memcpy(padding, iptr, i);
-    }
-    uint8_t tmp[SHA256_DIGEST_LENGTH] = {0};
-    entropy_mix_256(padding, SHA256_DIGEST_LENGTH, tmp);
-    memcpy(optr, &tmp, i);
-    memset(&tmp, 0, sizeof(tmp));
-    iptr = optr = NULL;
-}
-
 void random_salted_buffer(uint8_t* buf, size_t len)
 {
     _random_buffer(buf, len);
