@@ -132,12 +132,10 @@ void entropy_salt_mix_256(uint8_t* in, size_t in_len, uint8_t* buf)
     }
 }
 
-extern uint8_t int_entropy[32];
-
 void set_external_entropy(uint8_t* entropy, size_t len)
 {
     stopwatch_reset(entropy_timeout);
-    entropy_salt_mix_256(entropy, len, int_entropy);
+    entropy_salt_mix_256(entropy, len, NULL);
 }
 
 void check_entropy(void)

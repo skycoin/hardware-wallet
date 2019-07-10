@@ -33,7 +33,7 @@
 #include "util.h"
 
 uint32_t strength;
-uint8_t int_entropy[32];
+uint8_t int_entropy[32] = {0};
 bool skip_backup = false;
 
 void reset_init(bool display_random, uint32_t _strength, bool passphrase_protection, bool pin_protection, const char* language, const char* label, bool _skip_backup)
