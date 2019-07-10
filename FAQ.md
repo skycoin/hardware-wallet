@@ -22,7 +22,22 @@
     The salt is chosen in such a way that no two devices can generate the same value in (at least) the time frame of a human lifetime.
     Such values [might not be particularly random](https://security.stackexchange.com/questions/16117/in-hashing-does-it-matter-how-random-a-salt-is).
     Internal entropy is eventually combined with an external entropy received from the user host device.
-
+#### Salt sources
+- MCU core registers
+  * We use constant values of three registers, namely: 
+    PC - shows which instruction perform next.
+    SP - track the call stack
+    LR - hold the address of the function.
+- Device UUID
+  * Every Microcontroller has its universal unique identifier which is stored at the specific location in memory, depending on different families.
+    As it is unique in every device, it can be used as a good salt for the entropy.
+- RTC(Real Time Clock) 
+- SysTick timer
+  * All the Microprocessor have it, regardless of the manufacturer. Systick timer is a part of the core. The dumbest and primitive timer.
+- TRNG
+  * is described above.
+- Unconnected GPIO pins
+  * We configure a detached port as an input and then read the value from it. Because of specific physical processes appears noise, which goes with waves, which has minimal statistical dependence.
 ### Why do I see an inverted skycoin logo in bootloader?
 
 If you see an inverted skycoin logo in bootloader mode like in the following image, maybe you have either flashed for development or not official device.
