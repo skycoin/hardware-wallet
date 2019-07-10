@@ -114,6 +114,12 @@ CFLAGS += -Wno-int-to-pointer-cast
 
 CFLAGS   += -include $(TOP_DIR)emulator/emulator.h
 CFLAGS   += -include stdio.h
+ifeq ($(COVERAGE), 1)
+	CFLAGS += -fprofile-arcs -ftest-coverage
+	LDLIBS+=-lgcov --coverage
+	SRCS  = $(OBJS:.o=.c)
+	SRCS += $(TEST_OBJS:.o=.c)
+endif
 
 ifeq ($(HEADLESS),1)
 CFLAGS   += -DHEADLESS=1
@@ -165,3 +171,6 @@ clean::
 	rm -f *.log
 	rm -f *.srec
 	cd protob && make clean-c
+
+coverage: test
+	gcov -n -b $(SRCS)

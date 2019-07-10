@@ -518,7 +518,7 @@ const char* storage_getFullSeed(void)
     if (!storage_hasPassphraseProtection()) {
         return storage_getMnemonic();
     }
-    if (sessionPassphraseCached || protectPassphrase()) {
+    if ((sessionPassphraseCached || protectPassphrase()) && strlen(sessionPassphrase) > 0) {
         sprintf(sessionSeed, "%s %s", storage_getMnemonic(), sessionPassphrase);
         return sessionSeed;
     }
@@ -760,6 +760,8 @@ uint32_t storage_getFlags(void)
     return storageRom->has_flags ? storageRom->flags : 0;
 }
 
+extern uint8_t int_entropy[32];
+
 void storage_wipe(void)
 {
     session_clear(true);
@@ -774,4 +776,5 @@ void storage_wipe(void)
     storageUpdate.has_label = true;
     strncpy(storageUpdate.label, storage_uuid_str, sizeof(storageUpdate.label));
     storage_update();
+    memset(int_entropy, 0, sizeof(int_entropy));
 }
