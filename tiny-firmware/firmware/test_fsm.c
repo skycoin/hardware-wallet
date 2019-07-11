@@ -56,6 +56,7 @@
 #include <stdio.h>
 
 static uint8_t msg_resp[MSG_OUT_SIZE] __attribute__((aligned));
+static uint32_t wcs[] = {MNEMONIC_WORD_COUNT_12, MNEMONIC_WORD_COUNT_24};
 
 void setup_tc_fsm(void)
 {
@@ -90,7 +91,6 @@ bool is_base16_char(char c)
 
 START_TEST(test_msgGenerateMnemonicImplOk)
 {
-    uint32_t wcs[] = {MNEMONIC_WORD_COUNT_12, MNEMONIC_WORD_COUNT_24};
     for (size_t wi = 0; wi < sizeof(wcs)/sizeof(*wcs); ++wi) {
         storage_wipe();
         GenerateMnemonic msg = GenerateMnemonic_init_zero;
@@ -160,12 +160,11 @@ END_TEST
 
 START_TEST(test_msgSkycoinSignMessageReturnIsInHex)
 {
-    uint32_t wcs[] = {MNEMONIC_WORD_COUNT_12, MNEMONIC_WORD_COUNT_24};
     for (size_t wi = 0; wi < sizeof(wcs)/sizeof(*wcs); ++wi) {
         forceGenerateMnemonic(wcs[wi]);
         char raw_msg[] = {"32018964c1ac8c2a536b59dd830a80b9d4ce3bb1ad6a182c13b36240ebf4ec11"};
         char test_msg[256];
-    
+
         SkycoinSignMessage msg = SkycoinSignMessage_init_zero;
         strncpy(msg.message, raw_msg, sizeof(msg.message));
         RESP_INIT(ResponseSkycoinSignMessage);
@@ -187,7 +186,6 @@ END_TEST
 
 START_TEST(test_msgSkycoinCheckMessageSignatureOk)
 {
-    uint32_t wcs[] = {MNEMONIC_WORD_COUNT_12, MNEMONIC_WORD_COUNT_24};
     for (size_t wi = 0; wi < sizeof(wcs)/sizeof(*wcs); ++wi) {
         // NOTE(): Given
         forceGenerateMnemonic(wcs[wi]);
@@ -204,7 +202,7 @@ START_TEST(test_msgSkycoinCheckMessageSignatureOk)
         SkycoinSignMessage msgSign = SkycoinSignMessage_init_zero;
         strncpy(msgSign.message, raw_msg, sizeof(msgSign.message));
         msgSign.address_n = 0;
-        
+
         // NOTE(): When
         uint8_t msg_resp_sign[MSG_OUT_SIZE] __attribute__((aligned)) = {0};
         ResponseSkycoinSignMessage* respSign = (ResponseSkycoinSignMessage*)(void*)msg_resp_sign;
@@ -217,7 +215,7 @@ START_TEST(test_msgSkycoinCheckMessageSignatureOk)
         Failure failRespCheck = Failure_init_zero;
         err = msgSkycoinCheckMessageSignatureImpl(
                     &checkMsg, &successRespCheck, &failRespCheck);
-        
+
         // NOTE(): Then
         ck_assert_int_eq(ErrOk, err);
         ck_assert(successRespCheck.has_message);
@@ -278,7 +276,6 @@ static void random_shuffle(char* buffer, size_t len)
 
 START_TEST(test_msgSkycoinCheckMessageSignatureFailedAsExpectedForInvalidSignedMessage)
 {
-    uint32_t wcs[] = {MNEMONIC_WORD_COUNT_12, MNEMONIC_WORD_COUNT_24};
     for (size_t wi = 0; wi < sizeof(wcs)/sizeof(*wcs); ++wi) {
         // NOTE(): Given
         forceGenerateMnemonic(wcs[wi]);
@@ -295,7 +292,7 @@ START_TEST(test_msgSkycoinCheckMessageSignatureFailedAsExpectedForInvalidSignedM
         SkycoinSignMessage msgSign = SkycoinSignMessage_init_zero;
         strncpy(msgSign.message, raw_msg, sizeof(msgSign.message));
         msgSign.address_n = 0;
-        
+
         // NOTE(): When
         uint8_t msg_resp_sign[MSG_OUT_SIZE] __attribute__((aligned)) = {0};
         ResponseSkycoinSignMessage* respSign = (ResponseSkycoinSignMessage*)(void*)msg_resp_sign;
@@ -311,7 +308,7 @@ START_TEST(test_msgSkycoinCheckMessageSignatureFailedAsExpectedForInvalidSignedM
         Success* successRespCheck = (Success*)(void*)msg_success_resp_check;
         Failure* failRespCheck = (Failure*)(void*)msg_fail_resp_check;
         err = msgSkycoinCheckMessageSignatureImpl(&checkMsg, successRespCheck, failRespCheck);
-        
+
         // NOTE(): Then
         ck_assert_int_ne(ErrOk, err);
         ck_assert(failRespCheck->has_message);
@@ -326,7 +323,6 @@ END_TEST
 
 START_TEST(test_msgSkycoinCheckMessageSignatureFailedAsExpectedForInvalidMessage)
 {
-    uint32_t wcs[] = {MNEMONIC_WORD_COUNT_12, MNEMONIC_WORD_COUNT_24};
     for (size_t wi = 0; wi < sizeof(wcs)/sizeof(*wcs); ++wi) {
         // NOTE(): Given
         forceGenerateMnemonic(wcs[wi]);
@@ -344,7 +340,7 @@ START_TEST(test_msgSkycoinCheckMessageSignatureFailedAsExpectedForInvalidMessage
         SkycoinSignMessage msgSign = SkycoinSignMessage_init_zero;
         strncpy(msgSign.message, raw_msg, sizeof(msgSign.message));
         msgSign.address_n = 0;
-        
+
         // NOTE(): When
         uint8_t msg_resp_sign[MSG_OUT_SIZE] __attribute__((aligned)) = {0};
         ResponseSkycoinSignMessage* respSign = (ResponseSkycoinSignMessage*)(void*)msg_resp_sign;
@@ -360,7 +356,7 @@ START_TEST(test_msgSkycoinCheckMessageSignatureFailedAsExpectedForInvalidMessage
         Success* successRespCheck = (Success*)(void*)msg_success_resp_check;
         Failure* failRespCheck = (Failure*)(void*)msg_fail_resp_check;
         err = msgSkycoinCheckMessageSignatureImpl(&checkMsg, successRespCheck, failRespCheck);
-        
+
         // NOTE(): Then
         ck_assert_int_ne(ErrOk, err);
         ck_assert(failRespCheck->has_message);
