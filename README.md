@@ -26,6 +26,7 @@
     - [Versioning combined binary builds](#versioning-combined-binary-builds)
     - [Versioning libraries](#versioning-libraries)
   - [Running tests](#running-tests)
+    - [Generating tests code coverage](#generating-tests-code-coverage)
   - [Validate the TRNG](#validate-the-trng)
       - [Files description](#files-description)
   - [Releases](#releases)
@@ -182,6 +183,11 @@ The project includes a test suite. In order to run it just execute the following
 ```
 make clean && make test
 ```
+
+#### Generating tests code coverage
+
+To generate code coverage html report you need to have `lcov` available in your `PATH`, in a debian based system you can run `apt install lcov`, lcov can be available using `brew` on osx too, but in the most general case you can follow the the official [install instructions](https://github.com/linux-test-project/lcov/blob/4ff2ed639ec25c271eb9aa2fcdadd30bfab33e4b/README).
+After having this tool you can run `make check-coverage`, if not errors found you can find the result in `coverage/index.html`.
 
 ### Validate the TRNG
 

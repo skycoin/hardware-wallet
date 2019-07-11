@@ -166,14 +166,18 @@ ErrCode_t fsm_getKeyPairAtIndex(uint32_t nbAddress, uint8_t* pubkey, uint8_t* se
     if (mnemo == NULL || nbAddress == 0) {
         return ErrInvalidArg;
     }
-    deterministic_key_pair_iterator((const uint8_t*)mnemo, strlen(mnemo), nextSeed, seckey, pubkey);
+    if (0 != deterministic_key_pair_iterator((const uint8_t*)mnemo, strlen(mnemo), nextSeed, seckey, pubkey)) {
+        return ErrFailed;
+    }
     if (respSkycoinAddress != NULL && start_index == 0) {
         skycoin_address_from_pubkey(pubkey, respSkycoinAddress->addresses[0], &size_address);
         respSkycoinAddress->addresses_count++;
     }
     memcpy(seed, nextSeed, 32);
     for (uint32_t i = 0; i < nbAddress + start_index - 1; ++i) {
-        deterministic_key_pair_iterator(seed, 32, nextSeed, seckey, pubkey);
+        if (0 != deterministic_key_pair_iterator(seed, 32, nextSeed, seckey, pubkey)) {
+            return ErrFailed;
+        }
         memcpy(seed, nextSeed, 32);
         seed[32] = 0;
         if (respSkycoinAddress != NULL && ((i + 1) >= start_index)) {
@@ -579,12 +583,15 @@ ErrCode_t msgRecoveryDeviceImpl(RecoveryDevice* msg, ErrCode_t (*funcConfirmReco
             return err;
         }
     }
+    char current_label[DEVICE_LABEL_SIZE];
+    strncpy(current_label, storage_getLabel(), sizeof(current_label));
+
     recovery_init(
         msg->has_word_count ? msg->word_count : 12,
         msg->has_passphrase_protection && msg->passphrase_protection,
         msg->has_pin_protection && msg->pin_protection,
         msg->has_language ? msg->language : 0,
-        msg->has_label ? msg->label : 0,
+        (msg->has_label && strlen(msg->label) > 0)? msg->label: current_label,
         dry_run);
     return ErrOk;
 }

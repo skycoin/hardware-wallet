@@ -67,7 +67,7 @@ ErrCode_t is_external_entropy_needed(void)
  *
  */
 
-static uint8_t entropy_mixer_prev_val[SHA256_DIGEST_LENGTH] = {0};
+uint8_t entropy_mixer_prev_val[SHA256_DIGEST_LENGTH] = {0};
 
 void reset_entropy_mix_256(void)
 {
@@ -136,12 +136,12 @@ void entropy_mix_256(const uint8_t* in, size_t in_len, uint8_t* out_mixed_entrop
     uint8_t val1[SHA256_DIGEST_LENGTH] = {0};
     sha256sum(in, val1, in_len);
     uint8_t val2[SHA256_DIGEST_LENGTH] = {0};
-    add_sha256(
+    sha256sum_two(
         val1, sizeof(val1),
         entropy_mixer_prev_val, sizeof(entropy_mixer_prev_val),
         val2);
     uint8_t val3[SHA256_DIGEST_LENGTH] = {0};
-    add_sha256(val1, sizeof(val1), val2, sizeof(val2), val3);
+    sha256sum_two(val1, sizeof(val1), val2, sizeof(val2), val3);
     memset(val1, 0, sizeof(val1));
     memcpy(entropy_mixer_prev_val, val3, sizeof(entropy_mixer_prev_val));
     memset(val3, 0, sizeof(val1));
@@ -195,12 +195,10 @@ void __attribute__((weak)) random_salted_buffer(uint8_t* buf, size_t len)
     bptr = tptr = NULL;
 }
 
-extern uint8_t int_entropy[32];
-
 void set_external_entropy(uint8_t* entropy, size_t len)
 {
     stopwatch_reset(entropy_timeout);
-    entropy_salt_mix_256(entropy, len, int_entropy);
+    entropy_salt_mix_256(entropy, len, NULL);
 }
 
 void check_entropy(void)
