@@ -284,7 +284,7 @@ ErrCode_t msgApplySettingsImpl(ApplySettings* msg)
 }
 
 #if !defined(EMULATOR) || !EMULATOR
-extern uint8_t rdp_level;
+#include "memory.h"
 #endif
 ErrCode_t msgGetFeaturesImpl(Features* resp)
 {
@@ -339,7 +339,7 @@ ErrCode_t msgGetFeaturesImpl(Features* resp)
 #if defined(EMULATOR) && EMULATOR
     resp->firmware_features |= FirmwareFeatures_IsEmulator;
 #else
-    resp->firmware_features |= (uint32_t)(rdp_level << FirmwareFeatures_IsEmulator);
+    resp->firmware_features |= (uint32_t)(memory_rdp_level() << FirmwareFeatures_IsEmulator);
 #endif
 
 #if DISABLE_GETENTROPY_CONFIRM
