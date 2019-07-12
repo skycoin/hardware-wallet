@@ -118,12 +118,12 @@ void entropy_salt_mix_256(uint8_t* in, size_t in_len, uint8_t* buf)
     salt_ticker = timer_ms();
 #else
     // Salt source : Simulate SysTick timer with random number
-    random_buffer((uint8_t*)&salt_ticker, sizeof(salt_ticker));
+    _random_buffer((uint8_t*)&salt_ticker, sizeof(salt_ticker));
 #endif // EMULATOR
     entropy_mix_256((uint8_t*)&salt_ticker, sizeof(salt_ticker), NULL);
 
     // Salt source : TRNG 32 bits
-    uint32_t salt_trng = random32();
+    uint32_t salt_trng = _random32();
     entropy_mix_256((uint8_t*)&salt_trng, sizeof(salt_trng), NULL);
     if (in != NULL) {
         entropy_mix_256(in, in_len, buf);
