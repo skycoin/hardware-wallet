@@ -437,7 +437,7 @@ ErrCode_t msgTransactionSignImpl(TransactionSign* msg, ErrCode_t (*funcConfirmTx
 
     CHECK_PIN_UNCACHED_RET_ERR_CODE
 
-    for (uint8_t i = 0; i < msg->nbIn; ++i) {
+    for (uint32_t i = 0; i < msg->nbIn; ++i) {
         uint8_t digest[32] = {0};
         transaction_msgToSign(&transaction, i, digest);
         // Only sign inputs owned by Skywallet device
