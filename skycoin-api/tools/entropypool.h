@@ -42,4 +42,10 @@ void random_salted_buffer(uint8_t* buf, size_t len);
  */
 uint32_t random32_salted(void);
 
+/**
+ * @brief backup_entropy_pool get snapshot of entropy pool buffer
+ * @param buf buffer used to store entropy pool state (at least SHA256_DIGEST_LENGTH bytes)
+ */
+void backup_entropy_pool(uint8_t* buf);
+
 #endif // __SKYAPI_ENTROPYPOOL__

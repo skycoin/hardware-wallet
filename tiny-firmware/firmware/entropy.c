@@ -68,8 +68,6 @@ ErrCode_t is_external_entropy_needed(void)
  *
  */
 
-extern uint8_t entropy_mixer_prev_val[SHA256_DIGEST_LENGTH];
-
 void reset_entropy_mix_256(void)
 {
     if (entropy_timeout == INVALID_TIMER) {
