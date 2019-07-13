@@ -96,7 +96,7 @@ void reset_entropy_mix_256(void)
 #endif
     // Salt source : Random buffer
     uint8_t rndbuf[ENTROPY_RANDOMSALT_SIZE];
-    random_buffer(rndbuf, sizeof(rndbuf));
+    _random_buffer(rndbuf, sizeof(rndbuf));
     entropy_mix_256(rndbuf, sizeof(rndbuf), NULL);
     // Mix type 3 salt sources
     entropy_salt_mix_256(NULL, 0, NULL);
