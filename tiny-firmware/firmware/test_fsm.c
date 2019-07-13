@@ -154,6 +154,33 @@ START_TEST(test_msgEntropyAckChgMixerNotInternal)
 }
 END_TEST
 
+START_TEST(test_isSha256DigestHex)
+{
+    for (size_t wi = 0; wi < sizeof(wcs)/sizeof(*wcs); ++wi) {
+        forceGenerateMnemonic(wcs[wi]);
+        char raw_msg_hex[] = {"32018964c1ac8c2a536b59dd830a80b9d4ce3bb1ad6a182c13b36240ebf4ec11"};
+        uint8_t raw_msg[sizeof(raw_msg_hex)] = {0};
+        tobuff(raw_msg_hex, raw_msg, sizeof(raw_msg));
+        char test_msg[256] = {0};
+
+        SkycoinSignMessage msg = SkycoinSignMessage_init_zero;
+        strncpy(
+            msg.message, (char*)raw_msg,
+            sizeof(raw_msg) < sizeof(msg.message)
+                    ? sizeof(raw_msg) : sizeof(msg.message));
+        RESP_INIT(ResponseSkycoinSignMessage);
+        msgSkycoinSignMessageImpl(&msg, resp);
+        // NOTE(): ecdsa signature have 65 bytes,
+        // 2 for each one in hex = 130
+        // TODO(): this kind of "dependency" is not maintainable.
+        for (size_t i = 0; i < sizeof(resp->signed_message); ++i) {
+            sprintf(test_msg, "Check that %d-th character in %s is in base16 alphabet", (int)i, resp->signed_message);
+            ck_assert_msg(is_base16_char(resp->signed_message[i]), test_msg);
+        }
+    }
+}
+END_TEST
+
 /**
  * Test cases : SkycoinSignMessage
  */
@@ -1398,5 +1425,6 @@ TCase* add_fsm_tests(TCase* tc)
     tcase_add_test(tc, test_msgTransactionSign8);
     tcase_add_test(tc, test_msgTransactionSign9);
     tcase_add_test(tc, test_msgTransactionSign10);
+    tcase_add_test(tc, test_isSha256DigestHex);
     return tc;
 }
