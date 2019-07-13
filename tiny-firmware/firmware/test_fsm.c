@@ -209,15 +209,17 @@ END_TEST
 
 START_TEST(test_msgSkycoinSignMessageCheckMaxAddresses)
 {
-    forceGenerateMnemonic();
-    char raw_msg[] = {"32018964c1ac8c2a536b59dd830a80b9d4ce3bb1ad6a182c13b36240ebf4ec11"};
-    SkycoinSignMessage msg = SkycoinSignMessage_init_zero;
-    msg.address_n = 101;
-    strncpy(msg.message, raw_msg, sizeof(msg.message));
-    RESP_INIT(ResponseSkycoinSignMessage);
-    ck_assert_int_eq(ErrInvalidValue, msgSkycoinSignMessageImpl(&msg, resp));
-    msg.address_n = 100;
-    ck_assert_int_eq(ErrOk, msgSkycoinSignMessageImpl(&msg, resp));
+    for (size_t wi = 0; wi < sizeof(wcs)/sizeof(*wcs); ++wi) {
+        forceGenerateMnemonic(wcs[wi]);
+        char raw_msg[] = {"32018964c1ac8c2a536b59dd830a80b9d4ce3bb1ad6a182c13b36240ebf4ec11"};
+        SkycoinSignMessage msg = SkycoinSignMessage_init_zero;
+        msg.address_n = 101;
+        strncpy(msg.message, raw_msg, sizeof(msg.message));
+        RESP_INIT(ResponseSkycoinSignMessage);
+        ck_assert_int_eq(ErrInvalidValue, msgSkycoinSignMessageImpl(&msg, resp));
+        msg.address_n = 100;
+        ck_assert_int_eq(ErrOk, msgSkycoinSignMessageImpl(&msg, resp));
+    }
 }
 END_TEST
 
