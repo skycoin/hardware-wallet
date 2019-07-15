@@ -56,6 +56,9 @@ ErrCode_t msgEntropyAckImpl(EntropyAck* msg)
 {
     _Static_assert(EXTERNAL_ENTROPY_MAX_SIZE == sizeof(msg->entropy.bytes),
         "External entropy size does not match.");
+    if (msg->entropy.size > sizeof(msg->entropy.bytes)) {
+      return ErrInvalidArg;
+    }
     if (!msg->has_entropy) {
         return ErrEntropyNotNeeded;
     }
@@ -103,6 +106,9 @@ ErrCode_t msgGenerateMnemonicImpl(GenerateMnemonic* msg, void (*random_buffer_fu
 
 ErrCode_t msgSkycoinSignMessageImpl(SkycoinSignMessage* msg, ResponseSkycoinSignMessage* resp)
 {
+    // NOTE: twise the SKYCOIN_SIG_LEN because the hex format
+    _Static_assert(sizeof(resp->signed_message) >= 2 * SKYCOIN_SIG_LEN,
+                   "hex SKYCOIN_SIG_LEN do not fit in the response");
     CHECK_MNEMONIC_RET_ERR_CODE
     uint8_t pubkey[SKYCOIN_PUBKEY_LEN] = {0};
     uint8_t seckey[SKYCOIN_SECKEY_LEN] = {0};
@@ -163,6 +169,9 @@ ErrCode_t fsm_getKeyPairAtIndex(uint32_t nbAddress, uint8_t* pubkey, uint8_t* se
     uint8_t seed[33] = {0};
     uint8_t nextSeed[SHA256_DIGEST_LENGTH] = {0};
     size_t size_address = 36;
+    _Static_assert(
+            sizeof(respSkycoinAddress->addresses[0]) == 36,
+            "invalid address bffer size");
     if (mnemo == NULL || nbAddress == 0) {
         return ErrInvalidArg;
     }
@@ -174,6 +183,12 @@ ErrCode_t fsm_getKeyPairAtIndex(uint32_t nbAddress, uint8_t* pubkey, uint8_t* se
         respSkycoinAddress->addresses_count++;
     }
     memcpy(seed, nextSeed, 32);
+    size_t max_addresses =
+            sizeof(respSkycoinAddress->addresses)
+            / sizeof(respSkycoinAddress->addresses[0]);
+    if (nbAddress + start_index - 1 > max_addresses) {
+        return ErrInvalidArg;
+    }
     for (uint32_t i = 0; i < nbAddress + start_index - 1; ++i) {
         if (0 != deterministic_key_pair_iterator(seed, 32, nextSeed, seckey, pubkey)) {
             return ErrFailed;
@@ -364,6 +379,12 @@ ErrCode_t msgGetFeaturesImpl(Features* resp)
 
 ErrCode_t msgTransactionSignImpl(TransactionSign* msg, ErrCode_t (*funcConfirmTxn)(char*, char*, TransactionSign*, uint32_t), ResponseTransactionSign* resp)
 {
+    if (msg->nbIn > sizeof(msg->transactionIn)/sizeof(*msg->transactionIn)) {
+        return ErrInvalidArg;
+    }
+    if (msg->nbOut > sizeof(msg->transactionOut)/sizeof(*msg->transactionOut)) {
+        return ErrInvalidArg;
+    }
 #if EMULATOR
     printf("%s: %d. nbOut: %d\n",
         _("Transaction signed nbIn"),
@@ -593,12 +614,15 @@ ErrCode_t msgRecoveryDeviceImpl(RecoveryDevice* msg, ErrCode_t (*funcConfirmReco
             return err;
         }
     }
+    char current_label[DEVICE_LABEL_SIZE];
+    strncpy(current_label, storage_getLabel(), sizeof(current_label));
+
     recovery_init(
         msg->has_word_count ? msg->word_count : 12,
         msg->has_passphrase_protection && msg->passphrase_protection,
         msg->has_pin_protection && msg->pin_protection,
         msg->has_language ? msg->language : 0,
-        msg->has_label ? msg->label : 0,
+        (msg->has_label && strlen(msg->label) > 0)? msg->label: current_label,
         dry_run);
     return ErrOk;
 }
