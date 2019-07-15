@@ -179,7 +179,9 @@ ErrCode_t fsm_getKeyPairAtIndex(uint32_t nbAddress, uint8_t* pubkey, uint8_t* se
         return ErrFailed;
     }
     if (respSkycoinAddress != NULL && start_index == 0) {
-        skycoin_address_from_pubkey(pubkey, respSkycoinAddress->addresses[0], &size_address);
+        if (!skycoin_address_from_pubkey(pubkey, respSkycoinAddress->addresses[0], &size_address)) {
+            return ErrFailed;
+        }
         respSkycoinAddress->addresses_count++;
     }
     memcpy(seed, nextSeed, 32);
@@ -197,7 +199,9 @@ ErrCode_t fsm_getKeyPairAtIndex(uint32_t nbAddress, uint8_t* pubkey, uint8_t* se
         seed[32] = 0;
         if (respSkycoinAddress != NULL && ((i + 1) >= start_index)) {
             size_address = 36;
-            skycoin_address_from_pubkey(pubkey, respSkycoinAddress->addresses[respSkycoinAddress->addresses_count], &size_address);
+            if (!skycoin_address_from_pubkey(pubkey, respSkycoinAddress->addresses[respSkycoinAddress->addresses_count], &size_address)) {
+                return ErrFailed;
+            }
             respSkycoinAddress->addresses_count++;
         }
     }
@@ -257,7 +261,11 @@ ErrCode_t msgSkycoinCheckMessageSignatureImpl(SkycoinCheckMessageSignature* msg,
         return ErrAddressGeneration;
     }
     size_t address_size = sizeof(address);
-    skycoin_address_from_pubkey(pubkey, address, &address_size);
+    if (!skycoin_address_from_pubkey(pubkey, address, &address_size)) {
+        strncpy(failureResp->message, _("Can not verify pub key"), sizeof(failureResp->message));
+        failureResp->has_message = true;
+        return ErrAddressGeneration;
+    }
     if (memcmp(address, msg->address, address_size)) {
         strncpy(failureResp->message, _("Address does not match"), sizeof(failureResp->message));
         failureResp->has_message = true;
@@ -416,8 +424,13 @@ ErrCode_t msgTransactionSignImpl(TransactionSign* msg, ErrCode_t (*funcConfirmTx
             uint8_t seckey[32] = {0};
             size_t size_address = 36;
             char address[36] = {0};
-            fsm_getKeyPairAtIndex(1, pubkey, seckey, NULL, msg->transactionOut[i].address_index);
-            skycoin_address_from_pubkey(pubkey, address, &size_address);
+            ErrCode_t ret = fsm_getKeyPairAtIndex(1, pubkey, seckey, NULL, msg->transactionOut[i].address_index);
+            if (ret != ErrOk) {
+                return ret;
+            }
+            if (!skycoin_address_from_pubkey(pubkey, address, &size_address)) {
+                return ErrAddressGeneration;
+            }
             if (strcmp(msg->transactionOut[i].address, address) != 0) {
 // fsm_sendFailure(FailureType_Failure_AddressGeneration, _("Wrong return address"));
 #if EMULATOR
