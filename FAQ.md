@@ -38,10 +38,8 @@
         * Every Microcontroller has its universal unique identifier which is stored at the specific location in memory, depending on different families.
         As it is unique in every device, it can be used as a good salt for the entropy. 
     3. SysTick timer
-        * All the Microprocessor have it, regardless of the manufacturer. Systick timer is a part of the core. The dumbest and primitive timer.
-    4. TRNG
-        * is described above.
-    5. Unconnected GPIO pins
+        * All the Microprocessor have it, regardless of the manufacturer. Systick timer is a part of the core.
+    4. Unconnected GPIO pins
         * We configure a detached port as an input and then read the value from it. Because of specific physical processes appears noise, which goes with waves, which has minimal statistical dependence.
 ### Why do I see an inverted skycoin logo in bootloader?
 
