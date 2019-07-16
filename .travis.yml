@@ -30,6 +30,7 @@ before_script:
   - eval "./ci-scripts/install-${TRAVIS_OS_NAME}.sh"
   # Install linters
   - make install-linters
+  - git submodule update --remote
 
 script:
   - make check-protob
