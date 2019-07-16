@@ -238,6 +238,12 @@ void fsm_sendFailure(FailureType code, const char* text, MessageType* msgtype)
         case FailureType_Failure_AddressGeneration:
             text = _("Failed to generate address");
             break;
+        case FailureType_Failure_FirmwarePanic:
+            text = _("Firmware panic");
+            break;
+        default:
+            text = _("Unknown failure error");
+            break;
         }
     }
     if (text) {
