@@ -60,27 +60,44 @@ void random_salted_buffer(uint8_t* buf, size_t len)
     // Invalidate random32() buffer cache
     random_buffer_index = 0xff;
 
-    _random_buffer(buf, len);
+    // Random bytes to be mixed with entropy pool have to fit in buckets of size SHA256_DIGEST_LENGTH
+    // to prevent padding added by mixing function.
+
+    // buffer_tail_length happens to be the number of bytes that do not fit in chunks of SHA256_DIGEST_LENGTH
+    size_t buffer_tail_length = len % SHA256_DIGEST_LENGTH;
+    // buffer_tail_length happens to be multiple of SHA256_DIGEST_LENGTH
+    size_t buffer_block_length = len - buffer_tail_length;
 
     uint8_t tmp[SHA256_DIGEST_LENGTH] = {0};
-    uint8_t *bptr, *tptr;
+    uint8_t *bufptr, *tmpptr;
     size_t i, j;
-    for (i = len, bptr = buf; i >= SHA256_DIGEST_LENGTH; i -= SHA256_DIGEST_LENGTH) {
-        entropy_mix_256(bptr, SHA256_DIGEST_LENGTH, tmp);
-        for (j = SHA256_DIGEST_LENGTH, tptr = tmp; j; --j, ++tptr, ++bptr) {
-            // FIXME: XOR the whole architecture-specific word
-            *bptr = *bptr ^ *tptr;
+
+    if (buffer_block_length > 0) {
+        _random_buffer(buf, buffer_block_len);
+
+        for (i = buffer_block_len, bufptr = buf; i >= SHA256_DIGEST_LENGTH; i -= SHA256_DIGEST_LENGTH) {
+            entropy_mix_256(bufptr, SHA256_DIGEST_LENGTH, tmp);
+            for (j = SHA256_DIGEST_LENGTH, tmpptr = tmp; j; --j, ++tmpptr, ++bufptr) {
+                *bufptr = *bufptr ^ *tmpptr;
+            }
         }
     }
-    if (i > 0) {
-        entropy_mix_256(bptr, i, tmp);
-        for (tptr = tmp; i; --i, ++tptr, ++bptr) {
-            // FIXME: XOR the whole architecture-specific word
-            *bptr = *bptr ^ *tptr;
+    if (buffer_tail_length > 0) {
+        // Handle the case in which buffer does not fit in chunks of SHA256_DIGEST_LENGTH bytes
+        // A random buffer of SHA256_DIGEST_LENGTH bytes is generated ...
+        uint8_t random_tail[SHA256_DIGEST_LENGTH] = {0};
+        _random_buffer(random_tail, SHA256_DIGEST_LENGTH);
+        // ... then mix it with entropy buffer (i.e. no padding)
+        entropy_mix_256(random_tail, SHA256_DIGEST_LENGTH, tmp);
+        // ... then XOR and copy into buffer ONLY bytes that did not fit in chunks
+        uint8_t *rndptr;
+        for (tmpptr = tmp, rndptr = random_tail, i = buffer_tail_length; i; --i, ++tmpptr, ++bufptr, ++rndptr) {
+            *bufptr = *rndptr ^ *tmpptr;
         }
+        rndptr = NULL;
     }
     memset(&tmp, 0, sizeof(tmp));
-    bptr = tptr = NULL;
+    bufptr = tmpptr = NULL;
 }
 
 uint32_t random32_salted(void)
