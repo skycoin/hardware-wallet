@@ -28,6 +28,9 @@ void backup_entropy_pool(uint8_t* buf){
 
 void entropy_mix_256(const uint8_t* in, size_t in_len, uint8_t* out_mixed_entropy)
 {
+    if (in == NULL) {
+      return;
+    }
     uint8_t val1[SHA256_DIGEST_LENGTH] = {0};
     sha256sum(in, val1, in_len);
     uint8_t val2[SHA256_DIGEST_LENGTH] = {0};
@@ -39,11 +42,11 @@ void entropy_mix_256(const uint8_t* in, size_t in_len, uint8_t* out_mixed_entrop
     sha256sum_two(val1, sizeof(val1), val2, sizeof(val2), val3);
     memset(val1, 0, sizeof(val1));
     memcpy(entropy_mixer_prev_val, val3, sizeof(entropy_mixer_prev_val));
-    memset(val3, 0, sizeof(val1));
+    memset(val3, 0, sizeof(val3));
     if (out_mixed_entropy != NULL) {
         memcpy(out_mixed_entropy, val2, SHA256_DIGEST_LENGTH);
     }
-    memset(val2, 0, sizeof(val1));
+    memset(val2, 0, sizeof(val2));
 }
 
 // Repeated invocation of `random32_salted` will be resolved from cache
