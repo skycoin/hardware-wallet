@@ -229,16 +229,15 @@ ErrCode_t msgSkycoinCheckMessageSignatureImpl(SkycoinCheckMessageSignature* msg,
 {
     // NOTE(): -1 because the end of string ('\0')
     // /2 because the hex to buff conversion.
-    // TODO - why is this size dynamic? It is always 65 (SKYCOIN_SIG_LEN) bytes?
-    uint8_t sig[(sizeof(msg->signature) - 1) / 2];
+    _Static_assert((sizeof(msg->message) - 1) / 2 == SHA256_DIGEST_LENGTH,
+                   "Invalid buffer size for message");
+    _Static_assert((sizeof(msg->signature) - 1) / 2 == SKYCOIN_SIG_LEN,
+                    "Invalid buffer size for signature");
+    uint8_t sig[SKYCOIN_SIG_LEN] = {0};
     // NOTE(): -1 because the end of string ('\0')
     char address[sizeof(msg->address) - 1];
     uint8_t pubkey[SKYCOIN_PUBKEY_LEN] = {0};
-    // NOTE(): -1 because the end of string ('\0')
-    // /2 because the hex to buff conversion.
-    // TODO - why is this size dynamic? It is always 32 (SHA256_DIGEST_LENGTH) bytes?
-    uint8_t digest[(sizeof(msg->message) - 1) / 2] = {0};
-    //     RESP_INIT(Success);
+    uint8_t digest[SHA256_DIGEST_LENGTH] = {0};
     if (is_sha256_digest_hex(msg->message)) {
         tobuff(msg->message, digest, MIN(sizeof(digest), sizeof(msg->message)));
     } else {
