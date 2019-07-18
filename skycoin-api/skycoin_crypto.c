@@ -448,6 +448,20 @@ BigTxContext* getBigTxCtx(){
     return context;
 }
 
+void printSHA256(BigTxContext* ctx) {
+    uint8_t* buffer = (uint8_t*)ctx->sha256_ctx.buffer;
+    for(uint8_t i = 0; i < 64; ++i)
+        printf("%u ",buffer[i]);
+    printf("\n");
+}
+
+void bigTxCtx_printInnerHash(BigTxContext* self) {
+    for(uint8_t i = 0; i < 32; ++i) {
+        printf("%u ", self->innerHash[i]);
+    }
+    printf("\n");
+}
+
 void bigTxCtx_AddHead(uint8_t count) {
     BigTxContext* ctx = getBigTxCtx();
     uint8_t data[4];

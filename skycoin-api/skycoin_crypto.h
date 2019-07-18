@@ -80,6 +80,8 @@ void bigTxCtx_UpdateInputs(BigTxContext* self, uint8_t inputs [7][32], uint8_t c
 void bigTxCtx_UpdateOutputs(BigTxContext* self, BigTxOutput outputs[7], uint8_t count);
 void bigTxCtx_finishInnerHash(BigTxContext* self);
 void bigTxCtx_Destroy(BigTxContext* ctx);
+void bigTxCtx_printInnerHash(BigTxContext* self);
+void printSHA256(BigTxContext* ctx);
  /* @brief verify_pub_key ec secp256k1
  * @param pub_key pub key to b verified
  * @return true if the verification success
