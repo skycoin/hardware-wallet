@@ -436,3 +436,58 @@ void transaction_msgToSign(Transaction* self, uint8_t index, uint8_t* msg_digest
     sha256_Update(&sha256ctx, shaInput, 64);
     sha256_Final(&sha256ctx, msg_digest);
 }
+
+BigTxContext* context;
+
+BigTxContext* initBigTxContext() {
+    context = malloc(sizeof(BigTxContext));
+    return context;
+}
+
+BigTxContext* getBigTxCtx(){
+    return context;
+}
+
+void bigTxCtx_AddHead(uint8_t count) {
+    BigTxContext* ctx = getBigTxCtx();
+    uint8_t data[4];
+    memcpy(data, &count, 1);
+    memset(&data[1], 0, 3);
+    sha256_Update(&ctx->sha256_ctx, data, 4);
+}
+
+void bigTxCtx_UpdateInputs(BigTxContext* self, uint8_t inputs [7][32], uint8_t count) {
+    for(uint8_t i = 0; i < count; ++i) {
+        sha256_Update(&self->sha256_ctx,inputs[i], HASHER_DIGEST_LENGTH);
+        self->current_nbIn +=1;
+    }
+}
+
+void bigTxCtx_UpdateOutputs(BigTxContext* self, BigTxOutput outputs[7], uint8_t count){
+    for (uint8_t i = 0; i < count; ++i) {
+        uint8_t data[37];
+        uint8_t bitcount = 0;
+        data[0] = 0;
+        data[bitcount] = 0;
+        bitcount += 1;
+        memcpy(&data[bitcount], &outputs[i].address, 20);
+        bitcount += 20;
+        memcpy(&data[bitcount], (uint8_t*)&outputs[i].coin, 4);
+        bitcount += 4;
+        memset(&data[bitcount], 0, 4);
+        bitcount += 4;
+        memcpy(&data[bitcount], (uint8_t*)&outputs[i].hour, 4);
+        bitcount += 4;
+        memset(&data[bitcount], 0, 4);
+        sha256_Update(&self->sha256_ctx, data, 37);
+        self->current_nbOut+=1;
+    }
+}
+
+void bigTxCtx_finishInnerHash(BigTxContext* self){
+    sha256_Final(&self->sha256_ctx, self->innerHash);
+}
+
+void bigTxCtx_Destroy(BigTxContext* ctx){
+    free(ctx);
+}

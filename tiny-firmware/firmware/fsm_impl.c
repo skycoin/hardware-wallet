@@ -16,6 +16,7 @@
 
 #include "bip32.h"
 #include "bip39.h"
+#include "base58.h"
 #include "check_digest.h"
 #include "droplet.h"
 #include "entropy.h"
@@ -590,5 +591,80 @@ ErrCode_t msgRecoveryDeviceImpl(RecoveryDevice* msg, ErrCode_t (*funcConfirmReco
         msg->has_language ? msg->language : 0,
         msg->has_label ? msg->label : 0,
         dry_run);
+    return ErrOk;
+}
+
+ErrCode_t msgSignTxImpl(SignTx* msg, TxRequest* resp) {
+    // Init BigTxContext
+    BigTxContext* context = initBigTxContext();
+    memcpy(context->coin_name,msg->coin_name, 36 * sizeof(char));
+    context->current_nbIn = 0;
+    context->current_nbOut=0;
+    context->lock_time = msg->lock_time;
+    context->nbIn = msg->inputs_count;
+    context->nbOut = msg->outputs_count;
+    sha256_Init(&context->sha256_ctx);
+    memcpy(context->tx_hash, msg->tx_hash, 65 * sizeof(char));
+    context->version = msg->version;
+    context->has_innerHash = false;
+    context->requesIndex = 0;
+
+    // Init Inputs head on sha256
+    bigTxCtx_AddHead(msg->inputs_count);
+
+    // Build response TxRequest
+    resp->has_details = true;
+    resp->details.has_request_index = true;
+    resp->details.request_index = 1;
+    memcpy(resp->details.tx_hash, msg->tx_hash, 65 * sizeof(char));
+    resp->request_type = TxRequest_RequestType_TXINPUT;
+    return ErrOk;
+}
+
+ErrCode_t msgTxAckImpl(TxAck* msg, TxRequest* resp) {
+    BigTxContext* ctx = getBigTxCtx();
+    if(msg->tx.inputs_count) {
+        // Update Context
+        uint8_t inputs[7][32];
+        for(uint8_t i = 0; i < msg->tx.inputs_count; ++i) {
+            writebuf_fromhexstr(msg->tx.inputs[i].hashIn,inputs[i]);
+        }
+        bigTxCtx_UpdateInputs(ctx, inputs,msg->tx.inputs_count);
+        #if EMULATOR
+        printf("|---> Context updated with %u new inputs\n", msg->tx.inputs_count);
+        #endif
+        if(ctx->current_nbIn != ctx->nbIn)
+            resp->request_type = TxRequest_RequestType_TXINPUT;
+        else
+            resp->request_type = TxRequest_RequestType_TXOUTPUT;
+    } else if(msg->tx.outputs_count) {
+        // Update Context
+        BigTxOutput outputs[7];
+        for(uint8_t i = 0; i < msg->tx.outputs_count; ++i) {
+            outputs[i].coin = msg->tx.outputs[i].coins;
+            outputs[i].hour = msg->tx.outputs[i].hours;
+            size_t len = 36;
+            uint8_t b58string[36];
+            b58tobin(b58string, &len, msg->tx.outputs[i].address);
+            memcpy(outputs[i].address, b58string, len);
+        }
+        bigTxCtx_UpdateOutputs(ctx, outputs, msg->tx.outputs_count);
+        #if EMULATOR
+        printf("|---> Context updated with new %u outputs\n",msg->tx.outputs_count);
+        #endif
+        if(ctx->current_nbOut != ctx->nbOut){
+            resp->request_type = TxRequest_RequestType_TXOUTPUT;
+        }
+        else {
+            bigTxCtx_finishInnerHash(ctx);
+            bigTxCtx_printInnerHash(ctx);
+        }
+    }
+    resp->has_details = true;
+    resp->details.has_request_index = true;
+    ctx->requesIndex++;
+    resp->details.request_index = ctx->requesIndex;
+    resp->details.has_tx_hash = true;
+    memcpy(resp->details.tx_hash, ctx->tx_hash,strlen(ctx->tx_hash) * sizeof(char));
     return ErrOk;
 }

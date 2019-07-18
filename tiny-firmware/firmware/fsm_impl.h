@@ -165,5 +165,7 @@ ErrCode_t msgGetEntropyImpl(GetRawEntropy* msg, Entropy* resp, void (*random_buf
 ErrCode_t msgLoadDeviceImpl(LoadDevice* msg);
 ErrCode_t msgBackupDeviceImpl(BackupDevice* msg, ErrCode_t (*)(void));
 ErrCode_t msgRecoveryDeviceImpl(RecoveryDevice* msg, ErrCode_t (*)(void));
+ErrCode_t msgSignTxImpl(SignTx* msg,TxRequest* resp);
+ErrCode_t msgTxAckImpl(TxAck* msg, TxRequest* resp);
 
 #endif // __TINYFIRMWARE_FIRMWARE_FSMIMPL_H__

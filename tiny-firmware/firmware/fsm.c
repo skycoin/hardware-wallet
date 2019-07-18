@@ -672,20 +672,59 @@ void fsm_msgEntropyAck(EntropyAck* msg)
     }
 }
 
-void fsm_msgSignTx(SignTx* msg)
-{
+void fsm_msgSignTx(SignTx* msg) {
     (void)msg;
-    RESP_INIT(TxRequest);
-    resp->request_type = TxRequest_RequestType_TXINPUT;
-    resp->has_details = true;
-    resp->details.has_request_index = true;
-    resp->details.request_index = 1;
-    msg_write(MessageType_MessageType_TxRequest, resp);
+    #if EMULATOR
+    printf("Procesing SignTx message\n");
+    #endif
+    MessageType msgtype = MessageType_MessageType_SignTx;
+    RESP_INIT(TxRequest)
+    ErrCode_t err = msgSignTxImpl(msg, resp);
+    switch (err) {
+        case ErrOk:
+            #if EMULATOR
+            printf("|---> Sending TxRequest message\n");
+            #endif
+            msg_write(MessageType_MessageType_TxRequest, resp);
+            break;
+        default:
+            fsm_sendResponseFromErrCode(err, NULL, "Error on fsm_msgSignTx", &msgtype);
+            break;
+    }
     return;
 }
 
-void fsm_msgTxAck(TxAck* msg)
-{
+void fsm_msgTxAck(TxAck* msg) {
     (void)msg;
+    #if EMULATOR
+    printf("Processing TxAck message\n");
+    #endif
+    MessageType msgtype = MessageType_MessageType_TxAck;
+    if(!msg->has_tx) {
+        fsm_sendFailure(FailureType_Failure_DataError,"Empty tx field on TxAck message.", &msgtype);
+        return;
+    }
+    if(msg->tx.inputs_count && msg->tx.outputs_count) {
+        fsm_sendFailure(FailureType_Failure_DataError, "Inputs and Outputs on same TxAck.", &msgtype);
+        return;
+    }
+    if(!msg->tx.inputs_count && !msg->tx.outputs_count) {
+        fsm_sendFailure(FailureType_Failure_DataError,"Empty Inputs and Outputs on same TxAck.", &msgtype);
+        return;
+    }
+    RESP_INIT(TxRequest);
+    ErrCode_t err = msgTxAckImpl(msg, resp);
+    switch (err)
+    {
+        case ErrOk:
+            #if EMULATOR
+            printf("|---> Sending TxRequest\n");
+            #endif
+            msg_write(MessageType_MessageType_TxRequest, resp);
+            break;
+        default:
+            fsm_sendResponseFromErrCode(err, NULL, "Error on fsm_msgTxAck", &msgtype);
+            break;
+    }
     return;
 }
