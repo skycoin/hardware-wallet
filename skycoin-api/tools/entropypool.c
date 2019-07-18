@@ -69,7 +69,7 @@ void random_salted_buffer(uint8_t* buf, size_t len)
     size_t buffer_block_length = len - buffer_tail_length;
 
     uint8_t tmp[SHA256_DIGEST_LENGTH] = {0};
-    uint8_t *bufptr = buff, *tmpptr = tmp;
+    uint8_t *bufptr = buf, *tmpptr = tmp;
     size_t i, j;
 
     if (buffer_block_length > 0) {
