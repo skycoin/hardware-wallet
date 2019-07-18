@@ -84,7 +84,7 @@ void random_salted_buffer(uint8_t* buf, size_t len)
     }
     if (buffer_tail_length > 0) {
         // Handle the case in which buffer does not fit in chunks of SHA256_DIGEST_LENGTH bytes
-        // A random buffer of SHA256_DIGEST_LENGTH bytes is generated ...
+        // A random buffer of SHA256_DIGEST_LENGTH bytes is generated ... random padding
         uint8_t random_tail[SHA256_DIGEST_LENGTH] = {0};
         _random_buffer(random_tail, SHA256_DIGEST_LENGTH);
         // ... then mix it with entropy buffer (i.e. no padding)
