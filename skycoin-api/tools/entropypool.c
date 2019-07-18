@@ -73,9 +73,9 @@ void random_salted_buffer(uint8_t* buf, size_t len)
     size_t i, j;
 
     if (buffer_block_length > 0) {
-        _random_buffer(buf, buffer_block_len);
+        _random_buffer(buf, buffer_block_length);
 
-        for (i = buffer_block_len, bufptr = buf; i >= SHA256_DIGEST_LENGTH; i -= SHA256_DIGEST_LENGTH) {
+        for (i = buffer_block_length, bufptr = buf; i >= SHA256_DIGEST_LENGTH; i -= SHA256_DIGEST_LENGTH) {
             entropy_mix_256(bufptr, SHA256_DIGEST_LENGTH, tmp);
             for (j = SHA256_DIGEST_LENGTH, tmpptr = tmp; j; --j, ++tmpptr, ++bufptr) {
                 *bufptr = *bufptr ^ *tmpptr;
