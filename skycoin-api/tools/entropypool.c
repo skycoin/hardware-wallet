@@ -75,6 +75,7 @@ void random_salted_buffer(uint8_t* buf, size_t len)
             *bufptr = *rndptr ^ *tmpptr;
         }
     }
+    memset(&random_chunk, 0, sizeof(random_chunk));
     memset(&tmp, 0, sizeof(tmp));
     bufptr = tmpptr = rndptr = NULL;
 }
