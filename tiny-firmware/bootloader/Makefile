@@ -19,9 +19,12 @@ OBJS += ../gen/fonts.o
 
 #skycoin-crypto
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/skycoin_signature.small.o
+OBJS += $(TOP_DIR)vendor/skycoin-crypto/skycoin_crypto.small.o
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/curves.small.o
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/hmac.small.o
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/secp256k1.small.o
+OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/rand.o
+OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/entropypool.o
 # OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/bip32.o
 
 #end skycoin-crypto

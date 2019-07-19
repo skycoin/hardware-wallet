@@ -127,7 +127,6 @@ END_TEST
 #define INTERNAL_ENTROPY_SIZE SHA256_DIGEST_LENGTH
 
 extern uint8_t int_entropy[INTERNAL_ENTROPY_SIZE];
-extern uint8_t entropy_mixer_prev_val[SHA256_DIGEST_LENGTH];
 
 START_TEST(test_msgEntropyAckChgMixerNotInternal)
 {
@@ -141,11 +140,13 @@ START_TEST(test_msgEntropyAckChgMixerNotInternal)
     eaMsg.entropy.size = 32;
     random_buffer(eaMsg.entropy.bytes, 32);
 
-    uint8_t entropy_mixer_initial_state[sizeof(entropy_mixer_prev_val)];
-    memcpy(entropy_mixer_initial_state, entropy_mixer_prev_val, sizeof(entropy_mixer_prev_val));
+    uint8_t entropy_mixer_initial_state[SHA256_DIGEST_LENGTH];
+    backup_entropy_pool(entropy_mixer_initial_state);
     ck_assert_int_eq(ErrOk, msgEntropyAckImpl(&eaMsg));
     ck_assert_mem_eq(int_entropy, null_entropy, sizeof(int_entropy));
-    ck_assert_mem_ne(entropy_mixer_prev_val, entropy_mixer_initial_state, sizeof(entropy_mixer_prev_val));
+    uint8_t entropy_mixer_final_state[SHA256_DIGEST_LENGTH];
+    backup_entropy_pool(entropy_mixer_final_state);
+    ck_assert_mem_ne(entropy_mixer_final_state, entropy_mixer_initial_state, SHA256_DIGEST_LENGTH);
 }
 END_TEST
 
