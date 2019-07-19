@@ -303,7 +303,7 @@ ErrCode_t msgApplySettingsImpl(ApplySettings* msg)
 }
 
 #if !defined(EMULATOR) || !EMULATOR
-#include "memory.h"
+#include <tiny-firmware/memory.h>
 #endif
 ErrCode_t msgGetFeaturesImpl(Features* resp)
 {
