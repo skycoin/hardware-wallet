@@ -11,13 +11,26 @@
 
 #include <check.h>
 #include <stdio.h>
+#include <time.h>
 
 #include "test_pin.h"
 #include "test_reset.h"
+#include "rand.h"
 #include "reset.h"
+#include "setup.h"
 #include "storage.h"
 
 #define TEST_SERIALNO "DC5E1023685C298CA8E27611"
+
+void setup_tc_reset(void)
+{
+    srand(time(NULL));
+    setup();
+}
+
+void teardown_tc_reset(void)
+{
+}
 
 static struct {
     STORAGE_STRING(mnemonic, 241)
@@ -149,6 +162,7 @@ END_TEST
 
 TCase *add_reset_tests(TCase *tc) {
     // FIXME: test cases for reset_init_ex with display_random=true (needs mocking of button ACK)
+    tcase_add_checked_fixture(tc, setup_tc_reset, teardown_tc_reset);
     tcase_add_test(tc, test_reset_initWithInvalidStrength);
     tcase_add_test(tc, test_reset_initNoPin);
     tcase_add_test(tc, test_reset_initNoLabel);
