@@ -49,17 +49,8 @@ void entropy_mix_256(const uint8_t* in, size_t in_len, uint8_t* out_mixed_entrop
     memset(val2, 0, sizeof(val2));
 }
 
-// Repeated invocation of `random32_salted` will be resolved from cache
-static uint8_t random_buffer_cache[SHA256_DIGEST_LENGTH] = {0};
-static uint8_t random_buffer_index = 0xff;
-
-_Static_assert(sizeof(random_buffer_cache) % sizeof(uint32_t) == 0, "Alignment error random_buffer_cache");
-
 void random_salted_buffer(uint8_t* buf, size_t len)
 {
-    // Invalidate random32() buffer cache
-    random_buffer_index = 0xff;
-
     // Random bytes to be mixed with entropy pool have to fit in buckets of size SHA256_DIGEST_LENGTH
     // to prevent padding added by mixing function.
 
@@ -82,13 +73,9 @@ void random_salted_buffer(uint8_t* buf, size_t len)
 
 uint32_t random32_salted(void)
 {
-    // On index overflow regenerate new random buffer
-    if (random_buffer_index >= sizeof(random_buffer_cache)) {
-        random_salted_buffer(random_buffer_cache, sizeof(random_buffer_cache));
-        random_buffer_index = 0;
-    }
-    uint32_t retval = *(((uint32_t *) random_buffer_cache) + random_buffer_index);
-    random_buffer_index += sizeof(uint32_t);
-    return retval;
+	uint8_t buf[4];
+	random_salted_buffer(buf, 4);
+	uint32_t ret = *(((uint32_t *) buf));
+	memset(&buf, 0, sizeof(buf));
+	return ret;
 }
-
