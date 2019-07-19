@@ -101,6 +101,7 @@ OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/memzero.o
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/secp256k1.o
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/bip39.o
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/pbkdf2.o
+OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/entropypool.o
 #end skycoin-crypto
 
 ifeq ($(REVERSE_SCREEN),1)

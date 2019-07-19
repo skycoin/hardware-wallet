@@ -1,6 +1,7 @@
 /**
  * Copyright (c) 2013-2014 Tomas Dzetkulic
  * Copyright (c) 2013-2014 Pavol Rusnak
+ * Copyright (c)      2019 Skycoin Developers
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the "Software"),
@@ -27,9 +28,48 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+/**
+ * @brief base (system) random number generator
+ * @return unsigned 32-bits integer
+ */
+uint32_t _random32(void);
+
+/**
+ * @brief generate random buffer using base (system) random generator
+ * @param len number of random bytes that need to be generated
+ * @param buf pointer to memory buffer
+ */
+void _random_buffer(uint8_t* buf, size_t len);
+
+/**
+ * @brief salted random number generator
+ * @return unsigned 32-bits integer
+ * @attention values returned by this function are salted with the accumulated state of the entropy pool
+ */
 uint32_t random32(void);
+
+/**
+ * @brief random number generator with uniform distribution in [0 .. n) interval
+ * @param n interval boundary
+ * @return unsigned 32-bit integer
+ * @attention values returned by this function are salted with the accumulated state of the entropy pool
+ */
 uint32_t random_uniform(uint32_t n);
+
+/**
+ * @brief populate buffer with random bytes
+ * @param buf memory buffer pointer
+ * @param len number of bytes in input buffer
+ * @attention values returned by this function are salted with the accumulated state of the entropy pool
+ */
 void random_buffer(uint8_t* buf, size_t len);
+
+/**
+ * @brief inplace permutation of buffer (byte) items
+ * @param buf memory buffer pointer
+ * @param len number of bytes in input buffer
+ * @attention values returned by this function are salted with the accumulated state of the entropy pool
+ */
 void random_permute(char* buf, size_t len);
 
 #endif
