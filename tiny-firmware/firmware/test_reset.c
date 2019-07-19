@@ -12,6 +12,7 @@
 #include <check.h>
 #include <stdio.h>
 
+#include "test_pin.h"
 #include "test_reset.h"
 #include "reset.h"
 #include "storage.h"
@@ -127,12 +128,19 @@ START_TEST(test_reset_initNoLabel)
 }
 END_TEST
 
-/*
 START_TEST(test_reset_initWrongPin)
 {
+    storage_wipe();
+    ck_assert_str_ne("", storage_getLabel());
+    take_storage_snapshot();
+    ck_assert_str_ne("", storage_snapshot.label);
+
+    reset_init_ex(false, 128, true, false, "english", "", true, pin_reader_wrong);
+    ck_assert_str_eq(storage_getLabel(), storage_snapshot.label);
 }
 END_TEST
 
+/*
 START_TEST(test_reset_initCorrectPin)
 {
 }
@@ -144,6 +152,7 @@ TCase *add_reset_tests(TCase *tc) {
     tcase_add_test(tc, test_reset_initWithInvalidStrength);
     tcase_add_test(tc, test_reset_initNoPin);
     tcase_add_test(tc, test_reset_initNoLabel);
+    tcase_add_test(tc, test_reset_initWrongPin);
     return tc;
 }
 

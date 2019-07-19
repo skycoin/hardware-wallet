@@ -31,6 +31,7 @@ TEST_OBJS += firmware/test_timer.o
 TEST_OBJS += firmware/test_fsm.o
 TEST_OBJS += firmware/test_droplet.o
 TEST_OBJS += serialno.o
+TEST_OBJS += firmware/test_pin.o
 TEST_OBJS += firmware/test_serialno.o
 TEST_OBJS += firmware/test_reset.o
 TEST_OBJS += firmware/test_main.o
