@@ -266,16 +266,6 @@ ErrCode_t msgSkycoinCheckMessageSignatureImpl(SkycoinCheckMessageSignature* msg,
         return ErrAddressGeneration;
     }
     if (memcmp(address, msg->address, address_size)) {
-        printf("\n\nmsg->address:");
-        for (size_t i = 0; i < address_size; ++i) {
-            printf("[%d|%c]", msg->address[i], msg->address[i]);
-        }
-        printf("\n\n");
-        printf("\n\naddress:");
-        for (size_t i = 0; i < address_size; ++i) {
-            printf("[%d|%c]", address[i], address[i]);
-        }
-        printf("\n\n");
         strncpy(failureResp->message, _("Address does not match"), sizeof(failureResp->message));
         failureResp->has_message = true;
         return ErrInvalidSignature;
