@@ -1,4 +1,3 @@
-TOP_DIR       := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))/
 SDL_CFLAGS ?= $(shell sdl2-config --cflags | sed 's/-D_THREAD_SAFE//g')
 ENABLE_GETENTROPY ?= 0
 DISABLE_GETENTROPY_CONFIRM ?= 0
@@ -14,8 +13,6 @@ OBJS += emulator/setup.o
 LDFLAGS  += -L$(TOP_DIR)emulator
 LDLIBS   += -lemulator
 LIBDEPS  += $(TOP_DIR)emulator/libemulator.a
-$(TOP_DIR)emulator/libemulator.a:
-	make -C $(TOP_DIR)emulator/ libemulator.a
 endif
 OBJS += buttons.o
 OBJS += layout.o
