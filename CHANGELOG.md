@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+- Add code coverage resport for tests.
 - `verify_pub_key` to crypto API.
 - Travis instructions to deploy to S3 bucket.
 - Get firmware version from `git`, use `tiny-firmware/VERSION` if it's not possible.

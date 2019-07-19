@@ -39,6 +39,7 @@
 #include "tiny-firmware/layout.h"
 #include "tiny-firmware/util.h"
 
+
 #define FIRMWARE_MAGIC "SKY1"
 
 #define ENDPOINT_ADDRESS_IN (0x81)
@@ -225,7 +226,6 @@ static void send_msg_failure(usbd_device* dev)
                64) != 64) {}
 }
 
-extern uint8_t rdp_level;
 static void send_msg_features(usbd_device* dev)
 {
     // response: Features message (id 17), payload len 39
@@ -259,7 +259,7 @@ static void send_msg_features(usbd_device* dev)
         // padding
         "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"};
     uint8_t fetOpts = 0;
-    switch (rdp_level) {
+    switch (memory_rdp_level()) {
     case 2:
         // https://github.com/skycoin/hardware-wallet-protob/blob/b3a2d50a55c6fb047b895bec27204e0abae38900/protob/messages/types.proto#L139
         fetOpts = (1 << 4);

@@ -186,11 +186,10 @@ static inline BITMAP invert_bitmap(BITMAP bm, uint8_t* data)
     return inverted;
 }
 
-extern uint8_t rdp_level;
 void bootloader_loop(void)
 {
     oledClear();
-    if (rdp_level != 2) {
+    if (memory_rdp_level() != 2) {
         // NOTE 48*64 is the size of the bmp_logo64 buffer.
         uint8_t bmp_logo64_data_inverted[48 * 64] = {0};
         BITMAP bmp_logo64_inverted =
@@ -223,7 +222,7 @@ int main(void)
 {
     setup();
     __stack_chk_guard = random32(); // this supports compiler provided unpredictable stack protection checks
-    set_up_rdp_level();
+    memory_rdp_level();
     memory_protect();
     oledInit();
 

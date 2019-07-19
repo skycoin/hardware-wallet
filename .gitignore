@@ -71,3 +71,8 @@ test_skycoin_crypto
 # IDE
 .vscode
 .idea
+
+# File check-coverage
+**/*.gcda
+**/*.gcno
+coverage/

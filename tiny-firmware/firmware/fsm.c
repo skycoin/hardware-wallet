@@ -194,48 +194,55 @@ void fsm_sendFailure(FailureType code, const char* text, MessageType* msgtype)
     }
     if (text == NULL) {
         switch (code) {
-            case FailureType_Failure_UnexpectedMessage:
-                text = _("Unexpected message");
-                break;
-            case FailureType_Failure_ButtonExpected:
-                text = _("Button expected");
-                break;
-            case FailureType_Failure_DataError:
-                text = _("Data error");
-                break;
-            case FailureType_Failure_ActionCancelled:
-                text = _("Action cancelled by user");
-                break;
-            case FailureType_Failure_PinExpected:
-                text = _("PIN expected");
-                break;
-            case FailureType_Failure_PinCancelled:
-                text = _("PIN cancelled");
-                break;
-            case FailureType_Failure_PinInvalid:
-                text = _("PIN invalid");
-                break;
-            case FailureType_Failure_InvalidSignature:
-                text = _("Invalid signature");
-                break;
-            case FailureType_Failure_ProcessError:
-                text = _("Process error");
-                break;
-            case FailureType_Failure_NotEnoughFunds:
-                text = _("Not enough funds");
-                break;
-            case FailureType_Failure_NotInitialized:
-                text = _("Device not initialized");
-                break;
-            case FailureType_Failure_PinMismatch:
-                text = _("PIN mismatch");
-                break;
-            case FailureType_Failure_FirmwareError:
-                text = _("Firmware error");
-                break;
-            case FailureType_Failure_AddressGeneration:
-                text = _("Failed to generate address");
-                break;
+
+        case FailureType_Failure_UnexpectedMessage:
+            text = _("Unexpected message");
+            break;
+        case FailureType_Failure_ButtonExpected:
+            text = _("Button expected");
+            break;
+        case FailureType_Failure_DataError:
+            text = _("Data error");
+            break;
+        case FailureType_Failure_ActionCancelled:
+            text = _("Action cancelled by user");
+            break;
+        case FailureType_Failure_PinExpected:
+            text = _("PIN expected");
+            break;
+        case FailureType_Failure_PinCancelled:
+            text = _("PIN cancelled");
+            break;
+        case FailureType_Failure_PinInvalid:
+            text = _("PIN invalid");
+            break;
+        case FailureType_Failure_InvalidSignature:
+            text = _("Invalid signature");
+            break;
+        case FailureType_Failure_ProcessError:
+            text = _("Process error");
+            break;
+        case FailureType_Failure_NotEnoughFunds:
+            text = _("Not enough funds");
+            break;
+        case FailureType_Failure_NotInitialized:
+            text = _("Device not initialized");
+            break;
+        case FailureType_Failure_PinMismatch:
+            text = _("PIN mismatch");
+            break;
+        case FailureType_Failure_FirmwareError:
+            text = _("Firmware error");
+            break;
+        case FailureType_Failure_AddressGeneration:
+            text = _("Failed to generate address");
+            break;
+        case FailureType_Failure_FirmwarePanic:
+            text = _("Firmware panic");
+            break;
+        default:
+            text = _("Unknown failure error");
+            break;
         }
     }
     if (text) {
