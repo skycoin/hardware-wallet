@@ -14,9 +14,9 @@
 #include <string.h>
 
 #include "skycoin_constants.h"
-#include "secp256k1.h"
-#include "curves.h"
-#include "ecdsa.h"
+#include <tools/secp256k1.h>
+#include <tools/curves.h>
+#include <tools/ecdsa.h>
 
 // sig 65 bytes compact recoverable signature
 // digest 32 bytes sha256 hash

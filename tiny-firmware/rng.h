@@ -20,6 +20,6 @@
 #ifndef __RNG_H__
 #define __RNG_H__
 
-#include "rand.h"
+#include <tools/rand.h>
 
 #endif

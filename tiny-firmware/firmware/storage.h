@@ -21,7 +21,7 @@
 #ifndef __STORAGE_H__
 #define __STORAGE_H__
 
-#include "bip32.h"
+#include <tools/bip32.h>
 #include "tiny-firmware/serialno.h"
 #include "messages.pb.h"
 #include "types.pb.h"

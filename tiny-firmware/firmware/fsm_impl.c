@@ -15,9 +15,9 @@
 #include <stdio.h>
 #include <inttypes.h>
 
-#include "bip32.h"
-#include "bip39.h"
-#include "check_digest.h"
+#include <tools/bip32.h>
+#include <tools/bip39.h>
+#include <check_digest.h>
 #include <tiny-firmware/firmware/droplet.h>
 #include <tiny-firmware/firmware/entropy.h>
 #include <tiny-firmware/firmware/fsm.h>
@@ -35,8 +35,8 @@
 #include <tiny-firmware/firmware/usb.h>
 #include <tiny-firmware/util.h>
 #include "skycoin_constants.h"
-#include "skycoin_crypto.h"
-#include "skycoin_signature.h"
+#include <skycoin_crypto.h>
+#include <skycoin_signature.h>
 #include <tiny-firmware/firmware/skyparams.h>
 
 #define MNEMONIC_STRENGTH_12 128

@@ -25,7 +25,7 @@
 #include <tiny-firmware/oled.h>
 #include <tiny-firmware/firmware/storage.h>
 #include "messages.pb.h"
-#include "sha2.h"
+#include <tools/sha2.h>
 #include "skycoin_crypto.h"
 
 #define EXTERNAL_ENTROPY_TIMEOUT 60000

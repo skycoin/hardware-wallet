@@ -24,7 +24,7 @@
 
 #include "tiny-firmware/memory.h"
 #include "tiny-firmware/serialno.h"
-#include "sha2.h"
+#include <tools/sha2.h>
 #include "tiny-firmware/util.h"
 
 void fill_serialno_fixed(char* s)
