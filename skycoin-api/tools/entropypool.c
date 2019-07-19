@@ -63,41 +63,20 @@ void random_salted_buffer(uint8_t* buf, size_t len)
     // Random bytes to be mixed with entropy pool have to fit in buckets of size SHA256_DIGEST_LENGTH
     // to prevent padding added by mixing function.
 
-    // buffer_tail_length happens to be the number of bytes that do not fit in chunks of SHA256_DIGEST_LENGTH
-    size_t buffer_tail_length = len % SHA256_DIGEST_LENGTH;
-    // buffer_tail_length happens to be multiple of SHA256_DIGEST_LENGTH
-    size_t buffer_block_length = len - buffer_tail_length;
-
     uint8_t tmp[SHA256_DIGEST_LENGTH] = {0};
-    uint8_t *bufptr = buf, *tmpptr = tmp;
+    uint8_t random_chunk[SHA256_DIGEST_LENGTH] = {0};
+    uint8_t *bufptr = buf, *tmpptr = tmp, *rndptr = random_chunk;
     size_t i, j;
 
-    if (buffer_block_length > 0) {
-        _random_buffer(buf, buffer_block_length);
-
-        for (i = buffer_block_length; i >= SHA256_DIGEST_LENGTH; i -= SHA256_DIGEST_LENGTH) {
-            entropy_mix_256(bufptr, SHA256_DIGEST_LENGTH, tmp);
-            for (j = SHA256_DIGEST_LENGTH, tmpptr = tmp; j; --j, ++tmpptr, ++bufptr) {
-                *bufptr = *bufptr ^ *tmpptr;
-            }
-        }
-    }
-    if (buffer_tail_length > 0) {
-        // Handle the case in which buffer does not fit in chunks of SHA256_DIGEST_LENGTH bytes
-        // A random buffer of SHA256_DIGEST_LENGTH bytes is generated ... random padding
-        uint8_t random_tail[SHA256_DIGEST_LENGTH] = {0};
-        _random_buffer(random_tail, SHA256_DIGEST_LENGTH);
-        // ... then mix it with entropy buffer (i.e. no padding)
-        entropy_mix_256(random_tail, SHA256_DIGEST_LENGTH, tmp);
-        // ... then XOR and copy into buffer ONLY bytes that did not fit in chunks
-        uint8_t *rndptr;
-        for (tmpptr = tmp, rndptr = random_tail, i = buffer_tail_length; i; --i, ++tmpptr, ++bufptr, ++rndptr) {
+    for (i = len; i > 0; ) {
+        _random_buffer(random_chunk, SHA256_DIGEST_LENGTH);
+        entropy_mix_256(random_chunk, SHA256_DIGEST_LENGTH, tmp);
+        for (tmpptr = tmp, rndptr = random_chunk, j = SHA256_DIGEST_LENGTH; i > 0 && j > 0; ++tmpptr, ++bufptr, ++rndptr, --i, --j) {
             *bufptr = *rndptr ^ *tmpptr;
         }
-        rndptr = NULL;
     }
     memset(&tmp, 0, sizeof(tmp));
-    bufptr = tmpptr = NULL;
+    bufptr = tmpptr = rndptr = NULL;
 }
 
 uint32_t random32_salted(void)
