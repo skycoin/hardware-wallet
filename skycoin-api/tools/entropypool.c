@@ -28,9 +28,13 @@ void backup_entropy_pool(uint8_t* buf){
 
 void entropy_mix_256(const uint8_t* in, size_t in_len, uint8_t* out_mixed_entropy)
 {
-    if (in == NULL) {
-      return;
-    }
+	// The entropy pool is a 32 byte block mixer that continually XORs entropy
+	// in 32 byte blocks together with "salt" values. Salts may be of any length.
+	// The salts are to mitigate certain types of attacks relying upon a
+	// hidden structure of the entropy source. Do not consider them a source
+	// of entropy.
+	// Refer to the mixer from Skycoin core (golang) for a reference implementation:
+	// https://github.com/skycoin/skycoin/blob/c0e9b986bd4bd5add2567d7d1057c00e60eaf21e/src/cipher/secp256k1-go/secp256_rand.go
     uint8_t val1[SHA256_DIGEST_LENGTH] = {0};
     sha256sum(in, val1, in_len);
     uint8_t val2[SHA256_DIGEST_LENGTH] = {0};
