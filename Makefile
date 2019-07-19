@@ -218,8 +218,8 @@ test: ## Run all project test suites.
 	make -C skycoin-api/ libskycoin-crypto.so
 	./tiny-firmware/bootloader/test_firmware_sign.py
 	make -C skycoin-api/ libskycoin-crypto.so
-	make -C skycoin-api/ test
 	make -C . clean
+	make -C skycoin-api/ test
 	VERSION_MAJOR=$(VERSION_FIRMWARE_MAJOR) VERSION_MINOR=$(VERSION_FIRMWARE_MINOR) VERSION_PATCH=$(VERSION_FIRMWARE_PATCH) make emulator
 	EMULATOR=1 VERSION_MAJOR=$(VERSION_FIRMWARE_MAJOR) VERSION_MINOR=$(VERSION_FIRMWARE_MINOR) VERSION_PATCH=$(VERSION_FIRMWARE_PATCH) make -C tiny-firmware/ test
 
