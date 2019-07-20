@@ -238,6 +238,8 @@ bool storage_from_flash(void)
 void storage_init(void)
 {
     // NOTE(): storage_uuid is loaded from main function
+    // but there is chance it won't be updated
+    // e.g. running tests
     data2hex(storage_uuid, sizeof(storage_uuid), storage_uuid_str);
     if (!storage_from_flash()) {
         storage_wipe();

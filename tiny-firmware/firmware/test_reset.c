@@ -132,33 +132,42 @@ END_TEST
 START_TEST(test_reset_initNoLabel)
 {
     storage_wipe();
-    ck_assert_str_ne("", storage_getLabel());
-    take_storage_snapshot();
-    ck_assert_str_ne("", storage_snapshot.label);
+    ck_assert_ptr_null(storage_getLabel());
 
+    reset_init_ex(false, 128, true, false, "english", "Label", true, NULL);
+    ck_assert_str_eq("Label", storage_getLabel());
     reset_init_ex(false, 128, true, false, "english", "", true, NULL);
-    ck_assert_str_eq(storage_getLabel(), storage_snapshot.label);
+    ck_assert_str_eq("Label", storage_getLabel());
 }
 END_TEST
 
 START_TEST(test_reset_initWrongPin)
 {
     storage_wipe();
-    ck_assert_str_ne("", storage_getLabel());
+    ck_assert_ptr_null(storage_getLabel());
     take_storage_snapshot();
-    ck_assert_str_ne("", storage_snapshot.label);
+    ck_assert_str_eq("", storage_snapshot.label);
 
-    reset_init_ex(false, 128, true, false, "english", "", true, pin_reader_wrong);
-    ck_assert_str_eq(storage_getLabel(), storage_snapshot.label);
+    reset_init_ex(false, 128, true, true, "english", "Label1", true, pin_reader_ok);
+    ck_assert_str_eq("Label1", storage_getLabel());
+    take_storage_snapshot();
+    ck_assert_str_eq("Label1", storage_snapshot.label);
+    reset_init_ex(false, 128, true, true, "english", NULL, true, pin_reader_wrong);
+    assert_storage_snapshot_eq("Invoking reset_init wih wrong PIN changed storage");
 }
 END_TEST
 
-/*
 START_TEST(test_reset_initCorrectPin)
 {
+    storage_wipe();
+    ck_assert_ptr_null(storage_getLabel());
+
+    reset_init_ex(false, 128, true, true, "english", "Label1", true, pin_reader_ok);
+    ck_assert_str_eq("Label1", storage_getLabel());
+    reset_init_ex(false, 128, true, true, "english", "Label2", true, pin_reader_wrong);
+    ck_assert_str_eq("Label2", storage_getLabel());
 }
 END_TEST
-*/
 
 TCase *add_reset_tests(TCase *tc) {
     // FIXME: test cases for reset_init_ex with display_random=true (needs mocking of button ACK)

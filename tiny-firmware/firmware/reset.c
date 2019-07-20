@@ -79,7 +79,9 @@ void reset_init_ex(bool display_random, uint32_t _strength, bool passphrase_prot
 
     storage_setPassphraseProtection(passphrase_protection);
     storage_setLanguage(language);
-    storage_setLabel(label);
+    if (label != NULL && strcmp("", label) != 0) {
+        storage_setLabel(label);
+    }
     storage_update();
 
     EntropyRequest resp;
