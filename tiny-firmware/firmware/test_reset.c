@@ -164,7 +164,7 @@ START_TEST(test_reset_initCorrectPin)
 
     reset_init_ex(false, 128, true, true, "english", "Label1", true, pin_reader_ok);
     ck_assert_str_eq("Label1", storage_getLabel());
-    reset_init_ex(false, 128, true, true, "english", "Label2", true, pin_reader_wrong);
+    reset_init_ex(false, 128, true, true, "english", "Label2", true, pin_reader_ok);
     ck_assert_str_eq("Label2", storage_getLabel());
 }
 END_TEST
@@ -176,6 +176,7 @@ TCase *add_reset_tests(TCase *tc) {
     tcase_add_test(tc, test_reset_initNoPin);
     tcase_add_test(tc, test_reset_initNoLabel);
     tcase_add_test(tc, test_reset_initWrongPin);
+    tcase_add_test(tc, test_reset_initCorrectPin);
     return tc;
 }
 
