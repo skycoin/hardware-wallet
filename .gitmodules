@@ -1,4 +1,4 @@
 [submodule "tiny-firmware/protob"]
 	path = tiny-firmware/protob
-	url = https://github.com/simelo/skycoin-hardware-wallet-protob.git
+	url = https://github.com/simelo/skycoin-hardware-wallet-protob
 	branch = stdevAdrianPaez_t25_create_long_transactions
