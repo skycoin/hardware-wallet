@@ -472,19 +472,18 @@ void bigTxCtx_AddHead(uint8_t count) {
 
 void bigTxCtx_UpdateInputs(BigTxContext* self, uint8_t inputs [7][32], uint8_t count) {
     for(uint8_t i = 0; i < count; ++i) {
-        sha256_Update(&self->sha256_ctx,inputs[i], HASHER_DIGEST_LENGTH);
+        sha256_Update(&self->sha256_ctx,inputs[i], 32);
         self->current_nbIn +=1;
     }
 }
 
 void bigTxCtx_UpdateOutputs(BigTxContext* self, BigTxOutput outputs[7], uint8_t count){
     for (uint8_t i = 0; i < count; ++i) {
-        uint8_t data[37];
+        uint8_t data[40];
         uint8_t bitcount = 0;
-        data[0] = 0;
         data[bitcount] = 0;
         bitcount += 1;
-        memcpy(&data[bitcount], &outputs[i].address, 20);
+        memcpy(&data[bitcount], outputs[i].address, 20);
         bitcount += 20;
         memcpy(&data[bitcount], (uint8_t*)&outputs[i].coin, 4);
         bitcount += 4;
@@ -493,13 +492,15 @@ void bigTxCtx_UpdateOutputs(BigTxContext* self, BigTxOutput outputs[7], uint8_t 
         memcpy(&data[bitcount], (uint8_t*)&outputs[i].hour, 4);
         bitcount += 4;
         memset(&data[bitcount], 0, 4);
-        sha256_Update(&self->sha256_ctx, data, 37);
+        bitcount += 4;
+        sha256_Update(&self->sha256_ctx, data, bitcount);
         self->current_nbOut+=1;
     }
 }
 
 void bigTxCtx_finishInnerHash(BigTxContext* self){
     sha256_Final(&self->sha256_ctx, self->innerHash);
+    self->has_innerHash = true;
 }
 
 void bigTxCtx_Destroy(BigTxContext* ctx){

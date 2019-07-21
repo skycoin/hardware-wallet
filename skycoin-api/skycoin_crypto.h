@@ -32,6 +32,12 @@ typedef struct Transaction {
     uint8_t innerHash[32];
 } Transaction;
 
+typedef enum _BixTxState {
+    InnerHashInputs = 0,
+    InnerHashOutputs = 1,
+    Signature = 2,
+} BigTxState;
+
 typedef struct _BigTxOutput{
     uint64_t coin;
     uint64_t hour;
@@ -40,6 +46,7 @@ typedef struct _BigTxOutput{
 } BigTxOutput;
 
 typedef struct BigTxContext {
+    BigTxState state;
     uint8_t nbIn;
     uint8_t nbOut;
     uint8_t current_nbIn;
@@ -50,7 +57,7 @@ typedef struct BigTxContext {
     char tx_hash[65];
     bool has_innerHash;
     uint8_t innerHash[32];
-    uint64_t requesIndex;
+    uint64_t requestIndex;
     SHA256_CTX sha256_ctx;
 } BigTxContext;
 
