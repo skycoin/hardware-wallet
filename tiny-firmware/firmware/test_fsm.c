@@ -55,6 +55,8 @@
 #include <inttypes.h>
 #include <stdio.h>
 
+#include "test_pin.h"
+
 static uint8_t msg_resp[MSG_OUT_SIZE] __attribute__((aligned));
 static uint32_t wcs[] = {MNEMONIC_WORD_COUNT_12, MNEMONIC_WORD_COUNT_24};
 
@@ -576,37 +578,6 @@ START_TEST(test_msgGetFeatures)
 #endif // VERSION_IS_SEMANTIC_COMPLIANT == 1
 }
 END_TEST
-
-char* TEST_PIN1 = "123";
-char* TEST_PIN2 = "246";
-
-const char* pin_reader_ok(PinMatrixRequestType pinReqType, const char* text)
-{
-    (void)text;
-    (void)pinReqType;
-    return TEST_PIN1;
-}
-
-const char* pin_reader_alt(PinMatrixRequestType pinReqType, const char* text)
-{
-    (void)text;
-    (void)pinReqType;
-    return TEST_PIN2;
-}
-
-const char* pin_reader_wrong(PinMatrixRequestType pinReqType, const char* text)
-{
-    (void)text;
-    switch (pinReqType) {
-    case PinMatrixRequestType_PinMatrixRequestType_NewFirst:
-        return TEST_PIN1;
-    case PinMatrixRequestType_PinMatrixRequestType_NewSecond:
-        return "456";
-    default:
-        break;
-    }
-    return "789";
-}
 
 /**
  * Test cases : ChangePin
