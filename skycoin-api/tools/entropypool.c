@@ -9,7 +9,7 @@
  *
  */
 
-#include "entropypool.h"
+#include <tools/entropypool.h>
 
 #include <string.h>
 

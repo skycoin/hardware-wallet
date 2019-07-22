@@ -9,7 +9,7 @@
  *
  */
 
-#include "entropy.h"
+#include <tiny-firmware/firmware/entropy.h>
 
 #include <string.h>
 

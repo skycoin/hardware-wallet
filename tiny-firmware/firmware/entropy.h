@@ -16,7 +16,7 @@
 #ifndef __TINYFIRMWARE_FIRMWARE_ENTROPY__
 #define __TINYFIRMWARE_FIRMWARE_ENTROPY__
 
-#include "vendor/skycoin-crypto/tools/entropypool.h"
+#include <tools/entropypool.h>
 
 #define EXTERNAL_ENTROPY_MAX_SIZE 128
 
