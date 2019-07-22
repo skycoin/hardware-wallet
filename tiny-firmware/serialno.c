@@ -27,11 +27,16 @@
 #include <tools/sha2.h>
 #include "tiny-firmware/util.h"
 
-void fill_serialno_fixed(char* s)
+void serialno_from_uuid(uint32_t *uuid, char *s)
 {
-    uint32_t uuid[STM32_UUID_LEN] = {0};
-    desig_get_unique_id(uuid);
     sha256_Raw((const uint8_t*)uuid, 12, (uint8_t*)uuid);
     sha256_Raw((const uint8_t*)uuid, 32, (uint8_t*)uuid);
     data2hex(uuid, STM32_UUID_LEN, s);
+}
+
+void fill_serialno_fixed(char *s)
+{
+	uint32_t uuid[STM32_UUID_LEN] = {0};
+	desig_get_unique_id(uuid);
+	serialno_from_uuid(uuid, s);
 }

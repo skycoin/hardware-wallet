@@ -14,7 +14,10 @@
 #include "tiny-firmware/firmware/test_droplet.h"
 #include "tiny-firmware/firmware/test_fsm.h"
 #include "tiny-firmware/firmware/test_protect.h"
+#include "tiny-firmware/firmware/test_serialno.h"
+#include "tiny-firmware/firmware/test_reset.h"
 #include "tiny-firmware/firmware/test_timer.h"
+
 
 // define test suite and cases
 Suite* test_suite(void)
@@ -25,6 +28,8 @@ Suite* test_suite(void)
     suite_add_tcase(s, add_droplet_tests(tcase_create("droplet")));
     suite_add_tcase(s, add_timer_tests(tcase_create("timer")));
     suite_add_tcase(s, add_protect_tests(tcase_create("protect")));
+    suite_add_tcase(s, add_serialno_tests(tcase_create("serialno")));
+    suite_add_tcase(s, add_reset_tests(tcase_create("reset")));
     return s;
 }
 
