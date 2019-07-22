@@ -26,6 +26,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Commandline tool for signing Skycoin firmware.')
     parser.add_argument('-f', '--file', dest='path', help="Firmware file to modify", required=True)
     parser.add_argument('-s', '--sign', dest='sign', action='store_true', help="Add signature to firmware slot")
+    parser.add_argument('-a', '--add-mh', dest='add_mh', action='store_true', help="Add meta header")
     parser.add_argument('-S', '--slot', type=int, dest='slot', help="Set slot")
     parser.add_argument('-sk', '--secret-key', dest='sec_key', help="Secret key in hexadecimal")
     parser.add_argument('-pk', '--pub-keys', dest='pub_keys', nargs='+', help="Public key in exadecimal", required=True)
@@ -172,6 +173,12 @@ def main(args):
         if len(secexp) != 0:
             if not check_signatures(data, pubkeys):
                 raise Exception("Invalid signature, hard fail")
+    elif args.add_mh:
+        # get_data add the meta header automatically
+        data = get_data(args.path)
+        fp = open(args.path, 'wb')
+        fp.write(data)
+        fp.close()
     else:
         if not check_signatures(data, pubkeys):
             raise Exception("Invalid signature")
