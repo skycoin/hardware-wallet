@@ -438,13 +438,13 @@ ErrCode_t msgTransactionSignImpl(TransactionSign* msg, ErrCode_t (*funcConfirmTx
             tohex(resp->signatures[resp->signatures_count], signature, sizeof(signature));
         }
         resp->signatures_count++;
-#if EMULATOR
+        #if EMULATOR
         char str[64];
         tohex(str, (uint8_t*)digest, 32);
         printf("Signing message:  %s\n", str);
         printf("Signed message:  %s\n", resp->signatures[i]);
         printf("Nb signatures: %d\n", resp->signatures_count);
-#endif
+        #endif
     }
     if (resp->signatures_count != msg->nbIn) {
         // Ensure number of sigs and inputs is the same. Mismatch should never happen.
@@ -603,8 +603,17 @@ ErrCode_t msgRecoveryDeviceImpl(RecoveryDevice* msg, ErrCode_t (*funcConfirmReco
 }
 
 ErrCode_t msgSignTxImpl(SignTx *msg, TxRequest *resp) {
+    #if EMULATOR
+    printf("%s: %d. nbOut: %d\n",
+        _("Transaction signed nbIn"),
+        msg->inputs_count, msg->outputs_count);
+    #endif
     // Init BigTxContext
     BigTxContext *context = initBigTxContext();
+    if (context->mnemonic_change){
+        bigTxCtx_Destroy();
+        return ErrFailed;
+    }
     memcpy(context->coin_name, msg->coin_name, 36 * sizeof(char));
     context->state = InnerHashInputs;
     context->current_nbIn = 0;
@@ -632,19 +641,52 @@ ErrCode_t msgSignTxImpl(SignTx *msg, TxRequest *resp) {
 
 ErrCode_t msgTxAckImpl(TxAck *msg, TxRequest *resp) {
     BigTxContext *ctx = getBigTxCtx();
+    if (ctx == NULL) {
+        bigTxCtx_Destroy();
+        return ErrFailed;
+    }
+    #if EMULATOR
+    switch (ctx->state) {
+        case InnerHashInputs:
+            printf("-> Inner Hash inputs\n");
+            break;
+        case InnerHashOutputs:
+            printf("-> Inner Hash outputs\n");
+            break;
+        case Signature:
+            printf("-> Signatures\n");
+            break;
+    }
+    for(uint32_t i = 0; i < msg->tx.inputs_count; ++i) {
+        printf("   %d - Input: addressIn: %s, address_n: ", i + 1,
+            msg->tx.inputs[i].hashIn);
+        if (msg->tx.inputs[i].address_n_count != 0)
+            printf("%d",msg->tx.inputs[i].address_n[0]);
+        printf("\n");
+    }
+    for (uint32_t i = 0; i < msg->tx.outputs_count; ++i) {
+        printf("   %d - Output: coins: %" PRIu64 ", hours: %" PRIu64 " address: %s address_n: ", i + 1, msg->tx.outputs[i].coins, msg->tx.outputs[i].hours, msg->tx.outputs[i].address);
+        if (msg->tx.outputs[i].address_n_count != 0) {
+            printf("%d",msg->tx.outputs[i].address_n[0]);
+        }
+        printf("\n");
+    }
+    #endif
+    if (ctx->mnemonic_change){
+        bigTxCtx_Destroy();
+        return ErrFailed;
+    }
     uint8_t inputs[7][32];
     for (uint8_t i = 0; i < msg->tx.inputs_count; ++i) {
         writebuf_fromhexstr(msg->tx.inputs[i].hashIn, inputs[i]);
     }
     switch (ctx->state) {
         case InnerHashInputs:
-            if (!msg->tx.inputs_count) {
+            if (!msg->tx.inputs_count || msg->tx.outputs_count) {
+                bigTxCtx_Destroy();
                 return ErrInvalidArg;
             }
             bigTxCtx_UpdateInputs(ctx, inputs, msg->tx.inputs_count);
-            #if EMULATOR
-            printf("|---> Context updated with %u new inputs\n", msg->tx.inputs_count);
-            #endif
             if (ctx->current_nbIn != ctx->nbIn)
                 resp->request_type = TxRequest_RequestType_TXINPUT;
             else {
@@ -654,7 +696,8 @@ ErrCode_t msgTxAckImpl(TxAck *msg, TxRequest *resp) {
             }
             break;
         case InnerHashOutputs:
-            if (!msg->tx.outputs_count) {
+            if (!msg->tx.outputs_count || msg->tx.inputs_count) {
+                bigTxCtx_Destroy();
                 return ErrInvalidArg;
             }
             BigTxOutput outputs[7];
@@ -667,17 +710,10 @@ ErrCode_t msgTxAckImpl(TxAck *msg, TxRequest *resp) {
                 memcpy(outputs[i].address, &b58string[36 - len], len);
             }
             bigTxCtx_UpdateOutputs(ctx, outputs, msg->tx.outputs_count);
-            #if EMULATOR
-            printf("|---> Context updated with new %u outputs\n",msg->tx.outputs_count);
-            #endif
-
             if (ctx->current_nbOut != ctx->nbOut) {
                 resp->request_type = TxRequest_RequestType_TXOUTPUT;
             } else {
                 bigTxCtx_finishInnerHash(ctx);
-                char innerHash[65] = {0};
-                tohex(innerHash,ctx->innerHash,32);
-                printf("Inner Hash: %s\n",innerHash);
                 ctx->state = Signature;
                 ctx->current_nbIn = 0;
                 resp->request_type = TxRequest_RequestType_TXINPUT;
@@ -685,6 +721,7 @@ ErrCode_t msgTxAckImpl(TxAck *msg, TxRequest *resp) {
             break;
         case Signature:
             if (!ctx->has_innerHash) {
+                bigTxCtx_Destroy();
                 return ErrInvalidArg;
             }
             uint8_t signCount = 0;
@@ -709,8 +746,10 @@ ErrCode_t msgTxAckImpl(TxAck *msg, TxRequest *resp) {
             resp->sign_result_count = signCount;
             if (ctx->current_nbIn != ctx->nbIn)
                 resp->request_type = TxRequest_RequestType_TXINPUT;
-            else
+            else{
                 resp->request_type = TxRequest_RequestType_TXFINISHED;
+                bigTxCtx_Destroy();
+            }
             break;
         default:
             break;

@@ -504,6 +504,7 @@ void bigTxCtx_finishInnerHash(BigTxContext* self){
     self->has_innerHash = true;
 }
 
-void bigTxCtx_Destroy(BigTxContext* ctx){
-    free(ctx);
+void bigTxCtx_Destroy(){
+    free(context);
+    context = NULL;
 }

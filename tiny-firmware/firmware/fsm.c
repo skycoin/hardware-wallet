@@ -674,21 +674,14 @@ void fsm_msgEntropyAck(EntropyAck* msg)
 
 void fsm_msgSignTx(SignTx *msg) {
 
-    // FIXME: Add CHECK_PIN and CHECK_MNEMONIC ?
-    // CHECK_PIN
-    // CHECK_MNEMONIC
+    CHECK_PIN
+    CHECK_MNEMONIC
 
-    #if EMULATOR
-    printf("Procesing SignTx message\n");
-    #endif
     MessageType msgtype = MessageType_MessageType_SignTx;
     RESP_INIT(TxRequest)
     ErrCode_t err = msgSignTxImpl(msg, resp);
     switch (err) {
         case ErrOk:
-            #if EMULATOR
-            printf("|---> Sending TxRequest message\n");
-            #endif
             msg_write(MessageType_MessageType_TxRequest, resp);
             break;
         default:
@@ -699,10 +692,10 @@ void fsm_msgSignTx(SignTx *msg) {
 }
 
 void fsm_msgTxAck(TxAck *msg) {
-    (void) msg;
-    #if EMULATOR
-    printf("Processing TxAck message\n");
-    #endif
+
+    CHECK_PIN
+    CHECK_MNEMONIC
+    
     MessageType msgType = MessageType_MessageType_TxAck;
     if (!msg->has_tx) {
         fsm_sendFailure(FailureType_Failure_DataError, "Empty tx field on TxAck message.", &msgType);
@@ -720,9 +713,6 @@ void fsm_msgTxAck(TxAck *msg) {
     ErrCode_t err = msgTxAckImpl(msg, resp);
     switch (err) {
         case ErrOk:
-            #if EMULATOR
-            printf("|---> Sending TxRequest\n");
-            #endif
             msg_write(MessageType_MessageType_TxRequest, resp);
             break;
         default:
