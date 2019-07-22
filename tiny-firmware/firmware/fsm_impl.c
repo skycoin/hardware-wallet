@@ -94,6 +94,10 @@ ErrCode_t msgGenerateMnemonicImpl(GenerateMnemonic* msg, void (*random_buffer_fu
         return ErrInvalidChecksum;
     }
     storage_setMnemonic(mnemonic);
+    BigTxContext* ctx = getBigTxCtx();
+    if(ctx != NULL){
+        ctx->mnemonic_change = true;
+    }
     storage_setNeedsBackup(true);
     storage_setPassphraseProtection(
         msg->has_passphrase_protection && msg->passphrase_protection);
@@ -507,6 +511,10 @@ ErrCode_t msgSetMnemonicImpl(SetMnemonic* msg)
 {
     CHECK_MNEMONIC_CHECKSUM_RET_ERR_CODE
     storage_setMnemonic(msg->mnemonic);
+    BigTxContext* ctx = getBigTxCtx();
+    if(ctx != NULL){
+        ctx->mnemonic_change = true;
+    }
     storage_setNeedsBackup(true);
     storage_update();
     //fsm_sendSuccess(_(msg->mnemonic));

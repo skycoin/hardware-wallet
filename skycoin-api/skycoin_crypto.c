@@ -441,6 +441,7 @@ BigTxContext* context;
 
 BigTxContext* initBigTxContext() {
     context = malloc(sizeof(BigTxContext));
+    context->mnemonic_change = false;
     return context;
 }
 

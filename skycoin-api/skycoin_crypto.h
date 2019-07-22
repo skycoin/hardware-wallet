@@ -46,6 +46,7 @@ typedef struct _BigTxOutput{
 } BigTxOutput;
 
 typedef struct BigTxContext {
+    bool mnemonic_change;
     BigTxState state;
     uint8_t nbIn;
     uint8_t nbOut;
