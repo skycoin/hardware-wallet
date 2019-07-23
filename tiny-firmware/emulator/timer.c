@@ -16,11 +16,11 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this library.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include <tiny-firmware/timer.h>
+#include "tiny-firmware/timer.h"
 
 #include <time.h>
 
-#include <tiny-firmware/firmware/swtimer.h>
+#include "tiny-firmware/firmware/swtimer.h"
 
 void timer_init(void)
 {

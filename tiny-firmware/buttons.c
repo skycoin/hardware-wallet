@@ -17,7 +17,7 @@
  * along with this library.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <tiny-firmware/buttons.h>
+#include "tiny-firmware/buttons.h"
 
 struct buttonState button;
 bool simulateButtonPress = false;

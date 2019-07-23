@@ -18,8 +18,8 @@
  */
 
 
-#include <tiny-firmware/emulator/strl.h>
-#include <tiny-firmware/util.h>
+#include "tiny-firmware/emulator/strl.h"
+#include "tiny-firmware/util.h"
 
 #include <string.h>
 

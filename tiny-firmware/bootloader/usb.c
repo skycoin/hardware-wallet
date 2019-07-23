@@ -24,10 +24,10 @@
 
 #include <string.h>
 
-#include <tiny-firmware/bootloader/usb.h>
+#include "tiny-firmware/bootloader/usb.h"
 
-#include <tiny-firmware/bootloader/bootloader.h>
-#include <tiny-firmware/bootloader/signatures.h>
+#include "tiny-firmware/bootloader/bootloader.h"
+#include "tiny-firmware/bootloader/signatures.h"
 #include <tools/sha2.h>
 #include <tools/ecdsa.h>
 #include <tools/secp256k1.h>

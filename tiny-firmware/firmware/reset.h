@@ -24,7 +24,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include <tiny-firmware/firmware/error.h>
+#include "tiny-firmware/firmware/error.h"
 #include "types.pb.h"
 
 void reset_init(bool display_random, uint32_t _strength, bool passphrase_protection, bool pin_protection, const char* language, const char* label, bool skip_backup);

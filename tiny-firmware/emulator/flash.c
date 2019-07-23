@@ -22,7 +22,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <tiny-firmware/memory.h>
+#include "tiny-firmware/memory.h"
 
 void flash_lock(void) {}
 void flash_unlock(void) {}

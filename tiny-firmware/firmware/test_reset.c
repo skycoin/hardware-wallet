@@ -13,12 +13,12 @@
 #include <stdio.h>
 #include <time.h>
 
-#include <tiny-firmware/firmware/test_pin.h>
-#include <tiny-firmware/firmware/test_reset.h>
+#include "tiny-firmware/firmware/test_pin.h"
+#include "tiny-firmware/firmware/test_reset.h"
 #include <tools/rand.h>
-#include <tiny-firmware/firmware/reset.h>
-#include <tiny-firmware/setup.h>
-#include <tiny-firmware/firmware/storage.h>
+#include "tiny-firmware/firmware/reset.h"
+#include "tiny-firmware/setup.h"
+#include "tiny-firmware/firmware/storage.h"
 
 #define TEST_SERIALNO "DC5E1023685C298CA8E27611"
 

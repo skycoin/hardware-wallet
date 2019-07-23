@@ -11,23 +11,23 @@
 
 #include <libopencm3/stm32/desig.h>
 
-#include <tiny-firmware/firmware/skywallet.h>
-#include <tiny-firmware/oled.h>
-#include <tiny-firmware/gen/bitmaps.h>
-#include <tiny-firmware/util.h>
-#include <tiny-firmware/firmware/usb.h>
-#include <tiny-firmware/setup.h>
-#include <tiny-firmware/firmware/storage.h>
-#include <tiny-firmware/layout.h>
-#include <tiny-firmware/firmware/layout2.h>
-#include <tiny-firmware/rng.h>
-#include <tiny-firmware/timer.h>
-#include <tiny-firmware/buttons.h>
-#include <tiny-firmware/firmware/gettext.h>
-#include <tiny-firmware/firmware/fastflash.h>
-#include <tiny-firmware/firmware/factory_test.h>
-#include <tiny-firmware/firmware/entropy.h>
-#include <tiny-firmware/memory.h>
+#include "tiny-firmware/firmware/skywallet.h"
+#include "tiny-firmware/oled.h"
+#include "tiny-firmware/gen/bitmaps.h"
+#include "tiny-firmware/util.h"
+#include "tiny-firmware/firmware/usb.h"
+#include "tiny-firmware/setup.h"
+#include "tiny-firmware/firmware/storage.h"
+#include "tiny-firmware/layout.h"
+#include "tiny-firmware/firmware/layout2.h"
+#include "tiny-firmware/rng.h"
+#include "tiny-firmware/timer.h"
+#include "tiny-firmware/buttons.h"
+#include "tiny-firmware/firmware/gettext.h"
+#include "tiny-firmware/firmware/fastflash.h"
+#include "tiny-firmware/firmware/factory_test.h"
+#include "tiny-firmware/firmware/entropy.h"
+#include "tiny-firmware/memory.h"
 
 extern uint32_t storage_uuid[STM32_UUID_LEN / sizeof(uint32_t)];
 int main(void)

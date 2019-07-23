@@ -18,17 +18,17 @@
 #include "gpio_noise.h"
 
 #endif // EMULATOR
-#include <tiny-firmware/rng.h>
-#include <tiny-firmware/firmware/swtimer.h>
-#include <tiny-firmware/timer.h>
-#include <tiny-firmware/firmware/messages.h>
-#include <tiny-firmware/oled.h>
-#include <tiny-firmware/firmware/storage.h>
+#include "tiny-firmware/rng.h"
+#include "tiny-firmware/firmware/swtimer.h"
+#include "tiny-firmware/timer.h"
+#include "tiny-firmware/firmware/messages.h"
+#include "tiny-firmware/oled.h"
+#include "tiny-firmware/firmware/storage.h"
 #include "messages.pb.h"
 #include <tools/sha2.h>
 #include "skycoin_crypto.h"
 
-#include <tiny-firmware/timer.h>
+#include "tiny-firmware/timer.h"
 #include <tools/entropypool.h>
 #include <tools/sha2.h>
 

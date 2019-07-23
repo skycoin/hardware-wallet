@@ -25,7 +25,7 @@
 #include "tiny-firmware/gen/bitmaps.h"
 #include "types.pb.h"
 #include <tools/bignum.h>
-#include <tiny-firmware/firmware/skywallet.h>
+#include "tiny-firmware/firmware/skywallet.h"
 
 extern void* layoutLast;
 
