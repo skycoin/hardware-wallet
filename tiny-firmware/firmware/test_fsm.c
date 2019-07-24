@@ -18,10 +18,10 @@
 #include <pb_decode.h>
 #include <pb_encode.h>
 
-#include <tools/base58.h>
-#include <tools/bip32.h>
-#include <tools/bip39.h>
-#include <check_digest.h>
+#include "tools/base58.h"
+#include "tools/bip32.h"
+#include "tools/bip39.h"
+#include "check_digest.h"
 #include "tiny-firmware/firmware/droplet.h"
 #include "tiny-firmware/firmware/entropy.h"
 #include "error.h"
@@ -35,12 +35,12 @@
 #include "tiny-firmware/firmware/pinmatrix.h"
 #include "tiny-firmware/firmware/protect.h"
 #include "messages.pb.h"
-#include <tools/rand.h>
+#include "tools/rand.h"
 #include "tiny-firmware/firmware/recovery.h"
 #include "tiny-firmware/firmware/reset.h"
 #include "tiny-firmware/rng.h"
 #include "tiny-firmware/setup.h"
-#include <skycoin_crypto.h>
+#include "skycoin_crypto.h"
 #include "tiny-firmware/firmware/skyparams.h"
 #include "tiny-firmware/firmware/storage.h"
 #include "tiny-firmware/firmware/test_fsm.h"

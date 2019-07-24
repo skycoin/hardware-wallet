@@ -19,7 +19,7 @@
  */
 
 #include "tiny-firmware/memory.h"
-#include <tools/sha2.h>
+#include "tools/sha2.h"
 #include <libopencm3/stm32/flash.h>
 #include <stdint.h>
 

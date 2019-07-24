@@ -26,7 +26,7 @@
 #include "tiny-firmware/firmware/fsm.h"
 #include "tiny-firmware/firmware/skywallet.h"
 #include "tiny-firmware/firmware/messages.h"
-#include <tools/bip32.h>
+#include "tools/bip32.h"
 #include "tiny-firmware/firmware/storage.h"
 #include "tiny-firmware/firmware/layout2.h"
 #include "tiny-firmware/rng.h"
@@ -36,12 +36,12 @@
 #include "tiny-firmware/firmware/protect.h"
 #include "tiny-firmware/firmware/recovery.h"
 #include "tiny-firmware/firmware/reset.h"
-#include <tools/bip39.h>
+#include "tools/bip39.h"
 #include "tiny-firmware/firmware/usb.h"
-#include <tools/base58.h>
+#include "tools/base58.h"
 #include "tiny-firmware/firmware/gettext.h"
-#include <skycoin_crypto.h>
-#include <check_digest.h>
+#include "skycoin_crypto.h"
+#include "check_digest.h"
 #include "tiny-firmware/firmware/fsm_impl.h"
 #include "tiny-firmware/firmware/droplet.h"
 #include "tiny-firmware/firmware/skyparams.h"

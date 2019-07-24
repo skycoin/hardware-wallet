@@ -22,17 +22,17 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <tools/bignum.h>
-#include <tiny-firmware/firmware/gettext.h>
-#include <tiny-firmware/firmware/layout2.h>
-#include <tiny-firmware/oled.h>
-#include <tiny-firmware/gen/bitmaps.h>
-#include <tiny-firmware/util.h>
-#include <tiny-firmware/timer.h>
-#include <tiny-firmware/firmware/storage.h>
+#include "tools/bignum.h"
+#include "tiny-firmware/firmware/gettext.h"
+#include "tiny-firmware/firmware/layout2.h"
+#include "tiny-firmware/oled.h"
+#include "tiny-firmware/gen/bitmaps.h"
+#include "tiny-firmware/util.h"
+#include "tiny-firmware/timer.h"
+#include "tiny-firmware/firmware/storage.h"
 #include "string.h"
-#include <tools/secp256k1.h>
-#include <tiny-firmware/firmware/gettext.h>
+#include "tools/secp256k1.h"
+#include "tiny-firmware/firmware/gettext.h"
 
 #define BITCOIN_DIVISIBILITY (8)
 #define BIP32_MAX_LAST_ELEMENT 1000000

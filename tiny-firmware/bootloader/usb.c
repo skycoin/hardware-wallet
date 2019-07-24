@@ -28,10 +28,10 @@
 
 #include "tiny-firmware/bootloader/bootloader.h"
 #include "tiny-firmware/bootloader/signatures.h"
-#include <tools/sha2.h>
-#include <tools/ecdsa.h>
-#include <tools/secp256k1.h>
-#include <tools/memzero.h>
+#include "tools/sha2.h"
+#include "tools/ecdsa.h"
+#include "tools/secp256k1.h"
+#include "tools/memzero.h"
 #include "tiny-firmware/buttons.h"
 #include "tiny-firmware/oled.h"
 #include "tiny-firmware/rng.h"
