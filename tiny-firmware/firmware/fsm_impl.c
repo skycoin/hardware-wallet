@@ -639,6 +639,25 @@ ErrCode_t msgSignTxImpl(SignTx *msg, TxRequest *resp) {
     return ErrOk;
 }
 
+ErrCode_t reqConfirmTransaction(uint64_t coins, uint64_t hours,char* address){
+    char strCoins[32];
+    char strHours[32];
+    char strValue[20];
+    char* coinString = coins == 1000000 ? _("coin") : _("coins");
+    char* hourString = (hours == 1 || hours == 0) ? _("hour") : _("hours");
+    char* strValueMsg = sprint_coins(coins,SKYPARAM_DROPLET_PRECISION_EXP, sizeof(strValue), strValue);
+    if (strValue == NULL) {
+        strcpy(strCoins, "toomany coins");
+    }
+    sprintf(strCoins, "%s %s %s", _("send"), strValueMsg, coinString);
+    sprintf(strHours, "%" PRIu64 "%s", hours, hourString);
+    layoutDialogSwipe(&bmp_icon_question,_("Cancel"),_("Next"),NULL,_("Do you really want to"),strCoins,strHours,_("to address"), _("..."), NULL);
+    CHECK_BUTTON_PROTECT_RET_ERR_CODE
+    layoutAddress(address);
+    CHECK_BUTTON_PROTECT_RET_ERR_CODE
+    return ErrOk;
+}
+
 ErrCode_t msgTxAckImpl(TxAck *msg, TxRequest *resp) {
     BigTxContext *ctx = getBigTxCtx();
     if (ctx == NULL) {
@@ -702,6 +721,11 @@ ErrCode_t msgTxAckImpl(TxAck *msg, TxRequest *resp) {
             }
             BigTxOutput outputs[7];
             for (uint8_t i = 0; i < msg->tx.outputs_count; ++i) {
+                if(!msg->tx.outputs[i].address_n_count){
+                    ErrCode_t err = reqConfirmTransaction(msg->tx.outputs[i].coins,msg->tx.outputs[i].hours,msg->tx.outputs[i].address);
+                    if (err != ErrOk)
+                        return err;
+                }
                 outputs[i].coin = msg->tx.outputs[i].coins;
                 outputs[i].hour = msg->tx.outputs[i].hours;
                 size_t len = 36;
