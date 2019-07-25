@@ -614,7 +614,8 @@ void fsm_msgBackupDevice(BackupDevice* msg)
         fsm_sendSuccess(_("Device backed up!"), &msgtype);
         break;
         CASE_SEND_FAILURE(ErrUnexpectedMessage, FailureType_Failure_UnexpectedMessage, _("Seed already backed up"))
-        CASE_SEND_FAILURE(ErrActionCancelled, FailureType_Failure_ActionCancelled, NULL)
+        // FIXME https://github.com/skycoin/hardware-wallet/issues/191#issuecomment-515221411
+        // CASE_SEND_FAILURE(ErrActionCancelled, FailureType_Failure_ActionCancelled, NULL)
         CASE_SEND_FAILURE(ErrUnfinishedBackup, FailureType_Failure_ActionCancelled, _("Backup operation did not finish properly."))
     default:
         fsm_sendFailure(FailureType_Failure_FirmwareError, _("Unexpected failure"), &msgtype);
