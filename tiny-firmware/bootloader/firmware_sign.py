@@ -1,4 +1,6 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 from __future__ import print_function
 import argparse
 import hashlib
@@ -6,6 +8,7 @@ import struct
 import binascii
 import skycoin_crypto
 import random
+import sys
 
 try:
     raw_input
@@ -14,23 +17,19 @@ except:
 
 SLOTS = 3
 
-pubkeys = {
-    1: '024291e2425a2fc7ec7bd75c8128726ca8cfb7ce9c04ae8186b66c3516f0f80cd2',
-    2: '03e592cb31c3c2cc9b3810e5c78298280b0cc785cd7f28e36e135aa8a0fc74d081',
-    3: '03b155df34b4c0879fdd6bde2acb9c7a45e93aa0bd0c697f6292dc3d1cb4c596d6',
-    4: '026d1d2e1c4af5a2c89e8e4c8bf724034d0252eb8b9179fc6eec9ceb8bb1734997',
-    5: '033bdf377502789d27a1d534775392af97a93333181b9736395b3db687ceffc473',
-}
-
 SIG_LEN = 65
 RESERVED_LEN = 49
 INDEXES_START = len('SKY1') + struct.calcsize('<I')
 SIG_START = INDEXES_START + SLOTS + 1 + RESERVED_LEN
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='Commandline tool for signing Trezor firmware.')
-    parser.add_argument('-f', '--file', dest='path', help="Firmware file to modify")
+    parser = argparse.ArgumentParser(description='Commandline tool for signing Skycoin firmware.')
+    parser.add_argument('-f', '--file', dest='path', help="Firmware file to modify", required=True)
     parser.add_argument('-s', '--sign', dest='sign', action='store_true', help="Add signature to firmware slot")
+    parser.add_argument('-a', '--add-mh', dest='add_mh', action='store_true', help="Add meta header")
+    parser.add_argument('-S', '--slot', type=int, dest='slot', help="Set slot")
+    parser.add_argument('-sk', '--secret-key', dest='sec_key', help="Secret key in hexadecimal")
+    parser.add_argument('-pk', '--pub-keys', dest='pub_keys', nargs='+', help="Public key in hexadecimal", required=True)
 
     return parser.parse_args()
 
@@ -57,10 +56,9 @@ def prepare(data):
 
     return out
 
-def check_signatures(data):
+def check_signatures(data, pubkeys):
     # Analyses given firmware and prints out
-    # status of included signatures
-
+    # status of included signatures. Return True on success False on failed.
     try:
         indexes = [ord(x) for x in data[INDEXES_START:INDEXES_START + SLOTS]]
     except:
@@ -83,7 +81,7 @@ def check_signatures(data):
             pubkey = skycoin.SkycoinEcdsaVerifyDigestRecover(signature, binascii.unhexlify(fingerprint))
             pubkey = binascii.hexlify(pubkey)
 
-            if (pubkey == pk):
+            if (pubkey.decode('utf-8') == pk):
                 if indexes[x] in used:
                     print("Slot #%d signature: DUPLICATE" % (x + 1), binascii.hexlify(signature))
                 else:
@@ -91,36 +89,31 @@ def check_signatures(data):
                     print("Slot #%d signature: VALID" % (x + 1), binascii.hexlify(signature))
             else:
                 print("Slot #%d signature: INVALID" % (x + 1), binascii.hexlify(signature))
+                return False
+    return len(used) > 0
 
 
 def modify(data, slot, index, signature):
     # Replace signature in data
 
     # Put index to data
-    data = data[:INDEXES_START + slot - 1 ] + chr(index) + data[INDEXES_START + slot:]
+    data = data[:INDEXES_START + slot - 1 ] + bytes([index]) + data[INDEXES_START + slot:]
 
     # Put signature to data
     data = data[:SIG_START + SIG_LEN * (slot - 1) ] + signature + data[SIG_START + SIG_LEN * slot:]
 
     return data
 
-def sign(data):
-    # Ask for index and private key and signs the firmware
-
-    slot = int(raw_input('Enter signature slot (1-%d): ' % SLOTS))
+def sign(data, pubkeys, secexp, slot):
     if slot < 1 or slot > SLOTS:
         raise Exception("Invalid slot")
-
-    print("Paste SECEXP (in hex) and press Enter:")
-    print("(blank private key removes the signature on given index)")
-    secexp = raw_input()
     if secexp.strip() == '':
         # Blank key, let's remove existing signature from slot
-        return modify(data, slot, 0, '\x00' * SIG_LEN)
-    skycoin = skycoin_crypto.SkycoinCrypto()
+        return modify(data, slot, 0, b'\x00' * SIG_LEN)
     seckey = binascii.unhexlify(secexp)
+    skycoin = skycoin_crypto.SkycoinCrypto()
     pubkey = skycoin.SkycoinPubkeyFromSeckey(seckey)
-    pubkey = binascii.hexlify(pubkey)
+    pubkey = binascii.hexlify(pubkey).decode('utf-8')
 
     to_sign = prepare(data)[256:] # without meta
     fingerprint = hashlib.sha256(to_sign).hexdigest()
@@ -143,12 +136,9 @@ def sign(data):
 
     return modify(data, slot, index, signature)
 
-def main(args):
-
-    if not args.path:
-        raise Exception("-f/--file is required")
-
-    data = open(args.path, 'rb').read()
+def get_data(path):
+    with open(path, 'rb') as fp:
+        data = fp.read()
     assert len(data) % 4 == 0
 
     if data[:4] != b'SKY1':
@@ -159,16 +149,39 @@ def main(args):
         raise Exception("Firmware header expected")
 
     print("Firmware size %d bytes" % len(data))
+    return data
 
-    check_signatures(data)
-
+def main(args):
+    pubkeys = {}
+    for idx, pub_key in enumerate(args.pub_keys):
+        pubkeys[idx + 1] = pub_key
+    data = get_data(args.path)
     if args.sign:
-        data = sign(data)
-        check_signatures(data)
-
-    fp = open(args.path, 'wb')
-    fp.write(data)
-    fp.close()
+        # Ask for index and private key and signs the firmware
+        if not args.slot:
+            slot = int(raw_input('Enter signature slot (1-%d): ' % SLOTS))
+        else:
+            slot = args.slot
+        if not args.sec_key:
+            print("Paste SECEXP (in hex) and press Enter:")
+            print("(blank private key removes the signature on given index)")
+            secexp = raw_input()
+        else:
+            secexp = args.sec_key
+        data = sign(data, pubkeys, secexp, slot)
+        if len(secexp) != 0:
+            if not check_signatures(data, pubkeys):
+                raise Exception("Invalid signature, hard fail")
+    elif args.add_mh:
+        # get_data add the meta header automatically
+        data = get_data(args.path)
+        with open(args.path, 'wb') as fp:
+            fp.write(data)
+    else:
+        if not check_signatures(data, pubkeys):
+            raise Exception("Invalid signature")
+    with open(args.path, 'wb') as fp:
+        fp.write(data)
 
 if __name__ == '__main__':
     args = parse_args()
