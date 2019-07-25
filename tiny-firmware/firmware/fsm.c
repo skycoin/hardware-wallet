@@ -621,9 +621,7 @@ void fsm_msgBackupDevice(BackupDevice* msg)
         fsm_sendFailure(FailureType_Failure_FirmwareError, _("Unexpected failure"), &msgtype);
         break;
     }
-    if (err != ErrActionCancelled) {
-        layoutHome();
-    }
+    layoutHome();
 }
 
 ErrCode_t confirmRecovery(void)

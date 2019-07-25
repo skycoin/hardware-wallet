@@ -109,12 +109,11 @@ ErrCode_t reset_entropy(void)
 
 static char current_word[10];
 
-// separated == true if called as a separate workflow via BackupMessage
-void reset_backup(bool separated)
+ErrCode_t reset_backup(bool separated)
 {
     if (!storage_needsBackup()) {
         fsm_sendFailure(FailureType_Failure_UnexpectedMessage, _("Seed already backed up"), 0);
-        return;
+        return ErrUnexpectedMessage;
     }
 
     storage_setUnfinishedBackup(true);
@@ -147,7 +146,7 @@ void reset_backup(bool separated)
                 }
                 layoutHome();
                 fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL, 0);
-                return;
+                return ErrActionCancelled;
             }
             word_pos++;
         }
@@ -160,6 +159,7 @@ void reset_backup(bool separated)
         fsm_sendSuccess(_("Device successfully initialized"), 0);
     }
     layoutHome();
+    return ErrOk;
 }
 
 #if DEBUG_LINK
