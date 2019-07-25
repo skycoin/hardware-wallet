@@ -2,7 +2,7 @@ from ctypes import cdll, c_char_p, c_uint32, c_size_t, byref, addressof, create_
 import binascii
 import os
 
-dir_path = os.path.dirname(os.path.realpath(__file__))
+dir_path = os.path.dirname(os.path.abspath(__file__))
 
 class SkycoinCryptoException(Exception):
     pass
@@ -24,6 +24,13 @@ class SkycoinCrypto(object):
         if len(signature.raw) != 65:
             raise SkycoinCryptoException("signature length {} is not 65 bytes".format(len(signature.raw)))
         return signature.raw
+
+    def KeyPair(self):
+        seed = os.urandom(32)
+        sec_key = create_string_buffer(32)
+        pub_key = create_string_buffer(33)
+        self.lib.deterministic_key_pair_iterator(seed, 32, seed, sec_key, pub_key)
+        return sec_key, pub_key
 
     def SkycoinPubkeyFromSeckey(self, seckey):
         if len(seckey) != 32:
