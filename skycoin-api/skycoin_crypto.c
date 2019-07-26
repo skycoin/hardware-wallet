@@ -437,16 +437,15 @@ void transaction_msgToSign(Transaction* self, uint8_t index, uint8_t* msg_digest
     sha256_Final(&sha256ctx, msg_digest);
 }
 
-TxSignContext* context;
+static TxSignContext context;
 
 TxSignContext* TxSignCtx_Init() {
-    context = malloc(sizeof(TxSignContext));
-    context->mnemonic_change = false;
-    return context;
+    context.mnemonic_change = false;
+    return &context;
 }
 
 TxSignContext* TxSignCtx_Get(){
-    return context;
+    return &context;
 }
 
 void TxSignCtx_printSHA256(TxSignContext* ctx) {
@@ -498,11 +497,10 @@ void TxSignCtx_UpdateOutputs(TxSignContext* ctx, TransactionOutput outputs[7], u
 }
 
 void TxSignCtx_finishInnerHash(TxSignContext* ctx){
-    sha256_Final(&ctx->sha256_ctx, context->innerHash);
+    sha256_Final(&ctx->sha256_ctx, ctx->innerHash);
     ctx->has_innerHash = true;
 }
 
 void TxSignCtx_Destroy(TxSignContext* ctx){
-    free(ctx);
-    ctx = NULL;
+    memset(ctx,0,sizeof(TxSignContext));
 }
