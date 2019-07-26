@@ -111,8 +111,8 @@ CFLAGS   += $(OPTFLAGS) \
             -DRAND_PLATFORM_INDEPENDENT=1 \
             -I$(TOOLCHAIN_DIR)/include \
             -I$(TOP_DIR)gen \
+            -I$(GLOBAL_PATH) \
             -isystem$(TOP_DIR)vendor/skycoin-crypto \
-            -I$(GLOBAL_PATH)
 
 LDFLAGS  += -L$(TOP_DIR) \
             $(DBGFLAGS) \
