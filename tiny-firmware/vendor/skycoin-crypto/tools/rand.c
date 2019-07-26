@@ -39,6 +39,8 @@
 #include <assert.h>
 #endif
 
+void _random_buffer(uint8_t* buf, size_t len) TARGET_ATTRIBUTE_WEAK;
+
 // This function is not compiled in firmware
 uint32_t __attribute__((weak)) _random32(void)
 {
