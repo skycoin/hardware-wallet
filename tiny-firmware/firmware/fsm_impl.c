@@ -94,7 +94,7 @@ ErrCode_t msgGenerateMnemonicImpl(GenerateMnemonic* msg, void (*random_buffer_fu
         return ErrInvalidChecksum;
     }
     storage_setMnemonic(mnemonic);
-    BigTxContext* ctx = getBigTxCtx();
+    TxSignContext* ctx = TxSignCtx_Get();
     if(ctx != NULL){
         ctx->mnemonic_change = true;
     }
@@ -511,7 +511,7 @@ ErrCode_t msgSetMnemonicImpl(SetMnemonic* msg)
 {
     CHECK_MNEMONIC_CHECKSUM_RET_ERR_CODE
     storage_setMnemonic(msg->mnemonic);
-    BigTxContext* ctx = getBigTxCtx();
+    TxSignContext* ctx = TxSignCtx_Get();
     if(ctx != NULL){
         ctx->mnemonic_change = true;
     }
@@ -608,10 +608,10 @@ ErrCode_t msgSignTxImpl(SignTx *msg, TxRequest *resp) {
         _("Transaction signed nbIn"),
         msg->inputs_count, msg->outputs_count);
     #endif
-    // Init BigTxContext
-    BigTxContext *context = initBigTxContext();
+    // Init TxSignContext
+    TxSignContext *context = TxSignCtx_Init();
     if (context->mnemonic_change){
-        bigTxCtx_Destroy();
+        TxSignCtx_Destroy(context);
         return ErrFailed;
     }
     memcpy(context->coin_name, msg->coin_name, 36 * sizeof(char));
@@ -628,7 +628,7 @@ ErrCode_t msgSignTxImpl(SignTx *msg, TxRequest *resp) {
     context->requestIndex = 0;
 
     // Init Inputs head on sha256
-    bigTxCtx_AddHead(msg->inputs_count);
+    TxSignCtx_AddSizePrefix(context,msg->inputs_count);
 
     // Build response TxRequest
     resp->has_details = true;
@@ -659,9 +659,9 @@ ErrCode_t reqConfirmTransaction(uint64_t coins, uint64_t hours,char* address){
 }
 
 ErrCode_t msgTxAckImpl(TxAck *msg, TxRequest *resp) {
-    BigTxContext *ctx = getBigTxCtx();
+    TxSignContext *ctx = TxSignCtx_Get();
     if (ctx == NULL) {
-        bigTxCtx_Destroy();
+        TxSignCtx_Destroy(ctx);
         return ErrFailed;
     }
     #if EMULATOR
@@ -692,7 +692,7 @@ ErrCode_t msgTxAckImpl(TxAck *msg, TxRequest *resp) {
     }
     #endif
     if (ctx->mnemonic_change){
-        bigTxCtx_Destroy();
+        TxSignCtx_Destroy(ctx);
         return ErrFailed;
     }
     uint8_t inputs[7][32];
@@ -702,24 +702,24 @@ ErrCode_t msgTxAckImpl(TxAck *msg, TxRequest *resp) {
     switch (ctx->state) {
         case InnerHashInputs:
             if (!msg->tx.inputs_count || msg->tx.outputs_count) {
-                bigTxCtx_Destroy();
+                TxSignCtx_Destroy(ctx);
                 return ErrInvalidArg;
             }
-            bigTxCtx_UpdateInputs(ctx, inputs, msg->tx.inputs_count);
+            TxSignCtx_UpdateInputs(ctx, inputs, msg->tx.inputs_count);
             if (ctx->current_nbIn != ctx->nbIn)
                 resp->request_type = TxRequest_RequestType_TXINPUT;
             else {
-                bigTxCtx_AddHead(ctx->nbOut);
+                TxSignCtx_AddSizePrefix(ctx,ctx->nbOut);
                 resp->request_type = TxRequest_RequestType_TXOUTPUT;
                 ctx->state = InnerHashOutputs;
             }
             break;
         case InnerHashOutputs:
             if (!msg->tx.outputs_count || msg->tx.inputs_count) {
-                bigTxCtx_Destroy();
+                TxSignCtx_Destroy(ctx);
                 return ErrInvalidArg;
             }
-            BigTxOutput outputs[7];
+            TransactionOutput outputs[7];
             for (uint8_t i = 0; i < msg->tx.outputs_count; ++i) {
                 if(!msg->tx.outputs[i].address_n_count){
                     ErrCode_t err = reqConfirmTransaction(msg->tx.outputs[i].coins,msg->tx.outputs[i].hours,msg->tx.outputs[i].address);
@@ -733,11 +733,11 @@ ErrCode_t msgTxAckImpl(TxAck *msg, TxRequest *resp) {
                 b58tobin(b58string, &len, msg->tx.outputs[i].address);
                 memcpy(outputs[i].address, &b58string[36 - len], len);
             }
-            bigTxCtx_UpdateOutputs(ctx, outputs, msg->tx.outputs_count);
+            TxSignCtx_UpdateOutputs(ctx,outputs, msg->tx.outputs_count);
             if (ctx->current_nbOut != ctx->nbOut) {
                 resp->request_type = TxRequest_RequestType_TXOUTPUT;
             } else {
-                bigTxCtx_finishInnerHash(ctx);
+                TxSignCtx_finishInnerHash(ctx);
                 ctx->state = Signature;
                 ctx->current_nbIn = 0;
                 resp->request_type = TxRequest_RequestType_TXINPUT;
@@ -745,7 +745,7 @@ ErrCode_t msgTxAckImpl(TxAck *msg, TxRequest *resp) {
             break;
         case Signature:
             if (!ctx->has_innerHash) {
-                bigTxCtx_Destroy();
+                TxSignCtx_Destroy(ctx);
                 return ErrInvalidArg;
             }
             uint8_t signCount = 0;
@@ -772,7 +772,7 @@ ErrCode_t msgTxAckImpl(TxAck *msg, TxRequest *resp) {
                 resp->request_type = TxRequest_RequestType_TXINPUT;
             else{
                 resp->request_type = TxRequest_RequestType_TXFINISHED;
-                bigTxCtx_Destroy();
+                TxSignCtx_Destroy(ctx);
             }
             break;
         default:

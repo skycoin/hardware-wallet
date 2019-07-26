@@ -437,48 +437,46 @@ void transaction_msgToSign(Transaction* self, uint8_t index, uint8_t* msg_digest
     sha256_Final(&sha256ctx, msg_digest);
 }
 
-BigTxContext* context;
+TxSignContext* context;
 
-BigTxContext* initBigTxContext() {
-    context = malloc(sizeof(BigTxContext));
+TxSignContext* TxSignCtx_Init() {
+    context = malloc(sizeof(TxSignContext));
     context->mnemonic_change = false;
     return context;
 }
 
-BigTxContext* getBigTxCtx(){
+TxSignContext* TxSignCtx_Get(){
     return context;
 }
 
-void printSHA256(BigTxContext* ctx) {
+void TxSignCtx_printSHA256(TxSignContext* ctx) {
     uint8_t* buffer = (uint8_t*)ctx->sha256_ctx.buffer;
     for(uint8_t i = 0; i < 64; ++i)
         printf("%u ",buffer[i]);
     printf("\n");
 }
 
-void bigTxCtx_printInnerHash(BigTxContext* self) {
-    for(uint8_t i = 0; i < 32; ++i) {
-        printf("%u ", self->innerHash[i]);
-    }
-    printf("\n");
+void TxSignCtx_printInnerHash(TxSignContext* ctx) {
+    char innerHash[64];
+    tohex(innerHash,ctx->innerHash,32);
+    printf("Inner hash: %s\n",innerHash);
 }
 
-void bigTxCtx_AddHead(uint8_t count) {
-    BigTxContext* ctx = getBigTxCtx();
+void TxSignCtx_AddSizePrefix(TxSignContext* ctx, uint8_t count) {
     uint8_t data[4];
     memcpy(data, &count, 1);
     memset(&data[1], 0, 3);
     sha256_Update(&ctx->sha256_ctx, data, 4);
 }
 
-void bigTxCtx_UpdateInputs(BigTxContext* self, uint8_t inputs [7][32], uint8_t count) {
+void TxSignCtx_UpdateInputs(TxSignContext* ctx, uint8_t inputs [7][32], uint8_t count) {
     for(uint8_t i = 0; i < count; ++i) {
-        sha256_Update(&self->sha256_ctx,inputs[i], 32);
-        self->current_nbIn +=1;
+        sha256_Update(&ctx->sha256_ctx,inputs[i], 32);
+        ctx->current_nbIn +=1;
     }
 }
 
-void bigTxCtx_UpdateOutputs(BigTxContext* self, BigTxOutput outputs[7], uint8_t count){
+void TxSignCtx_UpdateOutputs(TxSignContext* ctx, TransactionOutput outputs[7], uint8_t count){
     for (uint8_t i = 0; i < count; ++i) {
         uint8_t data[40];
         uint8_t bitcount = 0;
@@ -494,17 +492,17 @@ void bigTxCtx_UpdateOutputs(BigTxContext* self, BigTxOutput outputs[7], uint8_t 
         bitcount += 4;
         memset(&data[bitcount], 0, 4);
         bitcount += 4;
-        sha256_Update(&self->sha256_ctx, data, bitcount);
-        self->current_nbOut+=1;
+        sha256_Update(&ctx->sha256_ctx, data, bitcount);
+        ctx->current_nbOut+=1;
     }
 }
 
-void bigTxCtx_finishInnerHash(BigTxContext* self){
-    sha256_Final(&self->sha256_ctx, self->innerHash);
-    self->has_innerHash = true;
+void TxSignCtx_finishInnerHash(TxSignContext* ctx){
+    sha256_Final(&ctx->sha256_ctx, context->innerHash);
+    ctx->has_innerHash = true;
 }
 
-void bigTxCtx_Destroy(){
-    free(context);
-    context = NULL;
+void TxSignCtx_Destroy(TxSignContext* ctx){
+    free(ctx);
+    ctx = NULL;
 }

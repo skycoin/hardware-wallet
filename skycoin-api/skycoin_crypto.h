@@ -21,6 +21,7 @@ typedef struct TransactionOutput {
     uint64_t coin;
     uint64_t hour;
     uint8_t address[20];
+    uint32_t address_n[8];
 } TransactionOutput;
 
 typedef struct Transaction {
@@ -32,22 +33,15 @@ typedef struct Transaction {
     uint8_t innerHash[32];
 } Transaction;
 
-typedef enum _BixTxState {
+typedef enum _TxSignState {
     InnerHashInputs = 0,
     InnerHashOutputs = 1,
     Signature = 2,
-} BigTxState;
+} TxSignState;
 
-typedef struct _BigTxOutput{
-    uint64_t coin;
-    uint64_t hour;
-    uint8_t address[20];
-    uint32_t address_n[8];
-} BigTxOutput;
-
-typedef struct BigTxContext {
+typedef struct _TxSignContext {
     bool mnemonic_change;
-    BigTxState state;
+    TxSignState state;
     uint8_t nbIn;
     uint8_t nbOut;
     uint8_t current_nbIn;
@@ -60,7 +54,7 @@ typedef struct BigTxContext {
     uint8_t innerHash[32];
     uint64_t requestIndex;
     SHA256_CTX sha256_ctx;
-} BigTxContext;
+} TxSignContext;
 
 void transaction_initZeroTransaction(Transaction* self);
 void transaction_addInput(Transaction* self, uint8_t* address);
@@ -81,15 +75,15 @@ void tohex(char* str, const uint8_t* buffer, int buffer_length);
 void tobuff(const char* str, uint8_t* buf, size_t buffer_length);
 void writebuf_fromhexstr(const char* str, uint8_t* buf);
 
-BigTxContext* initBigTxContext(void);
-BigTxContext* getBigTxCtx(void);
-void bigTxCtx_AddHead(uint8_t nbIn);
-void bigTxCtx_UpdateInputs(BigTxContext* self, uint8_t inputs [7][32], uint8_t count);
-void bigTxCtx_UpdateOutputs(BigTxContext* self, BigTxOutput outputs[7], uint8_t count);
-void bigTxCtx_finishInnerHash(BigTxContext* self);
-void bigTxCtx_Destroy(void);
-void bigTxCtx_printInnerHash(BigTxContext* self);
-void printSHA256(BigTxContext* ctx);
+TxSignContext* TxSignCtx_Init(void);
+TxSignContext* TxSignCtx_Get(void);
+void TxSignCtx_AddSizePrefix(TxSignContext* ctx, uint8_t nbIn);
+void TxSignCtx_UpdateInputs(TxSignContext* ctx, uint8_t inputs [7][32], uint8_t count);
+void TxSignCtx_UpdateOutputs(TxSignContext* ctx, TransactionOutput outputs[7], uint8_t count);
+void TxSignCtx_finishInnerHash(TxSignContext* ctx);
+void TxSignCtx_Destroy(TxSignContext* ctx);
+void TxSignCtx_printInnerHash(TxSignContext* ctx);
+void TxSignCtx_printSHA256(TxSignContext* ctx);
  /* @brief verify_pub_key ec secp256k1
  * @param pub_key pub key to b verified
  * @return true if the verification success
