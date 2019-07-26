@@ -75,14 +75,46 @@ void tohex(char* str, const uint8_t* buffer, int buffer_length);
 void tobuff(const char* str, uint8_t* buf, size_t buffer_length);
 void writebuf_fromhexstr(const char* str, uint8_t* buf);
 
+/*  @brief Initialize global variable context
+ *  @return Pointer to TxSignContext
+ */
 TxSignContext* TxSignCtx_Init(void);
+/* @brief Get current transaction context 
+ * @return Pointer to TxSignContext
+ */
 TxSignContext* TxSignCtx_Get(void);
+/*  @brief Add size prefix of inputs or outputs to SHA256 context inside ctx
+ *  @param ctx Context with SHA256 context for update
+ *  @param nbIn Number of inputs or outputs
+ */
 void TxSignCtx_AddSizePrefix(TxSignContext* ctx, uint8_t nbIn);
+/*  @brief Update SHA256 context with new inputs
+ *  @param ctx Context with SHA256 context to be updated
+ *  @param inputs Inputs for add
+ *  @param count Number of inputs on inputs param
+ */
 void TxSignCtx_UpdateInputs(TxSignContext* ctx, uint8_t inputs [7][32], uint8_t count);
+/*  @brief Update SHA256 context with new outputs
+ *  @param ctx Context with SHA256 context to be updated
+ *  @param outputs Outputs for add
+ *  @param count Number of outputs on outputs param
+ */
 void TxSignCtx_UpdateOutputs(TxSignContext* ctx, TransactionOutput outputs[7], uint8_t count);
+/*  @brief Finish SHA256 context and store inner hash on innerHash and set has_innerHash correctly
+ *  @param ctx Context with SHA256 to be finished
+ */
 void TxSignCtx_finishInnerHash(TxSignContext* ctx);
+/*  @brief Destroy (set with 0) all memory occupied for ctx
+ *  @param ctx Context to be destroyed
+ */
 void TxSignCtx_Destroy(TxSignContext* ctx);
+/*  @brief Print inner hash
+ *  @param ctx Context with inner hash to print
+ */
 void TxSignCtx_printInnerHash(TxSignContext* ctx);
+/*  @brief Print SHA256 context buffer
+ *  @param ctx Context with SHA256 context buffer to be printed
+ */
 void TxSignCtx_printSHA256(TxSignContext* ctx);
  /* @brief verify_pub_key ec secp256k1
  * @param pub_key pub key to b verified
