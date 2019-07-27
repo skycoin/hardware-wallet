@@ -719,5 +719,6 @@ void fsm_msgTxAck(TxAck *msg) {
             fsm_sendResponseFromErrCode(err, NULL, "Error on fsm_msgTxAck", &msgType);
             break;
     }
+    layoutHome();
     return;
 }
