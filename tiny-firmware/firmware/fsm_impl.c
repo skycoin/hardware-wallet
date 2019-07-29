@@ -608,8 +608,11 @@ ErrCode_t msgSignTxImpl(SignTx *msg, TxRequest *resp) {
         _("Transaction signed nbIn"),
         msg->inputs_count, msg->outputs_count);
     #endif
+    TxSignContext *context = TxSignCtx_Get();
+    if(context->state != Destroyed)
+        return ErrFailed;
     // Init TxSignContext
-    TxSignContext *context = TxSignCtx_Init();
+    context = TxSignCtx_Init();
     if (context->mnemonic_change){
         TxSignCtx_Destroy(context);
         return ErrFailed;
@@ -658,11 +661,28 @@ ErrCode_t reqConfirmTransaction(uint64_t coins, uint64_t hours,char* address){
     return ErrOk;
 }
 
+ErrCode_t checkTxAckData(TxAck* msg){
+    TxSignContext *ctx = TxSignCtx_Get();
+    switch (ctx->state) {
+        case InnerHashInputs:
+        case InnerHashOutputs:
+            if (msg->has_tx && ((msg->tx.inputs_count && !msg->tx.outputs_count) || (!msg->tx.inputs_count && msg->tx.outputs_count)))
+                return ErrOk;
+            return ErrFailed;
+        case Signature:
+            if (msg->has_tx && (msg->tx.inputs_count && !msg->tx.outputs_count))
+                return ErrOk;
+            return ErrFailed;
+        default:
+            return ErrFailed;
+    }
+}
+
 ErrCode_t msgTxAckImpl(TxAck *msg, TxRequest *resp) {
     TxSignContext *ctx = TxSignCtx_Get();
-    if (ctx == NULL) {
+    if (ctx->state != Start && ctx->state != InnerHashInputs && ctx->state != InnerHashOutputs && ctx->state != Signature) {
         TxSignCtx_Destroy(ctx);
-        return ErrFailed;
+        return ErrInvalidArg;
     }
     #if EMULATOR
     switch (ctx->state) {
@@ -674,6 +694,9 @@ ErrCode_t msgTxAckImpl(TxAck *msg, TxRequest *resp) {
             break;
         case Signature:
             printf("-> Signatures\n");
+            break;
+        default:
+            printf("-> Unexpected\n");
             break;
     }
     for(uint32_t i = 0; i < msg->tx.inputs_count; ++i) {

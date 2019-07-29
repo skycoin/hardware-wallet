@@ -685,7 +685,7 @@ void fsm_msgSignTx(SignTx *msg) {
             msg_write(MessageType_MessageType_TxRequest, resp);
             break;
         default:
-            fsm_sendResponseFromErrCode(err, NULL, "Error on fsm_msgSignTx", &msgtype);
+            fsm_sendFailure(FailureType_Failure_ProcessError,_("Signing transaction failed."), &msgtype);
             break;
     }
     return;
@@ -697,16 +697,8 @@ void fsm_msgTxAck(TxAck *msg) {
     CHECK_MNEMONIC
     
     MessageType msgType = MessageType_MessageType_TxAck;
-    if (!msg->has_tx) {
-        fsm_sendFailure(FailureType_Failure_DataError, "Empty tx field on TxAck message.", &msgType);
-        return;
-    }
-    if (msg->tx.inputs_count && msg->tx.outputs_count) {
-        fsm_sendFailure(FailureType_Failure_DataError, "Inputs and Outputs on same TxAck.", &msgType);
-        return;
-    }
-    if (!msg->tx.inputs_count && !msg->tx.outputs_count) {
-        fsm_sendFailure(FailureType_Failure_DataError, "Empty Inputs and Outputs on same TxAck.", &msgType);
+    if(checkTxAckData(msg) != ErrOk) {
+        fsm_sendFailure(FailureType_Failure_DataError, _("Invalid inputs and outputs amount on TxAck message"), &msgType);
         return;
     }
     RESP_INIT(TxRequest);
@@ -715,8 +707,14 @@ void fsm_msgTxAck(TxAck *msg) {
         case ErrOk:
             msg_write(MessageType_MessageType_TxRequest, resp);
             break;
+        case ErrInvalidArg:
+            fsm_sendFailure(FailureType_Failure_DataError, _("Invalid data on TxAck message."), &msgType);
+            break;
+        case ErrActionCancelled:
+            fsm_sendFailure(FailureType_Failure_ActionCancelled , NULL, &msgType);
+            break;
         default:
-            fsm_sendResponseFromErrCode(err, NULL, "Error on fsm_msgTxAck", &msgType);
+            fsm_sendFailure(FailureType_Failure_ProcessError,_("Signing transaction failed."), &msgType);
             break;
     }
     layoutHome();

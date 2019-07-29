@@ -440,6 +440,7 @@ void transaction_msgToSign(Transaction* self, uint8_t index, uint8_t* msg_digest
 static TxSignContext context;
 
 TxSignContext* TxSignCtx_Init() {
+    context.state = Start;
     context.mnemonic_change = false;
     return &context;
 }
@@ -503,4 +504,5 @@ void TxSignCtx_finishInnerHash(TxSignContext* ctx){
 
 void TxSignCtx_Destroy(TxSignContext* ctx){
     memset(ctx,0,sizeof(TxSignContext));
+    ctx->state = Destroyed;
 }

@@ -34,9 +34,11 @@ typedef struct Transaction {
 } Transaction;
 
 typedef enum _TxSignState {
-    InnerHashInputs = 0,
-    InnerHashOutputs = 1,
-    Signature = 2,
+    Destroyed = 0,
+    Start = 1,
+    InnerHashInputs = 2,
+    InnerHashOutputs = 3,
+    Signature = 4,
 } TxSignState;
 
 typedef struct _TxSignContext {

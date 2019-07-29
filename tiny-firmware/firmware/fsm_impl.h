@@ -166,6 +166,7 @@ ErrCode_t msgLoadDeviceImpl(LoadDevice* msg);
 ErrCode_t msgBackupDeviceImpl(BackupDevice* msg, ErrCode_t (*)(void));
 ErrCode_t msgRecoveryDeviceImpl(RecoveryDevice* msg, ErrCode_t (*)(void));
 ErrCode_t msgSignTxImpl(SignTx* msg,TxRequest* resp);
+ErrCode_t checkTxAckData(TxAck* msg);
 ErrCode_t msgTxAckImpl(TxAck* msg, TxRequest* resp);
 ErrCode_t reqConfirmTransaction(uint64_t coins, uint64_t hours,char* address);
 
