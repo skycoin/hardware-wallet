@@ -20,7 +20,7 @@ ent: $(DATA:%.dat=%.ent)
 rngtest: $(DATA:%.dat=%.rngtest)
 
 %.dieharder: %.dat
-	dieharder -a -f $< > $@
+	dieharder -k 2 -Y 1 -a -f $< > $@
 
 %.ent: %.dat
 	ent $< > $@
