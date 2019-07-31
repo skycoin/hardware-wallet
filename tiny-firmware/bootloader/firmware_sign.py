@@ -6,7 +6,7 @@ import argparse
 import hashlib
 import struct
 import binascii
-from skycoin_crypto import skycoin_crypto
+import skycoin_crypto
 import random
 import sys
 
