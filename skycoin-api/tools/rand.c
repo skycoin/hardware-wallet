@@ -39,12 +39,6 @@
 #include <assert.h>
 #endif
 
-#ifdef __CYGWIN__
-#pragma weak _random_buffer
-#else
-void __attribute__((weak)) _random_buffer(uint8_t* buf, size_t len);
-#endif
-
 // This function is not compiled in firmware
 uint32_t __attribute__((weak)) _random32(void)
 {
@@ -73,8 +67,12 @@ uint32_t __attribute__((weak)) _random32(void)
 // The following code is platform independent
 //
 
-
+#ifdef __CYGWIN__
+#pragma weak _random_buffer
 void _random_buffer(uint8_t* buf, size_t len)
+#else
+void __attribute__((weak)) _random_buffer(uint8_t* buf, size_t len)
+#endif
 {
     uint32_t *ptr = (uint32_t *) buf;
     size_t remaining = len;
