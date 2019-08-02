@@ -581,9 +581,12 @@ ErrCode_t msgBackupDeviceImpl(BackupDevice* msg, ErrCode_t (*funcConfirmBackup)(
         //fsm_sendFailure(FailureType_Failure_UnexpectedMessage, _("Seed already backed up"));
         return ErrUnexpectedMessage;
     }
-    reset_backup(true);
+    ErrCode_t err = reset_backup(true);
+    if (err != ErrOk) {
+      return err;
+    }
 
-    ErrCode_t err = funcConfirmBackup();
+    err = funcConfirmBackup();
     if (err != ErrOk) {
         return err;
     }
