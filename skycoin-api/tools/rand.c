@@ -42,7 +42,7 @@
 #ifdef __CYGWIN__
 #pragma weak _random_buffer
 #else
-void __attribute__ ((weak)) _random_buffer(uint8_t* buf, size_t len);
+void __attribute__((weak)) _random_buffer(uint8_t* buf, size_t len);
 #endif
 
 // This function is not compiled in firmware
