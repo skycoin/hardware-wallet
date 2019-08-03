@@ -628,7 +628,7 @@ ErrCode_t msgSignTxImpl(SignTx *msg, TxRequest *resp) {
     memcpy(context->tx_hash, msg->tx_hash, 65 * sizeof(char));
     context->version = msg->version;
     context->has_innerHash = false;
-    context->requestIndex = 0;
+    context->requestIndex = 1;
 
     // Init Inputs head on sha256
     TxSignCtx_AddSizePrefix(context,msg->inputs_count);
@@ -795,7 +795,6 @@ ErrCode_t msgTxAckImpl(TxAck *msg, TxRequest *resp) {
                 resp->request_type = TxRequest_RequestType_TXINPUT;
             else{
                 resp->request_type = TxRequest_RequestType_TXFINISHED;
-                TxSignCtx_Destroy(ctx);
             }
             break;
         default:
@@ -807,5 +806,7 @@ ErrCode_t msgTxAckImpl(TxAck *msg, TxRequest *resp) {
     resp->details.request_index = ctx->requestIndex;
     resp->details.has_tx_hash = true;
     memcpy(resp->details.tx_hash, ctx->tx_hash, strlen(ctx->tx_hash) * sizeof(char));
+    if (resp->request_type == TxRequest_RequestType_TXFINISHED)
+        TxSignCtx_Destroy(ctx);
     return ErrOk;
 }
