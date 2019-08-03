@@ -609,8 +609,10 @@ ErrCode_t msgSignTxImpl(SignTx *msg, TxRequest *resp) {
         msg->inputs_count, msg->outputs_count);
     #endif
     TxSignContext *context = TxSignCtx_Get();
-    if(context->state != Destroyed)
+    if(context->state != Destroyed) {
+        TxSignCtx_Destroy(context);
         return ErrFailed;
+    }
     // Init TxSignContext
     context = TxSignCtx_Init();
     if (context->mnemonic_change){
