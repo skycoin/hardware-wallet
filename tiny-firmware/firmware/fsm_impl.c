@@ -661,23 +661,6 @@ ErrCode_t reqConfirmTransaction(uint64_t coins, uint64_t hours,char* address){
     return ErrOk;
 }
 
-ErrCode_t checkTxAckData(TxAck* msg){
-    TxSignContext *ctx = TxSignCtx_Get();
-    switch (ctx->state) {
-        case InnerHashInputs:
-        case InnerHashOutputs:
-            if (msg->has_tx && ((msg->tx.inputs_count && !msg->tx.outputs_count) || (!msg->tx.inputs_count && msg->tx.outputs_count)))
-                return ErrOk;
-            return ErrFailed;
-        case Signature:
-            if (msg->has_tx && (msg->tx.inputs_count && !msg->tx.outputs_count))
-                return ErrOk;
-            return ErrFailed;
-        default:
-            return ErrFailed;
-    }
-}
-
 ErrCode_t msgTxAckImpl(TxAck *msg, TxRequest *resp) {
     TxSignContext *ctx = TxSignCtx_Get();
     if (ctx->state != Start && ctx->state != InnerHashInputs && ctx->state != InnerHashOutputs && ctx->state != Signature) {
@@ -714,6 +697,9 @@ ErrCode_t msgTxAckImpl(TxAck *msg, TxRequest *resp) {
         printf("\n");
     }
     #endif
+    ErrCode_t err = checkTxAckData(msg);
+    if (err != ErrOk)
+        return err;
     if (ctx->mnemonic_change){
         TxSignCtx_Destroy(ctx);
         return ErrFailed;
@@ -767,9 +753,13 @@ ErrCode_t msgTxAckImpl(TxAck *msg, TxRequest *resp) {
             }
             break;
         case Signature:
-            if (!ctx->has_innerHash) {
+            if (!msg->tx.inputs_count || msg->tx.outputs_count) {
                 TxSignCtx_Destroy(ctx);
                 return ErrInvalidArg;
+            }
+            if (!ctx->has_innerHash) {
+                TxSignCtx_Destroy(ctx);
+                return ErrFailed;
             }
             uint8_t signCount = 0;
             for (uint8_t i = 0; i < msg->tx.inputs_count; ++i) {

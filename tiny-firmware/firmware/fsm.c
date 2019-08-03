@@ -697,10 +697,6 @@ void fsm_msgTxAck(TxAck *msg) {
     CHECK_MNEMONIC
     
     MessageType msgType = MessageType_MessageType_TxAck;
-    if(checkTxAckData(msg) != ErrOk) {
-        fsm_sendFailure(FailureType_Failure_DataError, _("Invalid inputs and outputs amount on TxAck message"), &msgType);
-        return;
-    }
     RESP_INIT(TxRequest);
     ErrCode_t err = msgTxAckImpl(msg, resp);
     switch (err) {
@@ -712,6 +708,9 @@ void fsm_msgTxAck(TxAck *msg) {
             break;
         case ErrActionCancelled:
             fsm_sendFailure(FailureType_Failure_ActionCancelled , NULL, &msgType);
+            break;
+        case ErrFailed:
+            fsm_sendFailure(FailureType_Failure_ProcessError, NULL, &msgType);
             break;
         default:
             fsm_sendFailure(FailureType_Failure_ProcessError,_("Signing transaction failed."), &msgType);
