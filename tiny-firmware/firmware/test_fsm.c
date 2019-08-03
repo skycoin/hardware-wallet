@@ -1651,6 +1651,250 @@ START_TEST(test_msgTransactionSign11)
 }
 END_TEST
 
+START_TEST(test_msgTransactionSig12)
+{
+    SetMnemonic mnemonic = SetMnemonic_init_zero;
+    char mnemonic_str[] = { "network hurdle trash obvious soccer sunset side merit horn author horn you" };
+    memcpy(mnemonic.mnemonic,mnemonic_str, sizeof(mnemonic_str));
+    ck_assert_int_eq(msgSetMnemonicImpl(&mnemonic), ErrOk);
+
+    SignTx sing_tx = SignTx_init_default;
+    sign_tx.outputs_count = 14;
+    sign_tx.inputs_count = 14;
+    sign_tx.has_coin_name = true;
+    sign_tx.coin_name = "Skycoin";
+    sign_tx.has_version = true;
+    sign_tx.version = 1;
+    sign_tx.has_lock_time = true;
+    sign_tx.lock_time = 3;
+    sign._tx.has_tx_hash = true;
+    sign_tx.tx_hash = "8cbdfbc7aa9975904b805152a816a897d7f8b652806fd9ceec8822b096c6fc18";
+    TxRequest response = TxRequest_init_default;
+    ck_assert_int_eq(msgSignTxImpl(&sign_tx, &response), ErrOk);
+    ck_assert_int_eq(response.request_type,TxRequest_RequestType_TXINPUT);
+    ck_assert_int_eq(response.has_details, true);
+    ck_assert_int_eq(response.details.request_index, 1);
+    
+    TxAck tx_ack = TxAck_init_default;
+    tx_ack.has_tx = true;
+    tx_ack.tx.has_version = true;
+    tx_ack.tx.version = 1;
+    tx_ack.tx.inputs_count = 3;
+    tx_ack.tx.outputs_count = 2;
+    tx_ack.tx.has_lock_time = true;
+    tx_ack.tx.lock_time = 3;
+    tx_ack.tx.inputs = {
+        {.hashIn = "941a422ed8b17ae9dcbf942ace143f77c26a9c02d2e6395b46d50d1079ba4b00",
+         .address_n_count = 1,
+         .address_n = {0} },
+        {.hashIn = "1c7afa90dcd10063722c0cf8981c52bc715a6d522c4fcc92cd743e2120e866f2",
+         .address_n_count = 1,
+         .address_n = {0} },
+        {.hashIn = "1e06ce57e449a3744a58d115da99f375926b30a4aaa62500f36400c479c86026",
+         .address_n_count = 1,
+         .address_n = {0} }
+    };
+    tx_ack.tx.outputs = {
+        {.address = "2EU3JbveHdkxW6z5tdhbbB2kRAWvXC2pLzw",
+         .address_n_count = 0,
+         .coins = 2,
+         .hours = 255},
+        {.address = "zC8GAQGQBfwk7vtTxVoRG7iMperHNuyYPs",
+         .address_n_count = 0,
+         .coins = 2,
+         .hours = 255},
+    response = TxRequest_init_default;
+    ck_assert_int_eq(msgTxAckImpl(&tx_ack,&response), ErrInvalidArg);
+}
+END_TEST
+
+START_TEST(test_fsm_msgTransactionSign13)
+{
+    SetMnemonic mnemonic = SetMnemonic_init_zero;
+    char mnemonic_str[] = { "network hurdle trash obvious soccer sunset side merit horn author horn you" };
+    memcpy(mnemonic.mnemonic,mnemonic_str, sizeof(mnemonic_str));
+    ck_assert_int_eq(msgSetMnemonicImpl(&mnemonic), ErrOk);
+
+    SignTx sing_tx = SignTx_init_default;
+    sign_tx.outputs_count = 14;
+    sign_tx.inputs_count = 14;
+    sign_tx.has_coin_name = true;
+    sign_tx.coin_name = "Skycoin";
+    sign_tx.has_version = true;
+    sign_tx.version = 1;
+    sign_tx.has_lock_time = true;
+    sign_tx.lock_time = 3;
+    sign._tx.has_tx_hash = true;
+    sign_tx.tx_hash = "8cbdfbc7aa9975904b805152a816a897d7f8b652806fd9ceec8822b096c6fc18";
+    TxRequest response = TxRequest_init_default;
+    ck_assert_int_eq(msgSignTxImpl(&sign_tx, &response), ErrOk);
+    ck_assert_int_eq(response.request_type,TxRequest_RequestType_TXINPUT);
+    ck_assert_int_eq(response.has_details, true);
+    ck_assert_int_eq(response.details.request_index, 1);
+
+    SignTx sing_tx = SignTx_init_default;
+    sign_tx.outputs_count = 14;
+    sign_tx.inputs_count = 14;
+    sign_tx.has_coin_name = true;
+    sign_tx.coin_name = "Skycoin";
+    sign_tx.has_version = true;
+    sign_tx.version = 1;
+    sign_tx.has_lock_time = true;
+    sign_tx.lock_time = 3;
+    sign._tx.has_tx_hash = true;
+    sign_tx.tx_hash = "8cbdfbc7aa9975904b805152a816a897d7f8b652806fd9ceec8822b096c6fc18";
+    TxRequest response = TxRequest_init_default;
+    ck_assert_int_eq(msgSignTxImpl(&sign_tx, &response), ErrFailed);
+}
+END_TEST
+
+START_TEST(test_msgTransactionSign14)
+{
+    SetMnemonic mnemonic = SetMnemonic_init_zero;
+    char mnemonic_str[] = { "network hurdle trash obvious soccer sunset side merit horn author horn you" };
+    memcpy(mnemonic.mnemonic,mnemonic_str, sizeof(mnemonic_str));
+    ck_assert_int_eq(msgSetMnemonicImpl(&mnemonic), ErrOk);
+
+    SignTx sing_tx = SignTx_init_default;
+    sign_tx.outputs_count = 14;
+    sign_tx.inputs_count = 14;
+    sign_tx.has_coin_name = true;
+    sign_tx.coin_name = "Skycoin";
+    sign_tx.has_version = true;
+    sign_tx.version = 1;
+    sign_tx.has_lock_time = true;
+    sign_tx.lock_time = 3;
+    sign._tx.has_tx_hash = true;
+    sign_tx.tx_hash = "8cbdfbc7aa9975904b805152a816a897d7f8b652806fd9ceec8822b096c6fc18";
+    TxRequest response = TxRequest_init_default;
+    ck_assert_int_eq(msgSignTxImpl(&sign_tx, &response), ErrOk);
+    ck_assert_int_eq(response.request_type,TxRequest_RequestType_TXINPUT);
+    ck_assert_int_eq(response.has_details, true);
+    ck_assert_int_eq(response.details.request_index, 1);
+    
+    TxAck tx_ack = TxAck_init_default;
+    tx_ack.has_tx = true;
+    tx_ack.tx.has_version = true;
+    tx_ack.tx.version = 1;
+    tx_ack.tx.inputs_count = 7;
+    tx_ack.tx.outputs_count = 0;
+    tx_ack.tx.has_lock_time = true;
+    tx_ack.tx.lock_time = 3;
+
+    tx_ack.tx.inputs = {
+        {.hashIn = "941a422ed8b17ae9dcbf942ace143f77c26a9c02d2e6395b46d50d1079ba4b00",
+         .address_n_count = 1,
+         .address_n = {0} },
+        {.hashIn = "1c7afa90dcd10063722c0cf8981c52bc715a6d522c4fcc92cd743e2120e866f2",
+         .address_n_count = 1,
+         .address_n = {0} },
+        {.hashIn = "1e06ce57e449a3744a58d115da99f375926b30a4aaa62500f36400c479c86026",
+         .address_n_count = 1,
+         .address_n = {0} },
+        {.hashIn = "c1dca5b6e34dbc8b8a87cae3074e1c24e555c8300043975982b3754c25fa31ef",
+         .address_n_count = 1,
+         .address_n = {0} },
+        {.hashIn = "516d5dd0465474b53520c2c7377f293823c36740b10a6cace58bcf53cabf91f2",
+         .address_n_count = 1,
+         .address_n = {0} },
+        {.hashIn = "69c010a4f512ef9a1ed73e8da5e57e7fdb11b9cadfa42babaf393c528d05b372",
+         .address_n_count = 1,
+         .address_n = {0} },
+        {.hashIn = "f7aeffdbfad94333c5198149bc1ad2a02acabeb3e67834f2f4c8aa2cac20248d",
+         .address_n_count = 1,
+         .address_n = {0} }
+    };
+    response = TxRequest_init_default;
+    ck_assert_int_eq(msgTxAckImpl(&tx_ack,&response), ErrOk);
+    ck_assert_int_eq(response.request_type,TxRequest_RequestType_TXINPUT);
+    ck_assert_int_eq(response.has_details, true);
+    ck_assert_int_eq(response.details.request_index, 2);
+
+    tx_ack.tx.inputs = {
+        {.hashIn = "6e99ca948cb8d50dc8708d77498fccc65ca2e6e8d6192c4b178999a6ed403752",
+         .address_n_count = 1,
+         .address_n = {0} },
+        {.hashIn = "6bb7c8ec3654b5f4718988606e15947ac45fd8ac255a6838c08c926a199c412d",
+         .address_n_count = 1,
+         .address_n = {0} },
+        {.hashIn = "19c3f8ef155b363cfc9e508de5930aad477e3ffd974ac90fd53b5eb0853cf29a",
+         .address_n_count = 1,
+         .address_n = {0} },
+        {.hashIn = "0516f33e59a97587135ee4350c8edff3a196415f31e3233579c29c505d6efa2c",
+         .address_n_count = 1,
+         .address_n = {0} },
+        {.hashIn = "1d6a5a6fa9af1acf4ad8bf4348369adcaf61bab84b82697db5f733f60f91337b",
+         .address_n_count = 1,
+         .address_n = {0} },
+        {.hashIn = "d7a958d8e7edbab356b68f257e3b57d44d35e22f1fcfbee70116d502fa48e390",
+         .address_n_count = 1,
+         .address_n = {0} },
+        {.hashIn = "fc8542d202ee8c57a8f91058aaaf852a3db695248f94302f3f76f29e42d284c1",
+         .address_n_count = 1,
+         .address_n = {0} }
+    }
+    response = TxRequest_init_default;
+    ck_assert_int_eq(msgTxAckImpl(&tx_ack,&response), ErrOk);
+    ck_assert_int_eq(response.request_type,TxRequest_RequestType_TXOUTPUT);
+    ck_assert_int_eq(response.has_details, true);
+    ck_assert_int_eq(response.details.request_index, 3);
+
+    tx_ack = TxAck_init_default;
+    tx_ack.has_tx = true;
+    tx_ack.tx.has_version = true;
+    tx_ack.tx.version = 1;
+    tx_ack.tx.inputs_count = 3;
+    tx_ack.tx.outputs_count = 7;
+    tx_ack.tx.has_lock_time = true;
+    tx_ack.tx.lock_time = 3;
+
+    tx_ack.tx.inputs = {
+        {.hashIn = "941a422ed8b17ae9dcbf942ace143f77c26a9c02d2e6395b46d50d1079ba4b00",
+         .address_n_count = 1,
+         .address_n = {0} },
+        {.hashIn = "1c7afa90dcd10063722c0cf8981c52bc715a6d522c4fcc92cd743e2120e866f2",
+         .address_n_count = 1,
+         .address_n = {0} },
+        {.hashIn = "1e06ce57e449a3744a58d115da99f375926b30a4aaa62500f36400c479c86026",
+         .address_n_count = 1,
+         .address_n = {0} }
+    };
+
+    tx_ack.tx.outputs = {
+        {.address = "2EU3JbveHdkxW6z5tdhbbB2kRAWvXC2pLzw",
+         .address_n_count = 0,
+         .coins = 2,
+         .hours = 255},
+        {.address = "zC8GAQGQBfwk7vtTxVoRG7iMperHNuyYPs",
+         .address_n_count = 0,
+         .coins = 2,
+         .hours = 255},
+        {.address = "28L2fexvThTVz6e2dWUV4pSuCP8SAnCUVku",
+         .address_n_count = 0,
+         .coins = 2,
+         .hours = 255},
+        {.address = "2NckPkQRQFa5E7HtqDkZmV1TH4HCzR2N5J6",
+         .address_n_count = 0,
+         .coins = 2,
+         .hours = 255},
+        {.address = "2ARhYQsMmMZuw5LPmZQvyWoTm1VUH8kSZ14",
+         .address_n_count = 0,
+         .coins = 2,
+         .hours = 255},
+        {.address = "FjWaGnwGTswo7TegsB9KikqcxGHy8zHTS1",
+         .address_n_count = 0,
+         .coins = 2,
+         .hours = 255},
+        {.address = "26GcGAkdrXYkPVKkHvy5FQWAeLVVVGSmz6V",
+         .address_n_count = 0,
+         .coins = 2,
+         .hours = 255}
+    }
+    response = TxRequest_init_default;
+    ck_assert_int_eq(msgTxAckImpl(&tx_ack,&response), ErrInvalidArg);
+}
+END_TEST
+
 // define test cases
 TCase* add_fsm_tests(TCase* tc)
 {
@@ -1694,5 +1938,8 @@ TCase* add_fsm_tests(TCase* tc)
     tcase_add_test(tc, test_msgTransactionSign9);
     tcase_add_test(tc, test_msgTransactionSign10);
     tcase_add_test(tc, test_msgTransactionSign11);
+    tcase_add_test(tc, test_msgTransactionSign12);
+    tcase_add_test(tc, test_msgTransactionSign13);
+    tcase_add_test(tc, test_msgTransactionSign14);
     return tc;
 }
