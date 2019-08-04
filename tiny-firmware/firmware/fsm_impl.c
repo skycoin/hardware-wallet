@@ -735,9 +735,6 @@ ErrCode_t msgTxAckImpl(TxAck *msg, TxRequest *resp) {
         printf("\n");
     }
     #endif
-    ErrCode_t err = checkTxAckData(msg);
-    if (err != ErrOk)
-        return err;
     if (ctx->mnemonic_change){
         TxSignCtx_Destroy(ctx);
         return ErrFailed;
@@ -768,11 +765,13 @@ ErrCode_t msgTxAckImpl(TxAck *msg, TxRequest *resp) {
             }
             TransactionOutput outputs[7];
             for (uint8_t i = 0; i < msg->tx.outputs_count; ++i) {
+                #if !EMULATOR
                 if(!msg->tx.outputs[i].address_n_count){
                     ErrCode_t err = reqConfirmTransaction(msg->tx.outputs[i].coins,msg->tx.outputs[i].hours,msg->tx.outputs[i].address);
                     if (err != ErrOk)
                         return err;
                 }
+                #endif
                 outputs[i].coin = msg->tx.outputs[i].coins;
                 outputs[i].hour = msg->tx.outputs[i].hours;
                 size_t len = 36;
