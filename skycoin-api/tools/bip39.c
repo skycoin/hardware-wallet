@@ -1,5 +1,6 @@
 /**
  * This file is part of the Skycoin project, https://skycoin.net/
+ * This file is part of Trezor, https://trezor.com/
  *
  * Copyright (c) 2013-2014 Tomas Dzetkulic
  * Copyright (c) 2013-2014 Pavol Rusnak

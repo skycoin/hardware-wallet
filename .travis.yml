@@ -30,12 +30,13 @@ before_script:
   - eval "./ci-scripts/install-${TRAVIS_OS_NAME}.sh"
   # Install linters
   - make install-linters
+  - git submodule update --remote
 
 script:
   - make check-protob
   - make lint
   - make -C tiny-firmware/protob build-c
-  - make test
+  - FIRMWARE_SIGNATURE_PUB_KEY1=0241d51e593f681006f9f3c4a0ec744d459c960601b4ed770d979c32ace63b0a7a make test
   - make clean
   - make emulator
   - make clean

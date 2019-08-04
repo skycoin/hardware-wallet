@@ -206,8 +206,13 @@ $(NAME).elf: lib$(NAME).a firmware/main.o $(LDSCRIPT) $(LIBDEPS)
 endif
 endif
 
+ifeq ($(BOOTLOADER),1)
+%.o: %.c Makefile pub_keys.h
+	$(CC) $(CFLAGS) -MMD -MP -o $@ -c $<
+else
 %.o: %.c Makefile
 	$(CC) $(CFLAGS) -MMD -MP -o $@ -c $<
+endif
 
 %.small.o: %.c Makefile
 	$(CC) $(CFLAGS) -MMD -MP -o $@ -c $<
