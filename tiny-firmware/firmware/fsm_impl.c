@@ -687,7 +687,7 @@ ErrCode_t reqConfirmTransaction(uint64_t coins, uint64_t hours,char* address){
     char* coinString = coins == 1000000 ? _("coin") : _("coins");
     char* hourString = (hours == 1 || hours == 0) ? _("hour") : _("hours");
     char* strValueMsg = sprint_coins(coins,SKYPARAM_DROPLET_PRECISION_EXP, sizeof(strValue), strValue);
-    if (strValue == NULL) {
+    if (&strValue == NULL) {
         strcpy(strCoins, "toomany coins");
     }
     sprintf(strCoins, "%s %s %s", _("send"), strValueMsg, coinString);
