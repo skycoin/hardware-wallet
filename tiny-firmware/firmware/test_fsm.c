@@ -1409,25 +1409,25 @@ START_TEST(test_msgTransactionSign11)
 
     // Send inputs 0-6
     TxAck_TransactionType_TxInputType inputs1[] = {
-        {.hashIn = "941a422ed8b17ae9dcbf942ace143f77c26a9c02d2e6395b46d50d1079ba4b00",
+        {.hashIn = "f61364da33ecd1f557cbbb4999b89baf14364d8934b2431cb1313a40695c435a",
          .address_n_count = 1,
          .address_n = {0} },
-        {.hashIn = "1c7afa90dcd10063722c0cf8981c52bc715a6d522c4fcc92cd743e2120e866f2",
+        {.hashIn = "7dd4035d267a3f692a8060b487895cbab4b18ff6dac1e7763b6243dd7b90e269",
          .address_n_count = 1,
          .address_n = {0} },
-        {.hashIn = "1e06ce57e449a3744a58d115da99f375926b30a4aaa62500f36400c479c86026",
+        {.hashIn = "5fcc3cea408c88371ece8ef0627cf6f5a91dc49085b1aa131137d3b72e7cc5fb",
          .address_n_count = 1,
          .address_n = {0} },
-        {.hashIn = "c1dca5b6e34dbc8b8a87cae3074e1c24e555c8300043975982b3754c25fa31ef",
+        {.hashIn = "6c7eea5c7290381393cbbd0c6a8269fcddfc24f7846a210e8c15bf0321dfe9df",
          .address_n_count = 1,
          .address_n = {0} },
-        {.hashIn = "516d5dd0465474b53520c2c7377f293823c36740b10a6cace58bcf53cabf91f2",
+        {.hashIn = "9d8dcf32ec69155fbbd42b64a277cc2cf41a7b7a07101c7772485255fa5b84cc",
          .address_n_count = 1,
          .address_n = {0} },
-        {.hashIn = "69c010a4f512ef9a1ed73e8da5e57e7fdb11b9cadfa42babaf393c528d05b372",
+        {.hashIn = "dfb13c86421c37f4a697433dbe5e0b6f33479596b14dc43bcf83f577881625d4",
          .address_n_count = 1,
          .address_n = {0} },
-        {.hashIn = "f7aeffdbfad94333c5198149bc1ad2a02acabeb3e67834f2f4c8aa2cac20248d",
+        {.hashIn = "a6fd4cdb5de8aa8bedc1f5b6e69bc5273f1590784caa584f9d275afa294156e3",
          .address_n_count = 1,
          .address_n = {0} }
     };
@@ -1439,25 +1439,25 @@ START_TEST(test_msgTransactionSign11)
 
     // Send inputs 7-13
     TxAck_TransactionType_TxInputType inputs2[] = {
-        {.hashIn = "6e99ca948cb8d50dc8708d77498fccc65ca2e6e8d6192c4b178999a6ed403752",
+        {.hashIn = "06c69e519bbcd5e989f66211ffa6f33610b3de986989ee5a04b7144dcd6252b4",
          .address_n_count = 1,
          .address_n = {0} },
-        {.hashIn = "6bb7c8ec3654b5f4718988606e15947ac45fd8ac255a6838c08c926a199c412d",
+        {.hashIn = "3d1f6c3e55034e113e7f6a3a69afbd3929b906f4bc834fba32a60f24a6bdb985",
          .address_n_count = 1,
          .address_n = {0} },
-        {.hashIn = "19c3f8ef155b363cfc9e508de5930aad477e3ffd974ac90fd53b5eb0853cf29a",
+        {.hashIn = "a15aa4069673995a09996f4c5cb7ee040ebf0afa8bb1593c39a96406e28228f0",
          .address_n_count = 1,
          .address_n = {0} },
-        {.hashIn = "0516f33e59a97587135ee4350c8edff3a196415f31e3233579c29c505d6efa2c",
+        {.hashIn = "d8f5573a56cb94561b4404b9d55cbc14cbd3ceb1f8e75223ae3ea3ff900be2bd",
          .address_n_count = 1,
          .address_n = {0} },
-        {.hashIn = "1d6a5a6fa9af1acf4ad8bf4348369adcaf61bab84b82697db5f733f60f91337b",
+        {.hashIn = "f16bcbda8477c7178120df5a597fa4326b71fbf3f8bc5dd4734a00f87bfef5c8",
          .address_n_count = 1,
          .address_n = {0} },
-        {.hashIn = "d7a958d8e7edbab356b68f257e3b57d44d35e22f1fcfbee70116d502fa48e390",
+        {.hashIn = "bed47fc5ad21ce1deab10bfe45a27bcae251224539fca8d618a3c86791cd3baf",
          .address_n_count = 1,
          .address_n = {0} },
-        {.hashIn = "fc8542d202ee8c57a8f91058aaaf852a3db695248f94302f3f76f29e42d284c1",
+        {.hashIn = "f580c788067392c6cf0f25b5c1fe099c41132750aab0cde0cfab6d47e5c0fbe7",
          .address_n_count = 1,
          .address_n = {0} }
     };
@@ -1480,32 +1480,32 @@ START_TEST(test_msgTransactionSign11)
     TxAck_TransactionType_TxOutputType outputs1[] = {
         {.address = "2EU3JbveHdkxW6z5tdhbbB2kRAWvXC2pLzw",
          .address_n_count = 0,
-         .coins = 2,
-         .hours = 255},
+         .coins = 2000000,
+         .hours = 149},
         {.address = "zC8GAQGQBfwk7vtTxVoRG7iMperHNuyYPs",
          .address_n_count = 0,
-         .coins = 2,
-         .hours = 255},
+         .coins = 2000000,
+         .hours = 149},
         {.address = "28L2fexvThTVz6e2dWUV4pSuCP8SAnCUVku",
          .address_n_count = 0,
-         .coins = 2,
-         .hours = 255},
+         .coins = 2000000,
+         .hours = 149},
         {.address = "2NckPkQRQFa5E7HtqDkZmV1TH4HCzR2N5J6",
          .address_n_count = 0,
-         .coins = 2,
-         .hours = 255},
+         .coins = 2000000,
+         .hours = 149},
         {.address = "2ARhYQsMmMZuw5LPmZQvyWoTm1VUH8kSZ14",
          .address_n_count = 0,
-         .coins = 2,
-         .hours = 255},
+         .coins = 2000000,
+         .hours = 149},
         {.address = "FjWaGnwGTswo7TegsB9KikqcxGHy8zHTS1",
          .address_n_count = 0,
-         .coins = 2,
-         .hours = 255},
+         .coins = 2000000,
+         .hours = 148},
         {.address = "26GcGAkdrXYkPVKkHvy5FQWAeLVVVGSmz6V",
          .address_n_count = 0,
-         .coins = 2,
-         .hours = 255}
+         .coins = 2000000,
+         .hours = 148}
     };
     memcpy(tx_ack.tx.outputs, outputs1, sizeof(outputs1));
     ck_assert_int_eq(msgTxAckImpl(&tx_ack,&response), ErrOk);
@@ -1517,32 +1517,32 @@ START_TEST(test_msgTransactionSign11)
     TxAck_TransactionType_TxOutputType outputs2[] = {
         {.address = "obaHadRxLaz8Laoxi8TA799ycHXNK2hgdz",
          .address_n_count = 0,
-         .coins = 2,
-         .hours = 255},
+         .coins = 2000000,
+         .hours = 148},
         {.address = "26jybLrsXXWjwBdmR2eo4c25hYGMipLEjTr",
          .address_n_count = 0,
-         .coins = 2,
-         .hours = 255},
+         .coins = 2000000,
+         .hours = 148},
         {.address = "2CgDFkD43CUpQot3e76iuoB2BxCGXZ6xn38",
          .address_n_count = 0,
-         .coins = 2,
-         .hours = 255},
+         .coins = 2000000,
+         .hours = 148},
         {.address = "cMdZRECEGhrBqtKvuB9XW2EK9tqi4znNhN",
          .address_n_count = 0,
-         .coins = 2,
-         .hours = 255},
+         .coins = 2000000,
+         .hours = 148},
         {.address = "ouE9prS4XMhVwQa5gwW4hQuiAGamMcJmK5",
          .address_n_count = 0,
-         .coins = 2,
-         .hours = 255},
+         .coins = 2000000,
+         .hours = 148},
         {.address = "ZyLHjEdTbxnYHZC2U4ZNqSuZBUh74Sjh9v",
          .address_n_count = 0,
-         .coins = 2,
-         .hours = 255},
+         .coins = 2000000,
+         .hours = 148},
         {.address = "2eZCcsBQVooxUStrCKEZ4TLZzbGa7tx7Cwa",
          .address_n_count = 0,
-         .coins = 2,
-         .hours = 255}
+         .coins = 2000000,
+         .hours = 148}
     };
     memcpy(tx_ack.tx.outputs, outputs2, sizeof(outputs2));
     ck_assert_int_eq(msgTxAckImpl(&tx_ack,&response), ErrOk);
@@ -1567,25 +1567,18 @@ START_TEST(test_msgTransactionSign11)
     ck_assert_int_eq(response.details.request_index, 6);
     ck_assert_int_eq(response.sign_result_count, 7);
 
-    char addresses1[7][40] = {"2EU3JbveHdkxW6z5tdhbbB2kRAWvXC2pLzw",
-                             "zC8GAQGQBfwk7vtTxVoRG7iMperHNuyYPs",
-                             "28L2fexvThTVz6e2dWUV4pSuCP8SAnCUVku",
-                             "2NckPkQRQFa5E7HtqDkZmV1TH4HCzR2N5J6",
-                             "2ARhYQsMmMZuw5LPmZQvyWoTm1VUH8kSZ14",
-                             "FjWaGnwGTswo7TegsB9KikqcxGHy8zHTS1",
-                             "26GcGAkdrXYkPVKkHvy5FQWAeLVVVGSmz6V"};
-    char messages1[7][64] = {"2b52eb40abc3ac8c19bd31fcb37ff2d238ecffa2d39d1d4b64a1bf593f7f3758",
-                            "50054c5dfe0d9cfe7d87d0ce01f576cc1601ab1cf02e3c7159a0405e62593b0e",
-                            "581de7e15946d30dd36160156b9977718f6c63645bf84fc608406759e4643382",
-                            "b674042cdb8e94b3c0959dc014c27827dc641ab7c3336ec96732e619fe348ca4",
-                            "7aaca187e055cc57e6356e009b33aea5e614c5936938ed58f94173f7387c0855",
-                            "3ffd187d8d686f8d65e2f00e869c5ccceb53bde9849dd9768c9a64f02d401b80",
-                            "8466467651b898a763b313e7d9bbbd4ef42cb4e95a2e1c7d0a10c173b9277ff9"};
+    char messages1[7][64] = {"24cb998dbaf43e6ae56896b116b5fd9bc13dc07a6ae05a04be48e404cb26260a",
+                            "69f07537857f5e79784e0d827f2111f0f50aeb3c990a0abe26629d6992ee619c",
+                            "be38e73857ba9d5a1af7f80050fc483f8452b8e993a35c01f9cc5fc8e401e907",
+                            "91f6382d053ba621d97485ff74abc4e79908dfbf7647b59721b00074b27189c2",
+                            "7d81509d42118a88561d4cd9eddd1e315e3fdf650199cc030bf0021582ff46cf",
+                            "0f04c62b3685668369a5e1bf1a3e7e539c9cd202efde7cd5730210b01c10bd10",
+                            "d2afbc1c9516cb344901b947283b62d69866fd653b273b14da66779e142f69d9"};
     SkycoinCheckMessageSignature msg_s = SkycoinCheckMessageSignature_init_zero;
     for (uint8_t i = 0; i < 7; i++){
-        memcpy(msg_s.address, addresses1[i], sizeof(addresses1[i]));
+        memcpy(msg_s.address, "zF2bJcm1VunARAJ26HmYVQE2SEudQmK9DJ", 34);
         memcpy(msg_s.message, messages1[i], sizeof(messages1[i]));
-        memcpy(msg_s.signature, &response.sign_result[i].signature, sizeof(response.sign_result[i].signature));
+        memcpy(msg_s.signature, response.sign_result[i].signature, sizeof(response.sign_result[i].signature));
         Failure failure_resp = Failure_init_default;
         Success success_resp = Success_init_default;
         ErrCode_t check_sign = msgSkycoinCheckMessageSignatureImpl(
@@ -1601,24 +1594,17 @@ START_TEST(test_msgTransactionSign11)
     ck_assert_int_eq(response.details.request_index, 7);
     ck_assert_int_eq(response.sign_result_count, 7);
 
-    char addresses[7][40] = { "obaHadRxLaz8Laoxi8TA799ycHXNK2hgdz",
-                            "26jybLrsXXWjwBdmR2eo4c25hYGMipLEjTr",
-                            "2CgDFkD43CUpQot3e76iuoB2BxCGXZ6xn38",
-                            "cMdZRECEGhrBqtKvuB9XW2EK9tqi4znNhN",
-                            "ouE9prS4XMhVwQa5gwW4hQuiAGamMcJmK5",
-                            "ZyLHjEdTbxnYHZC2U4ZNqSuZBUh74Sjh9v",
-                            "2eZCcsBQVooxUStrCKEZ4TLZzbGa7tx7Cwa"};
-    char messages[7][64] = {    "f907007d5ece78a762661b677fd1fc18f96a6273929ec6fb81113c2e0a450305",
-                                "dfc2021ca9bfb817261fe3acf8edcbd9a1bf59b51f92cb58748215daaea0aa5c",
-                                "399c472426f4930745bc59fcde905258dd4add4dabcb5b8fbae28abb7d29a9ac",
-                                "b68a1c52bbd8ea294a6c8ca8545b90006dd69ea3b280501edbef3e52664dc9c2",
-                                "a79671d5118392a1705cc1810b170bb2d63e418cb6c9a5bcc726f8228772f2d7",
-                                "35120affcbc2e43dfee456678ac5f7e98ecf48c70765b2921ec6ccfbd8b9bbba",
-                                "eed09fe8a2b2e59e5e0d318e4afb29631ba4a5241593359da890fc45396c348a"};
+    char messages[7][64] = {    "adbae6d00a6567c5f8e473b6960ba4268d066ffdcb318eb36ef014a2c074460c",
+                                "d9525e1876e759e2ca504b1c177cf8d21ea3e2bbec27bea79261479a8edfe84b",
+                                "4dfe14d44b23316cfeda041597291a15afd75a2b8a89e3d2b7f2b736c7cfa28d",
+                                "30d672b384783ae5ca09af711d756d809d37469e68589d3a5941ed80128a7685",
+                                "d221d769c6e9914c030c7dcea794a990623b3505ff32b90f5f65d14a25d5fc0d",
+                                "efb0c7d702ac4d9677fcd45785a5ff73a324bd787adbc17b3116a85fd38d1841",
+                                "be0c55f354fa94deb0ccbc62f29a8fa43068f8053c70eddc2e62d724659ff877"};
     for (uint8_t i = 0; i < 7; i++){
-        memcpy(msg_s.address, addresses[i], sizeof(addresses[i]));
+        memcpy(msg_s.address, "zF2bJcm1VunARAJ26HmYVQE2SEudQmK9DJ", 34);
         memcpy(msg_s.message, messages[i], sizeof(messages[i]));
-        memcpy(msg_s.signature, &response.sign_result[i].signature, sizeof(response.sign_result[i].signature));
+        memcpy(msg_s.signature, response.sign_result[i].signature, sizeof(response.sign_result[i].signature));
         Failure failure_resp = Failure_init_default;
         Success success_resp = Success_init_default;
         ErrCode_t check_sign = msgSkycoinCheckMessageSignatureImpl(
