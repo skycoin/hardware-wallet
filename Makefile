@@ -237,8 +237,8 @@ check-trng: ## Run test tools over random buffers
 	make -C trng-test trng-generate-buffers
 	make -C trng-test run-tests
 
-check-protob: ## verify protob submodule hash
-	./ci-scripts/verify_protob_hash.sh
+# check-protob: ## verify protob submodule hash
+	# ./ci-scripts/verify_protob_hash.sh
 
 check-coverage: clean ## Generate test coverage reports HTML
 	export LIBRARY_PATH="$(MKFILE_DIR)/skycoin-api/:$$LIBRARY_PATH"
