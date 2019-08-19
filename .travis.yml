@@ -32,8 +32,8 @@ before_script:
   - make install-linters
   - git submodule update --remote
    # Fix Travis :)	
-  - git config submodule.tiny-firmware/protob.url https://github.com/simelo/skycoin-hardware-wallet-protob.git	
-  - git config submodule.tiny-firmware/protob.branch stdevAdrianPaez_t25_create_long_transactions	
+  - git config submodule.tiny-firmware/protob.url https://github.com/simelo/skycoin-hardware-wallet-protob.git
+  - git config submodule.tiny-firmware/protob.branch stdevAdrianPaez_t25_create_long_transactions
   - git submodule update --init --recursive
 
 script:
