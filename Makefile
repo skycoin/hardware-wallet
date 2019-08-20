@@ -123,11 +123,15 @@ bootloader-mem-protect: firmware-deps ## Build bootloader (RDP level 2)
 	FIRMWARE_SIGNATURE_PUB_KEY1=$(FIRMWARE_SIGNATURE_PUB_KEY1) FIRMWARE_SIGNATURE_PUB_KEY2=$(FIRMWARE_SIGNATURE_PUB_KEY2) FIRMWARE_SIGNATURE_PUB_KEY3=$(FIRMWARE_SIGNATURE_PUB_KEY3) FIRMWARE_SIGNATURE_PUB_KEY4=$(FIRMWARE_SIGNATURE_PUB_KEY4) FIRMWARE_SIGNATURE_PUB_KEY5=$(FIRMWARE_SIGNATURE_PUB_KEY5) MEMORY_PROTECT=1 SIGNATURE_PROTECT=1 REVERSE_BUTTONS=1 VERSION_MAJOR=$(VERSION_BOOTLOADER_MAJOR) VERSION_MINOR=$(VERSION_BOOTLOADER_MINOR) VERSION_PATCH=$(VERSION_BOOTLOADER_PATCH) make -C tiny-firmware/bootloader/ align
 	mv tiny-firmware/bootloader/bootloader.bin bootloader-memory-protected.bin
 
-arm-skycoin-crypto:
+skycoin-crypto-lib:
+	make -C tiny-firmware/vendor/skycoin-crypto/ libskycoin-crypto.a && \
+	mv tiny-firmware/vendor/skycoin-crypto/libskycoin-crypto.a tiny-firmware/
+
+arm-skycoin-crypto-lib:
 	CC=arm-none-eabi-gcc make -C tiny-firmware/vendor/skycoin-crypto/ libskycoin-crypto.a && \
 	mv tiny-firmware/vendor/skycoin-crypto/libskycoin-crypto.a tiny-firmware/
 
-firmware: arm-skycoin-crypto tiny-firmware/skyfirmware.bin ## Build skycoin wallet firmware
+firmware: arm-skycoin-crypto-lib tiny-firmware/skyfirmware.bin ## Build skycoin wallet firmware
 
 build-libc: tiny-firmware/bootloader/libskycoin-crypto.so ## Build the Skycoin cipher library for firmware
 
@@ -199,7 +203,7 @@ full-firmware: bootloader firmware ## Build full firmware (RDP level 0)
 	cd tiny-firmware/bootloader/combine/ ; $(PYTHON) prepare.py
 	mv tiny-firmware/bootloader/combine/combined.bin releases/full-firmware-no-mem-protect.bin
 
-emulator: arm-skycoin-crypto build-deps ## Build emulator
+emulator: skycoin-crypto-lib build-deps ## Build emulator
 	EMULATOR=1 VERSION_MAJOR=$(VERSION_FIRMWARE_MAJOR) VERSION_MINOR=$(VERSION_FIRMWARE_MINOR) VERSION_PATCH=$(VERSION_FIRMWARE_PATCH) make -C tiny-firmware/emulator/
 	EMULATOR=1 VERSION_MAJOR=$(VERSION_FIRMWARE_MAJOR) VERSION_MINOR=$(VERSION_FIRMWARE_MINOR) VERSION_PATCH=$(VERSION_FIRMWARE_PATCH) make -C tiny-firmware/
 	mv tiny-firmware/skycoin-emulator emulator
