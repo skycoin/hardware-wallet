@@ -199,7 +199,7 @@ full-firmware: bootloader firmware ## Build full firmware (RDP level 0)
 	cd tiny-firmware/bootloader/combine/ ; $(PYTHON) prepare.py
 	mv tiny-firmware/bootloader/combine/combined.bin releases/full-firmware-no-mem-protect.bin
 
-emulator: build-deps ## Build emulator
+emulator: arm-skycoin-crypto build-deps ## Build emulator
 	EMULATOR=1 VERSION_MAJOR=$(VERSION_FIRMWARE_MAJOR) VERSION_MINOR=$(VERSION_FIRMWARE_MINOR) VERSION_PATCH=$(VERSION_FIRMWARE_PATCH) make -C tiny-firmware/emulator/
 	EMULATOR=1 VERSION_MAJOR=$(VERSION_FIRMWARE_MAJOR) VERSION_MINOR=$(VERSION_FIRMWARE_MINOR) VERSION_PATCH=$(VERSION_FIRMWARE_PATCH) make -C tiny-firmware/
 	mv tiny-firmware/skycoin-emulator emulator
