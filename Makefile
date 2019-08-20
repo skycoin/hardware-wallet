@@ -123,7 +123,11 @@ bootloader-mem-protect: firmware-deps ## Build bootloader (RDP level 2)
 	FIRMWARE_SIGNATURE_PUB_KEY1=$(FIRMWARE_SIGNATURE_PUB_KEY1) FIRMWARE_SIGNATURE_PUB_KEY2=$(FIRMWARE_SIGNATURE_PUB_KEY2) FIRMWARE_SIGNATURE_PUB_KEY3=$(FIRMWARE_SIGNATURE_PUB_KEY3) FIRMWARE_SIGNATURE_PUB_KEY4=$(FIRMWARE_SIGNATURE_PUB_KEY4) FIRMWARE_SIGNATURE_PUB_KEY5=$(FIRMWARE_SIGNATURE_PUB_KEY5) MEMORY_PROTECT=1 SIGNATURE_PROTECT=1 REVERSE_BUTTONS=1 VERSION_MAJOR=$(VERSION_BOOTLOADER_MAJOR) VERSION_MINOR=$(VERSION_BOOTLOADER_MINOR) VERSION_PATCH=$(VERSION_BOOTLOADER_PATCH) make -C tiny-firmware/bootloader/ align
 	mv tiny-firmware/bootloader/bootloader.bin bootloader-memory-protected.bin
 
-firmware: tiny-firmware/skyfirmware.bin ## Build skycoin wallet firmware
+arm-skycoin-crypto:
+	CC=arm-none-eabi-gcc make -C tiny-firmware/vendor/skycoin-crypto/ libskycoin-crypto.a && \
+	mv tiny-firmware/vendor/skycoin-crypto/libskycoin-crypto.a tiny-firmware/
+
+firmware: arm-skycoin-crypto tiny-firmware/skyfirmware.bin ## Build skycoin wallet firmware
 
 build-libc: tiny-firmware/bootloader/libskycoin-crypto.so ## Build the Skycoin cipher library for firmware
 

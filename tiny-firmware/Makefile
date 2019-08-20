@@ -84,25 +84,8 @@ OBJS += protob/c/messages.pb.o
 OBJS += protob/c/types.pb.o
 
 #skycoin-crypto
-OBJS += $(TOP_DIR)vendor/skycoin-crypto/skycoin_signature.o
-OBJS += $(TOP_DIR)vendor/skycoin-crypto/skycoin_crypto.o
-OBJS += $(TOP_DIR)vendor/skycoin-crypto/check_digest.o
-OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/base58.o
-OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/blake256.o
-OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/hasher.o
-OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/rand.o
-OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/sha2.o
-OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/bignum.o
-OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/curves.o
-OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/hmac.o
-OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/ripemd160.o
-OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/bip32.o
-OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/ecdsa.o
-OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/memzero.o
-OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/secp256k1.o
-OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/bip39.o
-OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/pbkdf2.o
-OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/entropypool.o
+LDLIBS += -lskycoin-crypto
+LDFLAGS += -L$(TOP_DIR)
 #end skycoin-crypto
 
 ifeq ($(REVERSE_SCREEN),1)
