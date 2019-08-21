@@ -88,10 +88,6 @@ LDLIBS += -lskycoin-crypto
 LDFLAGS += -L$(TOP_DIR)
 #end skycoin-crypto
 
-ifeq ($(REVERSE_SCREEN),1)
-CFLAGS   += -DREVERSE_SCREEN=1
-endif
-
 CFLAGS   += -frandom-seed=123
 
 ifeq ($(EMULATOR),1)
@@ -109,14 +105,11 @@ ifeq ($(COVERAGE), 1)
 	SRCS += $(TEST_OBJS:.o=.c)
 endif
 
-ifeq ($(HEADLESS),1)
-CFLAGS   += -DHEADLESS=1
-else
-CFLAGS   += -DHEADLESS=0
+HEADLESS ?= 0
+CFLAGS   += -DHEADLESS=$(HEADLESS)
 
 CFLAGS   += $(SDL_CFLAGS) -D_REENTRANT
 LDLIBS   += -lSDL2
-endif
 endif
 
 ifneq ($(EMULATOR),1)

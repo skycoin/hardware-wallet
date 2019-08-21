@@ -6,12 +6,14 @@ CFLAGS+=-DVERSION_MAJOR=$(VERSION_MAJOR)
 CFLAGS+=-DVERSION_MINOR=$(VERSION_MINOR)
 CFLAGS+=-DVERSION_PATCH=$(VERSION_PATCH)
 CFLAGS+=-DVERSION_IS_SEMANTIC_COMPLIANT=$(VERSION_IS_SEMANTIC_COMPLIANT)
+
 ifeq ($(VERSION_IS_SEMANTIC_COMPLIANT),0)
-ifeq ($(BOOTLOADER),0)
+ifneq ($(BOOTLOADER),1)
 $(warning "firmware version $(VERSION_FIRMWARE)...")
 CFLAGS+=-DAPPVER=0X$(VERSION_FIRMWARE)
 endif
 endif
+
 ifneq ($(BOOTLOADER),1)
 ifeq ($(DEBUG),1)
 	OPTFLAGS ?= -Og
@@ -25,7 +27,6 @@ endif
 ifeq ($(EMULATOR),1)
 
 PYTHON ?= python
-
 CC       ?= gcc
 LD       := $(CC)
 ifneq ($(UNAME_S),Darwin)
@@ -34,8 +35,6 @@ endif
 OBJDUMP  := objdump
 AR       := ar
 AS       := as
-CPUFLAGS ?=
-FPUFLAGS ?=
 ifeq ($(UNAME_S),Darwin)
 	CFLAGS += -DCONFIDENTIAL=
 else
@@ -123,31 +122,18 @@ LDFLAGS  += -L$(TOP_DIR) \
 
 CFLAGS += -DFASTFLASH=0
 
-ifeq ($(REVERSE_SCREEN),1)
-CFLAGS   += -DREVERSE_SCREEN=1
-else
-CFLAGS   += -DREVERSE_SCREEN=0
-endif
-
-ifeq ($(REVERSE_BUTTONS),1)
-CFLAGS   += -DREVERSE_BUTTONS=1
-else
-CFLAGS   += -DREVERSE_BUTTONS=0
-endif
-
-ifeq ($(EMULATOR),1)
-CFLAGS   += -DEMULATOR=1
-else
-CFLAGS   += -DEMULATOR=0
-endif
+REVERSE_SCREEN ?= 0
+REVERSE_BUTTONS ?= 0
+EMULATOR ?= 0
+CFLAGS   += -DREVERSE_SCREEN=$(REVERSE_SCREEN)
+CFLAGS   += -DREVERSE_BUTTONS=$(REVERSE_BUTTONS)
+CFLAGS   += -DEMULATOR=$(EMULATOR)
 
 ifeq ($(BOOTLOADER),1)
-ifeq ($(MEMORY_PROTECT),1)
-CFLAGS += -DMEMORY_PROTECT=1
-else
-CFLAGS += -DMEMORY_PROTECT=0
+MEMORY_PROTECT ?= 0
+CFLAGS += -DMEMORY_PROTECT=$(MEMORY_PROTECT)
 endif
-endif
+
 CFLAGS+=-DVERSION_IS_SEMANTIC_COMPLIANT=$(VERSION_IS_SEMANTIC_COMPLIANT)
 ifeq ($(VERSION_IS_SEMANTIC_COMPLIANT),0)
 $(warning "firmware version $(VERSION_FIRMWARE)...")
@@ -160,19 +146,20 @@ ifneq ($(BOOTLOADER),1)
 lib$(NAME).a: $(OBJS) $(LIBDEPS)
 	$(AR) rcs lib$(NAME).a $(OBJS) $(LIBDEPS)
 endif
+
 ifeq ($(EMULATOR),1)
 $(NAME): $(OBJS) $(LDSCRIPT) $(LIBDEPS) firmware/main.o
 	$(LD) -o $(NAME) firmware/main.o $(OBJS) $(LDLIBS) $(LDFLAGS)
 
 ifneq ($(CHECK_PATH),)
 ifeq ($(UNAME_S), Linux)
-TESTINC += -isystem $(CHECK_PATH)/src
-TESTINC += -isystem $(CHECK_PATH)
+TESTING += -isystem $(CHECK_PATH)/src
+TESTING += -isystem $(CHECK_PATH)
 endif
 ifeq ($(UNAME_S), Darwin)
-TESTINC+=-isystem $(CHECK_PATH)/include
+TESTING+=-isystem $(CHECK_PATH)/include
 endif
-CFLAGS += $(TESTINC)
+CFLAGS += $(TESTING)
 endif
 LIBS_DARWIN +=
 TESTLIBS_DARWIN += -L$(CHECK_PATH)/lib -lcheck
@@ -206,13 +193,8 @@ $(NAME).elf: lib$(NAME).a firmware/main.o $(LDSCRIPT) $(LIBDEPS)
 endif
 endif
 
-ifeq ($(BOOTLOADER),1)
 %.o: %.c Makefile pub_keys.h
 	$(CC) $(CFLAGS) -MMD -MP -o $@ -c $<
-else
-%.o: %.c Makefile
-	$(CC) $(CFLAGS) -MMD -MP -o $@ -c $<
-endif
 
 %.small.o: %.c Makefile
 	$(CC) $(CFLAGS) -MMD -MP -o $@ -c $<
