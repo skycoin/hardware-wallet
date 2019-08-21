@@ -13,7 +13,7 @@ fi
 # fetch recent 50 commits
 # hardware wallet should not get too behind protob repository
 git -C tiny-firmware/protob/ fetch origin
-PROTOB_REMOTE_HASH=$(git -C tiny-firmware/protob log remotes/origin/master --pretty=oneline | head -50 | cut -c 1-40)
+PROTOB_REMOTE_HASH=$(git -C tiny-firmware/protob log remotes/origin/develop --pretty=oneline | head -50 | cut -c 1-40)
 
 if ! echo "$PROTOB_REMOTE_HASH" | grep -q "$PROTOB_HASH"; then
     echo "commit hash $PROTOB_HASH not present in recent 50 master commits"
