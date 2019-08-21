@@ -128,7 +128,7 @@ skycoin-crypto-lib:
 	mv tiny-firmware/vendor/skycoin-crypto/libskycoin-crypto.a tiny-firmware/
 
 arm-skycoin-crypto-lib:
-	CC=arm-none-eabi-gcc make -C tiny-firmware/vendor/skycoin-crypto/ libskycoin-crypto.a && \
+	CC=arm-none-eabi-gcc AR=arm-none-eabi-ar make -C tiny-firmware/vendor/skycoin-crypto/ libskycoin-crypto.a && \
 	mv tiny-firmware/vendor/skycoin-crypto/libskycoin-crypto.a tiny-firmware/
 
 firmware: arm-skycoin-crypto-lib tiny-firmware/skyfirmware.bin ## Build skycoin wallet firmware
