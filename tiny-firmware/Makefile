@@ -79,6 +79,7 @@ OBJS += firmware/factory_test.o
 OBJS += firmware/gpio_noise.o
 OBJS += firmware/entropy.o
 OBJS += firmware/swtimer.o
+OBJS += firmware/bootloader_integrity.o
 
 OBJS += protob/c/messages.pb.o
 OBJS += protob/c/types.pb.o
