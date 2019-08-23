@@ -111,6 +111,7 @@ CFLAGS   += $(OPTFLAGS) \
             -DRAND_PLATFORM_INDEPENDENT=1 \
             -I$(TOOLCHAIN_DIR)/include \
             -I$(TOP_DIR) \
+            -I$(TOP_DIR)tests \
             -I$(TOP_DIR)gen \
             -I$(TOP_DIR)vendor/skycoin-crypto \
             -I$(TOP_DIR)vendor/skycoin-crypto/tools \
@@ -140,10 +141,8 @@ endif
 
 CFLAGS += -DDEBUG_RNG=0
 
-ifneq ($(BOOTLOADER),1)
 lib$(NAME).a: $(OBJS) $(LIBDEPS)
 	$(AR) rcs lib$(NAME).a $(OBJS) $(LIBDEPS)
-endif
 
 ifeq ($(EMULATOR),1)
 $(NAME): $(OBJS) $(LDSCRIPT) $(LIBDEPS) firmware/main.o
@@ -182,13 +181,13 @@ test: test_$(NAME) ## Run test suite for tiny-firmware.
 else
 $(NAME).bin: $(NAME).elf
 	$(OBJCOPY) -Obinary $(NAME).elf $(NAME).bin
-ifeq ($(BOOTLOADER),1)
-$(NAME).elf: $(OBJS) $(LDSCRIPT)
+
+bootloader.elf: $(OBJS) $(LDSCRIPT)
 	$(LD) -o $(NAME).elf $(OBJS) $(LDLIBS) $(LDFLAGS)
-else
-$(NAME).elf: lib$(NAME).a firmware/main.o $(LDSCRIPT) $(LIBDEPS)
+
+skyfirmware.elf: lib$(NAME).a firmware/main.o $(LDSCRIPT) $(LIBDEPS)
+	echo 123 $(NAME)
 	$(LD) -o $(NAME).elf firmware/main.o -l$(NAME) $(LDLIBS) $(LDFLAGS)
-endif
 endif
 
 %.o: %.c Makefile pub_keys.h

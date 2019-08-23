@@ -29,16 +29,8 @@ OBJS += gen/fonts.o
 #end libskywallet.a
 
 #test_skyhw
-TEST_OBJS += firmware/test_timer.o
-TEST_OBJS += firmware/test_fsm.o
-TEST_OBJS += firmware/test_droplet.o
+TEST_OBJS += $(patsubst tests/%.c,tests/%.o, $(wildcard tests/*.c))
 TEST_OBJS += serialno.o
-TEST_OBJS += firmware/test_pin.o
-TEST_OBJS += firmware/test_serialno.o
-TEST_OBJS += firmware/test_reset.o
-TEST_OBJS += firmware/test_main.o
-TEST_OBJS += firmware/test_many_address_golden.o
-TEST_OBJS += firmware/test_protect.o
 #end test_skyhw
 
 ifneq ($(EMULATOR),1)
@@ -62,6 +54,7 @@ OBJS += $(TOP_DIR)protob/nanopb/vendor/nanopb/pb_encode.o
 
 ifneq ($(EMULATOR),1)
 OBJS += firmware/usb.o
+OBJS += firmware/fastflash.o
 endif
 OBJS += firmware/skywallet.o
 OBJS += firmware/layout2.o
