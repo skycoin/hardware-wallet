@@ -1,4 +1,9 @@
-SDL_CFLAGS ?= $(shell sdl2-config --cflags | sed 's/-D_THREAD_SAFE//g')
+ifeq ($(EMULATOR),1)
+NAME = skycoin-emulator
+else
+NAME  = skyfirmware
+endif
+
 ENABLE_GETENTROPY ?= 0
 DISABLE_GETENTROPY_CONFIRM ?= 0
 
@@ -8,17 +13,14 @@ OBJS += startup.o
 OBJS += timer.o
 OBJS += setup.o
 OBJS += supervise.o
-else
-OBJS += emulator/setup.o
-LDFLAGS  += -L$(TOP_DIR)emulator
-LDLIBS   += -lemulator
-LIBDEPS  += $(TOP_DIR)emulator/libemulator.a
 endif
+
 OBJS += buttons.o
 OBJS += layout.o
 OBJS += oled.o
 OBJS += rng.o
 OBJS += util.o
+
 ifneq ($(BOOTLOADER),1)
 OBJS += memory.o
 OBJS += gen/bitmaps.o
@@ -48,7 +50,6 @@ endif
 DEBUG_LINK ?= 0
 CFLAGS += -Wno-sequence-point
 CFLAGS += -I$(TOP_DIR)protob/nanopb/vendor/nanopb -I$(TOP_DIR)protob/c -DPB_FIELD_16BIT=1
-# CFLAGS += -DQR_MAX_VERSION=0
 CFLAGS += -DDEBUG_LINK=$(DEBUG_LINK)
 CFLAGS += -DDEBUG_LOG=$(DEBUG_LOG)
 
@@ -61,8 +62,6 @@ OBJS += $(TOP_DIR)protob/nanopb/vendor/nanopb/pb_encode.o
 
 ifneq ($(EMULATOR),1)
 OBJS += firmware/usb.o
-else
-OBJS += firmware/udp.o
 endif
 OBJS += firmware/skywallet.o
 OBJS += firmware/layout2.o
@@ -90,34 +89,6 @@ LDFLAGS += -L$(TOP_DIR)
 
 CFLAGS   += -frandom-seed=123
 
-ifeq ($(EMULATOR),1)
-CFLAGS   += -DEMULATOR=1
-
-CFLAGS += -Wno-pointer-to-int-cast
-CFLAGS += -Wno-int-to-pointer-cast
-
-CFLAGS   += -include $(TOP_DIR)emulator/emulator.h
-CFLAGS   += -include stdio.h
-ifeq ($(COVERAGE), 1)
-	CFLAGS += -fprofile-arcs -ftest-coverage
-	LDLIBS+=-lgcov --coverage
-	SRCS  = $(OBJS:.o=.c)
-	SRCS += $(TEST_OBJS:.o=.c)
-endif
-
-HEADLESS ?= 0
-CFLAGS   += -DHEADLESS=$(HEADLESS)
-
-CFLAGS   += $(SDL_CFLAGS) -D_REENTRANT
-LDLIBS   += -lSDL2
-endif
-
-ifneq ($(EMULATOR),1)
-NAME  = skyfirmware
-else
-NAME = skycoin-emulator
-endif
-
 ifneq ($(EMULATOR),1)
 .PHONY: proto libopencm3
 
@@ -127,7 +98,6 @@ else
 
 all: proto $(NAME)
 endif
-
 
 proto:
 	cd protob && make build-c
@@ -140,6 +110,10 @@ sign: $(NAME).bin
 
 add_meta_header: $(NAME).bin
 	bootloader/firmware_sign.py -f $(NAME).bin -pk $(FIRMWARE_SIGNATURE_PUB_KEY1) $(FIRMWARE_SIGNATURE_PUB_KEY2) $(FIRMWARE_SIGNATURE_PUB_KEY3) $(FIRMWARE_SIGNATURE_PUB_KEY4) $(FIRMWARE_SIGNATURE_PUB_KEY5) -a
+
+ifeq ($(EMULATOR),1)
+include emulator/Makefile
+endif
 
 include Makefile.include
 
@@ -155,6 +129,3 @@ clean::
 	rm -f *.log
 	rm -f *.srec
 	cd protob && make clean-c
-
-coverage: test
-	gcov -n -b $(SRCS)

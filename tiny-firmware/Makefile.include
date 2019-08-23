@@ -49,6 +49,7 @@ OBJCOPY  := $(PREFIX)objcopy
 OBJDUMP  := $(PREFIX)objdump
 AR       := $(PREFIX)ar
 AS       := $(PREFIX)as
+
 OPENOCD  := openocd -f interface/stlink-v2.cfg -c "transport select hla_swd" -f target/stm32f2x.cfg
 ifeq ($(DEBUG),1)
 	OPTFLAGS ?= -Og
@@ -125,14 +126,11 @@ CFLAGS += -DFASTFLASH=0
 REVERSE_SCREEN ?= 0
 REVERSE_BUTTONS ?= 0
 EMULATOR ?= 0
-CFLAGS   += -DREVERSE_SCREEN=$(REVERSE_SCREEN)
-CFLAGS   += -DREVERSE_BUTTONS=$(REVERSE_BUTTONS)
-CFLAGS   += -DEMULATOR=$(EMULATOR)
-
-ifeq ($(BOOTLOADER),1)
 MEMORY_PROTECT ?= 0
-CFLAGS += -DMEMORY_PROTECT=$(MEMORY_PROTECT)
-endif
+CFLAGS += -DREVERSE_SCREEN=$(REVERSE_SCREEN) \
+		  -DREVERSE_BUTTONS=$(REVERSE_BUTTONS) \
+          -DEMULATOR=$(EMULATOR) \
+          -DMEMORY_PROTECT=$(MEMORY_PROTECT)
 
 CFLAGS+=-DVERSION_IS_SEMANTIC_COMPLIANT=$(VERSION_IS_SEMANTIC_COMPLIANT)
 ifeq ($(VERSION_IS_SEMANTIC_COMPLIANT),0)
@@ -157,7 +155,7 @@ TESTING += -isystem $(CHECK_PATH)/src
 TESTING += -isystem $(CHECK_PATH)
 endif
 ifeq ($(UNAME_S), Darwin)
-TESTING+=-isystem $(CHECK_PATH)/include
+TESTING += -isystem $(CHECK_PATH)/include
 endif
 CFLAGS += $(TESTING)
 endif
