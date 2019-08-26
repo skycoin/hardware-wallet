@@ -17,7 +17,7 @@ ifeq ($(DEBUG),1)
 ifneq ($(BOOTLOADER),1)
 	OPTFLAGS ?= -Og
 	DBGFLAGS ?= -g3 -ggdb3
-endif
+else
 ifneq ($(EMULATOR),1)
 	OPTFLAGS ?= -Og
 	DBGFLAGS ?= -g
