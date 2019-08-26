@@ -1,7 +1,19 @@
 .PHONY: proto
-EMULATOR := 1
-UNAME_S := $(shell uname -s)
-TOOLCHAIN_DIR ?= $(TOP_DIR)vendor/libopencm3
+EMULATOR = 1
+PYTHON ?= python
+CC       ?= gcc
+LD       := $(CC)
+ifneq ($(UNAME_S),Darwin)
+OBJCOPY  = objcopy
+endif
+OBJDUMP  = objdump
+AR       = ar
+AS       = as
+ifeq ($(UNAME_S),Darwin)
+	CFLAGS += -DCONFIDENTIAL=
+else
+	CFLAGS += -DCONFIDENTIAL='__attribute__((section("confidential")))'
+endif
 
 OBJS += emulator/setup.o
 OBJS += emulator/buttons.o

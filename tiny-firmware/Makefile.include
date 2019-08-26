@@ -5,7 +5,6 @@ DEBUG ?= 1
 CFLAGS+=-DVERSION_MAJOR=$(VERSION_MAJOR)
 CFLAGS+=-DVERSION_MINOR=$(VERSION_MINOR)
 CFLAGS+=-DVERSION_PATCH=$(VERSION_PATCH)
-CFLAGS+=-DVERSION_IS_SEMANTIC_COMPLIANT=$(VERSION_IS_SEMANTIC_COMPLIANT)
 
 ifeq ($(VERSION_IS_SEMANTIC_COMPLIANT),0)
 ifneq ($(BOOTLOADER),1)
@@ -14,34 +13,22 @@ CFLAGS+=-DAPPVER=0X$(VERSION_FIRMWARE)
 endif
 endif
 
-ifneq ($(BOOTLOADER),1)
 ifeq ($(DEBUG),1)
+ifneq ($(BOOTLOADER),1)
 	OPTFLAGS ?= -Og
 	DBGFLAGS ?= -g3 -ggdb3
+else
+ifneq ($(EMULATOR),1)
+	OPTFLAGS ?= -Og
+	DBGFLAGS ?= -g
+endif
+endif
 else
 	OPTFLAGS ?= -O3
 	DBGFLAGS ?= -DDNDEBUG
 endif
-endif
 
-ifeq ($(EMULATOR),1)
-
-PYTHON ?= python
-CC       ?= gcc
-LD       := $(CC)
-ifneq ($(UNAME_S),Darwin)
-OBJCOPY  := objcopy
-endif
-OBJDUMP  := objdump
-AR       := ar
-AS       := as
-ifeq ($(UNAME_S),Darwin)
-	CFLAGS += -DCONFIDENTIAL=
-else
-	CFLAGS += -DCONFIDENTIAL='__attribute__((section("confidential")))'
-endif
-
-else
+ifneq ($(EMULATOR),1)
 PREFIX   ?= arm-none-eabi-
 CC       := $(PREFIX)gcc
 LD       := $(PREFIX)gcc
@@ -51,13 +38,7 @@ AR       := $(PREFIX)ar
 AS       := $(PREFIX)as
 
 OPENOCD  := openocd -f interface/stlink-v2.cfg -c "transport select hla_swd" -f target/stm32f2x.cfg
-ifeq ($(DEBUG),1)
-	OPTFLAGS ?= -Og
-	DBGFLAGS ?= -g
-else
-	OPTFLAGS ?= -O3
-	DBGFLAGS ?= -DNDEBUG
-endif
+
 CPUFLAGS ?= -mcpu=cortex-m3 -mthumb
 FPUFLAGS ?= -msoft-float
 
@@ -74,9 +55,6 @@ LDFLAGS  += --static \
 CFLAGS += -DCONFIDENTIAL='__attribute__((section("confidential")))'
 
 endif
-
-CFLAGS += -DDISABLE_GETENTROPY_CONFIRM=$(DISABLE_GETENTROPY_CONFIRM)
-CFLAGS += -DENABLE_GETENTROPY=$(ENABLE_GETENTROPY)
 
 CFLAGS   += $(OPTFLAGS) \
             $(DBGFLAGS) \
@@ -99,6 +77,7 @@ CFLAGS   += $(OPTFLAGS) \
             -Wuninitialized \
             -Wformat-security \
             -Werror \
+            -Wno-sequence-point \
             -fno-common \
             -fno-exceptions \
             -fvisibility=internal \
@@ -111,6 +90,7 @@ CFLAGS   += $(OPTFLAGS) \
             -DRAND_PLATFORM_INDEPENDENT=1 \
             -I$(TOOLCHAIN_DIR)/include \
             -I$(TOP_DIR) \
+            -I$(TOP_DIR)firmware \
             -I$(TOP_DIR)tests \
             -I$(TOP_DIR)gen \
             -I$(TOP_DIR)vendor/skycoin-crypto \
@@ -122,23 +102,23 @@ LDFLAGS  += -L$(TOP_DIR) \
             $(CPUFLAGS) \
             $(FPUFLAGS)
 
-CFLAGS += -DFASTFLASH=0
-
 REVERSE_SCREEN ?= 0
 REVERSE_BUTTONS ?= 0
 EMULATOR ?= 0
 MEMORY_PROTECT ?= 0
+ENABLE_GETENTROPY ?= 0
+DISABLE_GETENTROPY_CONFIRM ?= 0
+
 CFLAGS += -DREVERSE_SCREEN=$(REVERSE_SCREEN) \
 		  -DREVERSE_BUTTONS=$(REVERSE_BUTTONS) \
           -DEMULATOR=$(EMULATOR) \
-          -DMEMORY_PROTECT=$(MEMORY_PROTECT)
+          -DMEMORY_PROTECT=$(MEMORY_PROTECT) \
+          -DDISABLE_GETENTROPY_CONFIRM=$(DISABLE_GETENTROPY_CONFIRM) \
+          -DENABLE_GETENTROPY=$(ENABLE_GETENTROPY) \
+          -DVERSION_IS_SEMANTIC_COMPLIANT=$(VERSION_IS_SEMANTIC_COMPLIANT)
 
-CFLAGS+=-DVERSION_IS_SEMANTIC_COMPLIANT=$(VERSION_IS_SEMANTIC_COMPLIANT)
-ifeq ($(VERSION_IS_SEMANTIC_COMPLIANT),0)
-$(warning "firmware version $(VERSION_FIRMWARE)...")
-CFLAGS+=-DAPPVER=0X$(VERSION_FIRMWARE)
-endif
 
+CFLAGS += -DFASTFLASH=0
 CFLAGS += -DDEBUG_RNG=0
 
 lib$(NAME).a: $(OBJS) $(LIBDEPS)
