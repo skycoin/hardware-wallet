@@ -88,6 +88,7 @@ firmware-deps: build-deps ## Build firmware dependencies
 generate-bitmaps:
 	cd tiny-firmware/gen/bitmaps/ && python2 generate.py
 
+MEMORY_PROTECT ?= 0
 bootloader: firmware-deps ## Build bootloader (RDP level 0)
 	rm -f tiny-firmware/memory.o tiny-firmware/gen/bitmaps.o # Force rebuild of these two files
 	FIRMWARE_SIGNATURE_PUB_KEY1=$(FIRMWARE_SIGNATURE_PUB_KEY1) FIRMWARE_SIGNATURE_PUB_KEY2=$(FIRMWARE_SIGNATURE_PUB_KEY2) FIRMWARE_SIGNATURE_PUB_KEY3=$(FIRMWARE_SIGNATURE_PUB_KEY3) FIRMWARE_SIGNATURE_PUB_KEY4=$(FIRMWARE_SIGNATURE_PUB_KEY4) FIRMWARE_SIGNATURE_PUB_KEY5=$(FIRMWARE_SIGNATURE_PUB_KEY5) MEMORY_PROTECT=$(MEMORY_PROTECT) SIGNATURE_PROTECT=1 REVERSE_BUTTONS=1 VERSION_MAJOR=$(VERSION_BOOTLOADER_MAJOR) VERSION_MINOR=$(VERSION_BOOTLOADER_MINOR) VERSION_PATCH=$(VERSION_BOOTLOADER_PATCH) make -C tiny-firmware/bootloader/ align
