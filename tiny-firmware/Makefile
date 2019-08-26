@@ -1,3 +1,4 @@
+UNAME_S ?= $(shell uname -s)
 ifeq ($(EMULATOR),1)
 NAME = skycoin-emulator
 else
