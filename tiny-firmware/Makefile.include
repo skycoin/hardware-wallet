@@ -17,15 +17,14 @@ ifeq ($(DEBUG),1)
 ifneq ($(BOOTLOADER),1)
 	OPTFLAGS ?= -Og
 	DBGFLAGS ?= -g3 -ggdb3
-else
+endif
 ifneq ($(EMULATOR),1)
 	OPTFLAGS ?= -Og
 	DBGFLAGS ?= -g
 endif
-endif
 else
 	OPTFLAGS ?= -O3
-	DBGFLAGS ?= -DDNDEBUG
+	DBGFLAGS ?= -DNDEBUG
 endif
 
 ifneq ($(EMULATOR),1)
