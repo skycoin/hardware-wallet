@@ -20,13 +20,26 @@
 #ifndef __RESET_H__
 #define __RESET_H__
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
 
-void reset_init(bool display_random, uint32_t _strength, bool passphrase_protection, bool pin_protection, const char *language, const char *label, bool skip_backup);
-void reset_entropy(const uint8_t *ext_entropy, uint32_t len);
-void reset_backup(bool separated);
-uint32_t reset_get_int_entropy(uint8_t *entropy);
-const char *reset_get_word(void);
+#include "firmware/error.h"
+#include "types.pb.h"
+
+void reset_init(bool display_random, uint32_t _strength, bool passphrase_protection, bool pin_protection, const char* language, const char* label, bool skip_backup);
+ErrCode_t reset_entropy(void);
+
+/**
+ * @brief reset_backup create a device bckup
+ * @param separated true if called as a separate workflow via BackupMessage.
+ * @return Ok if success.
+ */
+ErrCode_t reset_backup(bool separated);
+uint32_t reset_get_int_entropy(uint8_t* entropy);
+const char* reset_get_word(void);
+
+// Functions exported or testing purposes
+void reset_init_ex(bool display_random, uint32_t _strength, bool passphrase_protection, bool pin_protection, const char* language, const char* label, bool _skip_backup, const char* (*funcRequestPin)(PinMatrixRequestType mt, const char*msg));
 
 #endif

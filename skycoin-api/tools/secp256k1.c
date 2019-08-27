@@ -23,46 +23,80 @@
 
 #include "secp256k1.h"
 
+#include <string.h>
+
+#include "curves.h"
+
 const ecdsa_curve secp256k1 = {
-	/* .prime */ {
-		/*.val =*/ {0x3ffffc2f, 0x3ffffffb, 0x3fffffff, 0x3fffffff, 0x3fffffff, 0x3fffffff, 0x3fffffff, 0x3fffffff, 0xffff}
-	},
+    /* .prime */ {
+        /*.val =*/{0x3ffffc2f, 0x3ffffffb, 0x3fffffff, 0x3fffffff, 0x3fffffff, 0x3fffffff, 0x3fffffff, 0x3fffffff, 0xffff}},
 
-	/* G */ {
-		/*.x =*/{/*.val =*/{0x16f81798, 0x27ca056c, 0x1ce28d95, 0x26ff36cb, 0x70b0702, 0x18a573a, 0xbbac55a, 0x199fbe77, 0x79be}},
-		/*.y =*/{/*.val =*/{0x3b10d4b8, 0x311f423f, 0x28554199, 0x5ed1229, 0x1108a8fd, 0x13eff038, 0x3c4655da, 0x369dc9a8, 0x483a}}
-	},
+    /* G */ {/*.x =*/{/*.val =*/{0x16f81798, 0x27ca056c, 0x1ce28d95, 0x26ff36cb, 0x70b0702, 0x18a573a, 0xbbac55a, 0x199fbe77, 0x79be}},
+        /*.y =*/{/*.val =*/{0x3b10d4b8, 0x311f423f, 0x28554199, 0x5ed1229, 0x1108a8fd, 0x13eff038, 0x3c4655da, 0x369dc9a8, 0x483a}}},
 
-	/* order */ {
-		/*.val =*/{0x10364141, 0x3f497a33, 0x348a03bb, 0x2bb739ab, 0x3ffffeba, 0x3fffffff, 0x3fffffff, 0x3fffffff, 0xffff}
-	},
+    /* order */ {/*.val =*/{0x10364141, 0x3f497a33, 0x348a03bb, 0x2bb739ab, 0x3ffffeba, 0x3fffffff, 0x3fffffff, 0x3fffffff, 0xffff}},
 
-	/* order_half */ {
-		/*.val =*/{0x281b20a0, 0x3fa4bd19, 0x3a4501dd, 0x15db9cd5, 0x3fffff5d, 0x3fffffff, 0x3fffffff, 0x3fffffff, 0x7fff}
-	},
+    /* order_half */ {/*.val =*/{0x281b20a0, 0x3fa4bd19, 0x3a4501dd, 0x15db9cd5, 0x3fffff5d, 0x3fffffff, 0x3fffffff, 0x3fffffff, 0x7fff}},
 
-	/* a */	0,
+    /* a */ 0,
 
-	/* b */ {
-		/*.val =*/{7}
-	}
+    /* b */ {/*.val =*/{7}}
 
 #if USE_PRECOMPUTED_CP
-	,
-	/* cp */ {
+    ,
+    /* cp */ {
 #include "secp256k1.table"
-	}
+    }
 #endif
 };
 
 const curve_info secp256k1_info = {
-	.bip32_name = "Bitcoin seed",
-	.params = &secp256k1,
-	.hasher_type = HASHER_SHA2,
+    .bip32_name = "Bitcoin seed",
+    .params = &secp256k1,
+    .hasher_type = HASHER_SHA2,
 };
 
-const curve_info secp256k1_decred_info = {
-	.bip32_name = "Decred seed",
-	.params = &secp256k1,
-	.hasher_type = HASHER_BLAKE,
+/*
+const curve_info ed25519_info = {
+    .bip32_name = "ed25519 seed",
+    .params = NULL,
+    .hasher_type = HASHER_SHA2,
 };
+
+const curve_info ed25519_sha3_info = {
+    .bip32_name = "ed25519-sha3 seed",
+    .params = NULL,
+    .hasher_type = HASHER_SHA2,
+};
+
+const curve_info curve25519_info = {
+    .bip32_name = "curve25519 seed",
+    .params = NULL,
+    .hasher_type = HASHER_SHA2,
+};
+*/
+
+
+const curve_info* get_curve_by_name(const char* curve_name)
+{
+    if (curve_name == 0) {
+        return 0;
+    }
+    if (strcmp(curve_name, SECP256K1_NAME) == 0) {
+        return &secp256k1_info;
+    }
+
+    /*
+    if (strcmp(curve_name, ED25519_NAME) == 0) {
+        return &ed25519_info;
+    }
+    if (strcmp(curve_name, ED25519_SHA3_NAME) == 0) {
+        return &ed25519_sha3_info;
+    }
+    if (strcmp(curve_name, CURVE25519_NAME) == 0) {
+        return &curve25519_info;
+    }
+    */
+
+    return 0;
+}

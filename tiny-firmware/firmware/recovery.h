@@ -20,13 +20,13 @@
 #ifndef __RECOVERY_H__
 #define __RECOVERY_H__
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
-void recovery_init(uint32_t _word_count, bool passphrase_protection, bool pin_protection, const char *language, const char *label, bool _enforce_wordlist, uint32_t type, bool _dry_run);
-void recovery_word(const char *word);
+void recovery_init(uint32_t _word_count, bool passphrase_protection, bool pin_protection, const char* language, const char* label, bool _dry_run);
+void recovery_word(const char* word);
 void recovery_abort(void);
-const char *recovery_get_fake_word(void);
+const char* recovery_get_fake_word(void);
 uint32_t recovery_get_word_pos(void);
 
 #endif

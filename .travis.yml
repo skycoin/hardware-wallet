@@ -2,46 +2,75 @@ language: c
 matrix:
   include:
     - os: linux
+      env:
+        - PIP='sudo pip'
       addons:
         apt:
           sources:
             - ubuntu-toolchain-r-test
-      env:
-        - PROTOBUF_VERSION=3.4.0
     - os: osx
-      env:
-        - PROTOBUF_VERSION=3.6.1
+
 before_script:
-  # install linters
-  - make install-linters
+  - sh "./tiny-firmware/protob/ci-scripts/install-${TRAVIS_OS_NAME}.sh" ;
   # Define env vars for Linux builds
   - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then
+    ls -l /usr/local/bin/protoc ;
     export CHECK_PATH="$(pwd)/check-0.12.0" ;
     export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${CHECK_PATH}/src" ;
+    export PATH="/usr/local/bin:$(pwd)/protoc/bin:$PATH" ;
+    echo "PATH=$PATH";
+    echo "PIP=$PIP";
     fi
+  # Define env vars for osx builds
   - if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
     export CHECK_PATH="$(brew --prefix check)" ;
     export DYLD_LIBRARY_PATH="${DYLD_LIBRARY_PATH}:${CHECK_PATH}/lib" ;
     fi
-  - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then export PATH="$PATH:$(pwd)/protoc/bin" ; echo "PATH=$PATH"; fi
   # Install OS-specific test and build dependencies
   - eval "./ci-scripts/install-${TRAVIS_OS_NAME}.sh"
-  # Include paths for brew packages e.g. SDL2
-  - if [[ "$TRAVIS_OS_NAME" == 'osx' ]]; then export CFLAGS="-I$(brew --prefix sdl2)/include/SDL2" ; fi
-  # Upgrade protobuf python
-  - pip3 install --user --upgrade protobuf
-  - pip3 install --user "protobuf==${PROTOBUF_VERSION}" ecdsa
-  - pip install --user --upgrade protobuf
+  - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then export PATH="/opt/gcc-arm-none-eabi-6-2017-q2-update/bin:$PATH" ; fi
+  # Install linters
+  - make install-linters
+  - git submodule update --remote
+
 script:
+  - make check-protob
   - make lint
-  - make -C skycoin-api test
-  - make -C skycoin-api clean
+  - make -C tiny-firmware/protob build-c
+  - FIRMWARE_SIGNATURE_PUB_KEY1=0241d51e593f681006f9f3c4a0ec744d459c960601b4ed770d979c32ace63b0a7a make test
+  - make clean
   - make emulator
   - make clean
+  - make bootloader-mem-protect
+  - make bootloader-clean
   - make full-firmware
-  - md5sum tiny-firmware/bootloader/combine/*.bin
-  - md5sum full-firmware-no-mem-protect.bin
+  - make clean
+
 notifications:
   # https://github.com/kvld/travisci-telegram TravisCI Telegram Bot integration
   webhooks: https://fathomless-fjord-24024.herokuapp.com/notify
 
+before_deploy:
+  - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then
+      make release;
+      VERSION_BOOTLOADER=$(cat tiny-firmware/bootloader/VERSION);
+      ID_VENDOR=12602;
+      ID_PRODUCT=1;
+      export COMBINED_VERSION=${VERSION_BOOTLOADER}-${TRAVIS_TAG}-${ID_VENDOR}-${ID_PRODUCT}-1;
+    else
+      make release-emulator;
+    fi
+
+deploy:
+  - provider: s3
+    access_key_id: $AWS_ACCESS_KEY_ID
+    secret_access_key: $AWS_SECRET_ACCESS_KEY
+    bucket: $AWS_BUCKET
+    skip_cleanup: true
+    local_dir: releases
+    upload-dir: skywallet
+    acl: private
+    region: $AWS_REGION
+    on:
+      repo: skycoin/hardware-wallet
+      tags: true

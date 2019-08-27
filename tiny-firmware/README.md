@@ -1,6 +1,6 @@
 # Skycoin electronic wallet firmware
 
-This firmware had been copied and modified from [trezor-mcu](https://github.com/trezor/trezor-mcu). Please refer to the [README.md file](https://github.com/trezor/trezor-mcu/blob/master/README.md) on that repository for extra details about bootloader and firmware compilation.
+This firmware had been copied and modified from [trezor-mcu](https://github.com/trezor/trezor-mcu) under the GNU LGPL. Please refer to the [README.md file](https://github.com/trezor/trezor-mcu/blob/master/README.md) on that repository for extra details about bootloader and firmware compilation.
 
 This code aims at tranforming the cipher library from [this repository](https://github.com/skycoin/skycoin/tree/develop/src/cipher) into firmware for the STM32 hardware.
 
@@ -54,7 +54,7 @@ sudo apt-get install protobuf-compiler python-protobuf golang-goprotobuf-dev
 On Mac OS
 
 ```
-brew install protobuf --with-python
+brew install protobuf
 go get -u github.com/golang/protobuf/{proto,protoc-gen-go}
 ```
 
@@ -97,7 +97,7 @@ Restart your machine or force your udev kernel module to [reload the rules](http
 
     export REVERSE_SCREEN=1
     export REVERSE_BUTTONS=1 # need to be changed in the project Makefile if you are using it
-    
+
 Disable the signature checking
 
 Change SIGNATURE_PROTECT to 0 in the [project Makfile](https://github.com/skycoin/hardware-wallet/blob/master/Makefile)
@@ -110,11 +110,11 @@ You can check the device is seen by your ST-LINK using this command:
 
     st-info --probe
 
-To flash the device on a microcontroller of STM32f2xx family the command is:
+To flash a full firmware build at `FULL_FIRMWARE_PATH` on a microcontroller of STM32f2xx family the command is:
 
-    st-flash write bootloader/combine/combined.bin 0x08000000;
+    st-flash write ${FULL_FIRMWARE_PATH} 0x08000000;
 
-You can also use the `st-skycoin` rule in the [main Makfile](https://github.com/skycoin/hardware-wallet/blob/master/Makefile)
+It is also possible to use the `st-flash` rule in the [main Makefile](https://github.com/skycoin/hardware-wallet/blob/master/Makefile). If `FULL_FIRMWARE_PATH` not set it's value defaults to `./full-firmware-no-mem-protect.bin`, which happens to be the output of `make full-firmware` command.
 
 ## 4. Firmware signature
 
@@ -146,7 +146,7 @@ The it will ask you to provide a secret key that must correspond to one of the f
 
 #### Recombine the firmware and the bootloader
 
-See [README.md](https://github.com/skycoin/hardware-wallet/blob/master/README.md): Run `make full-firmware` from repository home. 
+See [README.md](https://github.com/skycoin/hardware-wallet/blob/master/README.md): Run `make full-firmware` from repository home.
 
 Then you can re-flash the firmware for instance with st-skycoin alias.
 
@@ -177,7 +177,7 @@ Here is a quick presentation of most important files of the firmware:
 * firmware/fsm.c: all the messages received in the firmware correspond to a call to a function in fsm.c, the corresponding between messages and function is defined in protob/messages_map.h (generated file)
 * firmware/storage.c: manages the persistent (persistent when pluging out the power supply) memory of the firmware.
 * oled.c/layout.c: manage screen display
-* firmware/trezor.c: main entry point
+* firmware/skywallet.c: main entry point
 
 On bootloader side it is worth mentioning:
 
