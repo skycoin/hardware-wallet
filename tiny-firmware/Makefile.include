@@ -165,7 +165,6 @@ bootloader.elf: $(OBJS) $(LDSCRIPT)
 	$(LD) -o $(NAME).elf $(OBJS) $(LDLIBS) $(LDFLAGS)
 
 skyfirmware.elf: lib$(NAME).a firmware/main.o $(LDSCRIPT) $(LIBDEPS)
-	echo 123 $(NAME)
 	$(LD) -o $(NAME).elf firmware/main.o -l$(NAME) $(LDLIBS) $(LDFLAGS)
 endif
 
