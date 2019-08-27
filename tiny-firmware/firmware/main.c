@@ -28,15 +28,22 @@
 #include "timer.h"
 #include "usb.h"
 #include "util.h"
+#include "bootloader_integrity.h"
 
 extern uint32_t storage_uuid[STM32_UUID_LEN / sizeof(uint32_t)];
-int main(void)
-{
+
+int main(void) {
 #if defined(EMULATOR) && EMULATOR == 1
     setup();
     __stack_chk_guard = random32(); // this supports compiler provided unpredictable stack protection checks
     oledInit();
 #else  // defined(EMULATOR) && EMULATOR == 1
+    if (!check_bootloader()) {
+        layoutDialog(&bmp_icon_error, NULL, NULL, NULL, "Unknown bootloader", "detected.", NULL,
+                     "Unplug your Skywallet",
+                     "contact our support.", NULL);
+        for (;;);
+    }
     setupApp();
     __stack_chk_guard = random32(); // this supports compiler provided unpredictable stack protection checks
 #endif // defined(EMULATOR) && EMULATOR == 1
