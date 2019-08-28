@@ -43,7 +43,6 @@ define is_version_correct
 $(if $(shell echo $1 | egrep '^[0-9]+\.[0-9]+\.[0-9]+$$'),1,0)
 endef
 
-$(warning $(VERSION_FIRMWARE))
 VERSION_IS_SEMANTIC_COMPLIANT = 0
 ifeq ($(call is_version_correct,$(VERSION_FIRMWARE)),0)
 	VERSION_FIRMWARE = $(VERSION_FIRMWARE_RAW)
@@ -55,7 +54,6 @@ ifeq ($(call is_version_correct,$(VERSION_FIRMWARE)),0)
 else
 	VERSION_IS_SEMANTIC_COMPLIANT=1
 endif
-$(warning $(VERSION_IS_SEMANTIC_COMPLIANT))
 
 export VERSION_IS_SEMANTIC_COMPLIANT
 export VERSION_FIRMWARE
