@@ -95,7 +95,8 @@ CFLAGS   += $(OPTFLAGS) \
             -I$(TOP_DIR)gen \
             -I$(TOP_DIR)vendor/skycoin-crypto \
             -I$(TOP_DIR)vendor/skycoin-crypto/tools \
-            -I$(TOP_DIR)vendor/skycoin-crypto/tools/aes
+            -I$(TOP_DIR)vendor/skycoin-crypto/tools/aes \
+			-L$(TOP_DIR)vendor/skycoin-crypto
 
 LDFLAGS  += -L$(TOP_DIR) \
 			-L$(TOP_DIR)vendor/skycoin-crypto \
