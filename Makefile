@@ -104,7 +104,7 @@ bootloader-mem-protect: bootloader ## Build bootloader (RDP level 2)
 	mv skybootloader-no-memory-protect.bin skybootloader-memory-protected.bin
 
 skycoin-crypto-lib:
-	AR=arm-none-eabi-ar make -C tiny-firmware/vendor/skycoin-crypto/ libskycoin-crypto.a
+	make -C tiny-firmware/vendor/skycoin-crypto/ libskycoin-crypto.a
 
 arm-skycoin-crypto-lib:
 	CC=arm-none-eabi-gcc AR=arm-none-eabi-ar make -C tiny-firmware/vendor/skycoin-crypto/ libskycoin-crypto.a
