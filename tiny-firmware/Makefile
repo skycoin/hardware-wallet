@@ -50,7 +50,7 @@ endif
 
 #skycoin-crypto
 LDLIBS += -lskycoin-crypto
-LDFLAGS += -L$(TOP_DIR)
+LDFLAGS += -L$(TOP_DIR)vendor/skycoin-crypto
 #end skycoin-crypto
 
 DEBUG_LINK ?= 0
