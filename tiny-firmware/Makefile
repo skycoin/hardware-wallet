@@ -51,6 +51,7 @@ endif
 #skycoin-crypto
 LDLIBS += -lskycoin-crypto
 LDFLAGS += -L$(TOP_DIR)vendor/skycoin-crypto
+LIBDEPS += $(TOP_DIR)vendor/skycoin-crypto/libskycoin-crypto.a
 #end skycoin-crypto
 
 DEBUG_LINK ?= 0
