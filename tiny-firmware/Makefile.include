@@ -98,6 +98,7 @@ CFLAGS   += $(OPTFLAGS) \
             -I$(TOP_DIR)vendor/skycoin-crypto/tools/aes
 
 LDFLAGS  += -L$(TOP_DIR) \
+			-L$(TOP_DIR)vendor/skycoin-crypto \
             $(DBGFLAGS) \
             $(CPUFLAGS) \
             $(FPUFLAGS)
