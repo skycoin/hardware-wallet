@@ -4,6 +4,47 @@ This firmware had been copied and modified from [trezor-mcu](https://github.com/
 
 This code aims at tranforming the cipher library from [this repository](https://github.com/skycoin/skycoin/tree/develop/src/cipher) into firmware for the STM32 hardware.
 
+## 0. Windows setup
+
+If you want to build project on Windows, you should install following tools:
+
+### MSYS2
+
+The reason we use MSYS2:
+1) It supports SDL2 (Cygwin throw error "Unable to initialize SDL: no video device")
+2) It supports POSIX system calls (no support in MINGW)
+
+To install MSYS2, go to [MSYS2 homepage](https://www.msys2.org), choose the proper installer, download it and follow installation instructions on the homepage
+
+### Packages
+
+After MSYS2 is installed, the following packages should be installed:
+
+1) Make
+2) GCC
+3) Unzip
+4) Pip3
+
+```
+pacman -Sy make gcc unzip python-pip
+```
+
+Libraries installations are described below
+
+### Warnings
+
+1) Somehow MSYS2 doesn't remember changes of PATH variable. So, you need to add binaries of arm-none-eabi-gcc.
+
+2) There is no SLD2 package, which is officially supported by MSYS2. But there is one for MINGW32/64. We used exactly this one. To make it work,
+   after package installation (described in 7), you need to go /c/path_to_msys64/msys64/mingw64 or /c/path_to_msys64/msys64/mingw32 directly in MSYS2
+   and copy:
+   1) whole SDL2 folder from mingw../inlude to /usr/include
+   2) SDL2.dll and sdl2-config from mingw../bin to /usr/binary
+   3) libSDL2.a, libSDL2.dll.a, libSDL2main.a, libSDL2_text.a from mingw../lib to /usr/lib
+
+3) If you use emulator, after first build and after each "make clean" command - run prepare_emulator.py script
+
+
 ## 1. Prepare environment
 
 ### Download and install GNU ARM Embedded Toolchain
@@ -30,6 +71,13 @@ brew update
 brew install gcc-arm-none-eabi-63
 ```
 
+On Windows, go to https://developer.arm.com and download [toolchain](https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads), depending of your Windows version. Install it (don't forget to add binaries). After MSYS2 setup, add binaries to PATH variable:
+
+```sh
+export PATH=$PATH:/c/path_to_binaries/bin
+```
+
+
 ### Install ST-LINK
 
 [ST-LINK](https://github.com/texane/stlink) tool is needed to send JTAG commands to the Skycoin hardware wallet.
@@ -39,6 +87,9 @@ For instance, on Mac OS X the following command will install `stlink` and its de
 ```
 brew install stlink
 ```
+
+On Windows, the best way to flash Skywallet is ST-Link Utility - can be downloaded [here](https://www.st.com/en/development-tools/stsw-link004.html)
+WARNING: Due to GUI interface make st-flash command won't work!!!
 
 If this option is not available for the platform of your preference then install from sources
 by following the steps [here](https://github.com/texane/stlink/blob/master/doc/compiling.md).
@@ -56,6 +107,12 @@ On Mac OS
 ```
 brew install protobuf
 go get -u github.com/golang/protobuf/{proto,protoc-gen-go}
+```
+
+On Windows (MSYS2)
+
+```
+pacman -S protobuf
 ```
 
 If no binaries are available for your platform then
@@ -115,6 +172,10 @@ To flash a full firmware build at `FULL_FIRMWARE_PATH` on a microcontroller of S
     st-flash write ${FULL_FIRMWARE_PATH} 0x08000000;
 
 It is also possible to use the `st-flash` rule in the [main Makefile](https://github.com/skycoin/hardware-wallet/blob/master/Makefile). If `FULL_FIRMWARE_PATH` not set it's value defaults to `./full-firmware-no-mem-protect.bin`, which happens to be the output of `make full-firmware` command.
+
+On Windows, open ST-Link Utility. Choose "File" -> "Open File", and choose proper .bin file. Then connect ST-Link to your computer, choose "Target" -> Connect.
+When ST-Link is successfully connected (see in console), choose "Target" -> "Erase". Wait, until previous firmware will erased. Then choose "Target" -> "Flash" and tap
+"Start" button.  
 
 ## 4. Firmware signature
 
@@ -196,3 +257,13 @@ If you can't install sdl packages using 'apt install' on an ubuntu based linux d
 Works also with docker if you run the script:
 
     ./build-emulator.sh
+
+On Windows (MSYS2)
+
+```
+#For x86
+pacman -S mingw-w64-i686-SDL2
+
+#For x86_64
+pacman -S mingw-w64-x86_64-SDL2
+```
