@@ -465,7 +465,7 @@ void TxSignCtx_printInnerHash(TxSignContext* ctx) {
 void TxSignCtx_AddSizePrefix(TxSignContext* ctx, uint8_t count) {
     uint8_t data[4];
     memcpy(data, &count, 1);
-    memset(&data[1], 0, 3);
+    memset(data + 1, 0, 3);
     sha256_Update(&ctx->sha256_ctx, data, 4);
 }
 
@@ -482,15 +482,15 @@ void TxSignCtx_UpdateOutputs(TxSignContext* ctx, TransactionOutput outputs[7], u
         uint8_t bitcount = 0;
         data[bitcount] = 0;
         bitcount += 1;
-        memcpy(&data[bitcount], outputs[i].address, 20);
+        memcpy(data + bitcount, outputs[i].address, 20);
         bitcount += 20;
-        memcpy(&data[bitcount], (uint8_t*)&outputs[i].coin, 4);
+        memcpy(data + bitcount, (uint8_t*)&outputs[i].coin, 4);
         bitcount += 4;
-        memset(&data[bitcount], 0, 4);
+        memset(data + bitcount, 0, 4);
         bitcount += 4;
-        memcpy(&data[bitcount], (uint8_t*)&outputs[i].hour, 4);
+        memcpy(data + bitcount, (uint8_t*)&outputs[i].hour, 4);
         bitcount += 4;
-        memset(&data[bitcount], 0, 4);
+        memset(data + bitcount, 0, 4);
         bitcount += 4;
         sha256_Update(&ctx->sha256_ctx, data, bitcount);
         ctx->current_nbOut+=1;
