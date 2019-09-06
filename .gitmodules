@@ -1,4 +1,4 @@
 [submodule "tiny-firmware/protob"]
 	path = tiny-firmware/protob
-	url = https://github.com/skycoin/hardware-wallet-protob
+	url = http://github.com/skycoin/hardware-wallet-protob.git
 	branch = develop
