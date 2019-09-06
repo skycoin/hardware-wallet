@@ -9,6 +9,8 @@ matrix:
           sources:
             - ubuntu-toolchain-r-test
     - os: osx
+      env:
+        - PYTHON=python3
 
 before_script:
   - sh "./tiny-firmware/protob/ci-scripts/install-${TRAVIS_OS_NAME}.sh" ;
@@ -39,18 +41,8 @@ before_script:
 script:
   - make check-protob
   - make lint
-  - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then
-    make -C tiny-firmware/protob build-c PYTHON=python3
-    fi
-  - if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
-    make -C tiny-firmware/protob build-c PYTHON=python3
-    fi
-  - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then
-    FIRMWARE_SIGNATURE_PUB_KEY1=0241d51e593f681006f9f3c4a0ec744d459c960601b4ed770d979c32ace63b0a7a make test
-    fi
-  - if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
-    FIRMWARE_SIGNATURE_PUB_KEY1=0241d51e593f681006f9f3c4a0ec744d459c960601b4ed770d979c32ace63b0a7a make test PYTHON=python3
-    fi
+  - make -C tiny-firmware/protob build-c 
+  - FIRMWARE_SIGNATURE_PUB_KEY1=0241d51e593f681006f9f3c4a0ec744d459c960601b4ed770d979c32ace63b0a7a make test
   - make clean
   - make emulator
   - make clean
