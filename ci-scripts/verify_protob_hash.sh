@@ -10,7 +10,7 @@ if ! echo "$SUBMODULE_ORIGIN_URL" | grep -q "http://github.com/skycoin/hardware-
     exit 1
 fi
 
-# TODO: if PR then determine base branch and do checks below
+# if PR then determine base branch and do checks below
 if "$TRAVIS_PULL_REQUEST" != "false" ; then
     echo "Merging changes into $TRAVIS_PULL_REQUEST_BRANCH"
     # fetch recent 50 commits
