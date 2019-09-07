@@ -436,3 +436,73 @@ void transaction_msgToSign(Transaction* self, uint8_t index, uint8_t* msg_digest
     sha256_Update(&sha256ctx, shaInput, 64);
     sha256_Final(&sha256ctx, msg_digest);
 }
+
+static TxSignContext context;
+
+TxSignContext* TxSignCtx_Init() {
+    context.state = Start;
+    context.mnemonic_change = false;
+    return &context;
+}
+
+TxSignContext* TxSignCtx_Get(){
+    return &context;
+}
+
+void TxSignCtx_printSHA256(TxSignContext* ctx) {
+    uint8_t* buffer = (uint8_t*)ctx->sha256_ctx.buffer;
+    for(uint8_t i = 0; i < 64; ++i)
+        printf("%u ",buffer[i]);
+    printf("\n");
+}
+
+void TxSignCtx_printInnerHash(TxSignContext* ctx) {
+    char innerHash[64];
+    tohex(innerHash,ctx->innerHash,32);
+    printf("Inner hash: %s\n",innerHash);
+}
+
+void TxSignCtx_AddSizePrefix(TxSignContext* ctx, uint8_t count) {
+    uint8_t data[4];
+    memcpy(data, &count, 1);
+    memset(data + 1, 0, 3);
+    sha256_Update(&ctx->sha256_ctx, data, 4);
+}
+
+void TxSignCtx_UpdateInputs(TxSignContext* ctx, uint8_t inputs [7][32], uint8_t count) {
+    for(uint8_t i = 0; i < count; ++i) {
+        sha256_Update(&ctx->sha256_ctx,inputs[i], 32);
+        ctx->current_nbIn +=1;
+    }
+}
+
+void TxSignCtx_UpdateOutputs(TxSignContext* ctx, TransactionOutput outputs[7], uint8_t count){
+    for (uint8_t i = 0; i < count; ++i) {
+        uint8_t data[40];
+        uint8_t bitcount = 0;
+        data[bitcount] = 0;
+        bitcount += 1;
+        memcpy(data + bitcount, outputs[i].address, 20);
+        bitcount += 20;
+        memcpy(data + bitcount, (uint8_t*)&outputs[i].coin, 4);
+        bitcount += 4;
+        memset(data + bitcount, 0, 4);
+        bitcount += 4;
+        memcpy(data + bitcount, (uint8_t*)&outputs[i].hour, 4);
+        bitcount += 4;
+        memset(data + bitcount, 0, 4);
+        bitcount += 4;
+        sha256_Update(&ctx->sha256_ctx, data, bitcount);
+        ctx->current_nbOut+=1;
+    }
+}
+
+void TxSignCtx_finishInnerHash(TxSignContext* ctx){
+    sha256_Final(&ctx->sha256_ctx, ctx->innerHash);
+    ctx->has_innerHash = true;
+}
+
+void TxSignCtx_Destroy(TxSignContext* ctx){
+    memset(ctx,0,sizeof(TxSignContext));
+    ctx->state = Destroyed;
+}
