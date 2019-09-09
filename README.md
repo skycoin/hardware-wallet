@@ -291,6 +291,8 @@ To update firmware the device must be in "bootloader mode". Press both buttons, 
 0. Update `CHANGELOG.md`: move the "unreleased" changes to the version and add the date.
 0. Follow the steps in [pre-release testing](#pre-release-testing)
 0. Make a PR merging the release branch into `master`
+0. Ensure changes needed in protobuffer specs are merged into its `master` branch
+0. Ensure protobuf specs sub-module will track changes from its `master` branch after merge
 0. Review the PR and merge it
 0. Tag the `master` branch with the version number. Version tags start with `v`, e.g. `v0.20.0`. Sign the tag. If you have your GPG key in github, creating a release on the Github website will automatically tag the release. It can be tagged from the command line with `git tag -as v0.20.0 $COMMIT_ID`, but Github will not recognize it as a "release".
 0. Tag the changeset of the `protob` submodule checkout with the same version number as above.

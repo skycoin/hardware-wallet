@@ -51,5 +51,7 @@ void fsm_msgCancel(Cancel* msg);
 void fsm_msgRecoveryDevice(RecoveryDevice* msg);
 void fsm_msgWordAck(WordAck* msg);
 void fsm_msgTransactionSign(TransactionSign* msg);
+void fsm_msgSignTx(SignTx* msg);
+void fsm_msgTxAck(TxAck* msg);
 
 #endif

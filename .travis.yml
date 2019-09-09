@@ -10,7 +10,7 @@ matrix:
             - ubuntu-toolchain-r-test
     - os: osx
       env:
-          - PYTHON=python3
+        - PYTHON=python3
 
 before_script:
   - sh "./tiny-firmware/protob/ci-scripts/install-${TRAVIS_OS_NAME}.sh" ;

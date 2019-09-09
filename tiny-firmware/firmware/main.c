@@ -30,6 +30,12 @@
 #include "util.h"
 #include "bootloader_integrity.h"
 
+#ifdef __CYGWIN__
+#ifdef main
+#undef main
+#endif
+#endif
+
 extern uint32_t storage_uuid[STM32_UUID_LEN / sizeof(uint32_t)];
 
 int main(void) {
