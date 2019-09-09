@@ -62,7 +62,7 @@ OBJS += $(TOP_DIR)protob/nanopb/vendor/nanopb/pb_encode.o
 ifneq ($(EMULATOR),1)
 OBJS += firmware/usb.o
 else
-OBJS += firmware/udp.o
+#OBJS += emulator/udp.o
 endif
 OBJS += firmware/skywallet.o
 OBJS += firmware/layout2.o
