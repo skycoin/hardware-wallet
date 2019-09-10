@@ -16,12 +16,12 @@
 
 #include "skycoin_constants.h"
 #include "skycoin_signature.h"
-#include <tools/base58.h>
-#include <tools/secp256k1.h>
-#include <tools/curves.h>
-#include <tools/ecdsa.h>
-#include <tools/ripemd160.h>
-#include <tools/sha2.h>
+#include "tools/base58.h"
+#include "tools/secp256k1.h"
+#include "tools/curves.h"
+#include "tools/ecdsa.h"
+#include "tools/ripemd160.h"
+#include "tools/sha2.h"
 
 extern void bn_print(const bignum256* a);
 
