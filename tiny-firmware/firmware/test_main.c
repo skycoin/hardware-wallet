@@ -11,12 +11,13 @@
 
 #include <check.h>
 
-#include "test_fsm.h"
-#include "test_droplet.h"
-#include "test_reset.h"
-#include "test_serialno.h"
-#include "test_protect.h"
-#include "test_timer.h"
+#include "tiny-firmware/firmware/test_droplet.h"
+#include "tiny-firmware/firmware/test_fsm.h"
+#include "tiny-firmware/firmware/test_protect.h"
+#include "tiny-firmware/firmware/test_serialno.h"
+#include "tiny-firmware/firmware/test_reset.h"
+#include "tiny-firmware/firmware/test_timer.h"
+
 
 // define test suite and cases
 Suite* test_suite(void)

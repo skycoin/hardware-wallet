@@ -41,7 +41,6 @@ ifeq ($(UNAME_S), Darwin)
 	TESTINC+=-isystem $(CHECK_PATH)/include
 endif
 endif
-INC += -I$(TOOLS_DIR)
 CFLAGS += -I$(MKFILE_DIR) $(INC)
 
 SRCS += skycoin_crypto.c

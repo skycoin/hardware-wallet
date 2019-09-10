@@ -18,19 +18,19 @@
  * along with this library.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "protect.h"
-#include "buttons.h"
-#include "fsm.h"
-#include "gettext.h"
-#include "layout2.h"
-#include "memory.h"
-#include "memzero.h"
-#include "messages.h"
-#include "oled.h"
-#include "pinmatrix.h"
-#include "storage.h"
-#include "usb.h"
-#include "util.h"
+#include "tiny-firmware/firmware/protect.h"
+#include "tiny-firmware/firmware/storage.h"
+#include "tiny-firmware/memory.h"
+#include "tiny-firmware/firmware/messages.h"
+#include "tiny-firmware/firmware/usb.h"
+#include "tiny-firmware/oled.h"
+#include "tiny-firmware/buttons.h"
+#include "tiny-firmware/firmware/pinmatrix.h"
+#include "tiny-firmware/firmware/fsm.h"
+#include "tiny-firmware/firmware/layout2.h"
+#include "tiny-firmware/util.h"
+#include "tiny-firmware/firmware/gettext.h"
+#include "skycoin-crypto/tools/memzero.h"
 
 #define MAX_WRONG_PINS 15
 

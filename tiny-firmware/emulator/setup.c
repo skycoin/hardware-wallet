@@ -26,11 +26,11 @@
 
 #include <libopencm3/stm32/flash.h>
 
-#include "memory.h"
-#include "oled.h"
-#include "rng.h"
-#include "setup.h"
-#include "timer.h"
+#include "tiny-firmware/memory.h"
+#include "tiny-firmware/oled.h"
+#include "tiny-firmware/rng.h"
+#include "tiny-firmware/setup.h"
+#include "tiny-firmware/timer.h"
 
 #define EMULATOR_FLASH_FILE "emulator.img"
 

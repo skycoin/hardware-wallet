@@ -12,8 +12,8 @@
 #ifndef __TINYFIRMWARE_FIRMWARE_FSMIMPL_H__
 #define __TINYFIRMWARE_FIRMWARE_FSMIMPL_H__
 
-#include "firmware/error.h"
 #include "messages.pb.h"
+#include "tiny-firmware/firmware/error.h"
 
 #define MNEMONIC_WORD_COUNT_12 12
 #define MNEMONIC_WORD_COUNT_24 24

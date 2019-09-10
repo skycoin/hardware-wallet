@@ -15,7 +15,7 @@
 
 #include "rand.h"
 #include "sha2.h"
-#include "skycoin_crypto.h"
+#include "../skycoin_crypto.h"
 
 #define INTERNAL_ENTROPY_SIZE SHA256_DIGEST_LENGTH
 

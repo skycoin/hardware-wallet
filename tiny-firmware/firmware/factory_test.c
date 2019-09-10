@@ -11,17 +11,17 @@
 
 
 #include "factory_test.h"
-#include "oled.h"
-#include "skywallet.h"
+#include "tiny-firmware/firmware/skywallet.h"
+#include "tiny-firmware/oled.h"
 #if EMULATOR
-#include "usb.h"
+#include "tiny-firmware/firmware/usb.h"
 #else
-#include "timer.h"
+#include "tiny-firmware/timer.h"
 #endif
-#include "buttons.h"
-#include "layout.h"
-#include "layout2.h"
-#include "util.h"
+#include "tiny-firmware/buttons.h"
+#include "tiny-firmware/layout.h"
+#include "tiny-firmware/firmware/layout2.h"
+#include "tiny-firmware/util.h"
 
 #if !EMULATOR
 void wait_ms(uint32_t millis)

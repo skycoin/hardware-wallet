@@ -8,9 +8,9 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  *
  */
-#include "bootloader_integrity.h"
-#include "memory.h"
-#include "sha2.h"
+#include "tiny-firmware/firmware/bootloader_integrity.h"
+#include "tiny-firmware/memory.h"
+#include "skycoin-crypto/tools/sha2.h"
 #include "string.h"
 
 int check_bootloader(void) {

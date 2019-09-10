@@ -19,8 +19,8 @@
 
 #include <string.h>
 
-#include "layout.h"
-#include "oled.h"
+#include "tiny-firmware/layout.h"
+#include "tiny-firmware/oled.h"
 
 void layoutButtonNo(const char* btnNo)
 {

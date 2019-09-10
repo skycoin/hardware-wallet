@@ -9,9 +9,9 @@
  *
  */
 
-#include "pinmatrix.h"
+#include "tiny-firmware/firmware/pinmatrix.h"
 
-#include "test_protect.h"
+#include "tiny-firmware/firmware/test_protect.h"
 
 extern char pinmatrix_perm[10];
 
