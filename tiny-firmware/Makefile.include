@@ -112,7 +112,7 @@ CFLAGS   += $(OPTFLAGS) \
             -I$(TOOLCHAIN_DIR)/include \
             -I$(TOP_DIR)gen \
             -I$(GLOBAL_PATH) \
-            -isystem$(TOP_DIR)vendor/skycoin-crypto \
+            -isystem$(TOP_DIR)vendor/ \
 
 LDFLAGS  += -L$(TOP_DIR) \
             $(DBGFLAGS) \

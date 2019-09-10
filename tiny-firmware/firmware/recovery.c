@@ -19,11 +19,11 @@
  */
 
 #include "tiny-firmware/firmware/recovery.h"
-#include "tools/bip39.h"
+#include "skycoin-crypto/tools/bip39.h"
 #include "tiny-firmware/firmware/fsm.h"
 #include "tiny-firmware/firmware/gettext.h"
 #include "tiny-firmware/firmware/layout2.h"
-#include "tools/memzero.h"
+#include "skycoin-crypto/tools/memzero.h"
 #include "tiny-firmware/firmware/messages.h"
 #include "tiny-firmware/firmware/protect.h"
 #include "tiny-firmware/firmware/recovery-table.h"

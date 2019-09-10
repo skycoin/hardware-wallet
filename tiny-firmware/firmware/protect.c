@@ -30,7 +30,7 @@
 #include "tiny-firmware/firmware/layout2.h"
 #include "tiny-firmware/util.h"
 #include "tiny-firmware/firmware/gettext.h"
-#include "tools/memzero.h"
+#include "skycoin-crypto/tools/memzero.h"
 
 #define MAX_WRONG_PINS 15
 

@@ -28,7 +28,7 @@
 #include <string.h>
 
 #include "rand.h"
-#include <tools/entropypool.h>
+#include "entropypool.h"
 
 #ifndef RAND_PLATFORM_INDEPENDENT
 

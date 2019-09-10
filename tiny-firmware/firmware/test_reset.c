@@ -15,7 +15,7 @@
 
 #include "tiny-firmware/firmware/test_pin.h"
 #include "tiny-firmware/firmware/test_reset.h"
-#include "tools/rand.h"
+#include "skycoin-crypto/tools/rand.h"
 #include "tiny-firmware/firmware/reset.h"
 #include "tiny-firmware/setup.h"
 #include "tiny-firmware/firmware/storage.h"

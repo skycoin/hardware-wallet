@@ -25,12 +25,12 @@
 #include "tiny-firmware/oled.h"
 #include "tiny-firmware/firmware/storage.h"
 #include "messages.pb.h"
-#include "tools/sha2.h"
-#include "skycoin_crypto.h"
+#include "skycoin-crypto/tools/sha2.h"
+#include "skycoin-crypto/skycoin_crypto.h"
 
 #include "tiny-firmware/timer.h"
-#include "tools/entropypool.h"
-#include "tools/sha2.h"
+#include "skycoin-crypto/tools/entropypool.h"
+#include "skycoin-crypto/tools/sha2.h"
 
 
 #define EXTERNAL_ENTROPY_TIMEOUT 60000

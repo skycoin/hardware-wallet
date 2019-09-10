@@ -24,7 +24,7 @@
 
 #include "tiny-firmware/memory.h"
 #include "tiny-firmware/serialno.h"
-#include "tools/sha2.h"
+#include "skycoin-crypto/tools/sha2.h"
 #include "tiny-firmware/util.h"
 
 void serialno_from_uuid(uint32_t *uuid, char *s)
