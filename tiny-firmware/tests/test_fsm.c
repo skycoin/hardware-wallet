@@ -24,7 +24,7 @@
 #include "skycoin-crypto/check_digest.h"
 #include "tiny-firmware/firmware/droplet.h"
 #include "tiny-firmware/firmware/entropy.h"
-#include "error.h"
+#include "tiny-firmware/firmware/error.h"
 #include "tiny-firmware/firmware/fsm_impl.h"
 #include "tiny-firmware/firmware/fsm.h"
 #include "tiny-firmware/firmware/gettext.h"
