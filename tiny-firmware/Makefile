@@ -64,7 +64,7 @@ OBJS += $(TOP_DIR)protob/nanopb/vendor/nanopb/pb_encode.o
 ifneq ($(EMULATOR),1)
 OBJS += firmware/usb.o
 else
-OBJS += firmware/udp.o
+#OBJS += emulator/udp.o
 endif
 OBJS += firmware/skywallet.o
 OBJS += firmware/layout2.o
@@ -81,6 +81,7 @@ OBJS += firmware/factory_test.o
 OBJS += firmware/gpio_noise.o
 OBJS += firmware/entropy.o
 OBJS += firmware/swtimer.o
+OBJS += firmware/bootloader_integrity.o
 
 OBJS += protob/c/messages.pb.o
 OBJS += protob/c/types.pb.o

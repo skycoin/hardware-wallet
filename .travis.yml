@@ -9,6 +9,8 @@ matrix:
           sources:
             - ubuntu-toolchain-r-test
     - os: osx
+      env:
+        - PYTHON=python3
 
 before_script:
   - sh "./tiny-firmware/protob/ci-scripts/install-${TRAVIS_OS_NAME}.sh" ;
@@ -28,6 +30,7 @@ before_script:
     fi
   # Install OS-specific test and build dependencies
   - eval "./ci-scripts/install-${TRAVIS_OS_NAME}.sh"
+  - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then export PATH="/opt/gcc-arm-none-eabi-6-2017-q2-update/bin:$PATH" ; fi
   # Install linters
   - make install-linters
   - git submodule update --remote

@@ -622,7 +622,7 @@ void fsm_msgBackupDevice(BackupDevice *msg) {
         fsm_sendFailure(FailureType_Failure_FirmwareError, _("Unexpected failure"), &msgtype);
         break;
     }
-    if (err != ErrActionCancelled) {
+    if (err == ErrOk) {
         layoutHome();
     }
 }
@@ -679,4 +679,52 @@ void fsm_msgEntropyAck(EntropyAck* msg)
         fsm_sendFailure(FailureType_Failure_FirmwareError, _("Entropy ack failed."), &msgtype);
         break;
     }
+}
+
+void fsm_msgSignTx(SignTx *msg) {
+
+    CHECK_PIN
+    CHECK_MNEMONIC
+
+    MessageType msgtype = MessageType_MessageType_SignTx;
+    RESP_INIT(TxRequest)
+    ErrCode_t err = msgSignTxImpl(msg, resp);
+    switch (err) {
+        case ErrOk:
+            msg_write(MessageType_MessageType_TxRequest, resp);
+            break;
+        default:
+            fsm_sendFailure(FailureType_Failure_ProcessError,_("Signing transaction failed."), &msgtype);
+            break;
+    }
+    return;
+}
+
+void fsm_msgTxAck(TxAck *msg) {
+
+    CHECK_PIN
+    CHECK_MNEMONIC
+    
+    MessageType msgType = MessageType_MessageType_TxAck;
+    RESP_INIT(TxRequest);
+    ErrCode_t err = msgTxAckImpl(msg, resp);
+    switch (err) {
+        case ErrOk:
+            msg_write(MessageType_MessageType_TxRequest, resp);
+            break;
+        case ErrInvalidArg:
+            fsm_sendFailure(FailureType_Failure_DataError, _("Invalid data on TxAck message."), &msgType);
+            break;
+        case ErrActionCancelled:
+            fsm_sendFailure(FailureType_Failure_ActionCancelled , NULL, &msgType);
+            break;
+        case ErrFailed:
+            fsm_sendFailure(FailureType_Failure_ProcessError, NULL, &msgType);
+            break;
+        default:
+            fsm_sendFailure(FailureType_Failure_ProcessError,_("Signing transaction failed."), &msgType);
+            break;
+    }
+    layoutHome();
+    return;
 }

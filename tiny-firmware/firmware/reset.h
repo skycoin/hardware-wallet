@@ -29,7 +29,13 @@
 
 void reset_init(bool display_random, uint32_t _strength, bool passphrase_protection, bool pin_protection, const char* language, const char* label, bool skip_backup);
 ErrCode_t reset_entropy(void);
-void reset_backup(bool separated);
+
+/**
+ * @brief reset_backup create a device bckup
+ * @param separated true if called as a separate workflow via BackupMessage.
+ * @return Ok if success.
+ */
+ErrCode_t reset_backup(bool separated);
 uint32_t reset_get_int_entropy(uint8_t* entropy);
 const char* reset_get_word(void);
 

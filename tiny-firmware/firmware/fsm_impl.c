@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <inttypes.h>
 
+#include "tools/base58.h"
 #include "tools/bip32.h"
 #include "tools/bip39.h"
 #include "check_digest.h"
@@ -93,6 +94,10 @@ ErrCode_t msgGenerateMnemonicImpl(GenerateMnemonic* msg, void (*random_buffer_fu
         return ErrInvalidChecksum;
     }
     storage_setMnemonic(mnemonic);
+    TxSignContext* ctx = TxSignCtx_Get();
+    if(ctx != NULL){
+        ctx->mnemonic_change = true;
+    }
     storage_setNeedsBackup(true);
     storage_setPassphraseProtection(
         msg->has_passphrase_protection && msg->passphrase_protection);
@@ -428,11 +433,11 @@ ErrCode_t msgTransactionSignImpl(TransactionSign* msg, ErrCode_t (*funcConfirmTx
                 return ErrAddressGeneration;
             }
             if (strcmp(msg->transactionOut[i].address, address) != 0) {
-// fsm_sendFailure(FailureType_Failure_AddressGeneration, _("Wrong return address"));
-#if EMULATOR
+                // fsm_sendFailure(FailureType_Failure_AddressGeneration, _("Wrong return address"));
+                #if EMULATOR
                 printf("Internal address: %s, message address: %s\n", address, msg->transactionOut[i].address);
                 printf("Comparaison size %ld\n", size_address);
-#endif
+                #endif
                 return ErrAddressGeneration;
             }
         } else {
@@ -463,13 +468,13 @@ ErrCode_t msgTransactionSignImpl(TransactionSign* msg, ErrCode_t (*funcConfirmTx
             tohex(resp->signatures[resp->signatures_count], signature, sizeof(signature));
         }
         resp->signatures_count++;
-#if EMULATOR
+        #if EMULATOR
         char str[64];
         tohex(str, (uint8_t*)digest, 32);
         printf("Signing message:  %s\n", str);
         printf("Signed message:  %s\n", resp->signatures[i]);
         printf("Nb signatures: %d\n", resp->signatures_count);
-#endif
+        #endif
     }
     if (resp->signatures_count != msg->nbIn) {
         // Ensure number of sigs and inputs is the same. Mismatch should never happen.
@@ -536,6 +541,10 @@ ErrCode_t msgSetMnemonicImpl(SetMnemonic* msg)
 {
     CHECK_MNEMONIC_CHECKSUM_RET_ERR_CODE
     storage_setMnemonic(msg->mnemonic);
+    TxSignContext* ctx = TxSignCtx_Get();
+    if(ctx != NULL){
+        ctx->mnemonic_change = true;
+    }
     storage_setNeedsBackup(true);
     storage_update();
     //fsm_sendSuccess(_(msg->mnemonic));
@@ -578,9 +587,12 @@ ErrCode_t msgBackupDeviceImpl(BackupDevice* msg, ErrCode_t (*funcConfirmBackup)(
         //fsm_sendFailure(FailureType_Failure_UnexpectedMessage, _("Seed already backed up"));
         return ErrUnexpectedMessage;
     }
-    reset_backup(true);
+    ErrCode_t err = reset_backup(true);
+    if (err != ErrOk) {
+      return err;
+    }
 
-    ErrCode_t err = funcConfirmBackup();
+    err = funcConfirmBackup();
     if (err != ErrOk) {
         return err;
     }
@@ -623,5 +635,202 @@ ErrCode_t msgRecoveryDeviceImpl(RecoveryDevice* msg, ErrCode_t (*funcConfirmReco
         msg->has_language ? msg->language : 0,
         (msg->has_label && strlen(msg->label) > 0)? msg->label: current_label,
         dry_run);
+    return ErrOk;
+}
+
+ErrCode_t msgSignTxImpl(SignTx *msg, TxRequest *resp) {
+    #if EMULATOR
+    printf("%s: %d. nbOut: %d\n",
+        _("Transaction signed nbIn"),
+        msg->inputs_count, msg->outputs_count);
+    #endif
+    TxSignContext *context = TxSignCtx_Get();
+    if(context->state != Destroyed) {
+        TxSignCtx_Destroy(context);
+        return ErrFailed;
+    }
+    // Init TxSignContext
+    context = TxSignCtx_Init();
+    if (context->mnemonic_change){
+        TxSignCtx_Destroy(context);
+        return ErrFailed;
+    }
+    memcpy(context->coin_name, msg->coin_name, 36 * sizeof(char));
+    context->state = InnerHashInputs;
+    context->current_nbIn = 0;
+    context->current_nbOut = 0;
+    context->lock_time = msg->lock_time;
+    context->nbIn = msg->inputs_count;
+    context->nbOut = msg->outputs_count;
+    sha256_Init(&context->sha256_ctx);
+    memcpy(context->tx_hash, msg->tx_hash, 65 * sizeof(char));
+    context->version = msg->version;
+    context->has_innerHash = false;
+    context->requestIndex = 1;
+
+    // Init Inputs head on sha256
+    TxSignCtx_AddSizePrefix(context,msg->inputs_count);
+
+    // Build response TxRequest
+    resp->has_details = true;
+    resp->details.has_request_index = true;
+    resp->details.request_index = 1;
+    memcpy(resp->details.tx_hash, msg->tx_hash, 65 * sizeof(char));
+    resp->request_type = TxRequest_RequestType_TXINPUT;
+    return ErrOk;
+}
+
+ErrCode_t reqConfirmTransaction(uint64_t coins, uint64_t hours,char* address){
+    char strCoins[32];
+    char strHours[32];
+    char strValue[20];
+    char* coinString = coins == 1000000 ? _("coin") : _("coins");
+    char* hourString = (hours == 1 || hours == 0) ? _("hour") : _("hours");
+    char* strValueMsg = sprint_coins(coins,SKYPARAM_DROPLET_PRECISION_EXP, sizeof(strValue), strValue);
+    sprintf(strCoins, "%s %s %s", _("send"), strValueMsg, coinString);
+    sprintf(strHours, "%" PRIu64 "%s", hours, hourString);
+    layoutDialogSwipe(&bmp_icon_question,_("Cancel"),_("Next"),NULL,_("Do you really want to"),strCoins,strHours,_("to address"), _("..."), NULL);
+    CHECK_BUTTON_PROTECT_RET_ERR_CODE
+    layoutAddress(address);
+    CHECK_BUTTON_PROTECT_RET_ERR_CODE
+    return ErrOk;
+}
+
+ErrCode_t msgTxAckImpl(TxAck *msg, TxRequest *resp) {
+    TxSignContext *ctx = TxSignCtx_Get();
+    if (ctx->state != Start && ctx->state != InnerHashInputs && ctx->state != InnerHashOutputs && ctx->state != Signature) {
+        TxSignCtx_Destroy(ctx);
+        return ErrInvalidArg;
+    }
+    #if EMULATOR
+    switch (ctx->state) {
+        case InnerHashInputs:
+            printf("-> Inner Hash inputs\n");
+            break;
+        case InnerHashOutputs:
+            printf("-> Inner Hash outputs\n");
+            break;
+        case Signature:
+            printf("-> Signatures\n");
+            break;
+        default:
+            printf("-> Unexpected\n");
+            break;
+    }
+    for(uint32_t i = 0; i < msg->tx.inputs_count; ++i) {
+        printf("   %d - Input: addressIn: %s, address_n: ", i + 1,
+            msg->tx.inputs[i].hashIn);
+        if (msg->tx.inputs[i].address_n_count != 0)
+            printf("%d",msg->tx.inputs[i].address_n[0]);
+        printf("\n");
+    }
+    for (uint32_t i = 0; i < msg->tx.outputs_count; ++i) {
+        printf("   %d - Output: coins: %" PRIu64 ", hours: %" PRIu64 " address: %s address_n: ", i + 1, msg->tx.outputs[i].coins, msg->tx.outputs[i].hours, msg->tx.outputs[i].address);
+        if (msg->tx.outputs[i].address_n_count != 0) {
+            printf("%d",msg->tx.outputs[i].address_n[0]);
+        }
+        printf("\n");
+    }
+    #endif
+    if (ctx->mnemonic_change){
+        TxSignCtx_Destroy(ctx);
+        return ErrFailed;
+    }
+    uint8_t inputs[7][32];
+    for (uint8_t i = 0; i < msg->tx.inputs_count; ++i) {
+        writebuf_fromhexstr(msg->tx.inputs[i].hashIn, inputs[i]);
+    }
+    switch (ctx->state) {
+        case InnerHashInputs:
+            if (!msg->tx.inputs_count || msg->tx.outputs_count) {
+                TxSignCtx_Destroy(ctx);
+                return ErrInvalidArg;
+            }
+            TxSignCtx_UpdateInputs(ctx, inputs, msg->tx.inputs_count);
+            if (ctx->current_nbIn != ctx->nbIn)
+                resp->request_type = TxRequest_RequestType_TXINPUT;
+            else {
+                TxSignCtx_AddSizePrefix(ctx,ctx->nbOut);
+                resp->request_type = TxRequest_RequestType_TXOUTPUT;
+                ctx->state = InnerHashOutputs;
+            }
+            break;
+        case InnerHashOutputs:
+            if (!msg->tx.outputs_count || msg->tx.inputs_count) {
+                TxSignCtx_Destroy(ctx);
+                return ErrInvalidArg;
+            }
+            TransactionOutput outputs[7];
+            for (uint8_t i = 0; i < msg->tx.outputs_count; ++i) {
+                #if !EMULATOR
+                if(!msg->tx.outputs[i].address_n_count){
+                    ErrCode_t err = reqConfirmTransaction(msg->tx.outputs[i].coins,msg->tx.outputs[i].hours,msg->tx.outputs[i].address);
+                    if (err != ErrOk)
+                        return err;
+                }
+                #endif
+                outputs[i].coin = msg->tx.outputs[i].coins;
+                outputs[i].hour = msg->tx.outputs[i].hours;
+                size_t len = 36;
+                uint8_t b58string[36];
+                b58tobin(b58string, &len, msg->tx.outputs[i].address);
+                memcpy(outputs[i].address, &b58string[36 - len], len);
+            }
+            TxSignCtx_UpdateOutputs(ctx,outputs, msg->tx.outputs_count);
+            if (ctx->current_nbOut != ctx->nbOut) {
+                resp->request_type = TxRequest_RequestType_TXOUTPUT;
+            } else {
+                TxSignCtx_finishInnerHash(ctx);
+                ctx->state = Signature;
+                ctx->current_nbIn = 0;
+                resp->request_type = TxRequest_RequestType_TXINPUT;
+            }
+            break;
+        case Signature:
+            if (!msg->tx.inputs_count || msg->tx.outputs_count) {
+                TxSignCtx_Destroy(ctx);
+                return ErrInvalidArg;
+            }
+            if (!ctx->has_innerHash) {
+                TxSignCtx_Destroy(ctx);
+                return ErrFailed;
+            }
+            uint8_t signCount = 0;
+            for (uint8_t i = 0; i < msg->tx.inputs_count; ++i) {
+                if (msg->tx.inputs[i].address_n_count) {
+                    uint8_t shaInput[64];
+                    uint8_t msg_digest[32] = {0};
+                    memcpy(shaInput, ctx->innerHash, 32);
+                    memcpy(&shaInput[32], &inputs[i], 32);
+                    SHA256_CTX sha256ctx;
+                    sha256_Init(&sha256ctx);
+                    sha256_Update(&sha256ctx, shaInput, 64);
+                    sha256_Final(&sha256ctx, msg_digest);
+                    resp->sign_result[signCount].has_signature = true;
+                    msgSignTransactionMessageImpl(msg_digest,msg->tx.inputs[i].address_n[0],resp->sign_result[signCount].signature);
+                    resp->sign_result[signCount].has_signature_index = true;
+                    resp->sign_result[signCount].signature_index = i;
+                    signCount++;
+                }
+                ctx->current_nbIn++;
+            }
+            resp->sign_result_count = signCount;
+            if (ctx->current_nbIn != ctx->nbIn)
+                resp->request_type = TxRequest_RequestType_TXINPUT;
+            else{
+                resp->request_type = TxRequest_RequestType_TXFINISHED;
+            }
+            break;
+        default:
+            break;
+    }
+    resp->has_details = true;
+    resp->details.has_request_index = true;
+    ctx->requestIndex++;
+    resp->details.request_index = ctx->requestIndex;
+    resp->details.has_tx_hash = true;
+    memcpy(resp->details.tx_hash, ctx->tx_hash, strlen(ctx->tx_hash) * sizeof(char));
+    if (resp->request_type == TxRequest_RequestType_TXFINISHED)
+        TxSignCtx_Destroy(ctx);
     return ErrOk;
 }

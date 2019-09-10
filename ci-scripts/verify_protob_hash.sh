@@ -10,14 +10,18 @@ if ! echo "$SUBMODULE_ORIGIN_URL" | grep -q "http://github.com/skycoin/hardware-
     exit 1
 fi
 
-# fetch recent 50 commits
-# hardware wallet should not get too behind protob repository
-git -C tiny-firmware/protob/ fetch origin
-PROTOB_REMOTE_HASH=$(git -C tiny-firmware/protob log remotes/origin/master --pretty=oneline | head -50 | cut -c 1-40)
+# if PR then determine base branch and do checks below
+if "$TRAVIS_PULL_REQUEST" != "false" ; then
+    echo "Merging changes into $TRAVIS_PULL_REQUEST_BRANCH"
+    # fetch recent 50 commits
+    # hardware wallet should not get too behind protob repository
+    git -C tiny-firmware/protob/ fetch origin $TRAVIS_PULL_REQUEST_BRANCH
+    PROTOB_REMOTE_HASH=$(git -C tiny-firmware/protob log remotes/origin/$TRAVIS_PULL_REQUEST_BRANCH --pretty=oneline | head -50 | cut -c 1-40)
 
-if ! echo "$PROTOB_REMOTE_HASH" | grep -q "$PROTOB_HASH"; then
-    echo "commit hash $PROTOB_HASH not present in recent 50 master commits"
-    exit 1
+    if ! echo "$PROTOB_REMOTE_HASH" | grep -q "$PROTOB_HASH"; then
+        echo "commit hash $PROTOB_HASH not present in recent 50 '$TRAVIS_PULL_REQUEST_BRANCH' commits"
+        exit 1
+    fi
 fi
 
 echo "success"
