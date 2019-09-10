@@ -22,7 +22,6 @@ OBJS += emulator/oled.o
 OBJS += emulator/rng.o
 OBJS += emulator/timer.o
 OBJS += emulator/udp.o
-OBJS += firmware/udp.o
 
 ifneq ($(UNAME_S),Darwin)
 OBJS += emulator/strl.o
@@ -50,7 +49,7 @@ ifeq ($(COVERAGE), 1)
 endif
 
 clean::
-	rm -f $(OBJS)
+	rm -f *.o
 	rm -f *.a
 	rm -f *.bin
 	rm -f *.d

@@ -107,7 +107,7 @@ bootloader: firmware-deps ## Build bootloader (RDP level 0)
 
 bootloader-mem-protect: MEMORY_PROTECT=1
 bootloader-mem-protect: bootloader ## Build bootloader (RDP level 2)
-	mv skybootloader-no-memory-protect.bin skybootloader-memory-protected.bin
+	mv skybootloader-no-memory-protect.bin bootloader-memory-protected.bin
 
 skycoin-crypto-lib:
 	make -C tiny-firmware/vendor/skycoin-crypto/ libskycoin-crypto.a

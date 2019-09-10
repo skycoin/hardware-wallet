@@ -31,7 +31,7 @@ OBJS += $(TOP_DIR)protob/nanopb/vendor/nanopb/pb_common.o
 OBJS += $(TOP_DIR)protob/nanopb/vendor/nanopb/pb_decode.o
 OBJS += $(TOP_DIR)protob/nanopb/vendor/nanopb/pb_encode.o
 
-FIRMWARE_SRCS = $(shell ls firmware/*.c | grep -v main.c | grep -v udp.c)
+FIRMWARE_SRCS = $(shell ls firmware/*.c | grep -v main.c)
 OBJS += $(FIRMWARE_SRCS:.c=.o)
 
 OBJS += protob/c/messages.pb.o
