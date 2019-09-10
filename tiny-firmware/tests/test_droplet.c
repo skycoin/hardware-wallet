@@ -13,7 +13,7 @@
 
 #include "tiny-firmware/firmware/droplet.h"
 #include "tiny-firmware/firmware/skyparams.h"
-#include "tiny-firmware/firmware/test_droplet.h"
+#include "tiny-firmware/tests/test_droplet.h"
 
 START_TEST(test_droplet_all_digits)
 {

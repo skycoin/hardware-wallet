@@ -31,7 +31,7 @@
 #include "types.pb.h"
 #include "tiny-firmware/rng.h"
 #include "tiny-firmware/oled.h"
-#include "tiny-firmware/firmware/usb.h"
+#include "tiny-firmware/usb.h"
 #include <ctype.h>
 
 /* number of words expected in the new seed */

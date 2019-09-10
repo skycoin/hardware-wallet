@@ -14,7 +14,7 @@
 #include "tiny-firmware/firmware/skywallet.h"
 #include "tiny-firmware/oled.h"
 #if EMULATOR
-#include "tiny-firmware/firmware/usb.h"
+#include "tiny-firmware/usb.h"
 #else
 #include "tiny-firmware/timer.h"
 #endif

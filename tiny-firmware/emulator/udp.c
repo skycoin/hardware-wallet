@@ -25,7 +25,7 @@
 #include <string.h>
 #include <sys/socket.h>
 
-#include "tiny-firmware/firmware/usb.h"
+#include "tiny-firmware/usb.h"
 #include "tiny-firmware/firmware/messages.h"
 #include "tiny-firmware/timer.h"
 

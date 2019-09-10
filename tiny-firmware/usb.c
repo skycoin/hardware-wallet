@@ -23,7 +23,7 @@
 
 #include "tiny-firmware/firmware/messages.h"
 #include "tiny-firmware/bootloader/signatures.h"
-#include "tiny-firmware/firmware/usb.h"
+#include "tiny-firmware/usb.h"
 #include "skycoin-crypto/tools/secp256k1.h"
 #include "skycoin-crypto/tools/memzero.h"
 #include "tiny-firmware/util.h"

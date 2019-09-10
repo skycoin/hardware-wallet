@@ -11,7 +11,7 @@
 
 #include <check.h>
 
-#include "tiny-firmware/firmware/test_serialno.h"
+#include "tiny-firmware/tests/test_serialno.h"
 #include "tiny-firmware/serialno.h"
 
 // FIXME: Missing reference. Defined in libopencm3

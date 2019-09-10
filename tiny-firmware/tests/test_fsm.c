@@ -24,7 +24,7 @@
 #include "skycoin-crypto/check_digest.h"
 #include "tiny-firmware/firmware/droplet.h"
 #include "tiny-firmware/firmware/entropy.h"
-#include "error.h"
+#include "tiny-firmware/firmware/error.h"
 #include "tiny-firmware/firmware/fsm_impl.h"
 #include "tiny-firmware/firmware/fsm.h"
 #include "tiny-firmware/firmware/gettext.h"
@@ -43,9 +43,9 @@
 #include "skycoin-crypto/skycoin_crypto.h"
 #include "tiny-firmware/firmware/skyparams.h"
 #include "tiny-firmware/firmware/storage.h"
-#include "tiny-firmware/firmware/test_fsm.h"
-#include "tiny-firmware/firmware/test_many_address_golden.h"
-#include "tiny-firmware/firmware/usb.h"
+#include "tiny-firmware/tests/test_fsm.h"
+#include "tiny-firmware/tests/test_many_address_golden.h"
+#include "tiny-firmware/usb.h"
 #include "tiny-firmware/util.h"
 #include <inttypes.h>
 #include <stdio.h>

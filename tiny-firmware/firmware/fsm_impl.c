@@ -33,7 +33,7 @@
 #include "tiny-firmware/firmware/recovery.h"
 #include "tiny-firmware/firmware/reset.h"
 #include "tiny-firmware/memory.h"
-#include "tiny-firmware/firmware/usb.h"
+#include "tiny-firmware/usb.h"
 #include "tiny-firmware/util.h"
 #include "skycoin-crypto/skycoin_constants.h"
 #include "skycoin-crypto/skycoin_crypto.h"

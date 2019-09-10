@@ -13,8 +13,8 @@
 #include <stdio.h>
 #include <time.h>
 
-#include "tiny-firmware/firmware/test_pin.h"
-#include "tiny-firmware/firmware/test_reset.h"
+#include "tiny-firmware/tests/test_pin.h"
+#include "tiny-firmware/tests/test_reset.h"
 #include "skycoin-crypto/tools/rand.h"
 #include "tiny-firmware/firmware/reset.h"
 #include "tiny-firmware/setup.h"

@@ -27,7 +27,7 @@
 #include "tiny-firmware/rng.h"
 #include "tiny-firmware/timer.h"
 #include "tiny-firmware/buttons.h"
-#include "tiny-firmware/firmware/usb.h"
+#include "tiny-firmware/usb.h"
 #include "tiny-firmware/firmware/storage.h"
 #include "tiny-firmware/firmware/layout2.h"
 #include "tiny-firmware/firmware/gettext.h"

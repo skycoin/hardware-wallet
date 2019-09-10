@@ -78,7 +78,8 @@ libskycoin-crypto.so: skycoin_crypto.o $(OBJS)
 	$(CC) -rdynamic -shared $(CFLAGS) $(OBJS) -o libskycoin-crypto.so
 
 libskycoin-crypto.a: skycoin_crypto.o $(OBJS)
-	$(AR) rcs libskycoin-crypto.a skycoin_crypto.o $(OBJS)
+	rm -rf lib && mkdir lib
+	$(AR) rcs lib/libskycoin-crypto.a skycoin_crypto.o $(OBJS)
 
 test_skycoin_crypto.o: test_skycoin_crypto.c
 	$(CC) $(CFLAGS) $(TESTINC) -o $@ -c $<
@@ -91,6 +92,7 @@ test: test_skycoin_crypto ## Run test suite for Skycoin cipher library for firmw
 	./test_skycoin_crypto.py
 
 clean: ## Delete all temporary files
+	rm -rf lib
 	rm -f $(MKFILE_DIR)/*.o test_skycoin_crypto
 	rm -f $(MKFILE_DIR)/*.so
 	rm -f $(TOOLS_DIR)/*.o

@@ -15,7 +15,7 @@
 #include "tiny-firmware/oled.h"
 #include "tiny-firmware/gen/bitmaps.h"
 #include "tiny-firmware/util.h"
-#include "tiny-firmware/firmware/usb.h"
+#include "tiny-firmware/usb.h"
 #include "tiny-firmware/setup.h"
 #include "tiny-firmware/firmware/storage.h"
 #include "tiny-firmware/layout.h"

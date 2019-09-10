@@ -9,7 +9,7 @@
  *
  */
 
-#include "tiny-firmware/firmware/test_timer.h"
+#include "tiny-firmware/tests/test_timer.h"
 #include "tiny-firmware/firmware/swtimer.h"
 #include "tiny-firmware/firmware/timerimpl.h"
 

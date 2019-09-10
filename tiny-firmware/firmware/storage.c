@@ -36,7 +36,7 @@
 #include "skycoin-crypto/tools/bip32.h"
 #include "skycoin-crypto/tools/bip39.h"
 #include "tiny-firmware/firmware/layout2.h"
-#include "tiny-firmware/firmware/usb.h"
+#include "tiny-firmware/usb.h"
 #include "tiny-firmware/firmware/gettext.h"
 #include "tiny-firmware/firmware/layout2.h"
 #include "skycoin-crypto/tools/memzero.h"

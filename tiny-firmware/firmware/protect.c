@@ -22,7 +22,7 @@
 #include "tiny-firmware/firmware/storage.h"
 #include "tiny-firmware/memory.h"
 #include "tiny-firmware/firmware/messages.h"
-#include "tiny-firmware/firmware/usb.h"
+#include "tiny-firmware/usb.h"
 #include "tiny-firmware/oled.h"
 #include "tiny-firmware/buttons.h"
 #include "tiny-firmware/firmware/pinmatrix.h"
