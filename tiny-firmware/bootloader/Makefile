@@ -45,6 +45,7 @@ CFLAGS += -DSIGNATURE_DEBUG=$(SIGNATURE_DEBUG)
 CFLAGS += -DBOOTLOADER=1
 CFLAGS += -DUSE_PRECOMPUTED_IV=0
 CFLAGS += -DUSE_PRECOMPUTED_CP=0
+#CFLAGS += -I$(MKFILE_DIR)
 
 OPTFLAGS ?= -Os
 DEBUG ?= 0
@@ -58,6 +59,7 @@ pub_keys.h:
 include ../Makefile.include
 
 align: $(NAME).bin
+	echo "$(CFLAGS)"
 	./firmware_align.py $(NAME).bin
 
 %.o: ../%.c

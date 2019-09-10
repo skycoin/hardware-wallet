@@ -11,8 +11,8 @@
 
 #include <check.h>
 
-#include "test_serialno.h"
-#include "serialno.h"
+#include "tiny-firmware/tests/test_serialno.h"
+#include "tiny-firmware/serialno.h"
 
 // FIXME: Missing reference. Defined in libopencm3
 void desig_get_unique_id(uint32_t *uuid)

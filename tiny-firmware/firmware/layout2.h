@@ -21,11 +21,11 @@
 #ifndef __LAYOUT2_H__
 #define __LAYOUT2_H__
 
-#include "bignum.h"
-#include "bitmaps.h"
-#include "layout.h"
-#include "skywallet.h"
+#include "tiny-firmware/layout.h"
+#include "tiny-firmware/gen/bitmaps.h"
 #include "types.pb.h"
+#include "skycoin-crypto/tools/bignum.h"
+#include "tiny-firmware/firmware/skywallet.h"
 
 extern void* layoutLast;
 

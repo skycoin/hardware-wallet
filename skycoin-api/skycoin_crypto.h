@@ -12,7 +12,7 @@
 #ifndef SKYCOIN_CRYPTO_H
 #define SKYCOIN_CRYPTO_H
 
-#include "sha2.h"
+#include "tools/sha2.h"
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>

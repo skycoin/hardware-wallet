@@ -33,12 +33,12 @@ CFLAGS += -Wno-int-to-pointer-cast
 
 CFLAGS += -include stdio.h
 CFLAGS += -include $(TOP_DIR)emulator/emulator.h
+CFLAGS += -I$(TOP_DIR)../
 
 HEADLESS ?= 0
 CFLAGS   += -DHEADLESS=$(HEADLESS)
 SDL_CFLAGS ?= $(shell sdl2-config --cflags | sed 's/-D_THREAD_SAFE//g')
 CFLAGS   += $(SDL_CFLAGS) -D_REENTRANT
-CFLAGS   += -I$(TOOLCHAIN_DIR)/include
 LDLIBS   += -lSDL2
 
 ifeq ($(COVERAGE), 1)

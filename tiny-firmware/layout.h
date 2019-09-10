@@ -20,7 +20,7 @@
 #ifndef __LAYOUT_H__
 #define __LAYOUT_H__
 
-#include "bitmaps.h"
+#include "tiny-firmware/gen/bitmaps.h"
 #include <stdbool.h>
 #include <stdlib.h>
 

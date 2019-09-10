@@ -24,20 +24,21 @@
 
 #include <string.h>
 
-#include "bootloader.h"
-#include "buttons.h"
-#include "ecdsa.h"
-#include "layout.h"
-#include "memory.h"
-#include "memzero.h"
-#include "oled.h"
-#include "rng.h"
-#include "secp256k1.h"
-#include "serialno.h"
-#include "sha2.h"
-#include "signatures.h"
-#include "usb.h"
-#include "util.h"
+#include "tiny-firmware/bootloader/usb.h"
+
+#include "tiny-firmware/bootloader/bootloader.h"
+#include "tiny-firmware/bootloader/signatures.h"
+#include "skycoin-crypto/tools/sha2.h"
+#include "skycoin-crypto/tools/ecdsa.h"
+#include "skycoin-crypto/tools/secp256k1.h"
+#include "skycoin-crypto/tools/memzero.h"
+#include "tiny-firmware/buttons.h"
+#include "tiny-firmware/oled.h"
+#include "tiny-firmware/rng.h"
+#include "tiny-firmware/serialno.h"
+#include "tiny-firmware/layout.h"
+#include "tiny-firmware/util.h"
+
 
 #define FIRMWARE_MAGIC "SKY1"
 

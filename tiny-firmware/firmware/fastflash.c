@@ -17,8 +17,8 @@
  * along with this library.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "fastflash.h"
-#include "util.h"
+#include "tiny-firmware/firmware/fastflash.h"
+#include "tiny-firmware/util.h"
 
 #include <stdbool.h>
 #include <stdint.h>

@@ -27,8 +27,8 @@
 #define VERSION_MINOR_CHAR VERSTR(VERSION_MINOR)
 #define VERSION_PATCH_CHAR VERSTR(VERSION_PATCH)
 
-#include "memory.h"
 #include <stdbool.h>
+#include "tiny-firmware/memory.h"
 
 void layoutFirmwareHash(const uint8_t* hash);
 #if SIGNATURE_DEBUG

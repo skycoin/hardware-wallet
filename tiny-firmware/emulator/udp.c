@@ -25,9 +25,9 @@
 #include <string.h>
 #include <sys/socket.h>
 
-#include "usb.h"
-#include "firmware/messages.h"
-#include "timer.h"
+#include "tiny-firmware/usb.h"
+#include "tiny-firmware/firmware/messages.h"
+#include "tiny-firmware/timer.h"
 
 #define SKYWALLET_UDP_PORT 21324
 

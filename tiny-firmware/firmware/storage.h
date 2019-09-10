@@ -21,9 +21,9 @@
 #ifndef __STORAGE_H__
 #define __STORAGE_H__
 
-#include "bip32.h"
+#include "skycoin-crypto/tools/bip32.h"
+#include "tiny-firmware/serialno.h"
 #include "messages.pb.h"
-#include "serialno.h"
 #include "types.pb.h"
 
 #define STORAGE_FIELD(TYPE, NAME) \

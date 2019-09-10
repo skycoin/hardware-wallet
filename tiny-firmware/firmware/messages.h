@@ -20,7 +20,7 @@
 #ifndef __MESSAGES_H__
 #define __MESSAGES_H__
 
-#include "skywallet.h"
+#include "tiny-firmware/firmware/skywallet.h"
 #include <stdbool.h>
 #include <stdint.h>
 

@@ -21,11 +21,11 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "bootloader.h"
-#include "sha2.h"
-#include "signatures.h"
-#include "skycoin_constants.h"
-#include "skycoin_signature.h"
+#include "skycoin-crypto/tools/sha2.h"
+#include "tiny-firmware/bootloader/signatures.h"
+#include "tiny-firmware/bootloader/bootloader.h"
+#include "skycoin-crypto/skycoin_constants.h"
+#include "skycoin-crypto/skycoin_signature.h"
 
 #define PUBKEYS 5
 

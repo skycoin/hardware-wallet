@@ -9,9 +9,9 @@
  *
  */
 
-#include "test_timer.h"
-#include "swtimer.h"
-#include "timerimpl.h"
+#include "tiny-firmware/tests/test_timer.h"
+#include "tiny-firmware/firmware/swtimer.h"
+#include "tiny-firmware/firmware/timerimpl.h"
 
 // Defined in swtimer.c
 extern TIMER sw_timers[MAX_TIMERS];

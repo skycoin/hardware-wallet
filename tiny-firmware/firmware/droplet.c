@@ -1,5 +1,5 @@
 
-#include "droplet.h"
+#include "tiny-firmware/firmware/droplet.h"
 #include <stdio.h>
 
 char* sprint_coins(uint64_t coins, uint32_t precision_exp, size_t sz, char* msg)
