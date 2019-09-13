@@ -20,7 +20,7 @@
 #ifndef __TIMER_H__
 #define __TIMER_H__
 
-#include "supervise.h"
+#include "tiny-firmware/supervise.h"
 #include <stdint.h>
 
 void timer_init(void);

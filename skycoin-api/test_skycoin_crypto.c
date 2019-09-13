@@ -14,7 +14,7 @@
 #include <check.h>
 
 #include "check_digest.h"
-#include "curves.h"
+#include "tools/curves.h"
 #include "skycoin_constants.h"
 #include "skycoin_crypto.h"
 #include "skycoin_signature.h"

@@ -29,10 +29,6 @@
 #define DEBUG_LINK 0
 #endif
 
-#ifndef DEBUG_LOG
-#define DEBUG_LOG 0
-#endif
-
 void check_lock_screen(void);
 void check_factory_test(void);
 

@@ -26,7 +26,6 @@ OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/secp256k1.small.o
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/rand.o
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/entropypool.o
 # OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/bip32.o
-
 #end skycoin-crypto
 
 OBJS += bootloader.o
@@ -35,26 +34,19 @@ OBJS += usb.o
 
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/bignum.small.o
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/ecdsa.small.o
-# OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/secp256k1.small.o
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/sha2.small.o
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/memzero.small.o
 
+SIGNATURE_PROTECT ?= 0
+SIGNATURE_DEBUG ?= 0
+
+CFLAGS += -DSIGNATURE_PROTECT=$(SIGNATURE_PROTECT)
+CFLAGS += -DSIGNATURE_DEBUG=$(SIGNATURE_DEBUG)
+CFLAGS += -DBOOTLOADER=1
 CFLAGS += -DUSE_PRECOMPUTED_IV=0
 CFLAGS += -DUSE_PRECOMPUTED_CP=0
+#CFLAGS += -I$(MKFILE_DIR)
 
-ifeq ($(SIGNATURE_PROTECT),1)
-CFLAGS += -DSIGNATURE_PROTECT=1
-else
-CFLAGS += -DSIGNATURE_PROTECT=0
-endif
-
-CFLAGS += -DBOOTLOADER
-
-ifeq ($(SIGNATURE_DEBUG),1)
-CFLAGS += -DSIGNATURE_DEBUG=1
-else
-CFLAGS += -DSIGNATURE_DEBUG=0
-endif
 OPTFLAGS ?= -Os
 DEBUG ?= 0
 
@@ -67,6 +59,7 @@ pub_keys.h:
 include ../Makefile.include
 
 align: $(NAME).bin
+	echo "$(CFLAGS)"
 	./firmware_align.py $(NAME).bin
 
 %.o: ../%.c

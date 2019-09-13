@@ -12,8 +12,8 @@
 #ifndef __TINYFIRMWARE_FIRMWARE_FSMIMPL_H__
 #define __TINYFIRMWARE_FIRMWARE_FSMIMPL_H__
 
-#include "firmware/error.h"
 #include "messages.pb.h"
+#include "tiny-firmware/firmware/error.h"
 
 #define MNEMONIC_WORD_COUNT_12 12
 #define MNEMONIC_WORD_COUNT_24 24
@@ -165,5 +165,8 @@ ErrCode_t msgGetEntropyImpl(GetRawEntropy* msg, Entropy* resp, void (*random_buf
 ErrCode_t msgLoadDeviceImpl(LoadDevice* msg);
 ErrCode_t msgBackupDeviceImpl(BackupDevice* msg, ErrCode_t (*)(void));
 ErrCode_t msgRecoveryDeviceImpl(RecoveryDevice* msg, ErrCode_t (*)(void));
+ErrCode_t msgSignTxImpl(SignTx* msg,TxRequest* resp);
+ErrCode_t msgTxAckImpl(TxAck* msg, TxRequest* resp);
+ErrCode_t reqConfirmTransaction(uint64_t coins, uint64_t hours,char* address);
 
 #endif // __TINYFIRMWARE_FIRMWARE_FSMIMPL_H__

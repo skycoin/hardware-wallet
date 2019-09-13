@@ -9,7 +9,7 @@
  *
  */
 
-#include "protect.h"
+#include "tiny-firmware/firmware/protect.h"
 
 extern char* TEST_PIN1;
 extern char* TEST_PIN2;

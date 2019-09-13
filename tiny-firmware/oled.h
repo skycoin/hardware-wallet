@@ -23,8 +23,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "bitmaps.h"
-#include "fonts.h"
+#include "tiny-firmware/gen/bitmaps.h"
+#include "tiny-firmware/gen/fonts.h"
 
 #define OLED_WIDTH 128
 #define OLED_HEIGHT 64

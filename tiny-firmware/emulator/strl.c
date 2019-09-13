@@ -17,8 +17,9 @@
  * along with this library.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "strl.h"
-#include "util.h"
+
+#include "tiny-firmware/emulator/strl.h"
+#include "tiny-firmware/util.h"
 
 #include <string.h>
 

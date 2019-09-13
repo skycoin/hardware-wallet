@@ -19,10 +19,9 @@
 
 #include <string.h>
 
-#include "layout2.h"
-#include "oled.h"
-#include "pinmatrix.h"
-#include "rng.h"
+#include "tiny-firmware/firmware/layout2.h"
+#include "tiny-firmware/oled.h"
+#include "tiny-firmware/rng.h"
 
 static char pinmatrix_perm[10] = "XXXXXXXXX";
 

@@ -17,17 +17,17 @@
  * along with this library.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "fastflash.h"
-#include "util.h"
+#include "tiny-firmware/firmware/fastflash.h"
+#include "tiny-firmware/util.h"
 
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
 
+#if !EMULATOR
 #define bootloader_vec ((vector_table_t*)0x20000000)
 
-void __attribute__((noreturn)) run_bootloader(void)
-{
+void __attribute__((noreturn)) run_bootloader(void) {
     extern uint8_t __bootloader_start__[];
     extern uint8_t __bootloader_size__[];
 
@@ -35,7 +35,9 @@ void __attribute__((noreturn)) run_bootloader(void)
     memset_reg(_ram_start, _ram_end, 0);
 
     // copy bootloader
-    memcpy(bootloader_vec, __bootloader_start__, (size_t)__bootloader_size__);
+    memcpy(bootloader_vec, __bootloader_start__, (size_t) __bootloader_size__);
 
     load_vector_table(bootloader_vec);
 }
+
+#endif

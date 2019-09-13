@@ -22,10 +22,10 @@
 
 #include <libopencm3/stm32/desig.h>
 
-#include "memory.h"
-#include "serialno.h"
-#include "sha2.h"
-#include "util.h"
+#include "tiny-firmware/memory.h"
+#include "tiny-firmware/serialno.h"
+#include "skycoin-crypto/tools/sha2.h"
+#include "tiny-firmware/util.h"
 
 void serialno_from_uuid(uint32_t *uuid, char *s)
 {
