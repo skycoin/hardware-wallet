@@ -19,7 +19,6 @@
 #define MNEMONIC_WORD_COUNT_24 24
 
 // message methods
-
 #define GET_MSG_POINTER(TYPE, VarName)                                       \
     TYPE* VarName = (TYPE*)(void*)msg_resp;                                  \
     _Static_assert(sizeof(msg_resp) >= sizeof(TYPE), #TYPE " is too large"); \
@@ -27,146 +26,74 @@
 
 #define RESP_INIT(TYPE) GET_MSG_POINTER(TYPE, resp);
 
-#define CHECK_INITIALIZED                                          \
-    if (!storage_isInitialized()) {                                \
-        fsm_sendFailure(FailureType_Failure_NotInitialized, NULL, 0); \
-        return;                                                    \
-    }
+bool checkInitialized(void);
 
-#define CHECK_INITIALIZED_RET_ERR_CODE \
-    if (!storage_isInitialized()) {    \
-        return ErrInitialized;         \
-    }
+bool checkNotInitialized(void);
 
-#define CHECK_NOT_INITIALIZED                                                                                        \
-    if (storage_isInitialized()) {                                                                                   \
-        fsm_sendFailure(FailureType_Failure_UnexpectedMessage, _("Device is already initialized. Use Wipe first."), 0); \
-        return;                                                                                                      \
-    }
+bool checkPin(void);
 
-#define CHECK_NOT_INITIALIZED_RET_ERR_CODE \
-    if (storage_isInitialized()) {         \
-        return ErrNotInitialized;          \
-    }
+bool checkPinUncached(void);
 
-#define CHECK_PIN            \
-    if (!protectPin(true)) { \
-        layoutHome();        \
-        return;              \
-    }
+bool checkParam(bool cond, const char *errormsg);
 
-#define CHECK_PIN_RET_ERR_CODE \
-    if (!protectPin(true)) {   \
-        return ErrPinRequired; \
-    }
+bool checkPrecondition(bool cond, const char *errormsg);
 
-#define CHECK_PIN_UNCACHED    \
-    if (!protectPin(false)) { \
-        layoutHome();         \
-        return;               \
-    }
+bool checkButtonProtect(void);
 
-#define CHECK_PIN_UNCACHED_RET_ERR_CODE \
-    if (!protectPin(false)) {           \
-        return ErrPinRequired;          \
-    }
+ErrCode_t checkButtonProtectRetErrCode(void);
 
-#define CHECK_PARAM(cond, errormsg)                                 \
-    if (!(cond)) {                                                  \
-        fsm_sendFailure(FailureType_Failure_DataError, (errormsg), 0); \
-        layoutHome();                                               \
-        return;                                                     \
-    }
+bool checkMnemonic(void);
 
-#define CHECK_PARAM_RET_ERR_CODE(cond, errormsg) \
-    if (!(cond)) {                               \
-        return ErrInvalidArg;                    \
-    }
+bool checkInputs(TransactionSign *msg);
 
-#define CHECK_PRECONDITION(cond, errormsg)                          \
-    if (!(cond)) {                                                  \
-        fsm_sendFailure(FailureType_Failure_DataError, (errormsg), 0); \
-        layoutHome();                                               \
-        return;                                                     \
-    }
+bool checkOutputs(TransactionSign *msg);
 
-#define CHECK_PRECONDITION_RET_ERR_CODE(cond, errormsg) \
-    if (!(cond)) {                                      \
-        return ErrPreconditionFailed;                   \
-    }
+bool checkMnemonicChecksum(SetMnemonic *msg);
 
-#define CHECK_BUTTON_PROTECT                                                  \
-    if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) { \
-        fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL, 0);           \
-        layoutHome();                                                         \
-        return;                                                               \
-    }
+ErrCode_t
+fsm_getKeyPairAtIndex(uint32_t nbAddress, uint8_t *pubkey, uint8_t *seckey, ResponseSkycoinAddress *respSkycoinAddress,
+                      uint32_t start_index);
 
-#define CHECK_BUTTON_PROTECT_RET_ERR_CODE                                     \
-    if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) { \
-        layoutHome();                                                         \
-        return ErrActionCancelled;                                            \
-    }
+ErrCode_t msgGenerateMnemonicImpl(GenerateMnemonic *msg, void (*random_buffer_func)(uint8_t *buf, size_t len));
 
-#define CHECK_MNEMONIC                                                              \
-    if (storage_hasMnemonic() == false) {                                           \
-        fsm_sendFailure(FailureType_Failure_AddressGeneration, "Mnemonic not set", 0); \
-        layoutHome();                                                               \
-        return;                                                                     \
-    }
+ErrCode_t msgEntropyAckImpl(EntropyAck *msg);
 
-#define CHECK_MNEMONIC_RET_ERR_CODE       \
-    if (storage_hasMnemonic() == false) { \
-        return ErrMnemonicRequired;       \
-    }
+ErrCode_t msgSkycoinSignMessageImpl(SkycoinSignMessage *msg, ResponseSkycoinSignMessage *msg_resp);
 
-#define CHECK_INPUTS(msg)                                                                           \
-    if ((msg)->nbIn > 8) {                                                                          \
-        fsm_sendFailure(FailureType_Failure_InvalidSignature, _("Cannot have more than 8 inputs"), 0); \
-        layoutHome();                                                                               \
-        return;                                                                                     \
-    }
+ErrCode_t msgSignTransactionMessageImpl(uint8_t *message_digest, uint32_t index, char *signed_message);
 
-#define CHECK_OUTPUTS(msg)                                                                           \
-    if ((msg)->nbOut > 8) {                                                                          \
-        fsm_sendFailure(FailureType_Failure_InvalidSignature, _("Cannot have more than 8 outputs"), 0); \
-        layoutHome();                                                                                \
-        return;                                                                                      \
-    }
+ErrCode_t msgSkycoinAddressImpl(SkycoinAddress *msg, ResponseSkycoinAddress *resp);
 
-#define CHECK_MNEMONIC_CHECKSUM                                                                     \
-    if (!mnemonic_check(msg->mnemonic)) {                                                           \
-        fsm_sendFailure(FailureType_Failure_DataError, _("Mnemonic with wrong checksum provided"), 0); \
-        layoutHome();                                                                               \
-        return;                                                                                     \
-    }
+ErrCode_t
+msgSkycoinCheckMessageSignatureImpl(SkycoinCheckMessageSignature *msg, Success *successResp, Failure *failureResp);
 
-#define CHECK_MNEMONIC_CHECKSUM_RET_ERR_CODE \
-    if (!mnemonic_check(msg->mnemonic)) {    \
-        return ErrInvalidValue;              \
-    }
+ErrCode_t msgApplySettingsImpl(ApplySettings *msg);
 
-ErrCode_t fsm_getKeyPairAtIndex(uint32_t nbAddress, uint8_t* pubkey, uint8_t* seckey, ResponseSkycoinAddress* respSkycoinAddress, uint32_t start_index);
+ErrCode_t msgGetFeaturesImpl(Features *resp);
 
-ErrCode_t msgGenerateMnemonicImpl(GenerateMnemonic* msg, void (*random_buffer_func)(uint8_t* buf, size_t len));
-ErrCode_t msgEntropyAckImpl(EntropyAck* msg);
-ErrCode_t msgSkycoinSignMessageImpl(SkycoinSignMessage* msg, ResponseSkycoinSignMessage* msg_resp);
-ErrCode_t msgSignTransactionMessageImpl(uint8_t* message_digest, uint32_t index, char* signed_message);
-ErrCode_t msgSkycoinAddressImpl(SkycoinAddress* msg, ResponseSkycoinAddress* resp);
-ErrCode_t msgSkycoinCheckMessageSignatureImpl(SkycoinCheckMessageSignature* msg, Success* successResp, Failure* failureResp);
-ErrCode_t msgApplySettingsImpl(ApplySettings* msg);
-ErrCode_t msgGetFeaturesImpl(Features* resp);
-ErrCode_t msgTransactionSignImpl(TransactionSign* msg, ErrCode_t (*)(char*, char*, TransactionSign*, uint32_t), ResponseTransactionSign*);
-ErrCode_t msgPingImpl(Ping* msg);
-ErrCode_t msgChangePinImpl(ChangePin* msg, const char* (*)(PinMatrixRequestType, const char*));
-ErrCode_t msgWipeDeviceImpl(WipeDevice* msg);
-ErrCode_t msgSetMnemonicImpl(SetMnemonic* msg);
-ErrCode_t msgGetEntropyImpl(GetRawEntropy* msg, Entropy* resp, void (*random_buffer_func)(uint8_t* buf, size_t len));
-ErrCode_t msgLoadDeviceImpl(LoadDevice* msg);
-ErrCode_t msgBackupDeviceImpl(BackupDevice* msg, ErrCode_t (*)(void));
-ErrCode_t msgRecoveryDeviceImpl(RecoveryDevice* msg, ErrCode_t (*)(void));
-ErrCode_t msgSignTxImpl(SignTx* msg,TxRequest* resp);
-ErrCode_t msgTxAckImpl(TxAck* msg, TxRequest* resp);
-ErrCode_t reqConfirmTransaction(uint64_t coins, uint64_t hours,char* address);
+ErrCode_t msgTransactionSignImpl(TransactionSign *msg, ErrCode_t (*)(char *, char *, TransactionSign *, uint32_t),
+                                 ResponseTransactionSign *);
+
+ErrCode_t msgPingImpl(Ping *msg);
+
+ErrCode_t msgChangePinImpl(ChangePin *msg, const char *(*)(PinMatrixRequestType, const char *));
+
+ErrCode_t msgWipeDeviceImpl(WipeDevice *msg);
+
+ErrCode_t msgSetMnemonicImpl(SetMnemonic *msg);
+
+ErrCode_t msgGetEntropyImpl(GetRawEntropy *msg, Entropy *resp, void (*random_buffer_func)(uint8_t *buf, size_t len));
+
+ErrCode_t msgLoadDeviceImpl(LoadDevice *msg);
+
+ErrCode_t msgBackupDeviceImpl(BackupDevice *msg, ErrCode_t (*)(void));
+
+ErrCode_t msgRecoveryDeviceImpl(RecoveryDevice *msg, ErrCode_t (*)(void));
+
+ErrCode_t msgSignTxImpl(SignTx *msg, TxRequest *resp);
+
+ErrCode_t msgTxAckImpl(TxAck *msg, TxRequest *resp);
+
+ErrCode_t reqConfirmTransaction(uint64_t coins, uint64_t hours, char *address);
 
 #endif // __TINYFIRMWARE_FIRMWARE_FSMIMPL_H__
