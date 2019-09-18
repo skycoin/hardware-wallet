@@ -211,7 +211,7 @@ void bootloader_loop(void)
     } else {
         oledDrawString(52, 10, "Welcome!", FONT_STANDARD);
         oledDrawString(52, 30, "Please visit", FONT_STANDARD);
-        oledDrawString(52, 50, "skycoin.net", FONT_STANDARD);
+        oledDrawString(52, 50, "skycoin.com", FONT_STANDARD);
     }
     oledRefresh();
 
