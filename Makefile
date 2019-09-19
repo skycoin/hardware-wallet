@@ -213,6 +213,14 @@ st-flash: ## Deploy (flash) firmware on physical wallet
 oflash: full-firmware
 	openocd -f openocd.cfg
 
+odebug: full-firmware
+	## Debug works only on Linux at the moment
+	gnome-terminal --command="openocd -f interface/stlink-v2.cfg -f target/stm32f2x.cfg"
+	arm-none-eabi-gdb ./tiny-firmware/skyfirmware.elf \
+	-ex 'target remote localhost:3333' \
+	-ex 'monitor reset halt' \
+	-ex 'monitor arm semihosting enable'
+
 check-ver:
 	echo "Bootloader : $(VERSION_BOOTLOADER_MAJOR).$(VERSION_BOOTLOADER_MINOR).$(VERSION_BOOTLOADER_PATCH)"
 	echo "Firmware   : $(VERSION_FIRMWARE_MAJOR).$(VERSION_FIRMWARE_MINOR).$(VERSION_FIRMWARE_PATCH)"

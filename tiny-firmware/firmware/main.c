@@ -29,6 +29,7 @@
 #include "tiny-firmware/firmware/entropy.h"
 #include "tiny-firmware/memory.h"
 #include "tiny-firmware/firmware/bootloader_integrity.h"
+#include "stdio.h"
 
 #ifdef __CYGWIN__
 #ifdef main
@@ -39,6 +40,7 @@
 extern uint32_t storage_uuid[STM32_UUID_LEN / sizeof(uint32_t)];
 
 int main(void) {
+  printf("Here\n");
 #if defined(EMULATOR) && EMULATOR == 1
     setup();
     __stack_chk_guard = random32(); // this supports compiler provided unpredictable stack protection checks
