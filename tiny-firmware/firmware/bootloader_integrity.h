@@ -11,7 +11,8 @@
 
 #ifndef HARDWARE_WALLET_BOOTLOADER_CHECK_H
 #define HARDWARE_WALLET_BOOTLOADER_CHECK_H
+#include <stdbool.h>
 
-int check_bootloader(void);
+bool check_bootloader(void);
 
 #endif //HARDWARE_WALLET_BOOTLOADER_CHECK_H
