@@ -10,6 +10,7 @@
  */
 
 #include <check.h>
+#include <stdbool.h>
 
 TCase* add_fsm_tests(TCase* tc);
 
