@@ -20,6 +20,7 @@
 #include <string.h>
 
 #include "tiny-firmware/firmware/fsm.h"
+#include "tiny-firmware/firmware/fsm_skycoin.h"
 #include "tiny-firmware/util.h"
 #include "tiny-firmware/firmware/gettext.h"
 #include "tiny-firmware/firmware/messages.h"

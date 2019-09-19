@@ -22,6 +22,7 @@
 #define __FSM_H__
 
 #include "messages.pb.h"
+#include "tiny-firmware/firmware/error.h"
 
 // message functions
 
@@ -29,12 +30,11 @@ void fsm_sendSuccess(const char* text, MessageType* msgtype);
 
 void fsm_sendFailure(FailureType code, const char* text, MessageType* msgtype);
 
+void fsm_sendResponseFromErrCode(ErrCode_t err, const char *successMsg, const char *failMsg, MessageType *msgtype);
+
 void fsm_msgInitialize(Initialize* msg);
 void fsm_msgGetFeatures(GetFeatures* msg);
 void fsm_msgApplySettings(ApplySettings* msg);
-void fsm_msgSkycoinCheckMessageSignature(SkycoinCheckMessageSignature* msg);
-void fsm_msgSkycoinSignMessage(SkycoinSignMessage* msg);
-void fsm_msgSkycoinAddress(SkycoinAddress* msg);
 void fsm_msgGenerateMnemonic(GenerateMnemonic* msg);
 void fsm_msgSetMnemonic(SetMnemonic* msg);
 void fsm_msgPing(Ping* msg);

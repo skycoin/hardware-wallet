@@ -308,30 +308,6 @@ void fsm_msgGetFeatures(GetFeatures *msg) {
     msg_write(MessageType_MessageType_Features, resp);
 }
 
-void fsm_msgSkycoinCheckMessageSignature(SkycoinCheckMessageSignature *msg) {
-    GET_MSG_POINTER(Success, successResp);
-    GET_MSG_POINTER(Failure, failureResp);
-    uint16_t msg_id = MessageType_MessageType_Failure;
-    void *msg_ptr = failureResp;
-    switch (msgSkycoinCheckMessageSignatureImpl(msg, successResp, failureResp)) {
-        case ErrOk:
-            msg_id = MessageType_MessageType_Success;
-            msg_ptr = successResp;
-            layoutRawMessage("Verification success");
-            break;
-        case ErrAddressGeneration:
-        case ErrInvalidSignature:
-            failureResp->code = FailureType_Failure_InvalidSignature;
-            layoutRawMessage("Wrong signature");
-            break;
-        default:
-            strncpy(failureResp->message, _("Firmware error."), sizeof(failureResp->message));
-            layoutHome();
-            break;
-    }
-    msg_write(msg_id, msg_ptr);
-}
-
 ErrCode_t requestConfirmTransaction(char *strCoin, char *strHour, TransactionSign *msg, uint32_t i) {
     layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Next"), NULL, _("Do you really want to"), strCoin, strHour,
                       _("to address"), _("..."), NULL);
@@ -364,76 +340,6 @@ void fsm_msgTransactionSign(TransactionSign *msg) {
             fsm_sendResponseFromErrCode(err, NULL, failMsg, &msgtype);
             break;
     }
-    layoutHome();
-}
-
-void fsm_msgSkycoinSignMessage(SkycoinSignMessage *msg) {
-    if (checkMnemonic() || checkPinUncached()) {
-        return;
-    }
-    RESP_INIT(ResponseSkycoinSignMessage);
-
-    MessageType msgtype = MessageType_MessageType_SkycoinSignMessage;
-    ResponseSkycoinAddress respAddr;
-    uint8_t seckey[32] = {0};
-    uint8_t pubkey[33] = {0};
-    ErrCode_t err = fsm_getKeyPairAtIndex(1, pubkey, seckey, &respAddr, msg->address_n);
-    if (err != ErrOk) {
-        fsm_sendResponseFromErrCode(err, NULL, _("Unable to get keys pair"), &msgtype);
-        layoutHome();
-        return;
-    }
-    layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL, _("Do you really want to"),
-                      _("sign message using"), _("this address?"), respAddr.addresses[0], NULL, NULL);
-    if (checkButtonProtect()) { return; }
-
-    err = msgSkycoinSignMessageImpl(msg, resp);
-    if (err == ErrOk) {
-        msg_write(MessageType_MessageType_ResponseSkycoinSignMessage, resp);
-        layoutRawMessage("Signature success");
-    } else {
-        char *failMsg = NULL;
-        if (err == ErrMnemonicRequired) {
-            failMsg = _("Mnemonic not set");
-        }
-        fsm_sendResponseFromErrCode(err, NULL, failMsg, &msgtype);
-        layoutHome();
-    }
-}
-
-void fsm_msgSkycoinAddress(SkycoinAddress *msg) {
-    MessageType msgtype = MessageType_MessageType_SkycoinAddress;
-    RESP_INIT(ResponseSkycoinAddress);
-    char *failMsg = NULL;
-    ErrCode_t err = msgSkycoinAddressImpl(msg, resp);
-    switch (err) {
-        case ErrUserConfirmation:
-            layoutAddress(resp->addresses[0]);
-            if (!protectButton(ButtonRequestType_ButtonRequest_ProtectCall, false)) {
-                err = ErrActionCancelled;
-                break;
-            }
-            // fall through
-        case ErrOk:
-            msg_write(MessageType_MessageType_ResponseSkycoinAddress, resp);
-            layoutHome();
-            return;
-        case ErrPinRequired:
-            failMsg = _("Expected pin");
-            break;
-        case ErrTooManyAddresses:
-            failMsg = _("Asking for too much addresses");
-            break;
-        case ErrMnemonicRequired:
-            failMsg = _("Mnemonic required");
-            break;
-        case ErrAddressGeneration:
-            failMsg = _("Key pair generation failed");
-            break;
-        default:
-            break;
-    }
-    fsm_sendResponseFromErrCode(err, NULL, failMsg, &msgtype);
     layoutHome();
 }
 
