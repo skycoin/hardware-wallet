@@ -50,8 +50,8 @@ void fsm_msgPinMatrixAck(PinMatrixAck* msg);
 void fsm_msgCancel(Cancel* msg);
 void fsm_msgRecoveryDevice(RecoveryDevice* msg);
 void fsm_msgWordAck(WordAck* msg);
-void fsm_msgTransactionSign(TransactionSign* msg);
 void fsm_msgSignTx(SignTx* msg);
 void fsm_msgTxAck(TxAck* msg);
+ErrCode_t requestConfirmTransaction(char *strCoin, char *strHour, TransactionSign *msg, uint32_t i);
 
 #endif

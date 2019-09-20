@@ -320,29 +320,6 @@ ErrCode_t requestConfirmTransaction(char *strCoin, char *strHour, TransactionSig
     return err;
 }
 
-void fsm_msgTransactionSign(TransactionSign *msg) {
-    if (checkPin() || checkMnemonic() || checkInputs(msg) || checkOutputs(msg)) {
-        return;
-    }
-
-    MessageType msgtype = MessageType_MessageType_TransactionSign;
-    RESP_INIT(ResponseTransactionSign);
-    ErrCode_t err = msgTransactionSignImpl(msg, &requestConfirmTransaction, resp);
-    char *failMsg = NULL;
-    switch (err) {
-        case ErrOk:
-            msg_write(MessageType_MessageType_ResponseTransactionSign, resp);
-            break;
-        case ErrAddressGeneration:
-            failMsg = _("Wrong return address");
-            // fall through
-        default:
-            fsm_sendResponseFromErrCode(err, NULL, failMsg, &msgtype);
-            break;
-    }
-    layoutHome();
-}
-
 void fsm_msgPing(Ping *msg) {
     MessageType msgtype = MessageType_MessageType_Ping;
     if (msg->has_button_protection && msg->button_protection) {

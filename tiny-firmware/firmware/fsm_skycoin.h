@@ -26,5 +26,6 @@
 void fsm_msgSkycoinCheckMessageSignature(SkycoinCheckMessageSignature *msg);
 void fsm_msgSkycoinSignMessage(SkycoinSignMessage *msg);
 void fsm_msgSkycoinAddress(SkycoinAddress* msg);
+void fsm_msgTransactionSign(TransactionSign* msg);
 
 #endif

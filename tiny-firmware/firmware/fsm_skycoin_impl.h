@@ -31,4 +31,7 @@ ErrCode_t msgSkycoinSignMessageImpl(SkycoinSignMessage *msg, ResponseSkycoinSign
 
 ErrCode_t msgSkycoinAddressImpl(SkycoinAddress *msg, ResponseSkycoinAddress *resp);
 
+ErrCode_t msgTransactionSignImpl(TransactionSign *msg, ErrCode_t (*)(char *, char *, TransactionSign *, uint32_t),
+                                 ResponseTransactionSign *);
+
 #endif

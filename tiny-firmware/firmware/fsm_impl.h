@@ -64,9 +64,6 @@ ErrCode_t msgApplySettingsImpl(ApplySettings *msg);
 
 ErrCode_t msgGetFeaturesImpl(Features *resp);
 
-ErrCode_t msgTransactionSignImpl(TransactionSign *msg, ErrCode_t (*)(char *, char *, TransactionSign *, uint32_t),
-                                 ResponseTransactionSign *);
-
 ErrCode_t msgPingImpl(Ping *msg);
 
 ErrCode_t msgChangePinImpl(ChangePin *msg, const char *(*)(PinMatrixRequestType, const char *));

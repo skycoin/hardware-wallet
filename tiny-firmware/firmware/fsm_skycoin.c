@@ -47,7 +47,7 @@
 #include "tiny-firmware/firmware/droplet.h"
 #include "tiny-firmware/firmware/skyparams.h"
 #include "tiny-firmware/firmware/entropy.h"
-#include "fsm_skycoin_impl.h"
+#include "tiny-firmware/firmware/fsm_skycoin_impl.h"
 
 extern uint8_t msg_resp[MSG_OUT_SIZE] __attribute__((aligned));
 
@@ -142,5 +142,28 @@ void fsm_msgSkycoinAddress(SkycoinAddress *msg) {
             break;
     }
     fsm_sendResponseFromErrCode(err, NULL, failMsg, &msgtype);
+    layoutHome();
+}
+
+void fsm_msgTransactionSign(TransactionSign *msg) {
+    if (checkPin() || checkMnemonic() || checkInputs(msg) || checkOutputs(msg)) {
+        return;
+    }
+
+    MessageType msgtype = MessageType_MessageType_TransactionSign;
+    RESP_INIT(ResponseTransactionSign);
+    ErrCode_t err = msgTransactionSignImpl(msg, &requestConfirmTransaction, resp);
+    char *failMsg = NULL;
+    switch (err) {
+        case ErrOk:
+            msg_write(MessageType_MessageType_ResponseTransactionSign, resp);
+            break;
+        case ErrAddressGeneration:
+            failMsg = _("Wrong return address");
+            // fall through
+        default:
+            fsm_sendResponseFromErrCode(err, NULL, failMsg, &msgtype);
+            break;
+    }
     layoutHome();
 }
