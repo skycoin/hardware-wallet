@@ -193,7 +193,7 @@ If you are fast enough you can also quickly click the button "accept" on the dev
 
 The system stores five public keys and expects three signatures issued from one of these public keys.
 
-The public keys are hardwritten in the bootloader's source code in file [signatures.c](https://github.com/skycoin/hardware-wallet/blob/master/tiny-firmware/bootloader/signatures.c)
+The public keys are hardwritten in the bootloader's source code in file [Makefile](https://github.com/skycoin/hardware-wallet/blob/master/Makefile)
 
 The signatures are also present in [firmware_sign.py](https://github.com/skycoin/hardware-wallet/blob/master/tiny-firmware/bootloader/firmware_sign.py) script, in the "pubkeys" array.
 
