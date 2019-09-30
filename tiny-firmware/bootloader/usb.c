@@ -261,11 +261,11 @@ static void send_msg_features(usbd_device* dev)
     uint8_t fetOpts = 0;
     switch (memory_rdp_level()) {
     case 2:
-        // https://github.com/skycoin/hardware-wallet-protob/blob/b3a2d50a55c6fb047b895bec27204e0abae38900/protob/messages/types.proto#L139
+        // https://github.com/SkycoinProject/hardware-wallet-protob/blob/b3a2d50a55c6fb047b895bec27204e0abae38900/protob/messages/types.proto#L139
         fetOpts = (1 << 4);
         break;
     case 1:
-        // https://github.com/skycoin/hardware-wallet-protob/blob/b3a2d50a55c6fb047b895bec27204e0abae38900/protob/messages/types.proto#L138
+        // https://github.com/SkycoinProject/hardware-wallet-protob/blob/b3a2d50a55c6fb047b895bec27204e0abae38900/protob/messages/types.proto#L138
         fetOpts = (1 << 3);
         break;
     }
@@ -547,14 +547,14 @@ static void hid_rx_callback(usbd_device* dev, uint8_t ep)
             if (flash_len > FLASH_TOTAL_SIZE + FLASH_META_DESC_LEN - (FLASH_APP_START - FLASH_ORIGIN)) { // firmware is too big
                 send_msg_failure(dev);
                 flash_state = STATE_END;
-                layoutDialog(&bmp_icon_error, NULL, NULL, NULL, "Firmware is too big.", NULL, "Get official firmware", "github.com/skycoin/hardware-wallet", NULL, NULL);
+                layoutDialog(&bmp_icon_error, NULL, NULL, NULL, "Firmware is too big.", NULL, "Get official firmware", "github.com/SkycoinProject/hardware-wallet", NULL, NULL);
                 return;
             }
             // check firmware magic
             if (memcmp(p, FIRMWARE_MAGIC, 4) != 0) {
                 send_msg_failure(dev);
                 flash_state = STATE_END;
-                layoutDialog(&bmp_icon_error, NULL, NULL, NULL, "Wrong firmware header.", NULL, "Get official firmware", "github.com/skycoin/hardware-wallet", NULL, NULL);
+                layoutDialog(&bmp_icon_error, NULL, NULL, NULL, "Wrong firmware header.", NULL, "Get official firmware", "github.com/SkycoinProject/hardware-wallet", NULL, NULL);
                 return;
             }
             flash_state = STATE_FLASHING;

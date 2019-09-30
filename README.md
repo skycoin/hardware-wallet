@@ -2,7 +2,7 @@
 
 # Skycoin hardware wallet
 
-[![Build Status](https://travis-ci.com/skycoin/hardware-wallet.svg?branch=develop)](https://travis-ci.com/skycoin/hardware-wallet)
+[![Build Status](https://travis-ci.com/SkycoinProject/hardware-wallet.svg?branch=develop)](https://travis-ci.com/SkycoinProject/hardware-wallet)
 
 ## Table of contents
 
@@ -41,16 +41,16 @@
 
 This folder provides a firmware implementing skycoin features, and tools to test it.
 
-The firmware itself is under [tiny-firmware](https://github.com/skycoin/hardware-wallet/tree/master/tiny-firmware) folder.
+The firmware itself is under [tiny-firmware](https://github.com/SkycoinProject/hardware-wallet/tree/master/tiny-firmware) folder.
 The firmware had been copied and modified from [this repository](https://github.com/trezor/trezor-mcu).
 
-The [skycoin-api](https://github.com/skycoin/hardware-wallet/tree/master/skycoin-api) folder contains the definition of the functions implementing the skycoin features.
+The [skycoin-api](https://github.com/SkycoinProject/hardware-wallet/tree/master/skycoin-api) folder contains the definition of the functions implementing the skycoin features.
 
-The [skycoin-hw-cli](https://github.com/skycoin/hardware-wallet-go/releases) defines golang functions that communicate with the firmware.
+The [skycoin-hw-cli](https://github.com/SkycoinProject/hardware-wallet-go/releases) defines golang functions that communicate with the firmware.
 
-There is also a [javascript API](https://github.com/skycoin/hardware-wallet-js/).
+There is also a [javascript API](https://github.com/SkycoinProject/hardware-wallet-js/).
 
-Follow up [the wiki](https://github.com/skycoin/hardware-wallet/wiki/Hardware-wallet-project-advancement) to keep track of project advancement.
+Follow up [the wiki](https://github.com/SkycoinProject/hardware-wallet/wiki/Hardware-wallet-project-advancement) to keep track of project advancement.
 
 ## FAQ
 
@@ -58,7 +58,7 @@ Follow up [the wiki](https://github.com/skycoin/hardware-wallet/wiki/Hardware-wa
 
 ## Install tools
 
-Follow the instructions written on [tiny-firware/README.md](https://github.com/skycoin/hardware-wallet/blob/master/tiny-firmware/README.md)
+Follow the instructions written on [tiny-firware/README.md](https://github.com/SkycoinProject/hardware-wallet/blob/master/tiny-firmware/README.md)
 
 ## Build instructions:
 
@@ -68,7 +68,7 @@ Immediately after cloning this repository make sure submoudules are up-to-date b
 git submodule update --init --recursive
 ```
 
-Should you find any issues while running any of the commands that follow please consult [FAQ](FAQ.md) before [reporting a bug](ihttps://github.com/skycoin/hardware-wallet/issues/new?assignees=&labels=bug&template=bug_report.md&title=).
+Should you find any issues while running any of the commands that follow please consult [FAQ](FAQ.md) before [reporting a bug](ihttps://github.com/SkycoinProject/hardware-wallet/issues/new?assignees=&labels=bug&template=bug_report.md&title=).
 
 ### Build and run emulator
 
@@ -125,7 +125,7 @@ Careful if you flash and run that bootloader on the device it will activate a me
 You won't be able to flash your device with an st-link again.
 
 ```
-make full-firmware-mem-protect # this will create a full-firmware-memory-protected.bin file 
+make full-firmware-mem-protect # this will create a full-firmware-memory-protected.bin file
 ```
 
 ## Development guidelines
@@ -223,22 +223,22 @@ After running the tools [some files](#Files-description) are generated and need 
 #=============================================================================#
         test_name   |ntup| tsamples |psamples|  p-value |Assessment
 #=============================================================================#
-   diehard_birthdays|   0|       100|     100|0.73855343|  PASSED  
-      diehard_operm5|   0|   1000000|     100|0.40846434|  PASSED  
-  diehard_rank_32x32|   0|     40000|     100|0.87409050|  PASSED  
-    diehard_rank_6x8|   0|    100000|     100|0.81487620|  PASSED  
-   diehard_bitstream|   0|   2097152|     100|0.97506327|  PASSED  
-        diehard_opso|   0|   2097152|     100|0.72414474|  PASSED  
-        diehard_oqso|   0|   2097152|     100|0.14038586|  PASSED  
-         diehard_dna|   0|   2097152|     100|0.29338685|  PASSED  
-diehard_count_1s_str|   0|    256000|     100|0.08300743|  PASSED  
-diehard_count_1s_byt|   0|    256000|     100|0.96142913|  PASSED  
- diehard_parking_lot|   0|     12000|     100|0.43595334|  PASSED  
-    diehard_2dsphere|   2|      8000|     100|0.88771280|  PASSED  
-    diehard_3dsphere|   3|      4000|     100|0.09017234|  PASSED  
-     diehard_squeeze|   0|    100000|     100|0.56740432|  PASSED  
-        diehard_sums|   0|       100|     100|0.00071665|   WEAK   
-        diehard_runs|   0|    100000|     100|0.05569879|  PASSED  
+   diehard_birthdays|   0|       100|     100|0.73855343|  PASSED
+      diehard_operm5|   0|   1000000|     100|0.40846434|  PASSED
+  diehard_rank_32x32|   0|     40000|     100|0.87409050|  PASSED
+    diehard_rank_6x8|   0|    100000|     100|0.81487620|  PASSED
+   diehard_bitstream|   0|   2097152|     100|0.97506327|  PASSED
+        diehard_opso|   0|   2097152|     100|0.72414474|  PASSED
+        diehard_oqso|   0|   2097152|     100|0.14038586|  PASSED
+         diehard_dna|   0|   2097152|     100|0.29338685|  PASSED
+diehard_count_1s_str|   0|    256000|     100|0.08300743|  PASSED
+diehard_count_1s_byt|   0|    256000|     100|0.96142913|  PASSED
+ diehard_parking_lot|   0|     12000|     100|0.43595334|  PASSED
+    diehard_2dsphere|   2|      8000|     100|0.88771280|  PASSED
+    diehard_3dsphere|   3|      4000|     100|0.09017234|  PASSED
+     diehard_squeeze|   0|    100000|     100|0.56740432|  PASSED
+        diehard_sums|   0|       100|     100|0.00071665|   WEAK
+        diehard_runs|   0|    100000|     100|0.05569879|  PASSED
 ```
 But in general a bit of research should be done looking at the files content. This feature come mainly from https://github.com/trezor/rng-test, so any advice from this repo is good as well
 
@@ -248,11 +248,11 @@ But in general a bit of research should be done looking at the files content. Th
 
 #### Skycoin firmware releases
 
-The skycoin firmware is composed of two parts: the [bootloader](https://github.com/skycoin/hardware-wallet/tree/master/tiny-firmware/bootloader) and the [firmware](https://github.com/skycoin/hardware-wallet/tree/master/tiny-firmware/firmware).
+The skycoin firmware is composed of two parts: the [bootloader](https://github.com/SkycoinProject/hardware-wallet/tree/master/tiny-firmware/bootloader) and the [firmware](https://github.com/SkycoinProject/hardware-wallet/tree/master/tiny-firmware/firmware).
 
 When plugging the device in, the bootloader runs first. Its only purpose it to check firmware's validity using Skycoin signature.
 
-The firmware is expected to have a header with proper MAGIC number and three signature slots. 
+The firmware is expected to have a header with proper MAGIC number and three signature slots.
 
 If the firmware does not have a valid signature in its header it is considered **"not official"**. A warning will be displayed but the user can still skip it and use it anyway.
 
@@ -262,7 +262,7 @@ Skycoin firmware is open source and it is easy to fork or copy official reposito
 
 The Skycoin hardware will be shipped with an immutable bootloader written in a protected memory that is impossible to re-write.
 
-The firmware however can evolve over time and some solutions were developed to update an existing firmware (see [skycoin-hw-cli](https://github.com/skycoin/hardware-wallet-go/releases)).
+The firmware however can evolve over time and some solutions were developed to update an existing firmware (see [skycoin-hw-cli](https://github.com/SkycoinProject/hardware-wallet-go/releases)).
 
 ##### Supported languages
 
@@ -272,15 +272,15 @@ The supported languages are encoded in a masked `32 bits` number:
 
 ##### Full-Firmware and bootloader folder
 
-The [firmware](https://github.com/skycoin/hardware-wallet/tree/master/tiny-firmware/firmware) and [bootloader](https://github.com/skycoin/hardware-wallet/tree/master/tiny-firmware/bootloader) folders are here for development purpose. They are meant to be [flashed with st-link](https://github.com/skycoin/hardware-wallet/blob/master/tiny-firmware/README.md#3-how-to-burn-the-firmware-in-the-device) on a STM32 device in which the memory protection was not enabled yet.
+The [firmware](https://github.com/SkycoinProject/hardware-wallet/tree/master/tiny-firmware/firmware) and [bootloader](https://github.com/SkycoinProject/hardware-wallet/tree/master/tiny-firmware/bootloader) folders are here for development purpose. They are meant to be [flashed with st-link](https://github.com/SkycoinProject/hardware-wallet/blob/master/tiny-firmware/README.md#3-how-to-burn-the-firmware-in-the-device) on a STM32 device in which the memory protection was not enabled yet.
 
-You can check [here](https://github.com/skycoin/hardware-wallet/blob/master/tiny-firmware/README.md#3-how-to-burn-the-firmware-in-the-device) for instructions about how to burn a full firmware on a device.
+You can check [here](https://github.com/SkycoinProject/hardware-wallet/blob/master/tiny-firmware/README.md#3-how-to-burn-the-firmware-in-the-device) for instructions about how to burn a full firmware on a device.
 
 ##### Firmware folder
 
-If you are a user of the skycoin electronic wallet and want to update your firmware. You can pick-up [official and tested releases](https://github.com/skycoin/hardware-wallet/releases).
+If you are a user of the skycoin electronic wallet and want to update your firmware. You can pick-up [official and tested releases](https://github.com/SkycoinProject/hardware-wallet/releases).
 
-To update firmware the device must be in "bootloader mode". Press both buttons, unplug your device and plug it back in. Then you can use [skycoin-cli](https://github.com/skycoin/hardware-wallet/releases) `firmwareUpdate` message to update the firmware.
+To update firmware the device must be in "bootloader mode". Press both buttons, unplug your device and plug it back in. Then you can use [skycoin-cli](https://github.com/SkycoinProject/hardware-wallet/releases) `firmwareUpdate` message to update the firmware.
 
 #### Update the version
 
@@ -301,7 +301,7 @@ To update firmware the device must be in "bootloader mode". Press both buttons, 
 
 #### Pre-release testing
 
-Once the candidate release build artifacts have been downloaded it is necessary to check once again that they behave according to specifications. The followinfg steps are aimed at ensuring this is the case. Execute 
+Once the candidate release build artifacts have been downloaded it is necessary to check once again that they behave according to specifications. The followinfg steps are aimed at ensuring this is the case. Execute
 
 0. Flash the device with latest versions of bootloader and firmware
 0. Ensure you have a recent version of Skycoin desktop software in one of the following ways
@@ -311,7 +311,7 @@ Once the candidate release build artifacts have been downloaded it is necessary 
 0. Recover a test wallet with nonzero balance from seed to confirm wallet loading works
 0. Send coins to another wallet to confirm spending works
 0. Check that transferred amounts reported in transaction history are correct
-0. Add a PIN to the hardware wallet 
+0. Add a PIN to the hardware wallet
 0. Use the same recovery seed of the wallet configured in the Skywallet device and to load a wallet directly in desktop wallet
 0. Send coins to another wallet again
 0. Check transaction history once again

@@ -5,7 +5,7 @@ PROTOB_HASH=$(git -C tiny-firmware/protob/ rev-parse HEAD)
 
 # make sure submodule has correct origin url
 SUBMODULE_ORIGIN_URL=$(git -C tiny-firmware/protob remote get-url origin)
-if ! echo "$SUBMODULE_ORIGIN_URL" | grep -q "http://github.com/skycoin/hardware-wallet-protob.git"; then
+if ! echo "$SUBMODULE_ORIGIN_URL" | grep -q "http://github.com/SkycoinProject/hardware-wallet-protob.git"; then
     echo "invalid repository $SUBMODULE_ORIGIN_URL"
     exit 1
 fi

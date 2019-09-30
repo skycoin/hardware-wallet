@@ -157,7 +157,7 @@ Restart your machine or force your udev kernel module to [reload the rules](http
 
 Disable the signature checking
 
-Change SIGNATURE_PROTECT to 0 in the [project Makfile](https://github.com/skycoin/hardware-wallet/blob/master/Makefile)
+Change SIGNATURE_PROTECT to 0 in the [project Makfile](https://github.com/SkycoinProject/hardware-wallet/blob/master/Makefile)
 
 ## 3. How to burn the firmware in the device
 
@@ -171,11 +171,11 @@ To flash a full firmware build at `FULL_FIRMWARE_PATH` on a microcontroller of S
 
     st-flash write ${FULL_FIRMWARE_PATH} 0x08000000;
 
-It is also possible to use the `st-flash` rule in the [main Makefile](https://github.com/skycoin/hardware-wallet/blob/master/Makefile). If `FULL_FIRMWARE_PATH` not set it's value defaults to `./full-firmware-no-mem-protect.bin`, which happens to be the output of `make full-firmware` command.
+It is also possible to use the `st-flash` rule in the [main Makefile](https://github.com/SkycoinProject/hardware-wallet/blob/master/Makefile). If `FULL_FIRMWARE_PATH` not set it's value defaults to `./full-firmware-no-mem-protect.bin`, which happens to be the output of `make full-firmware` command.
 
 On Windows, open ST-Link Utility. Choose "File" -> "Open File", and choose proper .bin file. Then connect ST-Link to your computer, choose "Target" -> Connect.
 When ST-Link is successfully connected (see in console), choose "Target" -> "Erase". Wait, until previous firmware will erased. Then choose "Target" -> "Flash" and tap
-"Start" button.  
+"Start" button.
 
 ## 4. Firmware signature
 
@@ -193,13 +193,13 @@ If you are fast enough you can also quickly click the button "accept" on the dev
 
 The system stores five public keys and expects three signatures issued from one of these public keys.
 
-The public keys are hardwritten in the bootloader's source code in file [Makefile](https://github.com/skycoin/hardware-wallet/blob/master/Makefile)
+The public keys are hardwritten in the bootloader's source code in file [Makefile](https://github.com/SkycoinProject/hardware-wallet/blob/master/Makefile)
 
-The signatures are also present in [firmware_sign.py](https://github.com/skycoin/hardware-wallet/blob/master/tiny-firmware/bootloader/firmware_sign.py) script, in the "pubkeys" array.
+The signatures are also present in [firmware_sign.py](https://github.com/SkycoinProject/hardware-wallet/blob/master/tiny-firmware/bootloader/firmware_sign.py) script, in the "pubkeys" array.
 
 #### Use your secret key to perform signature
 
-See [README.md](https://github.com/skycoin/hardware-wallet/blob/master/README.md): Run `make sign` from repository home.
+See [README.md](https://github.com/SkycoinProject/hardware-wallet/blob/master/README.md): Run `make sign` from repository home.
 
 The command line tool will ask you in which of the three slots do you want to store the signature.
 
@@ -207,7 +207,7 @@ The it will ask you to provide a secret key that must correspond to one of the f
 
 #### Recombine the firmware and the bootloader
 
-See [README.md](https://github.com/skycoin/hardware-wallet/blob/master/README.md): Run `make full-firmware` from repository home.
+See [README.md](https://github.com/SkycoinProject/hardware-wallet/blob/master/README.md): Run `make full-firmware` from repository home.
 
 Then you can re-flash the firmware for instance with st-skycoin alias.
 
@@ -215,9 +215,9 @@ Then you can re-flash the firmware for instance with st-skycoin alias.
 
 ### Use golang code examples
 
-Check [here](https://github.com/skycoin/hardware-wallet-go/) for golang code example communicating with the device.
+Check [here](https://github.com/SkycoinProject/hardware-wallet-go/) for golang code example communicating with the device.
 
-Feel free to hack [main.go](https://github.com/skycoin/hardware-wallet-go/blob/master/main.go) file.
+Feel free to hack [main.go](https://github.com/SkycoinProject/hardware-wallet-go/blob/master/main.go) file.
 
 You can also try the trezorctl [python based command line](https://github.com/trezor/python-trezor).
 
@@ -227,9 +227,9 @@ The communication between PC and firmware is a master/slave model where the firm
 It reacts to messages but cannot initiate a communication.
 The messages are defined using google protobuf code generation tools. The same file messages.proto can be copy pasted elswhere to generate the same structures in other coding languages.
 
-The [repository](https://github.com/skycoin/hardware-wallet-go/) provides examples to communicate with the device using golang.
+The [repository](https://github.com/SkycoinProject/hardware-wallet-go/) provides examples to communicate with the device using golang.
 
-The firmware has two components: the [bootloader](https://github.com/skycoin/hardware-wallet/tree/master/tiny-firmware/bootloader) and the [firmware](https://github.com/skycoin/hardware-wallet/tree/master/tiny-firmware/firmware).
+The firmware has two components: the [bootloader](https://github.com/SkycoinProject/hardware-wallet/tree/master/tiny-firmware/bootloader) and the [firmware](https://github.com/SkycoinProject/hardware-wallet/tree/master/tiny-firmware/firmware).
 The bootloader main role is to check firmware's signature in order to warn user in case the detected firmware is not the official firmware distributed by skycoin.
 
 Here is a quick presentation of most important files of the firmware:

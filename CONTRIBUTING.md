@@ -59,7 +59,7 @@ The Skywallet can enter in bootloader mode once it connected to the host machine
 
 ### Firmware
 
-The firmware makes possible for the Skywallet to exchange messages with its peer. These [protocol buffer](https://developers.google.com/protocol-buffers/) messages are specified in [skycoin/hardware-wallet-protob](https://github.com/skycoin/hardware-wallet-protob) repository, which is included as a submodule at path `./tiny-firmware/protob` relative to repository root. Libraries are strongly advised to reuse these specifications to generate message-specific source code for a particular programming language. Use `make proto` target to generate the C code needed by firmware and bootloader.
+The firmware makes possible for the Skywallet to exchange messages with its peer. These [protocol buffer](https://developers.google.com/protocol-buffers/) messages are specified in [SkycoinProject/hardware-wallet-protob](https://github.com/SkycoinProject/hardware-wallet-protob) repository, which is included as a submodule at path `./tiny-firmware/protob` relative to repository root. Libraries are strongly advised to reuse these specifications to generate message-specific source code for a particular programming language. Use `make proto` target to generate the C code needed by firmware and bootloader.
 
 At the core of the firmware , messages handlers are implemented in `tiny-firmware/firmware/fsm.c`. Function names should follow the convention `fsm_msgCamelCaseMsgName` and receive a single argument pointing at the corresponding protobuffer message `struct`. Message handler body should:
 
@@ -72,7 +72,7 @@ At the core of the firmware , messages handlers are implemented in `tiny-firmwar
 
 ### Gen
 If some image needs to be used in the hardware wallet, you must add appropriate bitmap.
-You can read more how to add a bitmap image [here](https://github.com/skycoin/hardware-wallet/tree/develop/tiny-firmware/gen)
+You can read more how to add a bitmap image [here](https://github.com/SkycoinProject/hardware-wallet/tree/develop/tiny-firmware/gen)
 Fonts for the hardware wallet, are also generated in this section of the code base.
 
 ### Emulator
@@ -138,14 +138,14 @@ Tests that PIN matrix layout works well and checks input with wrong digits.
 
 ## Relationship to other projects
 
-- [Hardware wallet daemon](https://github.com/skycoin/hardware-wallet-daemon)
+- [Hardware wallet daemon](https://github.com/SkycoinProject/hardware-wallet-daemon)
 The hardware wallet daemon provides an HTTP API to interface with the wallets supported by skycoin. It uses the go bindings provided by the hardware wallet GO library.
 
-- [Hardware wallet protobuffer](https://github.com/skycoin/hardware-wallet-protob)
+- [Hardware wallet protobuffer](https://github.com/SkycoinProject/hardware-wallet-protob)
 Protocol Buffer schemas for Skycoin hardware wallet communication and scripts for supporting multiple programming languages.
 
-- [Hardware wallet GO library](https://github.com/skycoin/hardware-wallet-go)
+- [Hardware wallet GO library](https://github.com/SkycoinProject/hardware-wallet-go)
   Go bindings and CLI tool for the Skycoin hardware wallet.
 
-- [Hardware wallet JS library](https://github.com/skycoin/hardware-wallet-js)
+- [Hardware wallet JS library](https://github.com/SkycoinProject/hardware-wallet-js)
   Javascript interface for the Skycoin hardware wallet
