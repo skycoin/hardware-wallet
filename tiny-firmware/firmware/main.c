@@ -29,6 +29,7 @@
 #include "tiny-firmware/firmware/entropy.h"
 #include "tiny-firmware/memory.h"
 #include "tiny-firmware/firmware/bootloader_integrity.h"
+#include "stdio.h"
 
 #ifdef __CYGWIN__
 #ifdef main
