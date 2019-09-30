@@ -115,7 +115,7 @@ bootloader-mem-protect: bootloader ## Build bootloader (RDP level 2)
 skycoin-crypto-lib:
 	$(MAKE) -C tiny-firmware/vendor/skycoin-crypto/ libskycoin-crypto.a
 
-firmware: skycoin-crypto-lib tiny-firmware/skyfirmware.bin ## Build skycoin wallet firmware
+firmware: tiny-firmware/skyfirmware.bin ## Build skycoin wallet firmware
 
 build-libc: tiny-firmware/bootloader/libskycoin-crypto.so ## Build the Skycoin cipher library for firmware
 
