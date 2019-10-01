@@ -10,10 +10,5 @@
  */
 
 #include <check.h>
-#include <stdbool.h>
 
-TCase* add_fsm_tests(TCase* tc);
-
-// Used in test_fsm_skycoin.c
-void forceGenerateMnemonic(uint32_t wc);
-bool is_base16_char(char c);
+TCase* add_fsm_skycoin_tests(TCase* tc);
