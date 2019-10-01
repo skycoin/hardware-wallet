@@ -13,6 +13,7 @@
 
 #include "tiny-firmware/tests/test_droplet.h"
 #include "tiny-firmware/tests/test_fsm.h"
+#include "tiny-firmware/tests/test_fsm_skycoin.h"
 #include "tiny-firmware/tests/test_protect.h"
 #include "tiny-firmware/tests/test_serialno.h"
 #include "tiny-firmware/tests/test_reset.h"
@@ -25,6 +26,7 @@ Suite* test_suite(void)
     Suite* s = suite_create("firmware");
 
     suite_add_tcase(s, add_fsm_tests(tcase_create("fsm")));
+    suite_add_tcase(s, add_fsm_skycoin_tests(tcase_create("fsm_skycoin")));
     suite_add_tcase(s, add_droplet_tests(tcase_create("droplet")));
     suite_add_tcase(s, add_timer_tests(tcase_create("timer")));
     suite_add_tcase(s, add_protect_tests(tcase_create("protect")));
