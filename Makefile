@@ -106,16 +106,17 @@ MEMORY_PROTECT ?= 0
 bootloader: firmware-deps ## Build bootloader (RDP level 0)
 	rm -f tiny-firmware/memory.o tiny-firmware/gen/bitmaps.o # Force rebuild of these two files
 	$(MAKE) FIRMWARE_SIGNATURE_PUB_KEY1=$(FIRMWARE_SIGNATURE_PUB_KEY1) FIRMWARE_SIGNATURE_PUB_KEY2=$(FIRMWARE_SIGNATURE_PUB_KEY2) FIRMWARE_SIGNATURE_PUB_KEY3=$(FIRMWARE_SIGNATURE_PUB_KEY3) FIRMWARE_SIGNATURE_PUB_KEY4=$(FIRMWARE_SIGNATURE_PUB_KEY4) FIRMWARE_SIGNATURE_PUB_KEY5=$(FIRMWARE_SIGNATURE_PUB_KEY5) MEMORY_PROTECT=0 SIGNATURE_PROTECT=1 REVERSE_BUTTONS=1 VERSION_MAJOR=$(VERSION_BOOTLOADER_MAJOR) VERSION_MINOR=$(VERSION_BOOTLOADER_MINOR) VERSION_PATCH=$(VERSION_BOOTLOADER_PATCH) GLOBAL_PATH=$(MKFILE_DIR) -C tiny-firmware/bootloader/ align
-	mv tiny-firmware/bootloader/bootloader.bin skybootloader-no-memory-protect.bin
+	mv tiny-firmware/bootloader/bootloader.bin build/bootloader-no-memory-protect.bin
 
 bootloader-mem-protect: MEMORY_PROTECT=1
 bootloader-mem-protect: bootloader ## Build bootloader (RDP level 2)
-	mv skybootloader-no-memory-protect.bin bootloader-memory-protected.bin
+	mv build/bootloader-no-memory-protect.bin build/bootloader-memory-protected.bin
 
 skycoin-crypto-lib:
 	$(MAKE) -C tiny-firmware/vendor/skycoin-crypto/ libskycoin-crypto.a
 
 firmware: tiny-firmware/skyfirmware.bin ## Build skycoin wallet firmware
+	mv tiny-firmware/skyfirmware.bin build/skyfirmware.bin
 
 build-libc: tiny-firmware/bootloader/libskycoin-crypto.so ## Build the Skycoin cipher library for firmware
 
@@ -125,16 +126,16 @@ release-emulator: clean emulator ## Build emulator in release mode.
 release-bootloader: ## Build bootloader in release mode.
 	if [ "$(call is_version_correct,$(VERSION_BOOTLOADER))" -eq "0" ]; then echo "Wrong bootloader version format"; exit 1; fi
 	$(MAKE) DEBUG=0 VERSION_MAJOR=$(VERSION_BOOTLOADER_MAJOR) VERSION_MINOR=$(VERSION_BOOTLOADER_MINOR) VERSION_PATCH=$(VERSION_BOOTLOADER_PATCH) bootloader
-	mv skybootloader-no-memory-protect.bin releases/skywallet-bootloader-no-memory-protect-v$(VERSION_BOOTLOADER).bin
+	mv build/bootloader-no-memory-protect.bin releases/skywallet-bootloader-no-memory-protect-v$(VERSION_BOOTLOADER).bin
 
 release-bootloader-mem-protect: ## Build bootloader(with memory protect enbled, make sure you know what you are doing).
 	if [ "$(call is_version_correct,$(VERSION_BOOTLOADER))" -eq "0" ]; then echo "Wrong bootloader version format"; exit 1; fi
 	$(MAKE) DEBUG=0 VERSION_MAJOR=$(VERSION_BOOTLOADER_MAJOR) VERSION_MINOR=$(VERSION_BOOTLOADER_MINOR) VERSION_PATCH=$(VERSION_BOOTLOADER_PATCH) bootloader-mem-protect
-	mv bootloader-memory-protected.bin releases/skywallet-bootloader-mem-protect-v$(VERSION_BOOTLOADER).bin
+	mv build/bootloader-memory-protected.bin releases/skywallet-bootloader-mem-protect-v$(VERSION_BOOTLOADER).bin
 
 release-firmware: check-version ## Build firmware in release mode.
 	$(MAKE) DEBUG=0 VERSION_MAJOR=$(VERSION_FIRMWARE_MAJOR) VERSION_MINOR=$(VERSION_FIRMWARE_MINOR) VERSION_PATCH=$(VERSION_FIRMWARE_PATCH) firmware
-	mv tiny-firmware/skyfirmware.bin releases/skywallet-firmware-v$(VERSION_FIRMWARE).bin
+	mv build/skyfirmware.bin releases/skywallet-firmware-v$(VERSION_FIRMWARE).bin
 
 release-combined: release-bootloader release-firmware ## Build bootloader and firmware together in a combined file in released mode.
 	cp releases/skywallet-bootloader-no-memory-protect-v$(VERSION_BOOTLOADER).bin tiny-firmware/bootloader/combine/bl.bin
@@ -170,14 +171,14 @@ sign: tiny-firmware/bootloader/libskycoin-crypto.so tiny-firmware/skyfirmware.bi
 	$(MAKE) FIRMWARE_SIGNATURE_PUB_KEY1=$(FIRMWARE_SIGNATURE_PUB_KEY1) FIRMWARE_SIGNATURE_PUB_KEY2=$(FIRMWARE_SIGNATURE_PUB_KEY2) FIRMWARE_SIGNATURE_PUB_KEY3=$(FIRMWARE_SIGNATURE_PUB_KEY3) FIRMWARE_SIGNATURE_PUB_KEY4=$(FIRMWARE_SIGNATURE_PUB_KEY4) FIRMWARE_SIGNATURE_PUB_KEY5=$(FIRMWARE_SIGNATURE_PUB_KEY5) -C tiny-firmware sign
 
 full-firmware-mem-protect: bootloader-mem-protect firmware ## Build full firmware (RDP level 2)
-	cp bootloader-memory-protected.bin tiny-firmware/bootloader/combine/bl.bin
-	cp tiny-firmware/skyfirmware.bin tiny-firmware/bootloader/combine/fw.bin
+	cp build/bootloader-memory-protected.bin tiny-firmware/bootloader/combine/bl.bin
+	cp build/skyfirmware.bin tiny-firmware/bootloader/combine/fw.bin
 	cd tiny-firmware/bootloader/combine/ ; $(PYTHON) prepare.py
 	mv tiny-firmware/bootloader/combine/combined.bin releases/full-firmware-memory-protected.bin
 
 full-firmware: bootloader firmware ## Build full firmware (RDP level 0)
-	cp skybootloader-no-memory-protect.bin tiny-firmware/bootloader/combine/bl.bin
-	cp tiny-firmware/skyfirmware.bin tiny-firmware/bootloader/combine/fw.bin
+	cp build/bootloader-no-memory-protect.bin tiny-firmware/bootloader/combine/bl.bin
+	cp build/skyfirmware.bin tiny-firmware/bootloader/combine/fw.bin
 	cd tiny-firmware/bootloader/combine/ ; $(PYTHON) prepare.py
 	mv tiny-firmware/bootloader/combine/combined.bin releases/full-firmware-no-mem-protect.bin
 
