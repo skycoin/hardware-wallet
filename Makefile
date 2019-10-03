@@ -80,7 +80,7 @@ install-linters-Darwin:
 	brew install yamllint
 
 install-linters-Linux:
-	$(PIP) install --user $(PIPARGS) yamllint
+	$(PIP) install $(PIPARGS) yamllint
 
 install-linters: install-linters-$(UNAME_S) ## Install code quality checking tools
 
