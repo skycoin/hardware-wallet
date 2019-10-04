@@ -48,6 +48,7 @@
 #include "tiny-firmware/firmware/skyparams.h"
 #include "tiny-firmware/firmware/entropy.h"
 #include "tiny-firmware/firmware/fsm_skycoin_impl.h"
+#include "tiny-firmware/buttons.h"
 
 extern uint8_t msg_resp[MSG_OUT_SIZE] __attribute__((aligned));
 
@@ -99,14 +100,18 @@ void fsm_msgSkycoinSignMessage(SkycoinSignMessage *msg) {
     if (err == ErrOk) {
         msg_write(MessageType_MessageType_ResponseSkycoinSignMessage, resp);
         layoutRawMessage("Signature success");
+        do {
+            delay(100000);
+            buttonUpdate();
+        } while (!button.YesUp && !button.NoUp);
     } else {
         char *failMsg = NULL;
         if (err == ErrMnemonicRequired) {
             failMsg = _("Mnemonic not set");
         }
         fsm_sendResponseFromErrCode(err, NULL, failMsg, &msgtype);
-        layoutHome();
     }
+    layoutHome();
 }
 
 void fsm_msgSkycoinAddress(SkycoinAddress *msg) {
