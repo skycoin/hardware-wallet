@@ -45,12 +45,14 @@ int main(void) {
     __stack_chk_guard = random32(); // this supports compiler provided unpredictable stack protection checks
     oledInit();
 #else  // defined(EMULATOR) && EMULATOR == 1
+#if defined(MEMORY_PROTECT) && MEMORY_PROTECT == 1
     if (!check_bootloader()) {
         layoutDialog(&bmp_icon_error, NULL, NULL, NULL, "Unknown bootloader", "detected.", NULL,
                      "Unplug your Skywallet",
                      "contact our support.", NULL);
         for (;;);
     }
+#endif
     setupApp();
     __stack_chk_guard = random32(); // this supports compiler provided unpredictable stack protection checks
 #endif // defined(EMULATOR) && EMULATOR == 1
