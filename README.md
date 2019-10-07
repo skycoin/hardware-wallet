@@ -29,7 +29,6 @@
   - [Validate the TRNG](#validate-the-trng)
       - [Files description](#files-description)
   - [Releases](#releases)
-    - [Skycoin firmware releases](#skycoin-firmware-releases)
     - [Update the version](#update-the-version)
     - [Pre-release testing](#pre-release-testing)
     - [Creating release builds](#creating-release-builds)
@@ -223,39 +222,11 @@ But in general a bit of research should be done looking at the files content. Th
 
 #### Skycoin firmware releases
 
-The skycoin firmware is composed of two parts: the [bootloader](https://github.com/SkycoinProject/hardware-wallet/tree/master/tiny-firmware/bootloader) and the [firmware](https://github.com/SkycoinProject/hardware-wallet/tree/master/tiny-firmware/firmware).
+The Skywallet firmware is composed of two parts: the [bootloader](https://github.com/SkycoinProject/hardware-wallet/tree/master/tiny-firmware/bootloader) and the [firmware](https://github.com/SkycoinProject/hardware-wallet/tree/master/tiny-firmware/firmware).
 
-When plugging the device in, the bootloader runs first. Its only purpose it to check firmware's validity using Skycoin signature.
-
-The firmware is expected to have a header with proper MAGIC number and three signature slots.
+Upon startup, the bootloader checks the validity of the firmware installed on the device. It checks whether the signatures of the firmware correspon to the PubKeys registered in the bootlaoder. The firmware is expected to have a header with proper MAGIC number and three signature slots.
 
 If the firmware does not have a valid signature in its header it is considered **"not official"**. A warning will be displayed but the user can still skip it and use it anyway.
-
-The "unofficial firmware warning", **means that the firmware was not signed by Skycoin Foundation**.
-
-Skycoin firmware is open source and it is easy to fork or copy official repository and create concurrent firmware for the device. Skycoin Foundation however will not put its signature on it.
-
-The Skycoin hardware will be shipped with an immutable bootloader written in a protected memory that is impossible to re-write.
-
-The firmware however can evolve over time and some solutions were developed to update an existing firmware (see [skycoin-hw-cli](https://github.com/SkycoinProject/hardware-wallet-go/releases)).
-
-##### Supported languages
-
-The supported languages are encoded in a masked `32 bits` number:
- - `0` English
- - `1:31` Reserved
-
-##### Full-Firmware and bootloader folder
-
-The [firmware](https://github.com/SkycoinProject/hardware-wallet/tree/master/tiny-firmware/firmware) and [bootloader](https://github.com/SkycoinProject/hardware-wallet/tree/master/tiny-firmware/bootloader) folders are here for development purpose. They are meant to be [flashed with st-link](https://github.com/SkycoinProject/hardware-wallet/blob/master/tiny-firmware/README.md#3-how-to-burn-the-firmware-in-the-device) on a STM32 device in which the memory protection was not enabled yet.
-
-You can check [here](https://github.com/SkycoinProject/hardware-wallet/blob/master/tiny-firmware/README.md#3-how-to-burn-the-firmware-in-the-device) for instructions about how to burn a full firmware on a device.
-
-##### Firmware folder
-
-If you are a user of the skycoin electronic wallet and want to update your firmware. You can pick-up [official and tested releases](https://github.com/SkycoinProject/hardware-wallet/releases).
-
-To update firmware the device must be in "bootloader mode". Press both buttons, unplug your device and plug it back in. Then you can use [skycoin-cli](https://github.com/SkycoinProject/hardware-wallet/releases) `firmwareUpdate` message to update the firmware.
 
 #### Update the version
 
