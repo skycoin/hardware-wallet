@@ -23,7 +23,6 @@
   - [Versioning policies](#versioning-policies)
     - [Firmware version scheme](#firmware-version-scheme)
     - [Bootloader version scheme](#bootloader-version-scheme)
-    - [Versioning combined binary builds](#versioning-combined-binary-builds)
     - [Versioning libraries](#versioning-libraries)
   - [Running tests](#running-tests)
     - [Generating tests code coverage](#generating-tests-code-coverage)
@@ -39,18 +38,12 @@
 
 ## Overview
 
-This folder provides a firmware implementing skycoin features, and tools to test it.
+This repo contains the firmware and bootloader for the Skywallet as well as tools to test and develop for the Skywallet. 
+The firmware can be found in [/tiny-firmware](https://github.com/SkycoinProject/hardware-wallet/tree/master/tiny-firmware).
+The firmware has been modified from [Trezor](https://github.com/trezor/trezor-mcu).
 
-The firmware itself is under [tiny-firmware](https://github.com/SkycoinProject/hardware-wallet/tree/master/tiny-firmware) folder.
-The firmware had been copied and modified from [this repository](https://github.com/trezor/trezor-mcu).
-
-The [skycoin-api](https://github.com/SkycoinProject/hardware-wallet/tree/master/skycoin-api) folder contains the definition of the functions implementing the skycoin features.
-
-The [skycoin-hw-cli](https://github.com/SkycoinProject/hardware-wallet-go/releases) defines golang functions that communicate with the firmware.
-
-There is also a [javascript API](https://github.com/SkycoinProject/hardware-wallet-js/).
-
-Follow up [the wiki](https://github.com/SkycoinProject/hardware-wallet/wiki/Hardware-wallet-project-advancement) to keep track of project advancement.
+The [skycoin-api](https://github.com/SkycoinProject/hardware-wallet/tree/master/skycoin-api) folder contains the definition of the functions implementing the Skycoin features.
+The [Skywallet Go CLI](https://github.com/SkycoinProject/hardware-wallet-go/releases) defines Golang functions that communicate with the firmware/bootloader.
 
 ## FAQ
 
@@ -58,11 +51,11 @@ Follow up [the wiki](https://github.com/SkycoinProject/hardware-wallet/wiki/Hard
 
 ## Install tools
 
-Follow the instructions written on [tiny-firware/README.md](https://github.com/SkycoinProject/hardware-wallet/blob/master/tiny-firmware/README.md)
+Get the development dependencies and tools from the [tiny-firware/README.md](https://github.com/SkycoinProject/hardware-wallet/blob/master/tiny-firmware/README.md) first, before continuing with the build instructions.
 
 ## Build instructions:
 
-Immediately after cloning this repository make sure submoudules are up-to-date by executing the following command. All other commands expect this step completed first.
+After cloning this repository, make sure the submodules are up-to-date by executing the following command:
 
 ```
 git submodule update --init --recursive
@@ -70,19 +63,6 @@ git submodule update --init --recursive
 
 Should you find any issues while running any of the commands that follow please consult [FAQ](FAQ.md) before [reporting a bug](ihttps://github.com/SkycoinProject/hardware-wallet/issues/new?assignees=&labels=bug&template=bug_report.md&title=).
 
-### Build and run emulator
-
-```
-make clean && make run-emulator
-```
-
-In case of needing special compiler flags for the SDL library it is possible to provide them in `SDL_CFLAGS` variable. For instance , if SDL was installed with brew on Mac OS X then the following command execution would force searching for header files at the right location.
-
-```
-make clean && make run-emulator SDL_CFLAGS=-I$(brew --prefix sdl2)/include/SDL2
-```
-
-However for the default `brew` installation in practice this should not be needed since the value of `SDL_CFLAGS` defaults to `$(shell sdl2-config --cflags | sed 's/-D_THREAD_SAFE//g')`.
 
 ### Build a bootloader
 
@@ -108,11 +88,14 @@ make firmware  # Your firmware is tiny-firmware/skyfirmware.bin
 
 ### Sign firmware
 
+Signs the firmware with the private key corresponding to the PubKeys that were registered in the bootlaoder during building. The PubKeys can be found in the project [Makefile](https://github.com/SkycoinProject/hardware-wallet/blob/develop/Makefile)
 ```
 make sign # Your firmware is tiny-firmware/skyfirmware.bin
 ```
 
 ### Combine bootloader and firmware
+
+This creates a combined firmware without memory protection.
 
 ```
 make full-firmware # this will create a full-firmware-no-mem-protect.bin file
@@ -120,19 +103,32 @@ make full-firmware # this will create a full-firmware-no-mem-protect.bin file
 
 ### Combine a memory protected bootloader and firmware
 
-Careful if you flash and run that bootloader on the device it will activate a memory protection that will close access to flash memory.
-
-You won't be able to flash your device with an st-link again.
+Caution: This combined firmware has memory protection enabled and therefore cannot be re-flashed. 
 
 ```
 make full-firmware-mem-protect # this will create a full-firmware-memory-protected.bin file
 ```
 
+### Build and run emulator
+
+```
+make clean && make run-emulator
+```
+
+In case of needing special compiler flags for the SDL library it is possible to provide them in `SDL_CFLAGS` variable. For instance , if SDL was installed with brew on Mac OS X then the following command execution would force searching for header files at the right location.
+
+```
+make clean && make run-emulator SDL_CFLAGS=-I$(brew --prefix sdl2)/include/SDL2
+```
+
+However for the default `brew` installation in practice this should not be needed since the value of `SDL_CFLAGS` defaults to `$(shell sdl2-config --cflags | sed 's/-D_THREAD_SAFE//g')`.
+
+
 ## Development guidelines
 
-Code added in this repository should comply to development guidelines documented in [Skycoin wiki](https://github.com/skycoin/skycoin/wiki).
+Code added in this repository should comply with the development guidelines documented in the [Skycoin wiki](https://github.com/skycoin/skycoin/wiki).
 
-The project has two branches: `master` and `develop`.
+This project has two branches: `master` and `develop`.
 
 - `develop` is the default branch and will always have the latest code.
 - `master` will always be equal to the current stable release on the website, and should correspond with the latest release tag.
@@ -141,36 +137,15 @@ The project has two branches: `master` and `develop`.
 
 #### Firmware version scheme
 
-The firmware defines a contract enforced upon all client libraries communicating with SkyWallet hardware devices. Firmware version expresses implemented contract version using a scheme based on [semantic versioning](http://semver.org). Individual components should be interpreted as follows :
+The firmware follows [Semver](https://semver.org/).
 
-- **Major version number** should be increased only if a new release introduces changes that are not backwards-compatible with respect to previous version
-- **Minor version number** should be increased for releases adding incremental backwards-compatible changes to the firmware contract
-- **Patch version number** should be increased for bug fix releases and similar changes keeping firmware contract unchanged
-
-Firmware binary filename is `skywallet-firmware-v$(VERSION_FIRMWARE).bin` e.g. `skywallet-firmware-v1.7.0.bin` .
+The firmware binary filename is `skywallet-firmware-v$(VERSION_FIRMWARE).bin` e.g. `skywallet-firmware-v1.0.0.bin` .
 
 #### Bootloader version scheme
 
-Bootloader versioning is independent and follows [semantic versioning](http://semver.org) rules.
+The bootloder versioning is independent of the firmware versioning, but follows Semver as well. 
 
-- **Major version number** indicates major changes in bootloader code
-- **Minor version number** is used for progressive backwards-compatible changes
-- **Patch version number** increased for bug fix releases
-
-Bootloader binary filename is `skywallet-bootloader-mem-protect-v$(VERSION_BOOTLOADER).bin` if compiled with memory protection enabled, else `skywallet-bootloader-no-memory-protect-v$(VERSION_BOOTLOADER).bin`. For instance, `skywallet-bootloader-mem-protect-v1.0.2.bin` or  `skywallet-bootloader-no-memory-protect-v1.0.2.bin` could be bootloader file names.
-
-#### Versioning combined binary builds
-
-The project releases production-ready binaries combining firmware and bootloader. A custom version scheme is used based on the rules that follow
-
-- **Bootloader version**: Consecutive bootloader version identifier
-- **Firmware version**: Consecutive firmware version identifier
-- **SoC identifier**: With the `Manufacturer` and `product` identifiers reported in hidraw `USB` driver.
-- **Country Exit Code**: to cope with i18n and locale specific features. At present only a value of `en` is supported for English according to `ISO-639-1`.
-
-Version identifiers are strings including, in the same order, the numbers mentioned above separated by dots.
-
-Combined binary filename is `skywallet-full-mem-protect-$(COMBINED_VERSION).bin` if compiled with memory protection enabled, else `skywallet-full-no-mem-protect-$(COMBINED_VERSION).bin` e.g. `skywallet-full-no-mem-protect-102.170.1.1.bin` and `skywallet-full-mem-protect-102.107.1.1.bin`.
+The bootloader binary filename is `skywallet-bootloader-mem-protect-v$(VERSION_BOOTLOADER).bin` if compiled with memory protection enabled it is `skywallet-bootloader-no-memory-protect-v$(VERSION_BOOTLOADER).bin`. For instance, `skywallet-bootloader-mem-protect-v1.0.2.bin` or  `skywallet-bootloader-no-memory-protect-v1.0.2.bin` could be bootloader file names.
 
 #### Versioning libraries
 
