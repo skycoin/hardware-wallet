@@ -169,7 +169,7 @@ sign: tiny-firmware/bootloader/libskycoin-crypto.so tiny-firmware/skyfirmware.bi
 
 
 full-firmware-mem-protect: bootloader-mem-protect firmware-mem-protect ## Build full firmware (RDP level 2)
-  $(PYTHON) ci-scripts/prepare.py -b build/bootloader-memory-protected.bin -f build/skyfirmware.bin -d releases/full-firmware-memory-protected.bin
+	$(PYTHON) ci-scripts/prepare.py -b build/bootloader-memory-protected.bin -f build/skyfirmware.bin -d releases/full-firmware-memory-protected.bin
 
 full-firmware: bootloader firmware ## Build full firmware (RDP level 0)
 	$(PYTHON) ci-scripts/prepare.py -b build/bootloader-no-memory-protect.bin -f build/skyfirmware.bin -d releases/full-firmware-no-memory-protect.bin
