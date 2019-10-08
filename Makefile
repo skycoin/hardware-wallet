@@ -118,6 +118,9 @@ skycoin-crypto-lib:
 firmware: tiny-firmware/skyfirmware.bin ## Build skycoin wallet firmware
 	cp tiny-firmware/skyfirmware.bin build/skyfirmware.bin
 
+firmware-mem-protect: MEMORY_PROTECT=1
+firmware-mem-protect: firmware ## Build skycoin wallet firmware
+
 build-libc: tiny-firmware/bootloader/libskycoin-crypto.so ## Build the Skycoin cipher library for firmware
 
 release-emulator: clean emulator ## Build emulator in release mode.
@@ -159,13 +162,14 @@ tiny-firmware/bootloader/libskycoin-crypto.so:
 	$(MAKE) -C skycoin-api clean
 
 tiny-firmware/skyfirmware.bin: firmware-deps
-	$(MAKE) FIRMWARE_SIGNATURE_PUB_KEY1=$(FIRMWARE_SIGNATURE_PUB_KEY1) FIRMWARE_SIGNATURE_PUB_KEY2=$(FIRMWARE_SIGNATURE_PUB_KEY2) FIRMWARE_SIGNATURE_PUB_KEY3=$(FIRMWARE_SIGNATURE_PUB_KEY3) FIRMWARE_SIGNATURE_PUB_KEY4=$(FIRMWARE_SIGNATURE_PUB_KEY4) FIRMWARE_SIGNATURE_PUB_KEY5=$(FIRMWARE_SIGNATURE_PUB_KEY5) REVERSE_BUTTONS=1 VERSION_MAJOR=$(VERSION_FIRMWARE_MAJOR) VERSION_MINOR=$(VERSION_FIRMWARE_MINOR) VERSION_PATCH=$(VERSION_FIRMWARE_PATCH) GLOBAL_PATH=$(MKFILE_DIR) -C tiny-firmware/ add_meta_header
+	$(MAKE) MEMORY_PROTECT=$(MEMORY_PROTECT) FIRMWARE_SIGNATURE_PUB_KEY1=$(FIRMWARE_SIGNATURE_PUB_KEY1) FIRMWARE_SIGNATURE_PUB_KEY2=$(FIRMWARE_SIGNATURE_PUB_KEY2) FIRMWARE_SIGNATURE_PUB_KEY3=$(FIRMWARE_SIGNATURE_PUB_KEY3) FIRMWARE_SIGNATURE_PUB_KEY4=$(FIRMWARE_SIGNATURE_PUB_KEY4) FIRMWARE_SIGNATURE_PUB_KEY5=$(FIRMWARE_SIGNATURE_PUB_KEY5) REVERSE_BUTTONS=1 VERSION_MAJOR=$(VERSION_FIRMWARE_MAJOR) VERSION_MINOR=$(VERSION_FIRMWARE_MINOR) VERSION_PATCH=$(VERSION_FIRMWARE_PATCH) GLOBAL_PATH=$(MKFILE_DIR) -C tiny-firmware/ add_meta_header
 
 sign: tiny-firmware/bootloader/libskycoin-crypto.so tiny-firmware/skyfirmware.bin ## Sign skycoin wallet firmware
 	$(MAKE) FIRMWARE_SIGNATURE_PUB_KEY1=$(FIRMWARE_SIGNATURE_PUB_KEY1) FIRMWARE_SIGNATURE_PUB_KEY2=$(FIRMWARE_SIGNATURE_PUB_KEY2) FIRMWARE_SIGNATURE_PUB_KEY3=$(FIRMWARE_SIGNATURE_PUB_KEY3) FIRMWARE_SIGNATURE_PUB_KEY4=$(FIRMWARE_SIGNATURE_PUB_KEY4) FIRMWARE_SIGNATURE_PUB_KEY5=$(FIRMWARE_SIGNATURE_PUB_KEY5) -C tiny-firmware sign
 
-full-firmware-mem-protect: bootloader-mem-protect firmware ## Build full firmware (RDP level 2)
-	$(PYTHON) ci-scripts/prepare.py -b build/bootloader-memory-protected.bin -f build/skyfirmware.bin -d releases/full-firmware-memory-protected.bin
+
+full-firmware-mem-protect: bootloader-mem-protect firmware-mem-protect ## Build full firmware (RDP level 2)
+  $(PYTHON) ci-scripts/prepare.py -b build/bootloader-memory-protected.bin -f build/skyfirmware.bin -d releases/full-firmware-memory-protected.bin
 
 full-firmware: bootloader firmware ## Build full firmware (RDP level 0)
 	$(PYTHON) ci-scripts/prepare.py -b build/bootloader-no-memory-protect.bin -f build/skyfirmware.bin -d releases/full-firmware-no-memory-protect.bin
