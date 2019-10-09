@@ -56,36 +56,15 @@ If you are experiencing any issues:
 
 ## Troubleshooting
 
-This section describes quick solutions to some common errors or mistakes.
+### Skywallet not recognized by machine
 
-### What does "Got TypeError when importing the protocol definitions for generator" message mean?
+If the Skywallet operates with an unofficial firmware, the user needs to confirm upon startup, that he wants to continue with this unofficial firmware and click `I will take the risk.` If that does not happen in under 2 seconds, the device often will not be recognized. Unplug und re-connect the device. Click the right buttons twice within 2 seconds.
 
-If you are getting this error quite likely your system is configured to run Python version `2.x` by default. This version of Python is not supported. At all times `Python3` is a requirement.
+## Cannot wipe the firmware on the device
 
-Firstly , confirm that Python 2.x was executed by running the following commands from a terminal window:
+When a firmware is installed on the device, the Go CLI can be used to erase the firmware installed. To do so, the device needs to be in bootlaoder mode. Unplug the device and re-connect it, while pressing both buttons. Then go ahead with wiping the firmware or updating the firmware.
 
-```sh
-which protoc
-protoc --version
-python -c 'import google.protobuf; print(google.protobuf.__file__)'
-```
+## Firmware aborts the startup due to unofficial bootloader
 
-If `python2` is part of the output then that's exactly the case so continue with instructions that follow. Otherwise [contact the team](#what-should-i-do-if-something-fails).
-
-In order to force using Python3 set `PYTHON=python3` environment variable while invoking all make targets. For instance if building bootloader binary just once
-
-```sh
-make bootloader PYTHON=python3
-```
-
-In order to invoke multiple targets export that variable to the glovbal OS environment, e.g. on Unix systems
-
-```sh
-export PYTHON=python3
-make bootloader
-make firmware
-make full-firmware
-```
-
-For further details see #235 .
+The official firmware distributed and signed by Skycoin checks the integrity of the bootloader and aborts if the bootloader hash is not registered in the firmware. Developers can build firmware themselves, that does not perform this check and can be freely used. Refer to the main README for instructions on how to build the firmware without the hash check. 
 
