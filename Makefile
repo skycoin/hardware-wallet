@@ -23,6 +23,7 @@ export PYTHON   ?= /usr/bin/python3
 PIP      ?= pip3
 PIPARGS  ?=
 COVERAGE ?= 0
+GDB ?= gdb-multiarch
 
 MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 MKFILE_DIR  := $(dir $(MKFILE_PATH))
@@ -207,7 +208,7 @@ oflash: full-firmware
 odebug: full-firmware
 	## Debug works only on Linux at the moment
 	gnome-terminal --command="openocd -f interface/stlink-v2.cfg -f target/stm32f2x.cfg"
-	arm-none-eabi-gdb ./tiny-firmware/skyfirmware.elf \
+	$(GDB) ./tiny-firmware/skyfirmware.elf \
 	-ex 'target remote localhost:3333' \
 	-ex 'monitor reset halt' \
 	-ex 'monitor arm semihosting enable'
