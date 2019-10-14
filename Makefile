@@ -203,11 +203,15 @@ st-flash: ## Deploy (flash) firmware on physical wallet
 	st-flash write $(FULL_FIRMWARE_PATH) 0x08000000
 
 oflash: full-firmware
-	openocd -f openocd.cfg
+	openocd -f ./debug-scripts/openocd.cfg
 
 odebug: full-firmware
 	## Debug works only on Linux at the moment
+ifeq ($(UNAME_S), Linux)
 	gnome-terminal --command="openocd -f interface/stlink-v2.cfg -f target/stm32f2x.cfg"
+else
+	open -a Terminal.app ./debug-scripts/osx-debug.sh
+endif
 	$(GDB) ./tiny-firmware/skyfirmware.elf \
 	-ex 'target remote localhost:3333' \
 	-ex 'monitor reset halt' \
