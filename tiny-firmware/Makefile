@@ -76,8 +76,6 @@ CFLAGS += -I$(TOP_DIR)protob/nanopb/vendor/nanopb \
           -DPB_FIELD_16BIT=1 \
           -DDEBUG_LINK=$(DEBUG_LINK)
 
-CFLAGS   += -frandom-seed=123
-
 ifneq ($(EMULATOR),1)
 .PHONY: proto libopencm3
 

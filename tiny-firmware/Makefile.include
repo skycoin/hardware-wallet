@@ -98,7 +98,8 @@ CFLAGS   += $(OPTFLAGS) \
             -I$(TOOLCHAIN_DIR)/include \
             -I$(GLOBAL_PATH) \
             -isystem$(TOP_DIR)vendor/ \
-            -fdebug-prefix-map=`pwd`=.
+            -fdebug-prefix-map=`pwd`=. \
+            -frandom-seed=0x$(shell md5sum $< | cut -d' ' -f 1)
 
 LDFLAGS  += -L$(TOP_DIR) \
             $(DBGFLAGS) \
@@ -174,7 +175,6 @@ endif
 
 %.o: %.c Makefile pub_keys.h
 	$(CC) $(CFLAGS) -MMD -MP -o $@ -c $<
-
 %.small.o: %.c Makefile
 	$(CC) $(CFLAGS) -MMD -MP -o $@ -c $<
 
