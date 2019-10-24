@@ -30,7 +30,7 @@ MKFILE_DIR  := $(dir $(MKFILE_PATH))
 
 CFLAGS += -I$(MKFILE_DIR)
 
-FULL_FIRMWARE_PATH ?= releases/full-firmware-no-mem-protect.bin
+FULL_FIRMWARE_PATH ?= releases/full-firmware-no-memory-protect.bin
 
 VERSION_BOOTLOADER       =$(shell cat tiny-firmware/bootloader/VERSION | tr -d v)
 VERSION_BOOTLOADER_MAJOR =$(shell echo $(VERSION_BOOTLOADER) | cut -d. -f1)
