@@ -127,7 +127,6 @@ CFLAGS += -DDEBUG_RNG=0
 
 lib$(NAME).a: $(OBJS) $(LIBDEPS)
 	$(AR) rcsD lib$(NAME).a $(OBJS) $(LIBDEPS)
-	ranlib -D lib$(NAME).a
 
 ifeq ($(EMULATOR),1)
 $(NAME): $(OBJS) $(LDSCRIPT) $(LIBDEPS) firmware/main.o
