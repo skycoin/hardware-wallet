@@ -23,6 +23,7 @@ export PYTHON   ?= /usr/bin/python3
 PIP      ?= pip3
 PIPARGS  ?=
 COVERAGE ?= 0
+GDB ?= gdb-multiarch
 
 MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 MKFILE_DIR  := $(dir $(MKFILE_PATH))
@@ -202,12 +203,17 @@ st-flash: ## Deploy (flash) firmware on physical wallet
 	st-flash write $(FULL_FIRMWARE_PATH) 0x08000000
 
 oflash: full-firmware
-	openocd -f openocd.cfg
+	openocd -f ./debug-scripts/openocd.cfg
 
 odebug: full-firmware
 	## Debug works only on Linux at the moment
+ifeq ($(UNAME_S), Darwin)
+	open -a Terminal.app ./debug-scripts/osx-debug.sh
+endif
+ifeq ($(UNAME_S), Linux)
 	gnome-terminal --command="openocd -f interface/stlink-v2.cfg -f target/stm32f2x.cfg"
-	arm-none-eabi-gdb ./tiny-firmware/skyfirmware.elf \
+endif
+	$(GDB) ./tiny-firmware/skyfirmware.elf \
 	-ex 'target remote localhost:3333' \
 	-ex 'monitor reset halt' \
 	-ex 'monitor arm semihosting enable'
