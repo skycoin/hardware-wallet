@@ -79,7 +79,7 @@ libskycoin-crypto.so: skycoin_crypto.o $(OBJS)
 
 libskycoin-crypto.a: skycoin_crypto.o $(OBJS)
 	$(AR) rcsD libskycoin-crypto.a skycoin_crypto.o $(OBJS)
-	ranlib -D lib$(NAME).a
+	ranlib -D libskycoin-crypto.a
 
 test_skycoin_crypto.o: test_skycoin_crypto.c
 	$(CC) $(CFLAGS) $(TESTINC) -o $@ -c $<
