@@ -98,7 +98,7 @@ CFLAGS   += $(OPTFLAGS) \
             -I$(TOOLCHAIN_DIR)/include \
             -I$(GLOBAL_PATH) \
             -isystem$(TOP_DIR)vendor/ \
-            -fdebug-prefix-map=`pwd`=. \
+            -fdebug-prefix-map=$(GLOBAL_PATH)=/hardware-wallet \
             -frandom-seed=0x$(shell md5sum $< | cut -d' ' -f 1)
 
 LDFLAGS  += -L$(TOP_DIR) \
@@ -126,7 +126,8 @@ CFLAGS += -DFASTFLASH=0
 CFLAGS += -DDEBUG_RNG=0
 
 lib$(NAME).a: $(OBJS) $(LIBDEPS)
-	$(AR) rcs lib$(NAME).a $(OBJS) $(LIBDEPS)
+	$(AR) rcsD lib$(NAME).a $(OBJS) $(LIBDEPS)
+	ranlib -D lib$(NAME).a
 
 ifeq ($(EMULATOR),1)
 $(NAME): $(OBJS) $(LDSCRIPT) $(LIBDEPS) firmware/main.o
