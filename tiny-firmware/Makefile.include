@@ -125,8 +125,13 @@ CFLAGS += -DREVERSE_SCREEN=$(REVERSE_SCREEN) \
 CFLAGS += -DFASTFLASH=0
 CFLAGS += -DDEBUG_RNG=0
 
+ifeq ($(UNAME_S), Darwin)
+lib$(NAME).a: $(OBJS) $(LIBDEPS)
+	$(AR) rcs lib$(NAME).a $(OBJS) $(LIBDEPS)
+else
 lib$(NAME).a: $(OBJS) $(LIBDEPS)
 	$(AR) rcsD lib$(NAME).a $(OBJS) $(LIBDEPS)
+endif
 
 ifeq ($(EMULATOR),1)
 $(NAME): $(OBJS) $(LDSCRIPT) $(LIBDEPS) firmware/main.o
