@@ -68,6 +68,7 @@ CFLAGS   += $(OPTFLAGS) \
             -std=gnu99 \
             -W \
             -Wall \
+            -Wdate-time \
             -Wextra \
             -Wimplicit-function-declaration \
             -Wredundant-decls \
