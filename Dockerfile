@@ -63,10 +63,7 @@ RUN $PYTHON -m zipfile -e "1.5.0.zip" /tmp && \
     make install && \
     ldconfig
 
-RUN printf "#!/usr/bin/python3\n\nimport sys\nfrom pip import __main__\n\nif __name__ == '__main__':\n    sys.exit(__main__._main())\n" > /usr/bin/pip3
-
 RUN useradd -m user
 USER user
 
-RUN $PYTHON -m pip install --user pipenv
 RUN $PYTHON -m pip install --user "protobuf==3.6.1" ecdsa
