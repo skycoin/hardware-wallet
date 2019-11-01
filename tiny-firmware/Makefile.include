@@ -68,6 +68,7 @@ CFLAGS   += $(OPTFLAGS) \
             -std=gnu99 \
             -W \
             -Wall \
+            -Wdate-time \
             -Wextra \
             -Wimplicit-function-declaration \
             -Wredundant-decls \
@@ -97,7 +98,9 @@ CFLAGS   += $(OPTFLAGS) \
             -DRAND_PLATFORM_INDEPENDENT=1 \
             -I$(TOOLCHAIN_DIR)/include \
             -I$(GLOBAL_PATH) \
-            -isystem$(TOP_DIR)vendor/
+            -isystem$(TOP_DIR)vendor/ \
+            -fdebug-prefix-map=$(GLOBAL_PATH)=/hardware-wallet \
+            -frandom-seed=0x$(shell md5sum $< | cut -d' ' -f 1)
 
 LDFLAGS  += -L$(TOP_DIR) \
             $(DBGFLAGS) \
@@ -123,8 +126,13 @@ CFLAGS += -DREVERSE_SCREEN=$(REVERSE_SCREEN) \
 CFLAGS += -DFASTFLASH=0
 CFLAGS += -DDEBUG_RNG=0
 
+ifeq ($(UNAME_S), Darwin)
 lib$(NAME).a: $(OBJS) $(LIBDEPS)
 	$(AR) rcs lib$(NAME).a $(OBJS) $(LIBDEPS)
+else
+lib$(NAME).a: $(OBJS) $(LIBDEPS)
+	$(AR) rcsD lib$(NAME).a $(OBJS) $(LIBDEPS)
+endif
 
 ifeq ($(EMULATOR),1)
 $(NAME): $(OBJS) $(LDSCRIPT) $(LIBDEPS) firmware/main.o
@@ -173,7 +181,6 @@ endif
 
 %.o: %.c Makefile pub_keys.h
 	$(CC) $(CFLAGS) -MMD -MP -o $@ -c $<
-
 %.small.o: %.c Makefile
 	$(CC) $(CFLAGS) -MMD -MP -o $@ -c $<
 
