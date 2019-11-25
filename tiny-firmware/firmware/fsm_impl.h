@@ -13,6 +13,7 @@
 #define __TINYFIRMWARE_FIRMWARE_FSMIMPL_H__
 
 #include "messages.pb.h"
+#include "bitcoin_messages.pb.h"
 #include "tiny-firmware/firmware/error.h"
 
 #define MNEMONIC_WORD_COUNT_12 12
@@ -52,7 +53,7 @@ bool checkMnemonicChecksum(SetMnemonic *msg);
 
 ErrCode_t
 fsm_getKeyPairAtIndex(uint32_t nbAddress, uint8_t *pubkey, uint8_t *seckey, ResponseSkycoinAddress *respSkycoinAddress,
-                      uint32_t start_index);
+                      uint32_t start_index, int (*address_from_pubkey)(const uint8_t*, char*, size_t*));
 
 ErrCode_t msgGenerateMnemonicImpl(GenerateMnemonic *msg, void (*random_buffer_func)(uint8_t *buf, size_t len));
 
@@ -83,6 +84,8 @@ ErrCode_t msgRecoveryDeviceImpl(RecoveryDevice *msg, ErrCode_t (*)(void));
 ErrCode_t msgSignTxImpl(SignTx *msg, TxRequest *resp);
 
 ErrCode_t msgTxAckImpl(TxAck *msg, TxRequest *resp);
+
+ErrCode_t msgBitcoinTxAckImpl(BitcoinTxAck *msg, TxRequest *resp);
 
 ErrCode_t reqConfirmTransaction(uint64_t coins, uint64_t hours, char *address);
 

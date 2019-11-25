@@ -5,5 +5,7 @@
 #define SKYCOIN_SECKEY_LEN 32
 #define SKYCOIN_SIG_LEN 65
 #define SKYCOIN_ADDRESS_CHECKSUM_LENGTH 4
+#define SKY_COIN 0
+#define BIT_COIN 1
 
 #endif

@@ -634,3 +634,33 @@ void fsm_msgTxAck(TxAck *msg) {
     layoutHome();
     return;
 }
+
+void fsm_msgBitcoinTxAck(BitcoinTxAck *msg) {
+
+    if (checkPin() || checkMnemonic()) {
+        return;
+    }
+
+    MessageType msgType = MessageType_MessageType_BitcoinTxAck;
+    RESP_INIT(TxRequest);
+    ErrCode_t err = msgBitcoinTxAckImpl(msg, resp);
+    switch (err) {
+        case ErrOk:
+            msg_write(MessageType_MessageType_TxRequest, resp);
+            break;
+        case ErrInvalidArg:
+            fsm_sendFailure(FailureType_Failure_DataError, _("Invalid data on TxAck message."), &msgType);
+            break;
+        case ErrActionCancelled:
+            fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL, &msgType);
+            break;
+        case ErrFailed:
+            fsm_sendFailure(FailureType_Failure_ProcessError, NULL, &msgType);
+            break;
+        default:
+            fsm_sendFailure(FailureType_Failure_ProcessError, _("Signing transaction failed."), &msgType);
+            break;
+    }
+    layoutHome();
+    return;
+}

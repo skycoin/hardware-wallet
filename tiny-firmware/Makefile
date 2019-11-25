@@ -36,6 +36,8 @@ OBJS += $(FIRMWARE_SRCS:.c=.o)
 
 OBJS += protob/c/messages.pb.o
 OBJS += protob/c/types.pb.o
+OBJS += protob/c/bitcoin_messages.pb.o
+OBJS += protob/c/bitcoin_types.pb.o
 
 #test_skyhw
 TEST_OBJS += $(patsubst tests/%.c,tests/%.o, $(wildcard tests/*.c))
