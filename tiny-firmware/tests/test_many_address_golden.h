@@ -17,5 +17,6 @@
 #define TEST_MANY_ADDRESS_SEED "wire junk original sword bread bottom armor dog snow accident inform rigid"
 
 extern char TEST_MANY_ADDRESSES[100][36];
+extern char TEST_MANY_BTC_ADDRESSES[100][36];
 
 #endif // __TEST_MANY_ADDRESSES_GOLDEN__
