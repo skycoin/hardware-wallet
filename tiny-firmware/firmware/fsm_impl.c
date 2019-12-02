@@ -369,7 +369,7 @@ ErrCode_t msgGetFeaturesImpl(Features *resp) {
 #if defined(EMULATOR) && EMULATOR
     resp->firmware_features |= FirmwareFeatures_IsEmulator;
 #else
-    resp->firmware_features |= (uint32_t)(memory_rdp_level() << FirmwareFeatures_IsEmulator);
+    resp->firmware_features |= (uint32_t) (memory_rdp_level() << FirmwareFeatures_IsEmulator);
 #endif
 
 #if DISABLE_GETENTROPY_CONFIRM
@@ -428,6 +428,29 @@ ErrCode_t msgWipeDeviceImpl(WipeDevice *msg) {
 }
 
 ErrCode_t msgSetMnemonicImpl(SetMnemonic *msg) {
+
+    // Removing multiple spaces from mnemonic
+    uint32_t legitSpace, countSpaces = 0, i = 0;
+    while (msg->mnemonic[i]) {
+        if (msg->mnemonic[i] == ' ' && countSpaces == 0) {
+            countSpaces++;
+            legitSpace = i;
+        } else if (msg->mnemonic[i] == ' ' && countSpaces > 0) {
+            countSpaces++;
+        } else if (msg->mnemonic[i] != ' ' && countSpaces > 1) {
+            countSpaces = 0;
+            memmove(&(msg->mnemonic[legitSpace + 1]), &(msg->mnemonic[i]), strlen(msg->mnemonic) - i + 1);
+        } else if (msg->mnemonic[i] != ' ' && countSpaces <= 1)
+            countSpaces = 0;
+
+        i++;
+    }
+    // Handling first and last whitespace
+    if (msg->mnemonic[0] == ' ')
+        memmove(&(msg->mnemonic[0]), &(msg->mnemonic[1]), strlen(msg->mnemonic));
+    if (msg->mnemonic[--i] == ' ')
+        msg->mnemonic[i] = msg->mnemonic[i + 1];
+    printf("%s\n", msg->mnemonic);
     if (!mnemonic_check(msg->mnemonic)) {
         return ErrInvalidValue;
     }
@@ -585,8 +608,8 @@ ErrCode_t reqConfirmTransaction(uint64_t coins, uint64_t hours, char *address) {
     char *strValueMsg = sprint_coins(coins, SKYPARAM_DROPLET_PRECISION_EXP, sizeof(strValue), strValue);
     sprintf(strCoins, "%s %s %s", _("send"), strValueMsg, coinString);
     sprintf(strHours, "%"
-    PRIu64
-    "%s", hours, hourString);
+                      PRIu64
+                      "%s", hours, hourString);
     layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Next"), NULL, _("Do you really want to"), strCoins, strHours,
                       _("to address"), _("..."), NULL);
     ErrCode_t err = checkButtonProtectRetErrCode();
