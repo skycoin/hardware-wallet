@@ -675,10 +675,10 @@ ErrCode_t msgTxAckImpl(TxAck *msg, TxRequest *resp) {
 #endif
                 outputs[i].coin = msg->tx.outputs[i].coins;
                 outputs[i].hour = msg->tx.outputs[i].hours;
-                size_t len = 36;
-                uint8_t b58string[36];
+                size_t len = 37;
+                uint8_t b58string[37];
                 b58tobin(b58string, &len, msg->tx.outputs[i].address);
-                memcpy(outputs[i].address, &b58string[36 - len], len);
+                memcpy(outputs[i].address, &b58string[37 - len], len);
             }
             TxSignCtx_UpdateOutputs(ctx, outputs, msg->tx.outputs_count);
             if (ctx->current_nbOut != ctx->nbOut) {
