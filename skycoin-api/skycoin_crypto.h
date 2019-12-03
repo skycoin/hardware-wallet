@@ -72,7 +72,6 @@ int deterministic_key_pair_iterator(const uint8_t* seed, const size_t seed_lengt
 int deterministic_key_pair_iterator_step(const uint8_t* seed, uint8_t* seckey, uint8_t* pubkey);
 void skycoin_pubkey_from_seckey(const uint8_t* seckey, uint8_t* pubkey);
 int skycoin_address_from_pubkey(const uint8_t* pubkey, char* address, size_t* size_address);
-int bitcoin_address_from_pubkey(const uint8_t* pubkey, char* b58address, size_t* size_b58address);
 int skycoin_ecdsa_sign_digest(const uint8_t* priv_key, const uint8_t* digest, uint8_t* sig);
 void tohex(char* str, const uint8_t* buffer, int buffer_length);
 void tobuff(const char* str, uint8_t* buf, size_t buffer_length);

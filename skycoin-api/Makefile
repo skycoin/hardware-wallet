@@ -44,6 +44,7 @@ endif
 CFLAGS += -I$(MKFILE_DIR) $(INC)
 
 SRCS += skycoin_crypto.c
+SRCS += bitcoin_crypto.c
 SRCS += skycoin_signature.c
 SRCS += check_digest.c
 SRCS += $(shell ls $(TOOLS_DIR)/*.c)
@@ -72,31 +73,48 @@ ifeq ($(UNAME_S), Darwin)
 endif
 
 
-all: test_skycoin_crypto
+all: test_skycoin_crypto test_bitcoin_crypto
 
 libskycoin-crypto.so: skycoin_crypto.o $(OBJS)
 	$(CC) -rdynamic -shared $(CFLAGS) $(OBJS) -o libskycoin-crypto.so
 
+libbitcoin-crypto.so: bitcoin_crypto.o $(OBJS)
+	$(CC) -rdynamic -shared $(CFLAGS) $(OBJS) -o libbitcoin-crypto.so
+
 ifeq ($(UNAME_S), Darwin)
 libskycoin-crypto.a: skycoin_crypto.o $(OBJS)
 	$(AR) rcs libskycoin-crypto.a skycoin_crypto.o $(OBJS)
+
+libbitcoin-crypto.a: bitcoin_crypto.o $(OBJS)
+	$(AR) rcs libbitcoin-crypto.a bitcoin_crypto.o $(OBJS)
 else
 libskycoin-crypto.a: skycoin_crypto.o $(OBJS)
 	$(AR) rcsD libskycoin-crypto.a skycoin_crypto.o $(OBJS)
+
+libbitcoin-crypto.a: bitcoin_crypto.o $(OBJS)
+		$(AR) rcsD libbitcoin-crypto.a bitcoin_crypto.o $(OBJS)
 endif
 
 test_skycoin_crypto.o: test_skycoin_crypto.c
 	$(CC) $(CFLAGS) $(TESTINC) -o $@ -c $<
 
+test_bitcoin_crypto.o :test_bitcoin_crypto.c
+		$(CC) $(CFLAGS) $(TESTINC) -o $@ -c $<
+
 test_skycoin_crypto: test_skycoin_crypto.o libskycoin-crypto.so
 	$(CC) test_skycoin_crypto.o $(OBJS) -L. -lskycoin-crypto $(LIBS) $(TESTLIBS) -o test_skycoin_crypto
 
-test: test_skycoin_crypto ## Run test suite for Skycoin cipher library for firmware
+test_bitcoin_crypto: test_bitcoin_crypto.o libbitcoin-crypto.so
+	$(CC) test_bitcoin_crypto.o $(OBJS) -L. -lskycoin-crypto $(LIBS) $(TESTLIBS) -o test_bitcoin_crypto
+
+test: test_skycoin_crypto test_bitcoin_crypto ## Run test suite for Skycoin cipher library for firmware
 	./test_skycoin_crypto
 	./test_skycoin_crypto.py
+	./test_bitcoin_crypto
 
 clean: ## Delete all temporary files
 	rm -f $(MKFILE_DIR)/*.o test_skycoin_crypto
+	rm -f $(MKFILE_DIR)/*.o test_bitcoin_crypto
 	rm -f $(MKFILE_DIR)/*.so
 	rm -f $(TOOLS_DIR)/*.o
 	rm -f $(MKFILE_DIR)/tools/*.o

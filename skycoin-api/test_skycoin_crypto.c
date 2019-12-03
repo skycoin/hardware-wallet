@@ -668,27 +668,6 @@ START_TEST(test_skycoin_address_from_pubkey)
 }
 END_TEST
 
-START_TEST(test_bitcoin_address_from_pubkey){
-  uint8_t pubkey[33] = {0};
-  char address[256] = {0};
-  size_t size_address = sizeof(address);
-  memcpy(pubkey, fromhex("038aca63fe6fb5eeccba919a5559aecadb8aca54b270c57c4498303b19e9829801"), 33);
-  int ok = bitcoin_address_from_pubkey(pubkey, address, &size_address);
-  ck_assert_int_eq(ok, 1);
-  ck_assert_str_eq(address, "1NnKKCBPyeFvoEmJXDKg8q8RZpGSQXLVEd");
-
-  memcpy(pubkey, fromhex("036e6fddfe21559034c317558c52856369ad42a1617eb39c52f324cd64be193561"), 33);
-  ok = bitcoin_address_from_pubkey(pubkey, address, &size_address);
-  ck_assert_int_eq(ok, 1);
-  ck_assert_str_eq(address, "1PgTd8MbDzFv5CNgQpn2acZEhFk55trNjo");
-
-  memcpy(pubkey, fromhex("037f695fe06102d2ff951bdfe7e9d1e7b6cee08f655b60cfa85c941c455a1e6c31"), 33);
-  ok = bitcoin_address_from_pubkey(pubkey, address, &size_address);
-  ck_assert_int_eq(ok, 1);
-  ck_assert_str_eq(address, "1C6DVX1v1eLsiAbQMSYeS54TZxoVvLVziM");
-}
-END_TEST
-
 START_TEST(test_compute_sha256sum)
 {
     char seed[256] = "seed";
@@ -1410,7 +1389,6 @@ Suite* test_suite(void)
     tcase_add_test(tc, test_secp256k1Hash);
     tcase_add_test(tc, test_deterministic_key_pair_iterator);
     tcase_add_test(tc, test_skycoin_address_from_pubkey);
-    tcase_add_test(tc, test_bitcoin_address_from_pubkey);
     tcase_add_test(tc, test_compute_sha256sum);
     tcase_add_test(tc, test_skycoin_ecdsa_verify_digest_recover);
     tcase_add_test(tc, test_base58_decode);

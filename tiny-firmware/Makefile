@@ -34,10 +34,7 @@ OBJS += $(TOP_DIR)protob/nanopb/vendor/nanopb/pb_encode.o
 FIRMWARE_SRCS = $(shell ls firmware/*.c | grep -v main.c)
 OBJS += $(FIRMWARE_SRCS:.c=.o)
 
-OBJS += protob/c/messages.pb.o
-OBJS += protob/c/types.pb.o
-OBJS += protob/c/bitcoin_messages.pb.o
-OBJS += protob/c/bitcoin_types.pb.o
+OBJS += $(patsubst protob/c/%.c,protob/c/%.o, $(wildcard protob/c/*.c))
 
 #test_skyhw
 TEST_OBJS += $(patsubst tests/%.c,tests/%.o, $(wildcard tests/*.c))
@@ -53,6 +50,7 @@ endif
 #skycoin-crypto
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/skycoin_signature.o
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/skycoin_crypto.o
+OBJS += $(TOP_DIR)vendor/skycoin-crypto/bitcoin_crypto.o
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/check_digest.o
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/base58.o
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/blake256.o

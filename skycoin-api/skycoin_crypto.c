@@ -322,7 +322,7 @@ int skycoin_address_from_pubkey(const uint8_t* pubkey, char* b58address, size_t*
         return 0;
     }
 
-    uint8_t address[RIPEMD160_DIGEST_LENGTH + 1 + 4] = {0};
+    uint8_t address[RIPEMD160_DIGEST_LENGTH + 1 + SKYCOIN_ADDRESS_CHECKSUM_LENGTH] = {0};
     uint8_t r1[SHA256_DIGEST_LENGTH] = {0};
     uint8_t r2[SHA256_DIGEST_LENGTH] = {0};
 
@@ -338,34 +338,6 @@ int skycoin_address_from_pubkey(const uint8_t* pubkey, char* b58address, size_t*
     // checksum
     sha256sum(address, digest, RIPEMD160_DIGEST_LENGTH + 1);
     memcpy(&address[RIPEMD160_DIGEST_LENGTH + 1], digest, SKYCOIN_ADDRESS_CHECKSUM_LENGTH);
-
-    if (b58enc(b58address, size_b58address, address, sizeof(address))) {
-        return 1;
-    }
-    return 0;
-}
-
-int bitcoin_address_from_pubkey(const uint8_t* pubkey, char* b58address, size_t* size_b58address){
-    const curve_info* curve = get_curve_by_name(SECP256K1_NAME);
-
-    if (!pubkey_is_valid(curve->params, pubkey)) {
-        return 0;
-    }
-
-    uint8_t address[RIPEMD160_DIGEST_LENGTH + 1 + 4] = {0};
-    uint8_t r1[SHA256_DIGEST_LENGTH] = {0};
-    uint8_t r2[SHA256_DIGEST_LENGTH] = {0};
-
-    sha256sum(pubkey, r1, SKYCOIN_PUBKEY_LEN);
-    ripemd160(r1, SHA256_DIGEST_LENGTH, address);
-
-    uint8_t digest[SHA256_DIGEST_LENGTH] = {0};
-    memmove(address+1, address, RIPEMD160_DIGEST_LENGTH + 4);
-    address[0] = 0; // version byte
-
-    sha256sum(address, digest, RIPEMD160_DIGEST_LENGTH + 1);
-    sha256sum(digest, r2, sizeof(digest));
-    memcpy(&address[RIPEMD160_DIGEST_LENGTH + 1], r2, SKYCOIN_ADDRESS_CHECKSUM_LENGTH);
 
     if (b58enc(b58address, size_b58address, address, sizeof(address))) {
         return 1;

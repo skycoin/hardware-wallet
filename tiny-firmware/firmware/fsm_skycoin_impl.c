@@ -107,9 +107,7 @@ ErrCode_t msgSkycoinSignMessageImpl(SkycoinSignMessage *msg, ResponseSkycoinSign
     uint8_t seckey[SKYCOIN_SECKEY_LEN] = {0};
     uint8_t digest[SHA256_DIGEST_LENGTH] = {0};
     uint8_t signature[SKYCOIN_SIG_LEN];
-    int (*address_from_pubkey)(const uint8_t*, char*, size_t*);
-    address_from_pubkey = &skycoin_address_from_pubkey;
-    if (fsm_getKeyPairAtIndex(1, pubkey, seckey, NULL, msg->address_n, address_from_pubkey) != ErrOk) {
+    if (fsm_getKeyPairAtIndex(1, pubkey, seckey, NULL, msg->address_n, &skycoin_address_from_pubkey) != ErrOk) {
         return ErrInvalidValue;
     }
     if (is_sha256_digest_hex(msg->message)) {
@@ -137,8 +135,6 @@ ErrCode_t msgSkycoinAddressImpl(SkycoinAddress *msg, ResponseSkycoinAddress *res
     uint8_t seckey[32] = {0};
     uint8_t pubkey[33] = {0};
     uint32_t start_index = !msg->has_start_index ? 0 : msg->start_index;
-    int (*address_from_pubkey)(const uint8_t*, char*, size_t*);
-    address_from_pubkey = &skycoin_address_from_pubkey;
     if (!protectPin(true)) {
         return ErrPinRequired;
     }
@@ -150,7 +146,7 @@ ErrCode_t msgSkycoinAddressImpl(SkycoinAddress *msg, ResponseSkycoinAddress *res
         return ErrMnemonicRequired;
     }
 
-    if (fsm_getKeyPairAtIndex(msg->address_n, pubkey, seckey, resp, start_index, address_from_pubkey) != ErrOk) {
+    if (fsm_getKeyPairAtIndex(msg->address_n, pubkey, seckey, resp, start_index, &skycoin_address_from_pubkey) != ErrOk) {
         return ErrAddressGeneration;
     }
     if (msg->address_n == 1 && msg->has_confirm_address && msg->confirm_address) {
@@ -213,9 +209,7 @@ msgTransactionSignImpl(TransactionSign *msg, ErrCode_t (*funcConfirmTxn)(char *,
             uint8_t seckey[32] = {0};
             size_t size_address = 36;
             char address[36] = {0};
-            int (*address_from_pubkey)(const uint8_t*, char*, size_t*);
-            address_from_pubkey = &skycoin_address_from_pubkey;
-            ErrCode_t ret = fsm_getKeyPairAtIndex(1, pubkey, seckey, NULL, msg->transactionOut[i].address_index, address_from_pubkey);
+            ErrCode_t ret = fsm_getKeyPairAtIndex(1, pubkey, seckey, NULL, msg->transactionOut[i].address_index, &skycoin_address_from_pubkey);
             if (ret != ErrOk) {
                 return ret;
             }
