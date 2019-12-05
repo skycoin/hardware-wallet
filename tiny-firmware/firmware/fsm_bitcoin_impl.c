@@ -44,7 +44,7 @@
 #include "tiny-firmware/memory.h"
 #include "tiny-firmware/usb.h"
 #include "tiny-firmware/util.h"
-#include "skycoin-crypto/skycoin_constants.h"
+#include "skycoin-crypto/bitcoin_constants.h"
 #include "skycoin-crypto/bitcoin_crypto.h"
 #include "skycoin-crypto/skycoin_signature.h"
 #include "tiny-firmware/firmware/skyparams.h"

@@ -5,7 +5,7 @@
 
 #include "check_digest.h"
 #include "tools/curves.h"
-#include "skycoin_constants.h"
+#include "bitcoin_constants.h"
 #include "bitcoin_crypto.h"
 #include "skycoin_signature.h"
 #include "tools/base58.h"
