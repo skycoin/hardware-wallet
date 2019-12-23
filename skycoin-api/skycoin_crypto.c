@@ -478,7 +478,7 @@ void TxSignCtx_UpdateInputs(TxSignContext* ctx, uint8_t inputs [7][32], uint8_t 
 
 void TxSignCtx_UpdateOutputs(TxSignContext* ctx, TransactionOutput outputs[7], uint8_t count){
     for (uint8_t i = 0; i < count; ++i) {
-        uint8_t data[40];
+        uint8_t data[37];
         uint8_t bitcount = 0;
         data[bitcount] = 0;
         bitcount += 1;
