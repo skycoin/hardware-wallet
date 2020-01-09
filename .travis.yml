@@ -27,7 +27,7 @@ before_script:
   - if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
     export CHECK_PATH="$(brew --prefix check)" ;
     export DYLD_LIBRARY_PATH="${DYLD_LIBRARY_PATH}:${CHECK_PATH}/lib" ;
-    sudo chown -R $(whoami) /usr/local
+    sudo chown -R $(whoami) /usr/local ;
     fi
   # Install OS-specific test and build dependencies
   - eval "./ci-scripts/install-${TRAVIS_OS_NAME}.sh"
