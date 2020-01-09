@@ -29,6 +29,7 @@ before_script:
     export DYLD_LIBRARY_PATH="${DYLD_LIBRARY_PATH}:${CHECK_PATH}/lib" ;
     sudo chown -R $(whoami) $(brew --prefix)/* ;
     sudo chown -R $(whoami) /usr/local/lib/python3.7/site-packages/pip ;
+    brew doctor ;
     fi
   # Install OS-specific test and build dependencies
   - eval "./ci-scripts/install-${TRAVIS_OS_NAME}.sh"
