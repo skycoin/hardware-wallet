@@ -37,7 +37,7 @@ before_script:
   - sudo python3 -m pip install setuptools
   # Install linters
   - make install-linters
-  - git submodule update --remote
+  - git submodule update
 
 script:
   - make check-protob
