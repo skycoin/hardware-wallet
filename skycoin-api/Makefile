@@ -44,6 +44,7 @@ endif
 CFLAGS += -I$(MKFILE_DIR) $(INC)
 
 SRCS += skycoin_crypto.c
+SRCS += bitcoin_crypto.c
 SRCS += skycoin_signature.c
 SRCS += check_digest.c
 SRCS += $(shell ls $(TOOLS_DIR)/*.c)
@@ -74,19 +75,22 @@ endif
 
 all: test_skycoin_crypto
 
-libskycoin-crypto.so: skycoin_crypto.o $(OBJS)
+libskycoin-crypto.so: skycoin_crypto.o bitcoin_crypto.o $(OBJS)
 	$(CC) -rdynamic -shared $(CFLAGS) $(OBJS) -o libskycoin-crypto.so
 
 ifeq ($(UNAME_S), Darwin)
-libskycoin-crypto.a: skycoin_crypto.o $(OBJS)
-	$(AR) rcs libskycoin-crypto.a skycoin_crypto.o $(OBJS)
+libskycoin-crypto.a: skycoin_crypto.o bitcoin_crypto.o $(OBJS)
+	$(AR) rcs libskycoin-crypto.a skycoin_crypto.o bitcoin_crypto.o $(OBJS)
+
 else
-libskycoin-crypto.a: skycoin_crypto.o $(OBJS)
-	$(AR) rcsD libskycoin-crypto.a skycoin_crypto.o $(OBJS)
+libskycoin-crypto.a: skycoin_crypto.o bitcoin_crypto.o $(OBJS)
+	$(AR) rcsD libskycoin-crypto.a skycoin_crypto.o bitcoin_crypto.o $(OBJS)
+
 endif
 
 test_skycoin_crypto.o: test_skycoin_crypto.c
 	$(CC) $(CFLAGS) $(TESTINC) -o $@ -c $<
+
 
 test_skycoin_crypto: test_skycoin_crypto.o libskycoin-crypto.so
 	$(CC) test_skycoin_crypto.o $(OBJS) -L. -lskycoin-crypto $(LIBS) $(TESTLIBS) -o test_skycoin_crypto

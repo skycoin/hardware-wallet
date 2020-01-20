@@ -22,6 +22,7 @@
 #define __FSM_H__
 
 #include "messages.pb.h"
+#include "bitcoin_messages.pb.h"
 #include "tiny-firmware/firmware/error.h"
 
 // message functions
@@ -52,6 +53,7 @@ void fsm_msgRecoveryDevice(RecoveryDevice* msg);
 void fsm_msgWordAck(WordAck* msg);
 void fsm_msgSignTx(SignTx* msg);
 void fsm_msgTxAck(TxAck* msg);
+void fsm_msgBitcoinTxAck(BitcoinTxAck* msg);
 ErrCode_t requestConfirmTransaction(char *strCoin, char *strHour, TransactionSign *msg, uint32_t i);
 
 #endif

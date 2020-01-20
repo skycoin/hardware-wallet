@@ -21,12 +21,14 @@
 
 #include "tiny-firmware/firmware/fsm.h"
 #include "tiny-firmware/firmware/fsm_skycoin.h"
+#include "tiny-firmware/firmware/fsm_bitcoin.h"
 #include "tiny-firmware/util.h"
 #include "tiny-firmware/firmware/gettext.h"
 #include "tiny-firmware/firmware/messages.h"
 #include "tiny-firmware/firmware/skywallet.h"
 
 #include "messages.pb.h"
+#include "bitcoin_messages.pb.h"
 #include "pb_decode.h"
 #include "pb_encode.h"
 

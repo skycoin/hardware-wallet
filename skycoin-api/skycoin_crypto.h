@@ -81,7 +81,7 @@ void writebuf_fromhexstr(const char* str, uint8_t* buf);
  *  @return Pointer to TxSignContext
  */
 TxSignContext* TxSignCtx_Init(void);
-/* @brief Get current transaction context 
+/* @brief Get current transaction context
  * @return Pointer to TxSignContext
  */
 TxSignContext* TxSignCtx_Get(void);

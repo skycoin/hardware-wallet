@@ -44,6 +44,8 @@
 #define MNEMONIC_STRENGTH_24 256
 #define INTERNAL_ENTROPY_SIZE SHA256_DIGEST_LENGTH
 
+#define UNUSED(x) (void)(x)
+
 uint8_t msg_resp[MSG_OUT_SIZE] __attribute__((aligned));
 
 extern uint32_t strength;
@@ -213,7 +215,7 @@ ErrCode_t msgSignTransactionMessageImpl(uint8_t *message_digest, uint32_t index,
     uint8_t pubkey[SKYCOIN_PUBKEY_LEN] = {0};
     uint8_t seckey[SKYCOIN_SECKEY_LEN] = {0};
     uint8_t signature[SKYCOIN_SIG_LEN];
-    ErrCode_t res = fsm_getKeyPairAtIndex(1, pubkey, seckey, NULL, index);
+    ErrCode_t res = fsm_getKeyPairAtIndex(1, pubkey, seckey, NULL, index, &skycoin_address_from_pubkey);
     if (res != ErrOk) {
         return res;
     }
@@ -235,7 +237,7 @@ ErrCode_t msgSignTransactionMessageImpl(uint8_t *message_digest, uint32_t index,
 
 ErrCode_t
 fsm_getKeyPairAtIndex(uint32_t nbAddress, uint8_t *pubkey, uint8_t *seckey, ResponseSkycoinAddress *respSkycoinAddress,
-                      uint32_t start_index) {
+                      uint32_t start_index, int (*address_from_pubkey)(const uint8_t*, char*, size_t*)) {
     const char *mnemo = storage_getFullSeed();
     uint8_t seed[33] = {0};
     uint8_t nextSeed[SHA256_DIGEST_LENGTH] = {0};
@@ -250,7 +252,7 @@ fsm_getKeyPairAtIndex(uint32_t nbAddress, uint8_t *pubkey, uint8_t *seckey, Resp
         return ErrFailed;
     }
     if (respSkycoinAddress != NULL && start_index == 0) {
-        if (!skycoin_address_from_pubkey(pubkey, respSkycoinAddress->addresses[0], &size_address)) {
+        if (!address_from_pubkey(pubkey, respSkycoinAddress->addresses[0], &size_address)) {
             return ErrFailed;
         }
         respSkycoinAddress->addresses_count++;
@@ -270,7 +272,7 @@ fsm_getKeyPairAtIndex(uint32_t nbAddress, uint8_t *pubkey, uint8_t *seckey, Resp
         seed[32] = 0;
         if (respSkycoinAddress != NULL && ((i + 1) >= start_index)) {
             size_address = 36;
-            if (!skycoin_address_from_pubkey(pubkey, respSkycoinAddress->addresses[respSkycoinAddress->addresses_count],
+            if (!address_from_pubkey(pubkey, respSkycoinAddress->addresses[respSkycoinAddress->addresses_count],
                                              &size_address)) {
                 return ErrFailed;
             }
@@ -761,4 +763,10 @@ ErrCode_t msgTxAckImpl(TxAck *msg, TxRequest *resp) {
     if (resp->request_type == TxRequest_RequestType_TXFINISHED)
         TxSignCtx_Destroy(ctx);
     return ErrOk;
+}
+
+ErrCode_t msgBitcoinTxAckImpl(BitcoinTxAck *msg, TxRequest *resp){
+  UNUSED(msg);
+  UNUSED(resp);
+  return ErrOk;
 }

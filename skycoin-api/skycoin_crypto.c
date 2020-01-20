@@ -322,7 +322,7 @@ int skycoin_address_from_pubkey(const uint8_t* pubkey, char* b58address, size_t*
         return 0;
     }
 
-    uint8_t address[RIPEMD160_DIGEST_LENGTH + 1 + 4] = {0};
+    uint8_t address[RIPEMD160_DIGEST_LENGTH + 1 + SKYCOIN_ADDRESS_CHECKSUM_LENGTH] = {0};
     uint8_t r1[SHA256_DIGEST_LENGTH] = {0};
     uint8_t r2[SHA256_DIGEST_LENGTH] = {0};
 
