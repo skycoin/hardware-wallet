@@ -172,8 +172,8 @@ START_TEST(test_msgBitcoinAddressesStartIndexEmptyPassphrase)
     setBitcoinPassphrase("");
 
     msgAddr.has_start_index = true;
-    msgAddr.start_index = random32() % 100;
-    msgAddr.address_n = random32() % (100 - msgAddr.start_index) + 1;
+    msgAddr.start_index = random32() % 99;
+    msgAddr.address_n = random32() % (99 - msgAddr.start_index) + 1;
     ck_assert_uint_ge(msgAddr.address_n, 1);
     msgAddr.has_confirm_address = false;
 
