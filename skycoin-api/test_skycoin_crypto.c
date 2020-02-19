@@ -24,6 +24,7 @@
 #include "tools/ecdsa.h"
 #include "tools/secp256k1.h"
 #include "tools/sha2.h" //SHA256_DIGEST_LENGTH
+#include "tools/sha3.h"
 
 #define FROMHEX_MAXLEN 512
 
@@ -108,6 +109,42 @@ START_TEST(test_skycoin_pubkey_from_seckey)
     memcpy(seckey, fromhex("f19c523315891e6e15ae0608a35eec2e00ebd6d1984cf167f46336dabd9b2de4"), sizeof(seckey));
     skycoin_pubkey_from_seckey(seckey, pubkey);
     ck_assert_mem_eq(pubkey, fromhex("03fe43d0c2c3daab30f9472beb5b767be020b81c7cc940ed7a7e910f0c1d9feef1"), SKYCOIN_PUBKEY_LEN);
+}
+END_TEST
+
+START_TEST(test_sha3_256)
+{
+    uint8_t digest[SHA3_256_DIGEST_LENGTH];
+
+    sha3_256((uint8_t *)"", 0, digest);
+    ck_assert_mem_eq(digest, fromhex("a7ffc6f8bf1ed76651c14756a061d662f580ff4de43b49fa82d80a4b80f8434a"), SHA3_256_DIGEST_LENGTH);
+
+    sha3_256((uint8_t *)"abc", 3, digest);
+    ck_assert_mem_eq(digest, fromhex("3a985da74fe225b2045c172d6bd390bd855f086e3e9d525b46bfe24511431532"), SHA3_256_DIGEST_LENGTH);
+
+    sha3_256((uint8_t *)"abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq", 56, digest);
+    ck_assert_mem_eq(digest, fromhex("41c0dba2a9d6240849100376a8235e2c82e1b9998a999e21db32dd97496d3376"), SHA3_256_DIGEST_LENGTH);
+
+    sha3_256((uint8_t *)"abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmnhijklmnoijklmnopjklmnopqklmnopqrlmnopqrsmnopqrstnopqrstu", 112, digest);
+    ck_assert_mem_eq(digest, fromhex("916f6061fe879741ca6469b43971dfdb28b1a32dc36cb3254e812be27aad1d18"), SHA3_256_DIGEST_LENGTH);
+}
+END_TEST
+
+START_TEST(test_sha3_512)
+{
+    uint8_t digest[SHA3_512_DIGEST_LENGTH];
+
+    sha3_512((uint8_t *)"", 0, digest);
+    ck_assert_mem_eq(digest, fromhex("a69f73cca23a9ac5c8b567dc185a756e97c982164fe25859e0d1dcc1475c80a615b2123af1f5f94c11e3e9402c3ac558f500199d95b6d3e301758586281dcd26"), SHA3_512_DIGEST_LENGTH);
+
+    sha3_512((uint8_t *)"abc", 3, digest);
+    ck_assert_mem_eq(digest, fromhex("b751850b1a57168a5693cd924b6b096e08f621827444f70d884f5d0240d2712e10e116e9192af3c91a7ec57647e3934057340b4cf408d5a56592f8274eec53f0"), SHA3_512_DIGEST_LENGTH);
+
+    sha3_512((uint8_t *)"abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq", 56, digest);
+    ck_assert_mem_eq(digest, fromhex("04a371e84ecfb5b8b77cb48610fca8182dd457ce6f326a0fd3d7ec2f1e91636dee691fbe0c985302ba1b0d8dc78c086346b533b49c030d99a27daf1139d6e75e"), SHA3_512_DIGEST_LENGTH);
+
+    sha3_512((uint8_t *)"abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmnhijklmnoijklmnopjklmnopqklmnopqrlmnopqrsmnopqrstnopqrstu", 112, digest);
+    ck_assert_mem_eq(digest, fromhex("afebb2ef542e6579c50cad06d2e578f9f8dd6881d7dc824d26360feebf18a4fa73e3261122948efcfd492e74e82e2189ed0fb440d187f382270cb455f21dd185"), SHA3_512_DIGEST_LENGTH);
 }
 END_TEST
 
@@ -1414,6 +1451,8 @@ Suite* test_suite(void)
     tcase_add_test(tc, test_skycoin_address_from_pubkey);
     tcase_add_test(tc, test_bitcoin_address_from_pubkey);
     tcase_add_test(tc, test_compute_sha256sum);
+    tcase_add_test(tc, test_sha3_256);
+    tcase_add_test(tc, test_sha3_512);
     tcase_add_test(tc, test_skycoin_ecdsa_verify_digest_recover);
     tcase_add_test(tc, test_base58_decode);
     tcase_add_test(tc, test_ecdsa_sign_digest_inner);
