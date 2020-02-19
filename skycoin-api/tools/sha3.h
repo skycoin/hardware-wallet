@@ -23,10 +23,6 @@
 #include <stdint.h>
 #include "options.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #define sha3_224_hash_size  28
 #define sha3_256_hash_size  32
 #define sha3_384_hash_size  48
@@ -81,9 +77,5 @@ void keccak_512(const unsigned char* data, size_t len, unsigned char* digest);
 
 void sha3_256(const unsigned char* data, size_t len, unsigned char* digest);
 void sha3_512(const unsigned char* data, size_t len, unsigned char* digest);
-
-#ifdef __cplusplus
-} /* extern "C" */
-#endif /* __cplusplus */
 
 #endif /* __SHA3_H__ */
