@@ -28,6 +28,7 @@
 #include "skycoin-crypto/tools/bip32.h"
 #include "skycoin-crypto/tools/bip39.h"
 #include "skycoin-crypto/check_digest.h"
+#include "skycoin-crypto/tools/curves.h"
 #include "tiny-firmware/firmware/droplet.h"
 #include "tiny-firmware/firmware/entropy.h"
 #include "tiny-firmware/firmware/fsm.h"
@@ -50,6 +51,24 @@
 #include "tiny-firmware/firmware/skyparams.h"
 #include "fsm_bitcoin_impl.h"
 
+#define FROMHEX_MAXLEN 512
+
+const uint8_t* fromhex(const char* str)
+{
+    static uint8_t buf[FROMHEX_MAXLEN];
+    size_t len = strlen(str) / 2;
+    if (len > FROMHEX_MAXLEN) len = FROMHEX_MAXLEN;
+    for (size_t i = 0; i < len; i++) {
+        uint8_t c = 0;
+        if (str[i * 2] >= '0' && str[i * 2] <= '9') c += (str[i * 2] - '0') << 4;
+        if ((str[i * 2] & ~0x20) >= 'A' && (str[i * 2] & ~0x20) <= 'F') c += (10 + (str[i * 2] & ~0x20) - 'A') << 4;
+        if (str[i * 2 + 1] >= '0' && str[i * 2 + 1] <= '9') c += (str[i * 2 + 1] - '0');
+        if ((str[i * 2 + 1] & ~0x20) >= 'A' && (str[i * 2 + 1] & ~0x20) <= 'F') c += (10 + (str[i * 2 + 1] & ~0x20) - 'A');
+        buf[i] = c;
+    }
+    return buf;
+}
+
 ErrCode_t msgBitcoinAddressImpl(BitcoinAddress *msg, ResponseSkycoinAddress *resp) {
     uint8_t seckey[32] = {0};
     uint8_t pubkey[33] = {0};
@@ -71,5 +90,26 @@ ErrCode_t msgBitcoinAddressImpl(BitcoinAddress *msg, ResponseSkycoinAddress *res
     if (msg->address_n == 1 && msg->has_confirm_address && msg->confirm_address) {
         return ErrUserConfirmation;
     }
+    return ErrOk;
+}
+
+ErrCode_t msgBitcoinAddressBip32Impl(BitcoinAddress *msg, ResponseSkycoinAddress *resp) {
+
+    HDNode* node = fsm_getDerivedNode(SECP256K1_NAME);
+    HDNode addressNode;
+    size_t size_address = 36;
+
+    for(uint32_t i = msg->start_index; i < (msg->start_index + msg->address_n); i++){
+      memcpy(&addressNode, node, sizeof(HDNode));
+      hdnode_private_ckd(&addressNode, i);
+      hdnode_fill_public_key(&addressNode);
+
+      if(bitcoin_address_from_pubkey(addressNode.public_key, resp->addresses[i], &size_address) != 0){
+        return ErrAddressGeneration;
+      }
+
+      resp->addresses_count++;
+    }
+
     return ErrOk;
 }
