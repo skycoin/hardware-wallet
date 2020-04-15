@@ -310,7 +310,6 @@ int base58_encode_check(const uint8_t* data, int datalen, HasherType hasher_type
     uint8_t* hash = buf + datalen;
     memcpy(buf, data, datalen);
     hasher_Raw(hasher_type, data, datalen, hash);
-    hasher_Raw(hasher_type, hash, 32, hash);
     size_t res = strsize;
     bool success = b58enc(str, &res, buf, datalen + 4);
     memzero(buf, sizeof(buf));
