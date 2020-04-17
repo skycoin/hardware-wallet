@@ -31,6 +31,9 @@
 // #include "ed25519-donna/ed25519.h"
 #include "options.h"
 
+#define VERSION_PRIVATE 0x0488ADE4
+#define VERSION_PUBLIC  0x0488B21E
+
 typedef struct {
     const char* bip32_name;    // string for generating BIP32 xprv from seed
     const ecdsa_curve* params; // ecdsa curve parameters, null for ed25519

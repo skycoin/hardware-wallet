@@ -694,7 +694,6 @@ HDNode* fsm_getDerivedNode(const char *curve){
 
   static CONFIDENTIAL HDNode node;
   static uint8_t CONFIDENTIAL BIP39Seed[256];
-  uint32_t fingerprint = 0;
 
   fsm_getBitcoinBIP39_Seed(BIP39Seed);
 
