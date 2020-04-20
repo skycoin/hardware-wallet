@@ -51,12 +51,14 @@ endif
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/skycoin_signature.o
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/skycoin_crypto.o
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/bitcoin_crypto.o
+OBJS += $(TOP_DIR)vendor/skycoin-crypto/eth_crypto.o
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/check_digest.o
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/base58.o
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/blake256.o
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/hasher.o
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/rand.o
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/sha2.o
+OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/sha3.o
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/bignum.o
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/curves.o
 OBJS += $(TOP_DIR)vendor/skycoin-crypto/tools/hmac.o
