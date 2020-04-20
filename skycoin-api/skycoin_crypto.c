@@ -108,7 +108,7 @@ Internal use only.
 
 Returns 0 on success
 */
-int deterministic_key_pair_iterator_step(const uint8_t* digest, uint8_t* seckey, uint8_t* pubkey)
+int deterministic_key_pair_iterator_step(const uint8_t* digest, uint8_t* seckey, uint8_t* pubkey, bool is_compressed_pk)
 {
     /*
     SKYCOIN CIPHER AUDIT
@@ -124,7 +124,13 @@ int deterministic_key_pair_iterator_step(const uint8_t* digest, uint8_t* seckey,
             continue;
         }
 
-        skycoin_pubkey_from_seckey(seckey, pubkey);
+        if (is_compressed_pk) {
+            skycoin_pubkey_from_seckey(seckey, pubkey);
+        } else {
+            //For now we will use Seckp256K1, as it is used in SKY/BTC/ETH
+            //Later on can be added parameter to support other curves
+            ecdsa_get_public_key65(curve->params, seckey, pubkey);
+        }
         if (!pubkey_is_valid(curve->params, pubkey)) {
             // TODO: if pubkey is invalid, FAIL/PANIC
             return -1;
@@ -176,7 +182,8 @@ int secp256k1sum(const uint8_t* seed, const size_t seed_length, uint8_t* digest)
     sha256sum(seed, hash, seed_length);
 
     // seckey, _ = deterministic_key_pair_iterator_step(hash)
-    if (0 != deterministic_key_pair_iterator_step(hash, seckey, pubkey)) {
+    // it doesn't matter, which public key will be, as it just used to salt the hash
+    if (0 != deterministic_key_pair_iterator_step(hash, seckey, pubkey, true)) {
         // TODO: abort() on failure
         return -1;
     }
@@ -184,7 +191,8 @@ int secp256k1sum(const uint8_t* seed, const size_t seed_length, uint8_t* digest)
     // _, pubkey = deterministic_key_pair_iterator_step(sha256(hash))
     // This value usually equals the seckey generated above, but not always (1^-128 probability)
     sha256sum(hash, hash2, sizeof(hash));
-    if (0 != deterministic_key_pair_iterator_step(hash2, dummy_seckey, pubkey)) {
+    // it doesn't matter, which public key will be, as it just used to salt the hash
+    if (0 != deterministic_key_pair_iterator_step(hash2, dummy_seckey, pubkey, true)) {
         // TODO: abort() on failure
         return -2;
     }
@@ -210,8 +218,8 @@ next_seed should be 32 bytes (size of a secp256k1sum digest)
 
 Returns 0 on success
 */
-int deterministic_key_pair_iterator(const uint8_t* seed, const size_t seed_length, uint8_t* next_seed, uint8_t* seckey, uint8_t* pubkey)
-{
+int deterministic_key_pair_iterator(const uint8_t *seed, const size_t seed_length, uint8_t *next_seed, uint8_t *seckey,
+                                    uint8_t *pubkey, bool is_compressed_pk){
     /*
     SKYCOIN CIPHER AUDIT
     Compare to function: secp254k1.DeterministicKeyPairIterator
@@ -237,7 +245,7 @@ int deterministic_key_pair_iterator(const uint8_t* seed, const size_t seed_lengt
     printf("seed2: %s\n", buf);
     #endif
 
-    if (0 != deterministic_key_pair_iterator_step(seed2, seckey, pubkey)) {
+    if (0 != deterministic_key_pair_iterator_step(seed2, seckey, pubkey, is_compressed_pk)) {
         return -1;
     }
 

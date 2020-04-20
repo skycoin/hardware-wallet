@@ -215,7 +215,7 @@ ErrCode_t msgSignTransactionMessageImpl(uint8_t *message_digest, uint32_t index,
     uint8_t pubkey[SKYCOIN_PUBKEY_LEN] = {0};
     uint8_t seckey[SKYCOIN_SECKEY_LEN] = {0};
     uint8_t signature[SKYCOIN_SIG_LEN];
-    ErrCode_t res = fsm_getKeyPairAtIndex(1, pubkey, seckey, NULL, index, &skycoin_address_from_pubkey);
+    ErrCode_t res = fsm_getKeyPairAtIndex(1, pubkey, seckey, NULL, index, &skycoin_address_from_pubkey, true);
     if (res != ErrOk) {
         return res;
     }
@@ -237,7 +237,8 @@ ErrCode_t msgSignTransactionMessageImpl(uint8_t *message_digest, uint32_t index,
 
 ErrCode_t
 fsm_getKeyPairAtIndex(uint32_t nbAddress, uint8_t *pubkey, uint8_t *seckey, ResponseSkycoinAddress *respSkycoinAddress,
-                      uint32_t start_index, int (*address_from_pubkey)(const uint8_t*, char*, size_t*)) {
+                      uint32_t start_index, int (*address_from_pubkey)(const uint8_t *, char *, size_t *),
+                      bool is_compressed_pk) {
     const char *mnemo = storage_getFullSeed();
     uint8_t seed[33] = {0};
     uint8_t nextSeed[SHA256_DIGEST_LENGTH] = {0};
@@ -248,7 +249,8 @@ fsm_getKeyPairAtIndex(uint32_t nbAddress, uint8_t *pubkey, uint8_t *seckey, Resp
     if (mnemo == NULL || nbAddress == 0) {
         return ErrInvalidArg;
     }
-    if (0 != deterministic_key_pair_iterator((const uint8_t *) mnemo, strlen(mnemo), nextSeed, seckey, pubkey)) {
+    if (0 != deterministic_key_pair_iterator((const uint8_t *) mnemo, strlen(mnemo), nextSeed, seckey, pubkey,
+                                             is_compressed_pk)) {
         return ErrFailed;
     }
     if (respSkycoinAddress != NULL && start_index == 0) {
@@ -265,7 +267,7 @@ fsm_getKeyPairAtIndex(uint32_t nbAddress, uint8_t *pubkey, uint8_t *seckey, Resp
         return ErrInvalidArg;
     }
     for (uint32_t i = 0; i < nbAddress + start_index - 1; ++i) {
-        if (0 != deterministic_key_pair_iterator(seed, 32, nextSeed, seckey, pubkey)) {
+        if (0 != deterministic_key_pair_iterator(seed, 32, nextSeed, seckey, pubkey, is_compressed_pk)) {
             return ErrFailed;
         }
         memcpy(seed, nextSeed, 32);
