@@ -5,6 +5,8 @@
 #include "tiny-firmware/protob/c/messages.pb.h"
 #include "tiny-firmware/protob/c/ethereum_messages.pb.h"
 
+ErrCode_t msgEthereumTxAckImpl(EthereumTxAck *msg, TxRequest *resp);
+
 ErrCode_t msgEthereumAddressImpl(EthereumAddress *msg, ResponseEthereumAddress *resp);
 
 #endif //HW_FSM_ETH_IMPL_H

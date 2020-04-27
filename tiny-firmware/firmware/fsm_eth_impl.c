@@ -34,3 +34,9 @@ ErrCode_t msgEthereumAddressImpl(EthereumAddress *msg, ResponseEthereumAddress *
     return ErrOk;
 }
 
+ErrCode_t msgEthereumTxAckImpl(EthereumTxAck *msg, TxRequest *resp) {
+    (void) (msg);
+    (void) (resp);
+    return ErrFailed;
+}
+

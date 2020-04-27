@@ -54,3 +54,32 @@ void fsm_msgEthereumAddress(EthereumAddress *msg) {
     fsm_sendResponseFromErrCode(err, NULL, failMsg, &msgtype);
     layoutHome();
 }
+
+void fsm_msgEthereumTxAck(EthereumTxAck *msg) {
+    if (checkPin() || checkMnemonic()) {
+        return;
+    }
+
+    MessageType msgType = MessageType_MessageType_EthereumTxAck;
+    RESP_INIT(TxRequest);
+    ErrCode_t err = msgEthereumTxAckImpl(msg, resp);
+    switch (err) {
+        case ErrOk:
+            msg_write(MessageType_MessageType_TxRequest, resp);
+            break;
+        case ErrInvalidArg:
+            fsm_sendFailure(FailureType_Failure_DataError, _("Invalid data on TxAck message."), &msgType);
+            break;
+        case ErrActionCancelled:
+            fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL, &msgType);
+            break;
+        case ErrFailed:
+            fsm_sendFailure(FailureType_Failure_ProcessError, NULL, &msgType);
+            break;
+        default:
+            fsm_sendFailure(FailureType_Failure_ProcessError, _("Signing transaction failed."), &msgType);
+            break;
+    }
+    layoutHome();
+    return;
+}

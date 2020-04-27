@@ -9,4 +9,6 @@
 
 void fsm_msgEthereumAddress(EthereumAddress *msg);
 
+void fsm_msgEthereumTxAck(EthereumTxAck *ethereumTxAck);
+
 #endif //HW_FSM_ETH_H
