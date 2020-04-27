@@ -24,8 +24,8 @@ ErrCode_t msgEthereumAddressImpl(EthereumAddress *msg, ResponseEthereumAddress *
         return ErrMnemonicRequired;
     }
 
-    if (fsm_getKeyPairAtIndex(msg->address_n, pubkey, seckey, resp, start_index, &eth_address_from_pubkey, false) !=
-        ErrOk) {
+    if (fsm_getKeyPairAtIndex(msg->address_n, pubkey, seckey, resp, addEthereumAddress,
+                              start_index, &eth_address_from_pubkey, false) != ErrOk) {
         return ErrAddressGeneration;
     }
     if (msg->address_n == 1 && msg->has_confirm_address && msg->confirm_address) {

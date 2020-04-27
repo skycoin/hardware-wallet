@@ -14,6 +14,7 @@
 #include <libopencm3/stm32/flash.h>
 #include <stdio.h>
 #include <inttypes.h>
+#include <ethereum_messages.pb.h>
 
 #include "skycoin-crypto/tools/base58.h"
 #include "skycoin-crypto/tools/bip32.h"
@@ -36,6 +37,7 @@
 #include "tiny-firmware/usb.h"
 #include "tiny-firmware/util.h"
 #include "skycoin-crypto/skycoin_constants.h"
+#include "skycoin-crypto/eth_constants.h"
 #include "skycoin-crypto/skycoin_crypto.h"
 #include "skycoin-crypto/skycoin_signature.h"
 #include "tiny-firmware/firmware/skyparams.h"
@@ -215,7 +217,8 @@ ErrCode_t msgSignTransactionMessageImpl(uint8_t *message_digest, uint32_t index,
     uint8_t pubkey[SKYCOIN_PUBKEY_LEN] = {0};
     uint8_t seckey[SKYCOIN_SECKEY_LEN] = {0};
     uint8_t signature[SKYCOIN_SIG_LEN];
-    ErrCode_t res = fsm_getKeyPairAtIndex(1, pubkey, seckey, NULL, index, &skycoin_address_from_pubkey, true);
+    ErrCode_t res = fsm_getKeyPairAtIndex(1, pubkey, seckey, NULL, addSkycoinAddress,
+                                          index, &skycoin_address_from_pubkey, true);
     if (res != ErrOk) {
         return res;
     }
@@ -235,17 +238,44 @@ ErrCode_t msgSignTransactionMessageImpl(uint8_t *message_digest, uint32_t index,
     return res;
 }
 
+ErrCode_t addSkycoinAddress(void *resp, char *address) {
+    ResponseSkycoinAddress *skycoinResp = (ResponseSkycoinAddress *) (resp);
+
+    static int max_addresses =
+            sizeof(skycoinResp->addresses)
+            / sizeof(skycoinResp->addresses[0]);
+    if (skycoinResp->addresses_count + 1 > max_addresses)
+        return ErrInvalidArg;
+
+    memcpy(skycoinResp->addresses[skycoinResp->addresses_count], address, MAX_BIP58_ADDRESS_LEN);
+    skycoinResp->addresses_count++;
+    return ErrOk;
+}
+
+ErrCode_t addEthereumAddress(void *resp, char *address) {
+    ResponseEthereumAddress *ethereumResp = (ResponseEthereumAddress *) (resp);
+
+    static int max_addresses =
+            sizeof(ethereumResp->addresses)
+            / sizeof(ethereumResp->addresses[0]);
+    if (ethereumResp->addresses_count + 1 > max_addresses)
+        return ErrInvalidArg;
+
+    memcpy(ethereumResp->addresses[ethereumResp->addresses_count].bytes, address, ETH_ADDR_LEN);
+    ethereumResp->addresses_count++;
+    return ErrOk;
+}
+
 ErrCode_t
-fsm_getKeyPairAtIndex(uint32_t nbAddress, uint8_t *pubkey, uint8_t *seckey, ResponseSkycoinAddress *respSkycoinAddress,
-                      uint32_t start_index, int (*address_from_pubkey)(const uint8_t *, char *, size_t *),
-                      bool is_compressed_pk) {
+fsm_getKeyPairAtIndex(uint32_t nbAddress,
+                      uint8_t *pubkey, uint8_t *seckey,
+                      void *resp,
+                      ErrCode_t (*add_address_to_resp)(void *resp, char *address),
+                      uint32_t start_index,
+                      int (*address_from_pubkey)(const uint8_t *, char *, size_t *), bool is_compressed_pk) {
     const char *mnemo = storage_getFullSeed();
     uint8_t seed[33] = {0};
     uint8_t nextSeed[SHA256_DIGEST_LENGTH] = {0};
-    size_t size_address = 36;
-    _Static_assert(
-            sizeof(respSkycoinAddress->addresses[0]) == 36,
-            "invalid address bffer size");
     if (mnemo == NULL || nbAddress == 0) {
         return ErrInvalidArg;
     }
@@ -253,32 +283,32 @@ fsm_getKeyPairAtIndex(uint32_t nbAddress, uint8_t *pubkey, uint8_t *seckey, Resp
                                              is_compressed_pk)) {
         return ErrFailed;
     }
-    if (respSkycoinAddress != NULL && start_index == 0) {
-        if (!address_from_pubkey(pubkey, respSkycoinAddress->addresses[0], &size_address)) {
+
+    size_t max_size_address = MAX(MAX_BIP58_ADDRESS_LEN, ETH_ADDR_LEN);
+    char buf[MAX(MAX_BIP58_ADDRESS_LEN, ETH_ADDR_LEN)];
+
+    if (resp != NULL && start_index == 0) {
+        if (!address_from_pubkey(pubkey, buf, &max_size_address)) {
             return ErrFailed;
         }
-        respSkycoinAddress->addresses_count++;
+        if (add_address_to_resp(resp, buf) != ErrOk) {
+            return ErrInvalidArg;
+        }
     }
     memcpy(seed, nextSeed, 32);
-    size_t max_addresses =
-            sizeof(respSkycoinAddress->addresses)
-            / sizeof(respSkycoinAddress->addresses[0]);
-    if (nbAddress + start_index - 1 > max_addresses) {
-        return ErrInvalidArg;
-    }
     for (uint32_t i = 0; i < nbAddress + start_index - 1; ++i) {
         if (0 != deterministic_key_pair_iterator(seed, 32, nextSeed, seckey, pubkey, is_compressed_pk)) {
             return ErrFailed;
         }
         memcpy(seed, nextSeed, 32);
         seed[32] = 0;
-        if (respSkycoinAddress != NULL && ((i + 1) >= start_index)) {
-            size_address = 36;
-            if (!address_from_pubkey(pubkey, respSkycoinAddress->addresses[respSkycoinAddress->addresses_count],
-                                             &size_address)) {
+        if (resp != NULL && ((i + 1) >= start_index)) {
+            if (!address_from_pubkey(pubkey, buf, &max_size_address)) {
                 return ErrFailed;
             }
-            respSkycoinAddress->addresses_count++;
+            if (add_address_to_resp(resp, buf) != ErrOk) {
+                return ErrInvalidArg;
+            }
         }
     }
     return ErrOk;
@@ -564,8 +594,8 @@ ErrCode_t msgRecoveryDeviceImpl(RecoveryDevice *msg, ErrCode_t (*funcConfirmReco
 ErrCode_t msgSignTxImpl(SignTx *msg, TxRequest *resp) {
 #if EMULATOR
     printf("%s: %d. nbOut: %d\n",
-        _("Transaction signed nbIn"),
-        msg->inputs_count, msg->outputs_count);
+           _("Transaction signed nbIn"),
+           msg->inputs_count, msg->outputs_count);
 #endif
     TxSignContext *context = TxSignCtx_Get();
     if (context->state != Destroyed) {
@@ -647,17 +677,18 @@ ErrCode_t msgTxAckImpl(TxAck *msg, TxRequest *resp) {
             printf("-> Unexpected\n");
             break;
     }
-    for(uint32_t i = 0; i < msg->tx.inputs_count; ++i) {
+    for (uint32_t i = 0; i < msg->tx.inputs_count; ++i) {
         printf("   %d - Input: addressIn: %s, address_n: ", i + 1,
-            msg->tx.inputs[i].hashIn);
+               msg->tx.inputs[i].hashIn);
         if (msg->tx.inputs[i].address_n_count != 0)
-            printf("%d",msg->tx.inputs[i].address_n[0]);
+            printf("%d", msg->tx.inputs[i].address_n[0]);
         printf("\n");
     }
     for (uint32_t i = 0; i < msg->tx.outputs_count; ++i) {
-        printf("   %d - Output: coins: %" PRIu64 ", hours: %" PRIu64 " address: %s address_n: ", i + 1, msg->tx.outputs[i].coins, msg->tx.outputs[i].hours, msg->tx.outputs[i].address);
+        printf("   %d - Output: coins: %" PRIu64 ", hours: %" PRIu64 " address: %s address_n: ", i + 1,
+               msg->tx.outputs[i].coins, msg->tx.outputs[i].hours, msg->tx.outputs[i].address);
         if (msg->tx.outputs[i].address_n_count != 0) {
-            printf("%d",msg->tx.outputs[i].address_n[0]);
+            printf("%d", msg->tx.outputs[i].address_n[0]);
         }
         printf("\n");
     }
@@ -767,8 +798,8 @@ ErrCode_t msgTxAckImpl(TxAck *msg, TxRequest *resp) {
     return ErrOk;
 }
 
-ErrCode_t msgBitcoinTxAckImpl(BitcoinTxAck *msg, TxRequest *resp){
-  UNUSED(msg);
-  UNUSED(resp);
-  return ErrOk;
+ErrCode_t msgBitcoinTxAckImpl(BitcoinTxAck *msg, TxRequest *resp) {
+    UNUSED(msg);
+    UNUSED(resp);
+    return ErrOk;
 }

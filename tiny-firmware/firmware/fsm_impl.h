@@ -51,10 +51,17 @@ bool checkOutputs(TransactionSign *msg);
 
 bool checkMnemonicChecksum(SetMnemonic *msg);
 
+ErrCode_t addSkycoinAddress(void *resp, char *address);
+
+ErrCode_t addEthereumAddress(void *resp, char *address);
+
 ErrCode_t
-fsm_getKeyPairAtIndex(uint32_t nbAddress, uint8_t *pubkey, uint8_t *seckey, ResponseSkycoinAddress *respSkycoinAddress,
-                      uint32_t start_index, int (*address_from_pubkey)(const uint8_t *, char *, size_t *),
-                      bool is_compressed_pk);
+fsm_getKeyPairAtIndex(uint32_t nbAddress,
+                      uint8_t *pubkey, uint8_t *seckey,
+                      void *respSkycoinAddress,
+                      ErrCode_t (*add_address_to_resp)(void *resp, char *address),
+                      uint32_t start_index,
+                      int (*address_from_pubkey)(const uint8_t *, char *, size_t *), bool is_compressed_pk);
 
 ErrCode_t msgGenerateMnemonicImpl(GenerateMnemonic *msg, void (*random_buffer_func)(uint8_t *buf, size_t len));
 
