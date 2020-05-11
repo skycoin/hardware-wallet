@@ -241,7 +241,7 @@ ErrCode_t msgSignTransactionMessageImpl(uint8_t *message_digest, uint32_t index,
 ErrCode_t addSkycoinAddress(void *resp, size_t start_index, char *address, size_t address_size) {
     ResponseSkycoinAddress *skycoinResp = (ResponseSkycoinAddress *) (resp);
 
-    static uint max_addresses =
+    static size_t max_addresses =
             sizeof(skycoinResp->addresses)
             / sizeof(skycoinResp->addresses[0]);
 
@@ -258,7 +258,7 @@ ErrCode_t addEthereumAddress(void *resp, size_t start_index, char *address, size
 
     ResponseEthereumAddress *ethereumResp = (ResponseEthereumAddress *) (resp);
 
-    static uint max_addresses =
+    static size_t max_addresses =
             sizeof(ethereumResp->addresses)
             / sizeof(ethereumResp->addresses[0]);
 
