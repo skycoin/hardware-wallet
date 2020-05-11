@@ -39,7 +39,7 @@ This repo contains the firmware and bootloader for the Skywallet as well as tool
 The firmware can be found in [/tiny-firmware](https://github.com/SkycoinProject/hardware-wallet/tree/master/tiny-firmware).
 The firmware has been modified from [Trezor](https://github.com/trezor/trezor-mcu).
 
-The [skycoin-api](https://github.com/SkycoinProject/hardware-wallet/tree/master/skycoin-api) folder contains the definition of the functions implementing the Skycoin features.
+The [skycoin-](https://github.com/SkycoinProject/hardware-wallet/tree/master/skycoin-crypto) folder contains the definition of the functions implementing the Skycoin features.
 The [Skywallet Go CLI](https://github.com/SkycoinProject/hardware-wallet-go/releases) defines Golang functions that communicate with the firmware/bootloader.
 
 ## FAQ

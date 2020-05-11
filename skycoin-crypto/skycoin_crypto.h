@@ -101,7 +101,8 @@ void TxSignCtx_UpdateInputs(TxSignContext* ctx, uint8_t inputs [7][32], uint8_t 
  *  @param outputs Outputs for add
  *  @param count Number of outputs on outputs param
  */
-void TxSignCtx_UpdateOutputs(TxSignContext* ctx, TransactionOutput outputs[7], uint8_t count);
+void TxSignCtx_UpdateOutputs(TxSignContext *ctx, TransactionOutput outputs[7], uint8_t count);
+
 /*  @brief Finish SHA256 context and store inner hash on innerHash and set has_innerHash correctly
  *  @param ctx Context with SHA256 to be finished
  */
@@ -117,11 +118,11 @@ void TxSignCtx_printInnerHash(TxSignContext* ctx);
 /*  @brief Print SHA256 context buffer
  *  @param ctx Context with SHA256 context buffer to be printed
  */
-void TxSignCtx_printSHA256(TxSignContext* ctx);
- /* @brief verify_pub_key ec secp256k1
- * @param pub_key pub key to b verified
- * @return true if the verification success
- */
-bool verify_pub_key(const uint8_t* pub_key);
+void TxSignCtx_printSHA256(TxSignContext *ctx);
+/* @brief verify_pub_key ec secp256k1
+* @param pub_key pub key to b verified
+* @return true if the verification success
+*/
+bool verify_pub_key(const uint8_t *pub_key);
 
 #endif

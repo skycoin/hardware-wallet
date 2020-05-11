@@ -1,5 +1,5 @@
-make -C ../../skycoin-api clean
-make -C ../../skycoin-api libskycoin-crypto.so
-cp ../../skycoin-api/libskycoin-crypto.so .
-make -C ../../skycoin-api clean
-ln -sf ../../skycoin-api/skycoin_crypto.py .
+make -C ../../skycoin-crypto clean
+make -C ../../skycoin-crypto libskycoin-crypto.so
+cp ../../skycoin-crypto/libskycoin-crypto.so .
+make -C ../../skycoin-crypto clean
+ln -sf ../../skycoin-crypto/skycoin_crypto.py .
