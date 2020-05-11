@@ -260,7 +260,7 @@ int skycoin_ecdsa_sign_digest(const uint8_t* priv_key, const uint8_t* digest, ui
     const curve_info* curve = get_curve_by_name(SECP256K1_NAME);
     uint8_t recid = 0;
     ret = ecdsa_sign_digest(curve->params, priv_key, digest, sig, &recid, NULL);
-    if (recid > 4) {
+    if (recid >= 4) {
         // This should never happen; we can abort() here, as a sanity check
         return -3;
     }
