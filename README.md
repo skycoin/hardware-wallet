@@ -221,7 +221,7 @@ make release
 Firmware version will be retrieved automatically from `git`, and bootloader version will be take from `tiny-firmware/VERSION`.
 
 ## Responsible Disclosure
-Security flaws in Skkywallet source code or infrastructure can be sent to security@skycoin.com.
+Security flaws in Skywallet source code or infrastructure can be sent to security@skycoin.com.
 Bounties are available for accepted critical bug reports.
 
 PGP Key for signing:
