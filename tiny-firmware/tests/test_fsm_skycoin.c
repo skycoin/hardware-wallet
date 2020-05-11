@@ -22,6 +22,7 @@
 #include "skycoin-crypto/tools/bip32.h"
 #include "skycoin-crypto/tools/bip39.h"
 #include "skycoin-crypto/check_digest.h"
+#include "skycoin-crypto/skycoin_constants.h"
 #include "tiny-firmware/firmware/droplet.h"
 #include "tiny-firmware/firmware/entropy.h"
 #include "tiny-firmware/firmware/error.h"
@@ -1023,7 +1024,7 @@ START_TEST(test_msgTransactionSign11) {
     for (uint8_t i = 0; i < 7; i++) {
         memcpy(msg_s.address, "zF2bJcm1VunARAJ26HmYVQE2SEudQmK9DJ", 34);
         memcpy(msg_s.message, messages1[i], sizeof(messages1[i]));
-        memcpy(msg_s.signature, response.sign_result[i].signature, sizeof(response.sign_result[i].signature));
+        memcpy(msg_s.signature, response.sign_result[i].signature, SKYCOIN_SIG_LEN*2+1);
         Failure failure_resp = Failure_init_default;
         Success success_resp = Success_init_default;
         ErrCode_t check_sign = msgSkycoinCheckMessageSignatureImpl(
@@ -1049,7 +1050,7 @@ START_TEST(test_msgTransactionSign11) {
     for (uint8_t i = 0; i < 7; i++) {
         memcpy(msg_s.address, "zF2bJcm1VunARAJ26HmYVQE2SEudQmK9DJ", 34);
         memcpy(msg_s.message, messages[i], sizeof(messages[i]));
-        memcpy(msg_s.signature, response.sign_result[i].signature, sizeof(response.sign_result[i].signature));
+        memcpy(msg_s.signature, response.sign_result[i].signature, SKYCOIN_SIG_LEN*2+1);
         Failure failure_resp = Failure_init_default;
         Success success_resp = Success_init_default;
         ErrCode_t check_sign = msgSkycoinCheckMessageSignatureImpl(
