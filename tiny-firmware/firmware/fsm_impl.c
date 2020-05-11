@@ -238,28 +238,33 @@ ErrCode_t msgSignTransactionMessageImpl(uint8_t *message_digest, uint32_t index,
     return res;
 }
 
-ErrCode_t addSkycoinAddress(void *resp, char *address) {
+ErrCode_t addSkycoinAddress(void *resp, size_t start_index, char *address, size_t address_size) {
     ResponseSkycoinAddress *skycoinResp = (ResponseSkycoinAddress *) (resp);
 
-    static int max_addresses =
+    static uint max_addresses =
             sizeof(skycoinResp->addresses)
             / sizeof(skycoinResp->addresses[0]);
-    if (skycoinResp->addresses_count + 1 > max_addresses)
+
+    if (start_index + skycoinResp->addresses_count + 1 > max_addresses)
         return ErrInvalidArg;
 
-    memcpy(skycoinResp->addresses[skycoinResp->addresses_count], address, MAX_BIP58_ADDRESS_LEN);
+    memcpy(skycoinResp->addresses[skycoinResp->addresses_count], address, address_size);
     skycoinResp->addresses_count++;
     return ErrOk;
 }
 
-ErrCode_t addEthereumAddress(void *resp, char *address) {
+ErrCode_t addEthereumAddress(void *resp, size_t start_index, char *address, size_t address_size) {
+    UNUSED(address_size);
+
     ResponseEthereumAddress *ethereumResp = (ResponseEthereumAddress *) (resp);
 
-    static int max_addresses =
+    static uint max_addresses =
             sizeof(ethereumResp->addresses)
             / sizeof(ethereumResp->addresses[0]);
-    if (ethereumResp->addresses_count + 1 > max_addresses)
+
+    if (start_index + ethereumResp->addresses_count + 1 > max_addresses)
         return ErrInvalidArg;
+
 
     memcpy(ethereumResp->addresses[ethereumResp->addresses_count].bytes, address, ETH_ADDR_LEN);
     ethereumResp->addresses_count++;
@@ -270,7 +275,7 @@ ErrCode_t
 fsm_getKeyPairAtIndex(uint32_t nbAddress,
                       uint8_t *pubkey, uint8_t *seckey,
                       void *resp,
-                      ErrCode_t (*add_address_to_resp)(void *resp, char *address),
+                      ErrCode_t (*add_address_to_resp)(void *, size_t, char *, size_t),
                       uint32_t start_index,
                       int (*address_from_pubkey)(const uint8_t *, char *, size_t *), bool is_compressed_pk) {
     const char *mnemo = storage_getFullSeed();
@@ -284,14 +289,20 @@ fsm_getKeyPairAtIndex(uint32_t nbAddress,
         return ErrFailed;
     }
 
-    size_t max_size_address = MAX(MAX_BIP58_ADDRESS_LEN, ETH_ADDR_LEN);
     char buf[MAX(MAX_BIP58_ADDRESS_LEN, ETH_ADDR_LEN)];
 
+    size_t max_address_size = sizeof(buf) / sizeof(buf[0]);
+    size_t address_size = max_address_size;
+
+    if (nbAddress + start_index - 1 > 100) {
+        return ErrInvalidArg;
+    }
+
     if (resp != NULL && start_index == 0) {
-        if (!address_from_pubkey(pubkey, buf, &max_size_address)) {
+        if (!address_from_pubkey(pubkey, buf, &address_size)) {
             return ErrFailed;
         }
-        if (add_address_to_resp(resp, buf) != ErrOk) {
+        if (add_address_to_resp(resp, start_index, buf, address_size) != ErrOk) {
             return ErrInvalidArg;
         }
     }
@@ -303,10 +314,11 @@ fsm_getKeyPairAtIndex(uint32_t nbAddress,
         memcpy(seed, nextSeed, 32);
         seed[32] = 0;
         if (resp != NULL && ((i + 1) >= start_index)) {
-            if (!address_from_pubkey(pubkey, buf, &max_size_address)) {
+            address_size = max_address_size;
+            if (!address_from_pubkey(pubkey, buf, &address_size)) {
                 return ErrFailed;
             }
-            if (add_address_to_resp(resp, buf) != ErrOk) {
+            if (add_address_to_resp(resp, start_index, buf, address_size) != ErrOk) {
                 return ErrInvalidArg;
             }
         }
