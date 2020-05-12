@@ -23,14 +23,14 @@
 #include "tools/ripemd160.h"
 #include "tools/sha2.h"
 
-extern void bn_print(const bignum256* a);
+extern void bn_print(const bignum256 *a);
 
-bool verify_pub_key(const uint8_t* pub_key) {
+bool verify_pub_key(const uint8_t *pub_key) {
     const curve_info *info = get_curve_by_name(SECP256K1_NAME);
     if (!info) {
         return false;
     }
-    const ecdsa_curve* curve = info->params;
+    const ecdsa_curve *curve = info->params;
     curve_point point;
     int res = ecdsa_read_pubkey(curve, pub_key, &point);
     memset(&point, 0, sizeof(point));
@@ -72,7 +72,7 @@ void skycoin_pubkey_from_seckey(const uint8_t* seckey, uint8_t* pubkey)
     SKYCOIN CIPHER AUDIT
     Compare to function: secp256k1.SkycoinPubkeyFromSeckey
     */
-    const curve_info* curve = get_curve_by_name(SECP256K1_NAME);
+    const curve_info *curve = get_curve_by_name(SECP256K1_NAME);
     ecdsa_get_public_key33(curve->params, seckey, pubkey);
 }
 
@@ -108,14 +108,14 @@ Internal use only.
 
 Returns 0 on success
 */
-int deterministic_key_pair_iterator_step(const uint8_t* digest, uint8_t* seckey, uint8_t* pubkey)
+int deterministic_key_pair_iterator_step(const uint8_t* digest, uint8_t* seckey, uint8_t* pubkey, bool is_compressed_pk)
 {
     /*
     SKYCOIN CIPHER AUDIT
     Compare to function: secp256k1.GenerateDeterministicKeyPair
     */
 
-    const curve_info* curve = get_curve_by_name(SECP256K1_NAME);
+    const curve_info *curve = get_curve_by_name(SECP256K1_NAME);
 
     memcpy(seckey, digest, SHA256_DIGEST_LENGTH);
     while (1) {
@@ -124,7 +124,13 @@ int deterministic_key_pair_iterator_step(const uint8_t* digest, uint8_t* seckey,
             continue;
         }
 
-        skycoin_pubkey_from_seckey(seckey, pubkey);
+        if (is_compressed_pk) {
+            skycoin_pubkey_from_seckey(seckey, pubkey);
+        } else {
+            //For now we will use Seckp256K1, as it is used in SKY/BTC/ETH
+            //Later on can be added parameter to support other curves
+            ecdsa_get_public_key65(curve->params, seckey, pubkey);
+        }
         if (!pubkey_is_valid(curve->params, pubkey)) {
             // TODO: if pubkey is invalid, FAIL/PANIC
             return -1;
@@ -147,7 +153,7 @@ Caller should verify that the ecdh_key is a valid pubkey.
 int ecdh(const uint8_t* pub_key, const uint8_t* sec_key, uint8_t* ecdh_key)
 {
     uint8_t long_pub_key[65] = {0};
-    const curve_info* curve = get_curve_by_name(SECP256K1_NAME);
+    const curve_info *curve = get_curve_by_name(SECP256K1_NAME);
     int ret = ecdh_multiply(curve->params, sec_key, pub_key, long_pub_key);
     if (ret != 0) {
         return ret;
@@ -176,7 +182,8 @@ int secp256k1sum(const uint8_t* seed, const size_t seed_length, uint8_t* digest)
     sha256sum(seed, hash, seed_length);
 
     // seckey, _ = deterministic_key_pair_iterator_step(hash)
-    if (0 != deterministic_key_pair_iterator_step(hash, seckey, pubkey)) {
+    // it doesn't matter, which public key will be, as it just used to salt the hash
+    if (0 != deterministic_key_pair_iterator_step(hash, seckey, pubkey, true)) {
         // TODO: abort() on failure
         return -1;
     }
@@ -184,7 +191,8 @@ int secp256k1sum(const uint8_t* seed, const size_t seed_length, uint8_t* digest)
     // _, pubkey = deterministic_key_pair_iterator_step(sha256(hash))
     // This value usually equals the seckey generated above, but not always (1^-128 probability)
     sha256sum(hash, hash2, sizeof(hash));
-    if (0 != deterministic_key_pair_iterator_step(hash2, dummy_seckey, pubkey)) {
+    // it doesn't matter, which public key will be, as it just used to salt the hash
+    if (0 != deterministic_key_pair_iterator_step(hash2, dummy_seckey, pubkey, true)) {
         // TODO: abort() on failure
         return -2;
     }
@@ -210,8 +218,8 @@ next_seed should be 32 bytes (size of a secp256k1sum digest)
 
 Returns 0 on success
 */
-int deterministic_key_pair_iterator(const uint8_t* seed, const size_t seed_length, uint8_t* next_seed, uint8_t* seckey, uint8_t* pubkey)
-{
+int deterministic_key_pair_iterator(const uint8_t *seed, const size_t seed_length, uint8_t *next_seed, uint8_t *seckey,
+                                    uint8_t *pubkey, bool is_compressed_pk){
     /*
     SKYCOIN CIPHER AUDIT
     Compare to function: secp254k1.DeterministicKeyPairIterator
@@ -222,31 +230,31 @@ int deterministic_key_pair_iterator(const uint8_t* seed, const size_t seed_lengt
         return -1;
     }
 
-    #if DEBUG_DETERMINISTIC_KEY_PAIR_ITERATOR
+#if DEBUG_DETERMINISTIC_KEY_PAIR_ITERATOR
     char buf[256];
     tohex(buf, seed, seed_length);
     printf("seedIn: %s\n", buf);
     tohex(buf, next_seed, SHA256_DIGEST_LENGTH);
     printf("next_seed: %s\n", buf);
-    #endif
+#endif
 
     sha256sum_two(seed, seed_length, next_seed, SHA256_DIGEST_LENGTH, seed2);
 
-    #if DEBUG_DETERMINISTIC_KEY_PAIR_ITERATOR
+#if DEBUG_DETERMINISTIC_KEY_PAIR_ITERATOR
     tohex(buf, seed2, SHA256_DIGEST_LENGTH);
     printf("seed2: %s\n", buf);
-    #endif
+#endif
 
-    if (0 != deterministic_key_pair_iterator_step(seed2, seckey, pubkey)) {
+    if (0 != deterministic_key_pair_iterator_step(seed2, seckey, pubkey, is_compressed_pk)) {
         return -1;
     }
 
-    #if DEBUG_DETERMINISTIC_KEY_PAIR_ITERATOR
+#if DEBUG_DETERMINISTIC_KEY_PAIR_ITERATOR
     tohex(buf, seckey, SKYCOIN_SECKEY_LEN);
     printf("seckey: %s\n", buf);
     tohex(buf, pubkey, SKYCOIN_PUBKEY_LEN);
     printf("pubkey: %s\n", buf);
-    #endif
+#endif
 
     return 0;
 }
@@ -257,7 +265,7 @@ int deterministic_key_pair_iterator(const uint8_t* seed, const size_t seed_lengt
 int skycoin_ecdsa_sign_digest(const uint8_t* priv_key, const uint8_t* digest, uint8_t* sig)
 {
     int ret;
-    const curve_info* curve = get_curve_by_name(SECP256K1_NAME);
+    const curve_info *curve = get_curve_by_name(SECP256K1_NAME);
     uint8_t recid = 0;
     ret = ecdsa_sign_digest(curve->params, priv_key, digest, sig, &recid, NULL);
     if (recid >= 4) {
@@ -316,7 +324,7 @@ int skycoin_address_from_pubkey(const uint8_t* pubkey, char* b58address, size_t*
     address = ripemd160(sha256(sha256(pubkey))
     checksum = sha256(address+version)
     */
-    const curve_info* curve = get_curve_by_name(SECP256K1_NAME);
+    const curve_info *curve = get_curve_by_name(SECP256K1_NAME);
 
     if (!pubkey_is_valid(curve->params, pubkey)) {
         return 0;
@@ -380,7 +388,7 @@ void transaction_innerHash(Transaction* self)
     memset(&ctx[bitcount + 1], 0, 3);
     bitcount += 4;
     for (uint8_t i = 0; i < self->nbIn; ++i) {
-        memcpy(&ctx[bitcount], (uint8_t*)&self->inAddress[i], 32);
+        memcpy(&ctx[bitcount], (uint8_t *) &self->inAddress[i], 32);
         bitcount += 32;
     }
 
@@ -394,11 +402,11 @@ void transaction_innerHash(Transaction* self)
         bitcount += 1;
         memcpy(&ctx[bitcount], &self->outAddress[i].address, 20);
         bitcount += 20;
-        memcpy(&ctx[bitcount], (uint8_t*)&self->outAddress[i].coin, 4);
+        memcpy(&ctx[bitcount], (uint8_t *) &self->outAddress[i].coin, 4);
         bitcount += 4;
         memset(&ctx[bitcount], 0, 4);
         bitcount += 4;
-        memcpy(&ctx[bitcount], (uint8_t*)&self->outAddress[i].hour, 4);
+        memcpy(&ctx[bitcount], (uint8_t *) &self->outAddress[i].hour, 4);
         bitcount += 4;
         memset(&ctx[bitcount], 0, 4);
         bitcount += 4;
@@ -422,7 +430,7 @@ void transaction_msgToSign(Transaction* self, uint8_t index, uint8_t* msg_digest
         transaction_innerHash(self);
     }
     memcpy(shaInput, self->innerHash, 32);
-    memcpy(&shaInput[32], (uint8_t*)&self->inAddress[index], 32);
+    memcpy(&shaInput[32], (uint8_t *) &self->inAddress[index], 32);
 #ifdef EMULATOR
 #if EMULATOR
     char str[128];
@@ -439,44 +447,44 @@ void transaction_msgToSign(Transaction* self, uint8_t index, uint8_t* msg_digest
 
 static TxSignContext context;
 
-TxSignContext* TxSignCtx_Init() {
+TxSignContext *TxSignCtx_Init() {
     context.state = Start;
     context.mnemonic_change = false;
     return &context;
 }
 
-TxSignContext* TxSignCtx_Get(){
+TxSignContext *TxSignCtx_Get() {
     return &context;
 }
 
-void TxSignCtx_printSHA256(TxSignContext* ctx) {
-    uint8_t* buffer = (uint8_t*)ctx->sha256_ctx.buffer;
-    for(uint8_t i = 0; i < 64; ++i)
-        printf("%u ",buffer[i]);
+void TxSignCtx_printSHA256(TxSignContext *ctx) {
+    uint8_t *buffer = (uint8_t *) ctx->sha256_ctx.buffer;
+    for (uint8_t i = 0; i < 64; ++i)
+        printf("%u ", buffer[i]);
     printf("\n");
 }
 
-void TxSignCtx_printInnerHash(TxSignContext* ctx) {
+void TxSignCtx_printInnerHash(TxSignContext *ctx) {
     char innerHash[64];
-    tohex(innerHash,ctx->innerHash,32);
-    printf("Inner hash: %s\n",innerHash);
+    tohex(innerHash, ctx->innerHash, 32);
+    printf("Inner hash: %s\n", innerHash);
 }
 
-void TxSignCtx_AddSizePrefix(TxSignContext* ctx, uint8_t count) {
+void TxSignCtx_AddSizePrefix(TxSignContext *ctx, uint8_t count) {
     uint8_t data[4];
     memcpy(data, &count, 1);
     memset(data + 1, 0, 3);
     sha256_Update(&ctx->sha256_ctx, data, 4);
 }
 
-void TxSignCtx_UpdateInputs(TxSignContext* ctx, uint8_t inputs [7][32], uint8_t count) {
-    for(uint8_t i = 0; i < count; ++i) {
-        sha256_Update(&ctx->sha256_ctx,inputs[i], 32);
-        ctx->current_nbIn +=1;
+void TxSignCtx_UpdateInputs(TxSignContext *ctx, uint8_t inputs[7][32], uint8_t count) {
+    for (uint8_t i = 0; i < count; ++i) {
+        sha256_Update(&ctx->sha256_ctx, inputs[i], 32);
+        ctx->current_nbIn += 1;
     }
 }
 
-void TxSignCtx_UpdateOutputs(TxSignContext* ctx, TransactionOutput outputs[7], uint8_t count){
+void TxSignCtx_UpdateOutputs(TxSignContext *ctx, TransactionOutput outputs[7], uint8_t count) {
     for (uint8_t i = 0; i < count; ++i) {
         uint8_t data[37];
         uint8_t bitcount = 0;
@@ -484,25 +492,25 @@ void TxSignCtx_UpdateOutputs(TxSignContext* ctx, TransactionOutput outputs[7], u
         bitcount += 1;
         memcpy(data + bitcount, outputs[i].address, 20);
         bitcount += 20;
-        memcpy(data + bitcount, (uint8_t*)&outputs[i].coin, 4);
+        memcpy(data + bitcount, (uint8_t *) &outputs[i].coin, 4);
         bitcount += 4;
         memset(data + bitcount, 0, 4);
         bitcount += 4;
-        memcpy(data + bitcount, (uint8_t*)&outputs[i].hour, 4);
+        memcpy(data + bitcount, (uint8_t *) &outputs[i].hour, 4);
         bitcount += 4;
         memset(data + bitcount, 0, 4);
         bitcount += 4;
         sha256_Update(&ctx->sha256_ctx, data, bitcount);
-        ctx->current_nbOut+=1;
+        ctx->current_nbOut += 1;
     }
 }
 
-void TxSignCtx_finishInnerHash(TxSignContext* ctx){
+void TxSignCtx_finishInnerHash(TxSignContext *ctx) {
     sha256_Final(&ctx->sha256_ctx, ctx->innerHash);
     ctx->has_innerHash = true;
 }
 
-void TxSignCtx_Destroy(TxSignContext* ctx){
-    memset(ctx,0,sizeof(TxSignContext));
+void TxSignCtx_Destroy(TxSignContext *ctx) {
+    memset(ctx, 0, sizeof(TxSignContext));
     ctx->state = Destroyed;
 }

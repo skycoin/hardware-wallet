@@ -68,8 +68,8 @@ int ecdh(const uint8_t* pub_key, const uint8_t* sec_key, uint8_t* ecdh_key);
 int secp256k1sum(const uint8_t* seed, const size_t seed_length, uint8_t* digest);
 void sha256sum(const uint8_t* seed, uint8_t* digest, size_t seed_length);
 void sha256sum_two(const uint8_t* msg1, size_t msg1_len, const uint8_t* msg2, size_t msg2_len, uint8_t* out_digest);
-int deterministic_key_pair_iterator(const uint8_t* seed, const size_t seed_length, uint8_t* nextSeed, uint8_t* seckey, uint8_t* pubkey);
-int deterministic_key_pair_iterator_step(const uint8_t* seed, uint8_t* seckey, uint8_t* pubkey);
+int deterministic_key_pair_iterator(const uint8_t* seed, const size_t seed_length, uint8_t* nextSeed, uint8_t* seckey, uint8_t* pubkey, bool is_compressed_pk);
+int deterministic_key_pair_iterator_step(const uint8_t* seed, uint8_t* seckey, uint8_t* pubkey, bool is_compressed_pk);
 void skycoin_pubkey_from_seckey(const uint8_t* seckey, uint8_t* pubkey);
 int skycoin_address_from_pubkey(const uint8_t* pubkey, char* address, size_t* size_address);
 int skycoin_ecdsa_sign_digest(const uint8_t* priv_key, const uint8_t* digest, uint8_t* sig);
@@ -101,7 +101,8 @@ void TxSignCtx_UpdateInputs(TxSignContext* ctx, uint8_t inputs [7][32], uint8_t 
  *  @param outputs Outputs for add
  *  @param count Number of outputs on outputs param
  */
-void TxSignCtx_UpdateOutputs(TxSignContext* ctx, TransactionOutput outputs[7], uint8_t count);
+void TxSignCtx_UpdateOutputs(TxSignContext *ctx, TransactionOutput outputs[7], uint8_t count);
+
 /*  @brief Finish SHA256 context and store inner hash on innerHash and set has_innerHash correctly
  *  @param ctx Context with SHA256 to be finished
  */
@@ -117,11 +118,11 @@ void TxSignCtx_printInnerHash(TxSignContext* ctx);
 /*  @brief Print SHA256 context buffer
  *  @param ctx Context with SHA256 context buffer to be printed
  */
-void TxSignCtx_printSHA256(TxSignContext* ctx);
- /* @brief verify_pub_key ec secp256k1
- * @param pub_key pub key to b verified
- * @return true if the verification success
- */
-bool verify_pub_key(const uint8_t* pub_key);
+void TxSignCtx_printSHA256(TxSignContext *ctx);
+/* @brief verify_pub_key ec secp256k1
+* @param pub_key pub key to b verified
+* @return true if the verification success
+*/
+bool verify_pub_key(const uint8_t *pub_key);
 
 #endif

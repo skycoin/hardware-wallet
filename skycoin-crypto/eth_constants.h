@@ -1,0 +1,10 @@
+#ifndef HW_ETH_CONSTANTS_H
+#define HW_ETH_CONSTANTS_H
+
+#define ETH_ADDR_LEN 20
+#define ETH_PUBKEY_LEN 65
+#define ETH_PRIVKEY_LEN 32
+#define ETH_SIG_LEN 65
+
+
+#endif //HW_ETH_CONSTANTS_H

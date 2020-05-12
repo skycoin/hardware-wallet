@@ -45,7 +45,7 @@ The source code tree is composed of the following main parts:
 - `Makefile` rules for project builds, testing and development commands.
 - `releases` is used to store releaase binary files.
 - `ci-scripts` tools for Travis CI and similar continuous integration environments.
-- `skycoin-api` a C implementation of the [Skycoin cryptography API](https://github.com/skycoin/skycoin/tree/master/src/cipher).
+- `skycoin-crypto` a C implementation of the [Skycoin cryptography API](https://github.com/skycoin/skycoin/tree/master/src/cipher).
 - `tiny-firmware/bootloader` contains device bootloader source code .
 - `tiny-firmware/emulator` contains the source code of the Skywallet emulator.
 - `tiny-firmware/firmware` contains the source code of the Skywallet firmware.

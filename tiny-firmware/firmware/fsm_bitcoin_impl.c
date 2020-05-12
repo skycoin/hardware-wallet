@@ -65,7 +65,8 @@ ErrCode_t msgBitcoinAddressImpl(BitcoinAddress *msg, ResponseSkycoinAddress *res
         return ErrMnemonicRequired;
     }
 
-    if (fsm_getKeyPairAtIndex(msg->address_n, pubkey, seckey, resp, start_index, &bitcoin_address_from_pubkey) != ErrOk) {
+    if (fsm_getKeyPairAtIndex(msg->address_n, pubkey, seckey, resp, addSkycoinAddress, start_index,
+                              &bitcoin_address_from_pubkey, true) != ErrOk) {
         return ErrAddressGeneration;
     }
     if (msg->address_n == 1 && msg->has_confirm_address && msg->confirm_address) {

@@ -107,7 +107,8 @@ ErrCode_t msgSkycoinSignMessageImpl(SkycoinSignMessage *msg, ResponseSkycoinSign
     uint8_t seckey[SKYCOIN_SECKEY_LEN] = {0};
     uint8_t digest[SHA256_DIGEST_LENGTH] = {0};
     uint8_t signature[SKYCOIN_SIG_LEN];
-    if (fsm_getKeyPairAtIndex(1, pubkey, seckey, NULL, msg->address_n, &skycoin_address_from_pubkey) != ErrOk) {
+    if (fsm_getKeyPairAtIndex(1, pubkey, seckey, NULL, addSkycoinAddress,
+                              msg->address_n, &skycoin_address_from_pubkey, true) != ErrOk) {
         return ErrInvalidValue;
     }
     if (is_sha256_digest_hex(msg->message)) {
@@ -146,7 +147,8 @@ ErrCode_t msgSkycoinAddressImpl(SkycoinAddress *msg, ResponseSkycoinAddress *res
         return ErrMnemonicRequired;
     }
 
-    if (fsm_getKeyPairAtIndex(msg->address_n, pubkey, seckey, resp, start_index, &skycoin_address_from_pubkey) != ErrOk) {
+    if (fsm_getKeyPairAtIndex(msg->address_n, pubkey, seckey, resp, addSkycoinAddress,
+                              start_index, &skycoin_address_from_pubkey, true) != ErrOk) {
         return ErrAddressGeneration;
     }
     if (msg->address_n == 1 && msg->has_confirm_address && msg->confirm_address) {
@@ -166,17 +168,17 @@ msgTransactionSignImpl(TransactionSign *msg, ErrCode_t (*funcConfirmTxn)(char *,
     }
 #if EMULATOR
     printf("%s: %d. nbOut: %d\n",
-        _("Transaction signed nbIn"),
-        msg->nbIn, msg->nbOut);
+           _("Transaction signed nbIn"),
+           msg->nbIn, msg->nbOut);
 
     for (uint32_t i = 0; i < msg->nbIn; ++i) {
         printf("Input: addressIn: %s, index: %d\n",
-            msg->transactionIn[i].hashIn, msg->transactionIn[i].index);
+               msg->transactionIn[i].hashIn, msg->transactionIn[i].index);
     }
     for (uint32_t i = 0; i < msg->nbOut; ++i) {
         printf("Output: coin: %" PRIu64 ", hour: %" PRIu64 " address: %s address_index: %d\n",
-            msg->transactionOut[i].coin, msg->transactionOut[i].hour,
-            msg->transactionOut[i].address, msg->transactionOut[i].address_index);
+               msg->transactionOut[i].coin, msg->transactionOut[i].hour,
+               msg->transactionOut[i].address, msg->transactionOut[i].address_index);
     }
 #endif
     Transaction transaction;
@@ -201,15 +203,17 @@ msgTransactionSignImpl(TransactionSign *msg, ErrCode_t (*funcConfirmTxn)(char *,
         }
         sprintf(strCoin, "%s %s %s", _("send"), strValueMsg, coinString);
         sprintf(strHour, "%"
-        PRIu64
-        " %s", msg->transactionOut[i].hour, hourString);
+                         PRIu64
+                         " %s", msg->transactionOut[i].hour, hourString);
 
         if (msg->transactionOut[i].has_address_index) {
             uint8_t pubkey[33] = {0};
             uint8_t seckey[32] = {0};
             size_t size_address = 36;
             char address[36] = {0};
-            ErrCode_t ret = fsm_getKeyPairAtIndex(1, pubkey, seckey, NULL, msg->transactionOut[i].address_index, &skycoin_address_from_pubkey);
+            ErrCode_t ret = fsm_getKeyPairAtIndex(1, pubkey, seckey, NULL, addSkycoinAddress,
+                                                  msg->transactionOut[i].address_index, &skycoin_address_from_pubkey,
+                                                  true);
             if (ret != ErrOk) {
                 return ret;
             }
@@ -258,7 +262,7 @@ msgTransactionSignImpl(TransactionSign *msg, ErrCode_t (*funcConfirmTxn)(char *,
         resp->signatures_count++;
 #if EMULATOR
         char str[64];
-        tohex(str, (uint8_t*)digest, 32);
+        tohex(str, (uint8_t *) digest, 32);
         printf("Signing message:  %s\n", str);
         printf("Signed message:  %s\n", resp->signatures[i]);
         printf("Nb signatures: %d\n", resp->signatures_count);
