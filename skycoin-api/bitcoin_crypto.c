@@ -11,6 +11,8 @@
 #include "tools/ecdsa.h"
 #include "tools/ripemd160.h"
 #include "tools/sha2.h"
+#include "tools/hasher.h"
+#include "stdint.h"
 
 int bitcoin_address_from_pubkey(const uint8_t* pubkey, char* b58address, size_t* size_b58address){
     const curve_info* curve = get_curve_by_name(SECP256K1_NAME);

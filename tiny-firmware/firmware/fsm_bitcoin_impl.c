@@ -70,6 +70,15 @@ const uint8_t* fromhex(const char* str)
 }
 
 ErrCode_t msgBitcoinAddressImpl(BitcoinAddress *msg, ResponseSkycoinAddress *resp) {
+
+  if (msg->address_n > 99) {
+      return ErrTooManyAddresses;
+  }
+
+  if (storage_hasMnemonic() == false) {
+      return ErrMnemonicRequired;
+  }
+
   HDNode* node = fsm_getDerivedNode(SECP256K1_NAME);
   HDNode addressNode;
   size_t size_address = 36;
@@ -79,7 +88,7 @@ ErrCode_t msgBitcoinAddressImpl(BitcoinAddress *msg, ResponseSkycoinAddress *res
     hdnode_private_ckd(&addressNode, i);
     hdnode_fill_public_key(&addressNode);
 
-    if(bitcoin_address_from_pubkey(addressNode.public_key, resp->addresses[i], &size_address) != 0){
+    if(bitcoin_address_from_pubkey(addressNode.public_key, resp->addresses[resp->addresses_count], &size_address) != 1){
       return ErrAddressGeneration;
     }
 
