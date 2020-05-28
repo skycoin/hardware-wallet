@@ -286,7 +286,7 @@ bool b58enc(char* b58, size_t* b58sz, const void* data, size_t binsz)
     for (j = 0; j < (ssize_t)size && !buf[j]; ++j)
         ;
 
-    if (*b58sz <= zcount + size - j) {
+    if (*b58sz < zcount + size - j) {
         *b58sz = zcount + size - j + 1;
         return false;
     }
