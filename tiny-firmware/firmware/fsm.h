@@ -58,7 +58,7 @@ void fsm_msgSignTx(SignTx* msg);
 void fsm_msgTxAck(TxAck* msg);
 void fsm_msgBitcoinTxAck(BitcoinTxAck* msg);
 int fsm_getBitcoinBIP39_Seed(uint8_t seed[]);
-HDNode* fsm_getDerivedNode(const char *curve);
+HDNode* fsm_getDerivedNode(const char *curve, const int coinType);
 ErrCode_t requestConfirmTransaction(char *strCoin, char *strHour, TransactionSign *msg, uint32_t i);
 
 #endif

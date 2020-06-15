@@ -27,6 +27,7 @@
 #include "skycoin-crypto/tools/base58.h"
 #include "skycoin-crypto/tools/bip32.h"
 #include "skycoin-crypto/tools/bip39.h"
+#include "skycoin-crypto/tools/bip44_coins.h"
 #include "skycoin-crypto/check_digest.h"
 #include "skycoin-crypto/tools/curves.h"
 #include "tiny-firmware/firmware/droplet.h"
@@ -79,7 +80,7 @@ ErrCode_t msgBitcoinAddressImpl(BitcoinAddress *msg, ResponseSkycoinAddress *res
       return ErrMnemonicRequired;
   }
 
-  HDNode* node = fsm_getDerivedNode(SECP256K1_NAME);
+  HDNode* node = fsm_getDerivedNode(SECP256K1_NAME, BIP44_BITCOIN);
   HDNode addressNode;
   size_t size_address = 36;
 

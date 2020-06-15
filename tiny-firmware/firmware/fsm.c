@@ -26,7 +26,6 @@
 #include "tiny-firmware/firmware/fsm.h"
 #include "tiny-firmware/firmware/skywallet.h"
 #include "tiny-firmware/firmware/messages.h"
-// #include "skycoin-crypto/tools/bip32.h"
 #include "skycoin-crypto/tools/memzero.h"
 #include "tiny-firmware/firmware/storage.h"
 #include "tiny-firmware/firmware/layout2.h"
@@ -38,6 +37,7 @@
 #include "tiny-firmware/firmware/recovery.h"
 #include "tiny-firmware/firmware/reset.h"
 #include "skycoin-crypto/tools/bip39.h"
+#include "skycoin-crypto/tools/bip44_coins.h"
 #include "tiny-firmware/usb.h"
 #include "skycoin-crypto/tools/base58.h"
 #include "tiny-firmware/firmware/gettext.h"
@@ -690,7 +690,7 @@ int fsm_getBitcoinBIP39_Seed(uint8_t seed[]){
      return 0;
 }
 
-HDNode* fsm_getDerivedNode(const char *curve){
+HDNode* fsm_getDerivedNode(const char *curve, const int coinType){
 
   static CONFIDENTIAL HDNode node;
   static uint8_t CONFIDENTIAL BIP39Seed[256];
@@ -704,12 +704,23 @@ HDNode* fsm_getDerivedNode(const char *curve){
   //   return &node;
   // }
 
-  // Chain m/0'
-  if(hdnode_private_ckd_prime(&node, 0) == 0){
+  // Chain m/44'
+  if(hdnode_private_ckd_prime(&node, 44) == 0){
     return 0;
   }
 
-  // Chain m/0'/0
+  // Chain m/44'/0'
+  if(hdnode_private_ckd_prime(&node, coinType) == 0){
+    return 0;
+  }
+
+  // Chain m/44'/0'/0'
+  if (hdnode_private_ckd_prime(&node, 0) == 0){
+
+      return 0;
+  }
+
+  // Chain m/44'/0'/0'/0
   if (hdnode_private_ckd(&node, 0) == 0){
 
       return 0;
