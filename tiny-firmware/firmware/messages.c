@@ -36,24 +36,24 @@ struct MessagesMap_t {
     char type; // n = normal, d = debug
     char dir;  // i = in, o = out
     uint16_t msg_id;
-    const pb_field_t* fields;
-    void (*process_func)(void* ptr);
+    const pb_field_t *fields;
+
+    void (*process_func)(void *ptr);
 };
 
 static const struct MessagesMap_t MessagesMap[] = {
 #include "messages_map.h"
-    // end
-    {0, 0, 0, 0, 0}};
+        // end
+        {0, 0, 0, 0, 0}};
 
-const pb_field_t* MessageFields(char type, char dir, uint16_t msg_id)
-{
-    const struct MessagesMap_t* m = MessagesMap;
+const pb_field_t *MessageFields(char type, char dir, uint16_t msg_id) {
+    const struct MessagesMap_t *m = MessagesMap;
     while (m->type) {
 #if EMULATOR
-        (void)type;
+        (void) type;
         if (dir == m->dir && msg_id == m->msg_id) {
 #else
-        if (type == m->type && dir == m->dir && msg_id == m->msg_id) {
+            if (type == m->type && dir == m->dir && msg_id == m->msg_id) {
 #endif
             return m->fields;
         }
@@ -62,15 +62,14 @@ const pb_field_t* MessageFields(char type, char dir, uint16_t msg_id)
     return 0;
 }
 
-void MessageProcessFunc(char type, char dir, uint16_t msg_id, void* ptr)
-{
-    const struct MessagesMap_t* m = MessagesMap;
+void MessageProcessFunc(char type, char dir, uint16_t msg_id, void *ptr) {
+    const struct MessagesMap_t *m = MessagesMap;
     while (m->type) {
 #if EMULATOR
-        (void)type;
+        (void) type;
         if (dir == m->dir && msg_id == m->msg_id) {
 #else
-        if (type == m->type && dir == m->dir && msg_id == m->msg_id) {
+            if (type == m->type && dir == m->dir && msg_id == m->msg_id) {
 #endif
             m->process_func(ptr);
             return;
@@ -85,8 +84,7 @@ static uint32_t msg_out_cur = 0;
 static uint8_t msg_out[MSG_OUT_SIZE];
 
 
-static inline void msg_out_append(uint8_t c)
-{
+static inline void msg_out_append(uint8_t c) {
     if (msg_out_cur == 0) {
         msg_out[msg_out_end * 64] = '?';
         msg_out_cur = 1;
@@ -99,8 +97,7 @@ static inline void msg_out_append(uint8_t c)
     }
 }
 
-static inline void msg_out_pad(void)
-{
+static inline void msg_out_pad(void) {
     if (msg_out_cur == 0) return;
     while (msg_out_cur < 64) {
         msg_out[msg_out_end * 64 + msg_out_cur] = 0;
@@ -110,18 +107,16 @@ static inline void msg_out_pad(void)
     msg_out_end = (msg_out_end + 1) % (MSG_OUT_SIZE / 64);
 }
 
-static bool pb_callback_out(pb_ostream_t* stream, const uint8_t* buf, size_t count)
-{
-    (void)stream;
+static bool pb_callback_out(pb_ostream_t *stream, const uint8_t *buf, size_t count) {
+    (void) stream;
     for (size_t i = 0; i < count; i++) {
         msg_out_append(buf[i]);
     }
     return true;
 }
 
-bool msg_write_common(char type, uint16_t msg_id, const void* msg_ptr)
-{
-    const pb_field_t* fields = MessageFields(type, 'o', msg_id);
+bool msg_write_common(char type, uint16_t msg_id, const void *msg_ptr) {
+    const pb_field_t *fields = MessageFields(type, 'o', msg_id);
     if (!fields) { // unknown message
         return false;
     }
@@ -134,7 +129,7 @@ bool msg_write_common(char type, uint16_t msg_id, const void* msg_ptr)
     }
 
     void (*append)(uint8_t);
-    bool (*pb_callback)(pb_ostream_t*, const uint8_t*, size_t);
+    bool (*pb_callback)(pb_ostream_t *, const uint8_t *, size_t);
 
     if (type == 'n') {
         append = msg_out_append;
@@ -165,8 +160,7 @@ enum {
     READSTATE_READING,
 };
 
-void msg_process(char type, uint16_t msg_id, const pb_field_t* fields, uint8_t* msg_raw, uint32_t msg_size)
-{
+void msg_process(char type, uint16_t msg_id, const pb_field_t *fields, uint8_t *msg_raw, uint32_t msg_size) {
     static CONFIDENTIAL uint8_t msg_data[MSG_IN_SIZE];
     memset(msg_data, 0, sizeof(msg_data));
     pb_istream_t stream = pb_istream_from_buffer(msg_raw, msg_size);
@@ -178,14 +172,13 @@ void msg_process(char type, uint16_t msg_id, const pb_field_t* fields, uint8_t* 
     }
 }
 
-void msg_read_common(char type, const uint8_t* buf, int len)
-{
+void msg_read_common(char type, const uint8_t *buf, int len) {
     static char read_state = READSTATE_IDLE;
     static CONFIDENTIAL uint8_t msg_in[MSG_IN_SIZE];
     static uint16_t msg_id = 0xFFFF;
     static uint32_t msg_size = 0;
     static uint32_t msg_pos = 0;
-    static const pb_field_t* fields = 0;
+    static const pb_field_t *fields = 0;
 
     if (len != 64) return;
 
@@ -194,7 +187,7 @@ void msg_read_common(char type, const uint8_t* buf, int len)
             return;
         }
         msg_id = (buf[3] << 8) + buf[4];
-        msg_size = (buf[5] << 24) + (buf[6] << 16) + (buf[7] << 8) + buf[8];
+        msg_size = ((uint32_t) buf[5] << 24) + (buf[6] << 16) + (buf[7] << 8) + buf[8];
 
         fields = MessageFields(type, 'i', msg_id);
         if (!fields) { // unknown message
@@ -226,10 +219,9 @@ void msg_read_common(char type, const uint8_t* buf, int len)
     }
 }
 
-const uint8_t* msg_out_data(void)
-{
+const uint8_t *msg_out_data(void) {
     if (msg_out_start == msg_out_end) return 0;
-    uint8_t* data = msg_out + (msg_out_start * 64);
+    uint8_t *data = msg_out + (msg_out_start * 64);
     msg_out_start = (msg_out_start + 1) % (MSG_OUT_SIZE / 64);
     return data;
 }
@@ -247,8 +239,7 @@ _Static_assert(sizeof(msg_tiny) >= sizeof(DebugLinkGetState), "msg_tiny too tiny
 #endif
 uint16_t msg_tiny_id = 0xFFFF;
 
-void msg_read_tiny(const uint8_t* buf, int len)
-{
+void msg_read_tiny(const uint8_t *buf, int len) {
     if (len != 64) return;
     if (buf[0] != '?' || buf[1] != '#' || buf[2] != '#') {
         return;
@@ -259,26 +250,26 @@ void msg_read_tiny(const uint8_t* buf, int len)
         return;
     }
 
-    const pb_field_t* fields = 0;
+    const pb_field_t *fields = 0;
     // upstream nanopb is missing const qualifier, so we have to cast :-/
-    pb_istream_t stream = pb_istream_from_buffer((uint8_t*)buf + 9, msg_size);
+    pb_istream_t stream = pb_istream_from_buffer((uint8_t *) buf + 9, msg_size);
 
     switch (msg_id) {
-    case MessageType_MessageType_PinMatrixAck:
-        fields = PinMatrixAck_fields;
-        break;
-    case MessageType_MessageType_ButtonAck:
-        fields = ButtonAck_fields;
-        break;
-    case MessageType_MessageType_PassphraseAck:
-        fields = PassphraseAck_fields;
-        break;
-    case MessageType_MessageType_Cancel:
-        fields = Cancel_fields;
-        break;
-    case MessageType_MessageType_Initialize:
-        fields = Initialize_fields;
-        break;
+        case MessageType_MessageType_PinMatrixAck:
+            fields = PinMatrixAck_fields;
+            break;
+        case MessageType_MessageType_ButtonAck:
+            fields = ButtonAck_fields;
+            break;
+        case MessageType_MessageType_PassphraseAck:
+            fields = PassphraseAck_fields;
+            break;
+        case MessageType_MessageType_Cancel:
+            fields = Cancel_fields;
+            break;
+        case MessageType_MessageType_Initialize:
+            fields = Initialize_fields;
+            break;
     }
     if (fields) {
         bool status = pb_decode(&stream, fields, msg_tiny);
