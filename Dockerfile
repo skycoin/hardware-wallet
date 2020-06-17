@@ -8,9 +8,8 @@ ENV OS_NAME=$OS_NAME
 RUN apt-get update && \
     apt-get install -y  \
     build-essential=12.3 \
-    curl=7.52.1-5+deb9u9 \
+    curl=7.52.1-5+deb9u10 \
     unzip=6.0-21+deb9u2 \
-    git=1:2.11.0-3+deb9u4 \
     python3=3.5.3-1 \
     python3-pip=9.0.1-2+deb9u1 \
     python-protobuf=3.0.0-9 \
@@ -18,7 +17,8 @@ RUN apt-get update && \
     libusb-1.0.0-dev=2:1.0.21-1 \
     cmake=3.7.2-1 \
     udev=232-25+deb9u12 \
-    sudo=1.8.19p1-2.1
+    git \
+    sudo
 
 RUN python3 -m pip uninstall pip && \
     apt-get install python3-pip --reinstall
@@ -41,7 +41,7 @@ ENV PROTOBUF_VERSION=3.6.1
 RUN wget "https://github.com/google/protobuf/releases/download/v${PROTOBUF_VERSION}/protoc-${PROTOBUF_VERSION}-linux-x86_64.zip"
 
 ENV STLINK_VERSION=1.5.0
-RUN wget "https://github.com/texane/stlink/archive/${STLINK_VERSION}.zip"
+RUN wget "https://github.com/texane/stlink/archive/v${STLINK_VERSION}.zip"
 
 # setup toolchain
 
@@ -56,7 +56,7 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 # use zipfile module to extract files world-readable
 RUN $PYTHON -m zipfile -e "protoc-${PROTOBUF_VERSION}-linux-x86_64.zip" /usr/local && \
     chmod 755 /usr/local/bin/protoc
-RUN $PYTHON -m zipfile -e "1.5.0.zip" /tmp && \
+RUN $PYTHON -m zipfile -e "v1.5.0.zip" /tmp && \
     cd /tmp/stlink-1.5.0 && \
     make release && \
     cd build/Release && \
