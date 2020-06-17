@@ -237,7 +237,7 @@ ErrCode_t msgSignTransactionMessageImpl(uint8_t *message_digest, uint32_t index,
 
 ErrCode_t
 fsm_getKeyPairAtIndex(uint32_t nbAddress, uint8_t *pubkey, uint8_t *seckey, ResponseSkycoinAddress *respSkycoinAddress,
-                      uint32_t start_index, int (*address_from_pubkey)(const uint8_t*, char*, size_t*)) {
+                      uint32_t start_index, int (*address_from_pubkey)(const uint8_t *, char *, size_t *)) {
     const char *mnemo = storage_getFullSeed();
     uint8_t seed[33] = {0};
     uint8_t nextSeed[SHA256_DIGEST_LENGTH] = {0};
@@ -273,7 +273,7 @@ fsm_getKeyPairAtIndex(uint32_t nbAddress, uint8_t *pubkey, uint8_t *seckey, Resp
         if (respSkycoinAddress != NULL && ((i + 1) >= start_index)) {
             size_address = 36;
             if (!address_from_pubkey(pubkey, respSkycoinAddress->addresses[respSkycoinAddress->addresses_count],
-                                             &size_address)) {
+                                     &size_address)) {
                 return ErrFailed;
             }
             respSkycoinAddress->addresses_count++;
@@ -433,6 +433,9 @@ ErrCode_t msgSetMnemonicImpl(SetMnemonic *msg) {
 
     // Removing multiple spaces from mnemonic
     uint32_t legitSpace, countSpaces = 0, i = 0;
+    if (!strlen(msg->mnemonic)) {
+        return ErrInvalidArg;
+    }
     while (msg->mnemonic[i]) {
         if (msg->mnemonic[i] == ' ' && countSpaces == 0) {
             countSpaces++;
@@ -562,8 +565,8 @@ ErrCode_t msgRecoveryDeviceImpl(RecoveryDevice *msg, ErrCode_t (*funcConfirmReco
 ErrCode_t msgSignTxImpl(SignTx *msg, TxRequest *resp) {
 #if EMULATOR
     printf("%s: %d. nbOut: %d\n",
-        _("Transaction signed nbIn"),
-        msg->inputs_count, msg->outputs_count);
+           _("Transaction signed nbIn"),
+           msg->inputs_count, msg->outputs_count);
 #endif
     TxSignContext *context = TxSignCtx_Get();
     if (context->state != Destroyed) {
@@ -645,17 +648,18 @@ ErrCode_t msgTxAckImpl(TxAck *msg, TxRequest *resp) {
             printf("-> Unexpected\n");
             break;
     }
-    for(uint32_t i = 0; i < msg->tx.inputs_count; ++i) {
+    for (uint32_t i = 0; i < msg->tx.inputs_count; ++i) {
         printf("   %d - Input: addressIn: %s, address_n: ", i + 1,
-            msg->tx.inputs[i].hashIn);
+               msg->tx.inputs[i].hashIn);
         if (msg->tx.inputs[i].address_n_count != 0)
-            printf("%d",msg->tx.inputs[i].address_n[0]);
+            printf("%d", msg->tx.inputs[i].address_n[0]);
         printf("\n");
     }
     for (uint32_t i = 0; i < msg->tx.outputs_count; ++i) {
-        printf("   %d - Output: coins: %" PRIu64 ", hours: %" PRIu64 " address: %s address_n: ", i + 1, msg->tx.outputs[i].coins, msg->tx.outputs[i].hours, msg->tx.outputs[i].address);
+        printf("   %d - Output: coins: %" PRIu64 ", hours: %" PRIu64 " address: %s address_n: ", i + 1,
+               msg->tx.outputs[i].coins, msg->tx.outputs[i].hours, msg->tx.outputs[i].address);
         if (msg->tx.outputs[i].address_n_count != 0) {
-            printf("%d",msg->tx.outputs[i].address_n[0]);
+            printf("%d", msg->tx.outputs[i].address_n[0]);
         }
         printf("\n");
     }
@@ -765,8 +769,8 @@ ErrCode_t msgTxAckImpl(TxAck *msg, TxRequest *resp) {
     return ErrOk;
 }
 
-ErrCode_t msgBitcoinTxAckImpl(BitcoinTxAck *msg, TxRequest *resp){
-  UNUSED(msg);
-  UNUSED(resp);
-  return ErrOk;
+ErrCode_t msgBitcoinTxAckImpl(BitcoinTxAck *msg, TxRequest *resp) {
+    UNUSED(msg);
+    UNUSED(resp);
+    return ErrOk;
 }
