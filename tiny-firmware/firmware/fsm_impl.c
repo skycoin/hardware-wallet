@@ -187,7 +187,7 @@ ErrCode_t msgGenerateMnemonicImpl(GenerateMnemonic *msg, void (*random_buffer_fu
         }
     }
     // random buffer + entropy pool => mix256 => internal entropy
-    uint8_t data[sizeof(int_entropy)];
+    uint8_t data[sizeof(int_entropy)] = {0};
     random_buffer_func(data, sizeof(data));
     entropy_salt_mix_256(data, sizeof(data), int_entropy);
     memset(data, 0, sizeof(data));

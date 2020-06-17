@@ -180,6 +180,7 @@ msgTransactionSignImpl(TransactionSign *msg, ErrCode_t (*funcConfirmTxn)(char *,
     }
 #endif
     Transaction transaction;
+    memset(&transaction, 0, sizeof(transaction));
     transaction_initZeroTransaction(&transaction);
     for (uint32_t i = 0; i < msg->nbIn; ++i) {
         uint8_t hashIn[32];
@@ -213,7 +214,7 @@ msgTransactionSignImpl(TransactionSign *msg, ErrCode_t (*funcConfirmTxn)(char *,
             if (ret != ErrOk) {
                 return ret;
             }
-            if (!skycoin_address_from_pubkey(pubkey, address, &size_address)) {
+           if (!skycoin_address_from_pubkey(pubkey, address, &size_address)) {
                 return ErrAddressGeneration;
             }
             if (strcmp(msg->transactionOut[i].address, address) != 0) {
