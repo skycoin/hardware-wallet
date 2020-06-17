@@ -261,7 +261,7 @@ fsm_getKeyPairAtIndex(uint32_t nbAddress, uint8_t *pubkey, uint8_t *seckey, Resp
     size_t max_addresses =
             sizeof(respSkycoinAddress->addresses)
             / sizeof(respSkycoinAddress->addresses[0]);
-    if (nbAddress + start_index - 1 > max_addresses) {
+    if (nbAddress + start_index - 1 >= max_addresses) {
         return ErrInvalidArg;
     }
     for (uint32_t i = 0; i < nbAddress + start_index - 1; ++i) {
