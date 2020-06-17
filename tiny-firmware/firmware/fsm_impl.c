@@ -550,7 +550,9 @@ ErrCode_t msgRecoveryDeviceImpl(RecoveryDevice *msg, ErrCode_t (*funcConfirmReco
         }
     }
     char current_label[DEVICE_LABEL_SIZE];
-    strncpy(current_label, storage_getLabel(), sizeof(current_label));
+    const char *label = storage_getLabel();
+    if (label != NULL)
+        strncpy(current_label, label, sizeof(current_label));
 
     recovery_init(
             msg->has_word_count ? msg->word_count : 12,
