@@ -124,7 +124,7 @@ ErrCode_t msgSkycoinSignMessageImpl(SkycoinSignMessage *msg, ResponseSkycoinSign
         // -> fail with an error
         return ErrFailed;
     }
-    const size_t hex_len = 2 * SKYCOIN_SIG_LEN;
+    const size_t hex_len = 2 * SKYCOIN_SIG_LEN + 1;
     char signature_in_hex[hex_len];
     tohex(signature_in_hex, signature, SKYCOIN_SIG_LEN);
     memcpy(resp->signed_message, signature_in_hex, hex_len);
@@ -257,7 +257,7 @@ msgTransactionSignImpl(TransactionSign *msg, ErrCode_t (*funcConfirmTxn)(char *,
         }
         resp->signatures_count++;
 #if EMULATOR
-        char str[64];
+        char str[65];
         tohex(str, (uint8_t*)digest, 32);
         printf("Signing message:  %s\n", str);
         printf("Signed message:  %s\n", resp->signatures[i]);
@@ -269,7 +269,7 @@ msgTransactionSignImpl(TransactionSign *msg, ErrCode_t (*funcConfirmTxn)(char *,
         return ErrFailed;
     }
 #if EMULATOR
-    char str[64];
+    char str[65];
     tohex(str, transaction.innerHash, 32);
     printf("InnerHash %s\n", str);
     printf("Signed message:  %s\n", resp->signatures[0]);
