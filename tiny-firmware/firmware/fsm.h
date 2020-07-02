@@ -28,8 +28,6 @@
 
 // message functions
 
-#define MAX_MNEMONIC_LEN 240
-
 void fsm_sendSuccess(const char* text, MessageType* msgtype);
 
 void fsm_sendFailure(FailureType code, const char* text, MessageType* msgtype);
@@ -57,8 +55,6 @@ void fsm_msgWordAck(WordAck* msg);
 void fsm_msgSignTx(SignTx* msg);
 void fsm_msgTxAck(TxAck* msg);
 void fsm_msgBitcoinTxAck(BitcoinTxAck* msg);
-int fsm_getBitcoinBIP39_Seed(uint8_t seed[]);
-HDNode* fsm_getDerivedNode(const char *curve, const int coinType);
 ErrCode_t requestConfirmTransaction(char *strCoin, char *strHour, TransactionSign *msg, uint32_t i);
 
 #endif
