@@ -248,6 +248,13 @@ fsm_getKeyPairAtIndex(uint32_t nbAddress, uint8_t *pubkey, uint8_t *seckey, Resp
     if (mnemo == NULL || nbAddress == 0) {
         return ErrInvalidArg;
     }
+    size_t max_addresses =
+            sizeof(respSkycoinAddress->addresses)
+            / sizeof(respSkycoinAddress->addresses[0]);
+    size_t initial_count = respSkycoinAddress == NULL ? 0 : respSkycoinAddress->addresses_count;
+    if ( initial_count + nbAddress + start_index - 1 >= max_addresses) {
+        return ErrInvalidArg;
+    }
     if (0 != deterministic_key_pair_iterator((const uint8_t *) mnemo, strlen(mnemo), nextSeed, seckey, pubkey)) {
         return ErrFailed;
     }
@@ -258,12 +265,6 @@ fsm_getKeyPairAtIndex(uint32_t nbAddress, uint8_t *pubkey, uint8_t *seckey, Resp
         respSkycoinAddress->addresses_count++;
     }
     memcpy(seed, nextSeed, 32);
-    size_t max_addresses =
-            sizeof(respSkycoinAddress->addresses)
-            / sizeof(respSkycoinAddress->addresses[0]);
-    if (nbAddress + start_index - 1 >= max_addresses) {
-        return ErrInvalidArg;
-    }
     for (uint32_t i = 0; i < nbAddress + start_index - 1; ++i) {
         if (0 != deterministic_key_pair_iterator(seed, 32, nextSeed, seckey, pubkey)) {
             return ErrFailed;
