@@ -5,7 +5,7 @@
 char* sprint_coins(uint64_t coins, uint32_t precision_exp, size_t sz, char* msg)
 {
     uint64_t div, mod;
-    char* eos = msg + sz;
+    char* eos = msg + sz - 1;
     char* ptr = eos;
     // EOS
     *ptr = 0;

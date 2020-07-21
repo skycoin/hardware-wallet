@@ -121,6 +121,8 @@ If no binaries are available for your platform then
 - [Install Protobuf Python runtime](https://github.com/protocolbuffers/protobuf/tree/master/python#installation) from sources.
 - [Install Protobuf Go runtime](https://github.com/golang/protobuf#installation) from sources.
 
+Alternatively, our docker can be used, where all required packages are installed. So you can just run `./build.sh` in hardware-wallet root directory
+
 ### Configure your usb module
 
 We need to tell your kernel to use the [hidraw module](https://www.kernel.org/doc/Documentation/hid/hidraw.txt) to communicate with the hardware device. If you don't your kernel will treat the device as a mouse or a keyboard.

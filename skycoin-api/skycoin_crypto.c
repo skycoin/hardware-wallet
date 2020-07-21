@@ -278,7 +278,7 @@ int skycoin_ecdsa_sign_digest(const uint8_t* priv_key, const uint8_t* digest, ui
     const curve_info* curve = get_curve_by_name(SECP256K1_NAME);
     uint8_t recid = 0;
     ret = ecdsa_sign_digest(curve->params, priv_key, digest, sig, &recid, NULL);
-    if (recid > 4) {
+    if (recid >= 4) {
         // This should never happen; we can abort() here, as a sanity check
         return -3;
     }
@@ -443,7 +443,7 @@ void transaction_msgToSign(Transaction* self, uint8_t index, uint8_t* msg_digest
     memcpy(&shaInput[32], (uint8_t*)&self->inAddress[index], 32);
 #ifdef EMULATOR
 #if EMULATOR
-    char str[128];
+    char str[129];
     tohex(str, shaInput, 64);
     printf("InnerHash computation on %s\n", str);
 #endif
@@ -475,7 +475,7 @@ void TxSignCtx_printSHA256(TxSignContext* ctx) {
 }
 
 void TxSignCtx_printInnerHash(TxSignContext* ctx) {
-    char innerHash[64];
+    char innerHash[65];
     tohex(innerHash,ctx->innerHash,32);
     printf("Inner hash: %s\n",innerHash);
 }

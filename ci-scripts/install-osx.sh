@@ -9,7 +9,9 @@ brew install check
 
 # Install build tools
 # TODO: Install tools in Debian's build-essentials ?
-brew install md5sha1sum curl unzip  gcc-arm-none-eabi
+brew install curl
+brew install unzip
+brew install gcc-arm-none-eabi
 brew install python3
 brew unlink python@2
 

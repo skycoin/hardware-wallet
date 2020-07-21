@@ -373,7 +373,7 @@ void fsm_msgWipeDevice(WipeDevice *msg) {
                       _("wipe the device?"), NULL, _("All data will be lost."), NULL, NULL);
     ErrCode_t err = protectButton(ButtonRequestType_ButtonRequest_WipeDevice, false) ? msgWipeDeviceImpl(msg)
                                                                                      : ErrActionCancelled;
-    fsm_sendResponseFromErrCode(err, _("User data was wiped from the device"), NULL, &msgtype);
+    fsm_sendResponseFromErrCode(err, _("Device wiped"), NULL, &msgtype);
     layoutHome();
 }
 
