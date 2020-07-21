@@ -425,7 +425,7 @@ void transaction_msgToSign(Transaction* self, uint8_t index, uint8_t* msg_digest
     memcpy(&shaInput[32], (uint8_t*)&self->inAddress[index], 32);
 #ifdef EMULATOR
 #if EMULATOR
-    char str[128];
+    char str[129];
     tohex(str, shaInput, 64);
     printf("InnerHash computation on %s\n", str);
 #endif
@@ -457,7 +457,7 @@ void TxSignCtx_printSHA256(TxSignContext* ctx) {
 }
 
 void TxSignCtx_printInnerHash(TxSignContext* ctx) {
-    char innerHash[64];
+    char innerHash[65];
     tohex(innerHash,ctx->innerHash,32);
     printf("Inner hash: %s\n",innerHash);
 }
