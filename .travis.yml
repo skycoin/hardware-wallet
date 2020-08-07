@@ -36,6 +36,7 @@ before_script:
   # Install linters
   - make install-linters
   - git submodule update
+  - sudo chmod 777 /usr/local/lib/python3.8/site-packages
 
 script:
   - make check-protob
