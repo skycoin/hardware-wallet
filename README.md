@@ -35,7 +35,7 @@
 
 ## Overview
 
-This repo contains the firmware and bootloader for the Skywallet as well as tools to test and develop for the Skywallet. 
+This repo contains the firmware and bootloader for the Skywallet as well as tools to test and develop for the Skywallet.
 The firmware can be found in [/tiny-firmware](https://github.com/SkycoinProject/hardware-wallet/tree/master/tiny-firmware).
 The firmware has been modified from [Trezor](https://github.com/trezor/trezor-mcu).
 
@@ -90,6 +90,28 @@ Signs the firmware with the private key corresponding to the PubKeys that were r
 make sign # Your firmware is tiny-firmware/skyfirmware.bin
 ```
 
+UPDATE!!!! Currently, our repo is a bit broken and firmware build fails on MacOS. In order to have ability to sign firmware
+on MacOS you can do it with Docker:
+0. Open the Terminal app and run the following commands to build and run Docker container:
+```
+sudo docker build -t hw_docker/dev .
+docker run --name "your name" -it hw_docker/dev
+```
+After the last command Docker container will start in current Terminal window.
+0. Open a new Terminal window inside the repository and copy script to the docker container:
+```
+sudo docker cp docker_signer.sh "your name":/home/user/
+```
+Note, that name of docker container should be the same as in the previous command!!!
+0. Go back to Terminal with doker window. Navigate to /home/user/ and run script, which you have copied with command:
+```
+sh docker_signer.sh
+```
+0. After script downloads hardware-wallet repository and installs additional requirements, go to the repository and
+simply run signing process with ```make sign``` command.
+
+We are very sorry for this issue and will try to solve the problem as soon as possible
+
 ### Combine bootloader and firmware
 
 This creates a combined firmware without memory protection.
@@ -100,7 +122,7 @@ make full-firmware # this will create a full-firmware-no-mem-protect.bin file
 
 ### Combine a memory protected bootloader and firmware
 
-Caution: This combined firmware has memory protection enabled and therefore cannot be re-flashed. 
+Caution: This combined firmware has memory protection enabled and therefore cannot be re-flashed.
 
 ```
 make full-firmware-mem-protect # this will create a full-firmware-memory-protected.bin file
@@ -140,7 +162,7 @@ The firmware binary filename is `skywallet-firmware-v$(VERSION_FIRMWARE).bin` e.
 
 #### Bootloader version scheme
 
-The bootloder versioning is independent of the firmware versioning, but follows Semver as well. 
+The bootloder versioning is independent of the firmware versioning, but follows Semver as well.
 
 The bootloader binary filename is `skywallet-bootloader-mem-protect-v$(VERSION_BOOTLOADER).bin` if compiled with memory protection enabled it is `skywallet-bootloader-no-memory-protect-v$(VERSION_BOOTLOADER).bin`. For instance, `skywallet-bootloader-mem-protect-v1.0.2.bin` or  `skywallet-bootloader-no-memory-protect-v1.0.2.bin` could be bootloader file names.
 
