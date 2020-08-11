@@ -90,27 +90,14 @@ Signs the firmware with the private key corresponding to the PubKeys that were r
 make sign # Your firmware is tiny-firmware/skyfirmware.bin
 ```
 
-UPDATE!!!! Currently, our repo is a bit broken and firmware build fails on MacOS. In order to have ability to sign firmware
-on MacOS you can do it with Docker:
-0. Open the Terminal app and run the following commands to build and run Docker container:
-```
-sudo docker build -t hw_docker/dev .
-docker run --name "your name" -it hw_docker/dev
-```
-After the last command Docker container will start in current Terminal window.
-0. Open a new Terminal window inside the repository and copy script to the docker container:
-```
-sudo docker cp docker_signer.sh "your name":/home/user/
-```
-Note, that name of docker container should be the same as in the previous command!!!
-0. Go back to Terminal with doker window. Navigate to /home/user/ and run script, which you have copied with command:
-```
-sh docker_signer.sh
-```
-0. After script downloads hardware-wallet repository and installs additional requirements, go to the repository and
-simply run signing process with ```make sign``` command.
+### Sign on MacOS with docker
 
-We are very sorry for this issue and will try to solve the problem as soon as possible
+Currently, the firmware cannot be signed on MacOS straight away. In order to sign the firmware on MacOS nonetheless, you can use the `sign.sh` script which requires a stable Docker release to be installed.
+
+```
+./sign.sh
+
+```
 
 ### Combine bootloader and firmware
 
