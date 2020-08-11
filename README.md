@@ -85,7 +85,7 @@ make firmware  # Your firmware is tiny-firmware/skyfirmware.bin
 
 ### Sign firmware
 
-Signs the firmware with the private key corresponding to the PubKeys that were registered in the bootlaoder during building. The PubKeys can be found in the project [Makefile](https://github.com/SkycoinProject/hardware-wallet/blob/develop/Makefile)
+Signs the firmware with the private key corresponding to the PubKeys that were registered in the bootloader during building. The PubKeys can be found in the project [Makefile](https://github.com/SkycoinProject/hardware-wallet/blob/develop/Makefile)
 ```
 make sign # Your firmware is tiny-firmware/skyfirmware.bin
 ```
