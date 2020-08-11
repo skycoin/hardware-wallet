@@ -1,4 +1,4 @@
-FROM debian:stretch-20190708
+FROM debian:9
 
 ARG OS_NAME=linux
 ENV OS_NAME=$OS_NAME
