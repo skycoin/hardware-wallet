@@ -1,4 +1,4 @@
-FROM debian:9
+FROM debian:stretch-20190708
 
 ARG OS_NAME=linux
 ENV OS_NAME=$OS_NAME
@@ -8,7 +8,7 @@ ENV OS_NAME=$OS_NAME
 RUN apt-get update && \
     apt-get install -y  \
     build-essential=12.3 \
-    curl=7.52.1-5+deb9u10 \
+    curl=7.52.1-5+deb9u11 \
     unzip=6.0-21+deb9u2 \
     python3=3.5.3-1 \
     python3-pip=9.0.1-2+deb9u1 \
