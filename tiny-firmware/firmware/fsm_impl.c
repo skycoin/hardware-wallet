@@ -567,9 +567,9 @@ ErrCode_t msgRecoveryDeviceImpl(RecoveryDevice *msg, ErrCode_t (*funcConfirmReco
 
 ErrCode_t msgSignTxImpl(SignTx *msg, TxRequest *resp) {
 #if EMULATOR
-    printf("%s: %d. nbOut: %d\n",
+    printf("%s: %d. nbOut: %d coin: %s\n",
            _("Transaction signed nbIn"),
-           msg->inputs_count, msg->outputs_count);
+           msg->inputs_count, msg->outputs_count, msg->coin_name);
 #endif
     TxSignContext *context = TxSignCtx_Get();
     if (context->state != Destroyed) {
@@ -583,7 +583,13 @@ ErrCode_t msgSignTxImpl(SignTx *msg, TxRequest *resp) {
         return ErrFailed;
     }
     memcpy(context->coin_name, msg->coin_name, 36 * sizeof(char));
-    context->state = InnerHashInputs;
+
+    msg->coin_name[7] = '\0';
+    if(!strcmp(msg->coin_name, "Skycoin")) {
+        context->state = InnerHashInputs;
+    } else if (!strcmp(msg->coin_name, "Bitcoin")) {
+        context->state = BTC_Outputs;
+    }
     context->current_nbIn = 0;
     context->current_nbOut = 0;
     context->lock_time = msg->lock_time;
@@ -603,7 +609,11 @@ ErrCode_t msgSignTxImpl(SignTx *msg, TxRequest *resp) {
     resp->details.has_request_index = true;
     resp->details.request_index = 1;
     memcpy(resp->details.tx_hash, msg->tx_hash, 65 * sizeof(char));
-    resp->request_type = TxRequest_RequestType_TXINPUT;
+    if(!strcmp(msg->coin_name, "Skycoin")) {
+        resp->request_type = TxRequest_RequestType_TXINPUT;
+    } else if (!strcmp(msg->coin_name, "Bitcoin")) {
+        resp->request_type = TxRequest_RequestType_TXOUTPUT;
+    }
     return ErrOk;
 }
 
@@ -769,11 +779,5 @@ ErrCode_t msgTxAckImpl(TxAck *msg, TxRequest *resp) {
     memcpy(resp->details.tx_hash, ctx->tx_hash, strlen(ctx->tx_hash) * sizeof(char));
     if (resp->request_type == TxRequest_RequestType_TXFINISHED)
         TxSignCtx_Destroy(ctx);
-    return ErrOk;
-}
-
-ErrCode_t msgBitcoinTxAckImpl(BitcoinTxAck *msg, TxRequest *resp) {
-    UNUSED(msg);
-    UNUSED(resp);
     return ErrOk;
 }

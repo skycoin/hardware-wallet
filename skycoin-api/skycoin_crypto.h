@@ -39,6 +39,8 @@ typedef enum {
     InnerHashInputs,
     InnerHashOutputs,
     Signature,
+    BTC_Outputs,
+    BTC_Signature
 } TxSignState;
 
 typedef struct _TxSignContext {
