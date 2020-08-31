@@ -66,4 +66,4 @@ RUN $PYTHON -m zipfile -e "v1.5.0.zip" /tmp && \
 RUN useradd -m user
 USER user
 
-RUN $PYTHON -m pip install --user "protobuf==3.6.1" ecdsa
+RUN $PYTHON -m pip install --user "protobuf==3.6.1" ecdsa "setuptools==49.6.0"
