@@ -24,6 +24,38 @@
 #include "bitcoin_messages.pb.h"
 #include "tiny-firmware/firmware/error.h"
 
+typedef struct Script{
+  uint32_t OP_DUP;
+  uint32_t OP_HASH160;
+  uint32_t PUSHDATA;
+  uint32_t pubKeyHash;
+  uint32_t OP_EQUALVERIFY;
+  uint32_t OP_CHECKSIG;
+}
+
+typedef struct BTC_Tx_Output{
+  uint32_t nbOut;
+  uint32_t value;
+  uint32_t lockScriptLen;
+  Script lScript;
+  uint32_t locktime;
+}
+
+typedef struct BTC_TxInput{
+  uint32_t version;
+  uint32_t nbIn;
+  uint32_t txHash;
+  uint32_t outputIndex;
+  uint32_t unlockScriptLen;
+  Script uScript;
+  uint32_t sequence;
+}
+
+typedef struct BitcoinTX{
+  BTC_TxInput input;
+  BTC_Tx_Output output;
+}
+
 ErrCode_t msgBitcoinAddressImpl(BitcoinAddress *msg, ResponseSkycoinAddress *resp);
 ErrCode_t reqConfirmBitcoinTransaction(uint64_t coins, char *address);
 ErrCode_t msgSignBitcoinTransactionMessageImpl(uint8_t *message_digest, uint32_t index, char *signed_message);
