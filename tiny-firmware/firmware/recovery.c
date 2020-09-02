@@ -291,7 +291,7 @@ static void display_choices(bool twoColumn, char choices[9][12], int num)
 
     /* avoid picking out of range numbers */
     for (int i = 0; i < displayedChoices; i++) {
-        if (word_matrix[i] > num)
+        if (word_matrix[i] >= num)
             word_matrix[i] = 0;
     }
     /* two column layout: middle column = right column */
