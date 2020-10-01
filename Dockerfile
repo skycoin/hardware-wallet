@@ -171,7 +171,6 @@ RUN apt-get update && \
     python-protobuf=3.0.0-9 \
     python3-cffi-backend=1.9.1-2 \
     python3-crypto=2.6.1-7 \
-    python3-ecdsa=0.13-2+deb9u1 \
     python3-idna=2.2-1 \
     python3-pyasn1=0.1.9-2 \
     python3-pkg-resources=33.1.1-1 \
@@ -239,3 +238,5 @@ RUN $PYTHON -m zipfile -e "v1.5.0.zip" /tmp && \
 
 RUN useradd -m user
 USER user
+
+RUN $PYTHON -m pip install --user "protobuf==3.6.1" "ecdsa==0.16.0" "setuptools==49.6.0"
