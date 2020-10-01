@@ -1,4 +1,4 @@
-FROM debian:9.13
+FROM debian:9
 
 ARG OS_NAME=linux
 ENV OS_NAME=$OS_NAME
