@@ -7,16 +7,16 @@ ENV OS_NAME=$OS_NAME
 
 RUN apt-get update && \
     apt-get install -y  \
-    build-essential=12.3 \
-    curl=7.52.1-5+deb9u11 \
-    unzip=6.0-21+deb9u2 \
-    python3=3.5.3-1 \
-    python3-pip=9.0.1-2+deb9u2 \
-    python-protobuf=3.0.0-9 \
-    wget=1.18-5+deb9u3 \
-    libusb-1.0.0-dev=2:1.0.21-1 \
-    cmake=3.7.2-1 \
-    udev=232-25+deb9u12 \
+    build-essential \
+    curl \
+    unzip\
+    python3 \
+    python3-pip \
+    python-protobuf \
+    wget \
+    libusb-1.0.0-dev \
+    cmake \
+    udev \
     git \
     sudo
 
