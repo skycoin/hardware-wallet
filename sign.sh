@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -eo pipefail
 
-REGISTRY="registry.skycoin.com"
+ORG="skycoinproject"
 
-docker pull $REGISTRY/skywallet && \
-docker run --rm -v $(pwd):/hardware-wallet/ -w /hardware-wallet/ -it $REGISTRY/skywallet
+docker pull $ORG/skywallet && \
+docker run --rm -v $(pwd):/hardware-wallet/ -w /hardware-wallet/ -it $ORG/skywallet

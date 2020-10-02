@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-REGISTRY="registry.skycoin.com"
+ORG="skycoinproject"
 
-docker pull $REGISTRY/skywallet && \
-docker run --rm -it -v $(pwd):/hardware-wallet:Z -w /hardware-wallet $REGISTRY/skywallet make full-firmware
+docker pull $ORG/skywallet && \
+docker run --rm -it -v $(pwd):/hardware-wallet:Z -w /hardware-wallet $ORG/skywallet make full-firmware
