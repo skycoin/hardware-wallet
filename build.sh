@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
+
+ORG="skycoinproject"
+
 git submodule update --init --recursive
-make clean
-docker build -t skywallet . && \
-docker run --rm -it -v $(pwd):/hardware-wallet:Z -w /hardware-wallet skywallet make full-firmware
+docker pull $ORG/skywallet && \
+docker run --rm -it -v $(pwd):/hardware-wallet:Z -w /hardware-wallet $ORG/skywallet make full-firmware
