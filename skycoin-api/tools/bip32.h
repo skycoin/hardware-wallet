@@ -31,10 +31,15 @@
 // #include "ed25519-donna/ed25519.h"
 #include "options.h"
 
+#define VERSION_PRIVATE 0x0488ADE4
+#define VERSION_PUBLIC  0x0488B21E
+
 typedef struct {
     const char* bip32_name;    // string for generating BIP32 xprv from seed
     const ecdsa_curve* params; // ecdsa curve parameters, null for ed25519
     HasherType hasher_type;    // hasher type for BIP32 and ECDSA
+    HasherType hasher_base58;
+    HasherType hasher_pubkey;
 } curve_info;
 
 typedef struct {
@@ -52,7 +57,17 @@ int hdnode_from_xprv(uint32_t depth, uint32_t child_num, const uint8_t* chain_co
 
 int hdnode_from_seed(const uint8_t* seed, int seed_len, const char* curve, HDNode* out);
 
+int hdnode_private_ckd(HDNode *inout, uint32_t i);
+
+#define hdnode_private_ckd_prime(X, I) \
+  hdnode_private_ckd((X), ((I) | 0x80000000))
+
 void hdnode_fill_public_key(HDNode* node);
+int hdnode_serialize(const HDNode *node, uint32_t fingerprint,
+                            uint32_t version, char use_public, char *str,
+                            int strsize);
+
+uint32_t hdnode_fingerprint(HDNode *node);
 
 int hdnode_sign(HDNode* node, const uint8_t* msg, uint32_t msg_len, uint8_t* sig, uint8_t* pby, int (*is_canonical)(uint8_t by, uint8_t sig[64]));
 int hdnode_sign_digest(HDNode* node, const uint8_t* digest, uint8_t* sig, uint8_t* pby, int (*is_canonical)(uint8_t by, uint8_t sig[64]));
