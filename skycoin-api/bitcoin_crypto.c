@@ -40,3 +40,31 @@ int bitcoin_address_from_pubkey(const uint8_t* pubkey, char* b58address, size_t*
     }
     return 0;
 }
+
+int compile_locking_script(uint8_t* b58_addr, uint8_t* pubkeyhash){
+
+  pubkeyhash[0] = BITCOIN_SCRIPT_OP_DUP;
+  pubkeyhash[1] = BITCOIN_SCRIPT_OP_HASH160;
+  pubkeyhash[23] = BITCOIN_SCRIPT_OP_CHECKSIG;
+  pubkeyhash[24] = BITCOIN_SCRIPT_OP_EQUALVERIFY;
+  memcpy(pubkeyhash + 2, b58_addr + 1, 20);
+
+  return 0;
+}
+
+static BTC_Transaction btc_tx;
+
+BTC_Transaction* BTC_Transaction_Init(){
+  btc_tx.state = Start;
+  btc_tx.mnemonic_change = false;
+  return &btc_tx;
+}
+
+BTC_Transaction* BTC_Transaction_Get(){
+  return &btc_tx;
+}
+
+void BTC_Transaction_Destroy(BTC_Transaction* btctx){
+    memset(btctx,0,sizeof(BTC_Transaction));
+    btctx->state = Destroyed;
+}

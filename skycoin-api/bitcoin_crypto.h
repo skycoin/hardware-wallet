@@ -46,4 +46,12 @@ typedef struct BTC_Transaction {
 
 int bitcoin_address_from_pubkey(const uint8_t* pubkey, char* b58address, size_t* size_b58address);
 
+int compile_locking_script(uint8_t* b58_addr, uint8_t* pubkeyhash);
+
+BTC_Transaction* BTC_Transaction_Init(void);
+
+BTC_Transaction* BTC_Transaction_Get(void);
+
+void BTC_Transaction_Destroy(BTC_Transaction*);
+
 #endif
