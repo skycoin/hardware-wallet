@@ -1,4 +1,5 @@
 #include "skycoin_crypto.h"
+#include "bitcoin_crypto.h"
 
 #include <stdio.h> //sprintf
 #include <string.h>
