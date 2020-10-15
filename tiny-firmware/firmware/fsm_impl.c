@@ -32,11 +32,13 @@
 #include "tiny-firmware/firmware/protect.h"
 #include "tiny-firmware/firmware/recovery.h"
 #include "tiny-firmware/firmware/reset.h"
+#include "tiny-firmware/firmware/signing.h"
 #include "tiny-firmware/memory.h"
 #include "tiny-firmware/usb.h"
 #include "tiny-firmware/util.h"
 #include "skycoin-crypto/skycoin_constants.h"
 #include "skycoin-crypto/skycoin_crypto.h"
+#include "skycoin-crypto/bitcoin_crypto.h"
 #include "skycoin-crypto/skycoin_signature.h"
 #include "tiny-firmware/firmware/skyparams.h"
 
@@ -571,48 +573,12 @@ ErrCode_t msgSignTxImpl(SignTx *msg, TxRequest *resp) {
            _("Transaction signed nbIn"),
            msg->inputs_count, msg->outputs_count, msg->coin_name);
 #endif
-    TxSignContext *context = TxSignCtx_Get();
-    if (context->state != Destroyed) {
-        TxSignCtx_Destroy(context);
-        return ErrFailed;
-    }
-    // Init TxSignContext
-    context = TxSignCtx_Init();
-    if (context->mnemonic_change) {
-        TxSignCtx_Destroy(context);
-        return ErrFailed;
-    }
-    memcpy(context->coin_name, msg->coin_name, 36 * sizeof(char));
 
     msg->coin_name[7] = '\0';
     if(!strcmp(msg->coin_name, "Skycoin")) {
-        context->state = InnerHashInputs;
+        sign_tx(msg, resp);
     } else if (!strcmp(msg->coin_name, "Bitcoin")) {
-        context->state = BTC_Outputs;
-    }
-    context->current_nbIn = 0;
-    context->current_nbOut = 0;
-    context->lock_time = msg->lock_time;
-    context->nbIn = msg->inputs_count;
-    context->nbOut = msg->outputs_count;
-    sha256_Init(&context->sha256_ctx);
-    memcpy(context->tx_hash, msg->tx_hash, 65 * sizeof(char));
-    context->version = msg->version;
-    context->has_innerHash = false;
-    context->requestIndex = 1;
-
-    // Init Inputs head on sha256
-    TxSignCtx_AddSizePrefix(context, msg->inputs_count);
-
-    // Build response TxRequest
-    resp->has_details = true;
-    resp->details.has_request_index = true;
-    resp->details.request_index = 1;
-    memcpy(resp->details.tx_hash, msg->tx_hash, 65 * sizeof(char));
-    if(!strcmp(msg->coin_name, "Skycoin")) {
-        resp->request_type = TxRequest_RequestType_TXINPUT;
-    } else if (!strcmp(msg->coin_name, "Bitcoin")) {
-        resp->request_type = TxRequest_RequestType_TXOUTPUT;
+        signBTC_tx(msg, resp);
     }
     return ErrOk;
 }
