@@ -8,6 +8,7 @@
 #define SCRIPT_LENGTH 25
 #define SEQUENCE_LENGTH 4
 #define LOCKTIME_LENGTH 4
+#define SEQUENCE 0xffffffff
 
 
 ErrCode_t sign_tx(SignTx* msg, TxRequest* resp);

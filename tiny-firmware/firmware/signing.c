@@ -76,6 +76,8 @@ ErrCode_t signBTC_tx(SignTx* msg, TxRequest* resp){
   btc_tx->nbOut = msg->outputs_count;
   //memcpy(btc_tx->tx_hash, msg->tx_hash, 65 * sizeof(char));
   btc_tx->version = msg->version;
+  btc_tx->sequence = SEQUENCE;
+  btc_tx->sigHash = 1;
   // btc_tx->has_innerHash = false;
   btc_tx->requestIndex = 1;
 
@@ -126,14 +128,12 @@ ErrCode_t set_prev_outputs_script(BTC_Transaction* btc_tx){
 size_t compile_btc_tx_hash(BTC_Transaction* btc_tx, BitcoinTransactionInput* inputs){
 
   size_t cursor = 0;
-  uint8_t version[VERSION_LENGTH] = {btc_tx->version, 0x00, 0x00, 0x00};
-  uint8_t prev_index[4] = {0x00};
-  uint8_t sequence[4] = {0xff, 0xff, 0xff, 0xff};
-  uint8_t lock_time[4] = {0x00, 0x00, 0x00, 0x00};
 
   //set version
-  memcpy(btc_tx->tx_hash, version, VERSION_LENGTH);
-  cursor = cursor + VERSION_LENGTH;
+  for(size_t i = 0; i < VERSION_LENGTH; i++){
+    btc_tx->tx_hash[cursor] = (btc_tx->version >> i * 8);
+    cursor = cursor + 1;
+  }
 
   //set number of inputs
   btc_tx->tx_hash[cursor] = btc_tx->nbIn;
@@ -147,9 +147,10 @@ size_t compile_btc_tx_hash(BTC_Transaction* btc_tx, BitcoinTransactionInput* inp
     cursor = cursor + TXID_LENGTH;
 
     //set input index
-    prev_index[0] = btc_tx->inputs[i].prev_index;
-    memcpy(btc_tx->tx_hash + cursor, prev_index, VERSION_LENGTH);
-    cursor = cursor + VERSION_LENGTH;
+    for(size_t k = 0; k < VERSION_LENGTH; k++){
+      btc_tx->tx_hash[cursor] = (btc_tx->inputs[i].prev_index >> k * 8);
+      cursor = cursor + 1;
+    }
 
     //set script length
     btc_tx->tx_hash[cursor] = SCRIPT_LENGTH;
@@ -160,8 +161,10 @@ size_t compile_btc_tx_hash(BTC_Transaction* btc_tx, BitcoinTransactionInput* inp
     cursor = cursor + SCRIPT_LENGTH;
 
     //set sequence
-    memcpy(btc_tx->tx_hash + cursor, sequence, VERSION_LENGTH);
-    cursor = cursor + VERSION_LENGTH;
+    for(size_t k = 0; k < VERSION_LENGTH; k++){
+      btc_tx->tx_hash[cursor] = (btc_tx->sequence >> k * 8);
+      cursor = cursor + 1;
+    }
 
   }
 
@@ -173,8 +176,11 @@ size_t compile_btc_tx_hash(BTC_Transaction* btc_tx, BitcoinTransactionInput* inp
   for(uint32_t i = 0; i < btc_tx->nbOut; i++){
 
     //set value
-    btc_tx->tx_hash[cursor] = btc_tx->outputs[i].amount;  //somehow value is only one hex digit
-    cursor = cursor + 1;
+
+    for(size_t k = 0; k < 8; k++){
+      btc_tx->tx_hash[cursor] = (btc_tx->outputs[i].amount >> k * 8);  //somehow value is only one hex digit
+      cursor = cursor + 1;
+    }
 
     //set script length
     btc_tx->tx_hash[cursor] = SCRIPT_LENGTH;
@@ -187,8 +193,16 @@ size_t compile_btc_tx_hash(BTC_Transaction* btc_tx, BitcoinTransactionInput* inp
   }
 
   //set locktime
-  memcpy(btc_tx->tx_hash + cursor, lock_time, VERSION_LENGTH);
-  cursor = cursor + VERSION_LENGTH;
+  for(size_t k = 0; k < VERSION_LENGTH; k++){
+    btc_tx->tx_hash[cursor] = (btc_tx->lock_time >> k * 8);
+    cursor = cursor + 1;
+  }
+
+  //set SIGHASH_ALL flag
+  for(size_t k = 0; k < VERSION_LENGTH; k++){
+    btc_tx->tx_hash[cursor] = (btc_tx->sigHash >> k * 8);
+    cursor = cursor + 1;
+  }
 
   return cursor;
 }

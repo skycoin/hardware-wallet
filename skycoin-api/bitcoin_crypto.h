@@ -17,7 +17,7 @@ typedef struct BTC_TxInput {
 
 typedef struct BTC_TxOutput {
   uint8_t address[25];
-  uint32_t amount;
+  uint64_t amount;
   uint32_t fee;
   bool has_change_address;
   uint32_t change_address_n;
@@ -30,15 +30,17 @@ typedef struct BTC_Transaction {
 
   uint32_t version;
   uint32_t current_nbIn;
-  uint32_t nbIn;
+  uint8_t nbIn;
   BTC_TxInput inputs[8];
 
   uint32_t sequence;
-  uint32_t nbOut;
+  uint8_t nbOut;
   uint32_t current_nbOut;
 
   BTC_TxOutput outputs[8];
   uint32_t lock_time;
+
+  uint32_t sigHash;
 
   uint8_t tx_hash[128];
   uint64_t requestIndex;
