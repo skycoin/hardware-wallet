@@ -53,6 +53,15 @@ int compile_locking_script(uint8_t* b58_addr, uint8_t* pubkeyhash){
   return 0;
 }
 
+int compile_unlocking_script(const uint8_t* signature, uint8_t* pubkey, uint8_t* script){
+  script[0] = 0x49;
+  memcpy(script + 1, signature, BITCOIN_DER_SIG_LEN);
+  script[BITCOIN_DER_SIG_LEN + 1] = 0x21;
+  script[BITCOIN_DER_SIG_LEN + 2] = 0x03;
+  memcpy(script + BITCOIN_DER_SIG_LEN + 3, pubkey, BITCOIN_PUBKEY_LEN);
+  return 0;
+}
+
 static BTC_Transaction btc_tx;
 
 BTC_Transaction* BTC_Transaction_Init(){

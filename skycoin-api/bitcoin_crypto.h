@@ -52,6 +52,8 @@ int bitcoin_address_from_pubkey(const uint8_t* pubkey, char* b58address, size_t*
 
 int compile_locking_script(uint8_t* b58_addr, uint8_t* pubkeyhash);
 
+int compile_unlocking_script(const uint8_t* signature, uint8_t* pubkey, uint8_t* script);
+
 BTC_Transaction* BTC_Transaction_Init(void);
 
 BTC_Transaction* BTC_Transaction_Get(void);
