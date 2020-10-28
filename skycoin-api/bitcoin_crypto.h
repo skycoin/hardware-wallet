@@ -11,6 +11,8 @@ typedef struct BTC_TxInput {
   uint32_t address_n;
   uint32_t prev_hash;
   uint32_t prev_index;
+  uint8_t pubkey[33];
+  uint8_t unlockScript[109];
   uint8_t sigScript[25];
   uint32_t value;
 } BTC_TxInput;
@@ -42,7 +44,7 @@ typedef struct BTC_Transaction {
 
   uint32_t sigHash;
 
-  uint8_t tx_hash[128];
+  uint8_t tx_hash[256];
   uint64_t requestIndex;
 } BTC_Transaction;
 
