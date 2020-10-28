@@ -17,4 +17,6 @@ ErrCode_t signBTC_tx(SignTx* msg, TxRequest* resp);
 
 ErrCode_t set_prev_outputs_script(BTC_Transaction* btc_tx);
 
-size_t compile_btc_tx_hash(BTC_Transaction* btc_tx, BitcoinTransactionInput* inputs);
+ErrCode_t getPubKey(uint8_t* seckey, uint8_t* pubkey, uint8_t address_n);
+
+size_t compile_btc_tx_hash(BTC_Transaction* btc_tx, BitcoinTransactionInput* inputs, uint8_t* hash, bool final_tx);

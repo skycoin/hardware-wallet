@@ -185,7 +185,7 @@ ErrCode_t msgBitcoinTxAckImpl(BitcoinTxAck *msg, TxRequest *resp) {
               return ErrFailed;
             }
 
-            size_t hash_len = compile_btc_tx_hash(btc_tx, msg->tx.inputs);
+            size_t hash_len = compile_btc_tx_hash(btc_tx, msg->tx.inputs, btc_tx->tx_hash, false);
 
             uint8_t first_tx_hash[32] = {0};
             uint8_t double_tx_hash[32] = {0};
@@ -202,11 +202,17 @@ ErrCode_t msgBitcoinTxAckImpl(BitcoinTxAck *msg, TxRequest *resp) {
                                                                      resp->sign_result[signCount].signature);
                 if (err != ErrOk)
                     return err;
+
+
                 resp->sign_result[signCount].has_signature = true;
                 resp->sign_result[signCount].has_signature_index = true;
                 resp->sign_result[signCount].signature_index = i;
                 signCount++;
-            }
+                compile_unlocking_script(fromhex(resp->sign_result[signCount - 1].signature),
+                                            btc_tx->inputs[i].pubkey,
+                                            btc_tx->inputs[i].unlockScript);
+                }
+
             btc_tx->current_nbIn += signCount;
             resp->sign_result_count = signCount;
             if (btc_tx->current_nbIn != btc_tx->nbIn)
@@ -218,6 +224,7 @@ ErrCode_t msgBitcoinTxAckImpl(BitcoinTxAck *msg, TxRequest *resp) {
         default:
             break;
     }
+    compile_btc_tx_hash(btc_tx, msg->tx.inputs, btc_tx->tx_hash, true);
     resp->has_details = true;
     resp->details.has_request_index = true;
     btc_tx->requestIndex++;
