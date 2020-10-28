@@ -45,9 +45,10 @@ int compile_locking_script(uint8_t* b58_addr, uint8_t* pubkeyhash){
 
   pubkeyhash[0] = BITCOIN_SCRIPT_OP_DUP;
   pubkeyhash[1] = BITCOIN_SCRIPT_OP_HASH160;
-  pubkeyhash[23] = BITCOIN_SCRIPT_OP_CHECKSIG;
-  pubkeyhash[24] = BITCOIN_SCRIPT_OP_EQUALVERIFY;
-  memcpy(pubkeyhash + 2, b58_addr + 1, 20);
+  pubkeyhash[2] = BITCOIN_PUSH_DATA;
+  pubkeyhash[23] = BITCOIN_SCRIPT_OP_EQUALVERIFY;
+  pubkeyhash[24] = BITCOIN_SCRIPT_OP_CHECKSIG;
+  memcpy(pubkeyhash + 3, b58_addr + 1, 20);
 
   return 0;
 }
