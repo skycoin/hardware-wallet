@@ -33,6 +33,7 @@
 
 typedef enum {
     HASHER_SHA2,
+    HASHER_SHA2D,
     HASHER_BLAKE,
 } HasherType;
 

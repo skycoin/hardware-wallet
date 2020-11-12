@@ -187,12 +187,10 @@ ErrCode_t msgBitcoinTxAckImpl(BitcoinTxAck *msg, TxRequest *resp) {
 
             size_t hash_len = compile_btc_tx_hash(btc_tx, msg->tx.inputs, btc_tx->tx_hash, false);
 
-            uint8_t first_tx_hash[32] = {0};
             uint8_t double_tx_hash[32] = {0};
 
-            sha256sum(btc_tx->tx_hash, first_tx_hash, hash_len);
-
-            sha256sum(first_tx_hash, double_tx_hash, 32);
+            hasher_Update(&(btc_tx->hasher), btc_tx->tx_hash, hash_len);
+            hasher_Final(&(btc_tx->hasher), double_tx_hash);
 
             uint8_t signCount = 0;
 

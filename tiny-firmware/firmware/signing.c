@@ -71,6 +71,7 @@ ErrCode_t signBTC_tx(SignTx* msg, TxRequest* resp){
   btc_tx->lock_time = msg->lock_time;
   btc_tx->nbIn = msg->inputs_count;
   btc_tx->nbOut = msg->outputs_count;
+  hasher_Init(&(btc_tx->hasher), HASHER_SHA2D);
   //memcpy(btc_tx->tx_hash, msg->tx_hash, 65 * sizeof(char));
   btc_tx->version = msg->version;
   btc_tx->sequence = SEQUENCE;

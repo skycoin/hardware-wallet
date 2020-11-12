@@ -28,6 +28,7 @@ void hasher_Init(Hasher* hasher, HasherType type)
 
     switch (hasher->type) {
     case HASHER_SHA2:
+    case HASHER_SHA2D:
         sha256_Init(&hasher->ctx.sha2);
         break;
     case HASHER_BLAKE:
@@ -45,6 +46,7 @@ void hasher_Update(Hasher* hasher, const uint8_t* data, size_t length)
 {
     switch (hasher->type) {
     case HASHER_SHA2:
+    case HASHER_SHA2D:
         sha256_Update(&hasher->ctx.sha2, data, length);
         break;
     case HASHER_BLAKE:
@@ -58,6 +60,10 @@ void hasher_Final(Hasher* hasher, uint8_t hash[HASHER_DIGEST_LENGTH])
     switch (hasher->type) {
     case HASHER_SHA2:
         sha256_Final(&hasher->ctx.sha2, hash);
+        break;
+    case HASHER_SHA2D:
+        sha256_Final(&hasher->ctx.sha2, hash);
+        hasher_Raw(HASHER_SHA2, hash, HASHER_DIGEST_LENGTH, hash);
         break;
     case HASHER_BLAKE:
         blake256_Final(&hasher->ctx.blake, hash);
