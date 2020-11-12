@@ -53,12 +53,12 @@ int compile_locking_script(uint8_t* b58_addr, uint8_t* pubkeyhash){
   return 0;
 }
 
-int compile_unlocking_script(const uint8_t* signature, uint8_t* pubkey, uint8_t* script){
-  script[0] = 0x49;
-  memcpy(script + 1, signature, BITCOIN_DER_SIG_LEN);
-  script[BITCOIN_DER_SIG_LEN + 1] = 0x21;
-  script[BITCOIN_DER_SIG_LEN + 2] = 0x03;
-  memcpy(script + BITCOIN_DER_SIG_LEN + 3, pubkey, BITCOIN_PUBKEY_LEN);
+int compile_unlocking_script(const uint8_t* signature, int siglen, uint8_t* pubkey, uint8_t* script){
+  script[0] = (uint8_t) siglen + 1;
+  memcpy(script + 1, signature, siglen);
+  script[siglen + 1] = 0x01;
+  script[siglen + 2] = 0x21;
+  memcpy(script + siglen + 3, pubkey, BITCOIN_PUBKEY_LEN);
   return 0;
 }
 

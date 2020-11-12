@@ -209,6 +209,7 @@ ErrCode_t msgBitcoinTxAckImpl(BitcoinTxAck *msg, TxRequest *resp) {
                 resp->sign_result[signCount].signature_index = i;
                 signCount++;
                 compile_unlocking_script(fromhex(resp->sign_result[signCount - 1].signature),
+                                            sizeof(resp->sign_result[signCount - 1].signature)/2
                                             btc_tx->inputs[i].pubkey,
                                             btc_tx->inputs[i].unlockScript);
                 }

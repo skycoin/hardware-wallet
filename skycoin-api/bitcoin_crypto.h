@@ -2,6 +2,7 @@
 #define BITCOIN_CRYPTO_H
 
 #include "tools/sha2.h"
+#include "tools/hasher.h"
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -12,6 +13,7 @@ typedef struct BTC_TxInput {
   uint32_t prev_hash;
   uint32_t prev_index;
   uint8_t pubkey[33];
+  uint8_t script_len;
   uint8_t unlockScript[109];
   uint8_t sigScript[25];
   uint32_t value;
@@ -29,6 +31,7 @@ typedef struct BTC_TxOutput {
 typedef struct BTC_Transaction {
   bool mnemonic_change;
   TxSignState state;
+  Hasher hasher;
 
   uint32_t version;
   uint32_t current_nbIn;
@@ -52,7 +55,7 @@ int bitcoin_address_from_pubkey(const uint8_t* pubkey, char* b58address, size_t*
 
 int compile_locking_script(uint8_t* b58_addr, uint8_t* pubkeyhash);
 
-int compile_unlocking_script(const uint8_t* signature, uint8_t* pubkey, uint8_t* script);
+int compile_unlocking_script(const uint8_t* signature, int siglen, uint8_t* pubkey, uint8_t* script);
 
 BTC_Transaction* BTC_Transaction_Init(void);
 
