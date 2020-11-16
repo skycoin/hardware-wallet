@@ -89,7 +89,7 @@ ErrCode_t msgSignBitcoinTransactionMessageImpl(uint8_t *message_digest, uint32_t
     uint8_t pubkey[BITCOIN_PUBKEY_LEN] = {0};
     uint8_t seckey[BITCOIN_SECKEY_LEN] = {0};
     uint8_t signature_rs[BITCOIN_RS_SIG_LEN];
-    uint8_t signature_der[BITCOIN_DER_SIG_LEN];
+    // uint8_t signature_der[BITCOIN_DER_SIG_LEN];
     ErrCode_t res = fsm_getKeyPairAtIndex(1, pubkey, seckey, NULL, index, &bitcoin_address_from_pubkey);
     if (res != ErrOk) {
         return res;
@@ -103,11 +103,11 @@ ErrCode_t msgSignBitcoinTransactionMessageImpl(uint8_t *message_digest, uint32_t
         // -> fail with an error
         return ErrFailed;
     }
-    int len = ecdsa_sig_to_der(signature_rs, signature_der);
-    tohex(signed_message, signature_der, len);
-#if EMULATOR
-    printf("Size_sign: %d, sig(hex): %s\n", len * 2, signed_message);
-#endif
+    // int len = ecdsa_sig_to_der(signature_rs, signature_der);
+    tohex(signed_message, signature_rs, BITCOIN_RS_SIG_LEN);
+// #if EMULATOR
+//     printf("Size_sign: %d, sig(hex): %s\n", len * 2, signed_message);
+// #endif
     return res;
 }
 
@@ -201,15 +201,20 @@ ErrCode_t msgBitcoinTxAckImpl(BitcoinTxAck *msg, TxRequest *resp) {
                 if (err != ErrOk)
                     return err;
 
+                uint8_t signature_rs[BITCOIN_RS_SIG_LEN];
+                uint8_t signature_der[BITCOIN_DER_SIG_LEN];
+                tobuff(resp->sign_result[signCount].signature, signature_rs, BITCOIN_RS_SIG_LEN);
+                int siglen = ecdsa_sig_to_der(signature_rs, signature_der);
+
+                compile_unlocking_script(signature_der, siglen,
+                                            btc_tx->inputs[i].pubkey,
+                                            btc_tx->inputs[i].unlockScript);
+
 
                 resp->sign_result[signCount].has_signature = true;
                 resp->sign_result[signCount].has_signature_index = true;
                 resp->sign_result[signCount].signature_index = i;
                 signCount++;
-                compile_unlocking_script(fromhex(resp->sign_result[signCount - 1].signature),
-                                            sizeof(resp->sign_result[signCount - 1].signature)/2
-                                            btc_tx->inputs[i].pubkey,
-                                            btc_tx->inputs[i].unlockScript);
                 }
 
             btc_tx->current_nbIn += signCount;
@@ -217,13 +222,17 @@ ErrCode_t msgBitcoinTxAckImpl(BitcoinTxAck *msg, TxRequest *resp) {
             if (btc_tx->current_nbIn != btc_tx->nbIn)
                 resp->request_type = TxRequest_RequestType_TXINPUT;
             else {
+                hash_len = compile_btc_tx_hash(btc_tx, msg->tx.inputs, btc_tx->tx_hash, true);
+                for(size_t k =0; k < hash_len; k++){
+                  printf("%02x", btc_tx->tx_hash[k]);
+                }
+                printf("\n");
                 resp->request_type = TxRequest_RequestType_TXFINISHED;
             }
             break;
         default:
             break;
     }
-    compile_btc_tx_hash(btc_tx, msg->tx.inputs, btc_tx->tx_hash, true);
     resp->has_details = true;
     resp->details.has_request_index = true;
     btc_tx->requestIndex++;
