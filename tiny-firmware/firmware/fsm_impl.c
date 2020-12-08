@@ -576,9 +576,77 @@ ErrCode_t msgSignTxImpl(SignTx *msg, TxRequest *resp) {
 
     msg->coin_name[7] = '\0';
     if(!strcmp(msg->coin_name, "Skycoin")) {
-        sign_tx(msg, resp);
+      TxSignContext *context = TxSignCtx_Get();
+      if (context->state != Destroyed) {
+          TxSignCtx_Destroy(context);
+          return ErrFailed;
+      }
+
+      // Init TxSignContext
+      context = TxSignCtx_Init();
+      if (context->mnemonic_change) {
+          TxSignCtx_Destroy(context);
+          return ErrFailed;
+      }
+      memcpy(context->coin_name, msg->coin_name, 36 * sizeof(char));
+
+      msg->coin_name[7] = '\0';
+      context->state = InnerHashInputs;
+
+      context->current_nbIn = 0;
+      context->current_nbOut = 0;
+      context->lock_time = msg->lock_time;
+      context->nbIn = msg->inputs_count;
+      context->nbOut = msg->outputs_count;
+      sha256_Init(&context->sha256_ctx);
+      memcpy(context->tx_hash, msg->tx_hash, 65 * sizeof(char));
+      context->version = msg->version;
+      context->has_innerHash = false;
+      context->requestIndex = 1;
+
+      // Init Inputs head on sha256
+      TxSignCtx_AddSizePrefix(context, msg->inputs_count);
+
+      // Build response TxRequest
+      resp->has_details = true;
+      resp->details.has_request_index = true;
+      resp->details.request_index = 1;
+      memcpy(resp->details.tx_hash, msg->tx_hash, 65 * sizeof(char));
+      resp->request_type = TxRequest_RequestType_TXINPUT;
     } else if (!strcmp(msg->coin_name, "Bitcoin")) {
-        signBTC_tx(msg, resp);
+      BTC_Transaction *btc_tx = BTC_Transaction_Get();
+      if(btc_tx->state != Destroyed){
+        BTC_Transaction_Destroy(btc_tx);
+        return ErrFailed;
+      }
+
+      // Init TxSignContext
+      btc_tx = BTC_Transaction_Init();
+      if (btc_tx->mnemonic_change) {
+          BTC_Transaction_Destroy(btc_tx);
+          return ErrFailed;
+      }
+      btc_tx->state = BTC_Outputs;
+
+      btc_tx->current_nbIn = 0;
+      btc_tx->current_nbOut = 0;
+      btc_tx->lock_time = msg->lock_time;
+      btc_tx->nbIn = msg->inputs_count;
+      btc_tx->nbOut = msg->outputs_count;
+      hasher_Init(&(btc_tx->hasher), HASHER_SHA2D);
+      //memcpy(btc_tx->tx_hash, msg->tx_hash, 65 * sizeof(char));
+      btc_tx->version = msg->version;
+      btc_tx->sequence = SEQUENCE;
+      btc_tx->sigHash = 1;
+      btc_tx->requestIndex = 1;
+
+      // Build response TxRequest
+      resp->has_details = true;
+      resp->details.has_request_index = true;
+      resp->details.request_index = 1;
+      memcpy(resp->details.tx_hash, msg->tx_hash, 65 * sizeof(char));
+
+      resp->request_type = TxRequest_RequestType_TXOUTPUT;
     }
     return ErrOk;
 }
