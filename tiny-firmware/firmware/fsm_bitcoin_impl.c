@@ -94,7 +94,7 @@ ErrCode_t msgSignBitcoinTransactionMessageImpl(uint8_t *message_digest, uint32_t
     if (res != ErrOk) {
         return res;
     }
-    int signres = skycoin_ecdsa_sign_digest(seckey, message_digest, signature_rs);
+    int signres = bitcoin_ecdsa_sign_digest(seckey, message_digest, signature_rs);
     if (signres == -2) {
         // Fail due to empty digest
         return ErrInvalidArg;
@@ -112,134 +112,182 @@ ErrCode_t msgSignBitcoinTransactionMessageImpl(uint8_t *message_digest, uint32_t
 }
 
 ErrCode_t msgBitcoinTxAckImpl(BitcoinTxAck *msg, TxRequest *resp) {
-    BTC_Transaction *btc_tx = BTC_Transaction_Get();
-    if (btc_tx->state != Start && btc_tx->state != BTC_Outputs && btc_tx->state != BTC_Signature) {
-        BTC_Transaction_Destroy(btc_tx);
-        return ErrInvalidArg;
-    }
+  TxSignContext* ctx = TxSignCtx_Get();
+  if (ctx->state != Start && ctx->state != BTC_Inputs && ctx->state != BTC_Outputs && ctx->state != BTC_Signature) {
+      TxSignCtx_Destroy(ctx);
+      return ErrInvalidArg;
+  }
 #if EMULATOR
-    switch (btc_tx->state) {
-        case BTC_Outputs:
-            printf("-> Outputs\n");
-            for (uint32_t i = 0; i < btc_tx->nbOut; ++i) {
-                printf("   %d - Output: coins: %" PRIu64 ", address: %s\n", i + 1, msg->tx.outputs[i].coin,
-                       msg->tx.outputs[i].address);
-            }
-            break;
-        case BTC_Signature:
-            printf("-> Signatures\n");
-            for (uint32_t i = 0; i < btc_tx->nbIn; ++i) {
-                printf("   %d - Input: prev_hash: ", i + 1);
+  switch (ctx->state) {
+      case BTC_Outputs:
+          printf("-> Outputs\n");
+          for (uint32_t i = 0; i < ctx->nbOut; ++i) {
+              printf("   %d - Output: coins: %" PRIu64 ", address: %s\n", i + 1, msg->tx.outputs[i].coin,
+                     msg->tx.outputs[i].address);
+          }
+          break;
+      case BTC_Inputs:
+          printf("-> Inputs\n");
+          for (uint32_t i = 0; i < ctx->nbIn; ++i) {
+              printf("   %d - Input: prev_hash: ", i + 1);
 
-                for(int byte = 0; byte < 32; byte++){
-                    printf("%x", msg->tx.inputs[i].prev_hash.bytes[byte]);
-                }
-                printf("\n");
-            }
-            break;
-        default:
-            printf("-> Unexpected: %d\n", btc_tx->state);
-            break;
-    }
+              for(int byte = 0; byte < 32; byte++){
+                  printf("%x", msg->tx.inputs[i].prev_hash.bytes[byte]);
+              }
+              printf("\n");
+          }
+          break;
+      default:
+          printf("-> Unexpected: %d\n", ctx->state);
+          break;
+  }
 #endif
-    if (btc_tx->mnemonic_change) {
-        BTC_Transaction_Destroy(btc_tx);
-        return ErrFailed;
-    }
-    switch (btc_tx->state) {
-        case BTC_Outputs:
-            if (!msg->tx.outputs_count || msg->tx.inputs_count) {
-                BTC_Transaction_Destroy(btc_tx);
-                return ErrInvalidArg;
-            }
-            for (uint8_t i = 0; i < msg->tx.outputs_count; ++i) {
+  if (ctx->mnemonic_change) {
+      TxSignCtx_Destroy(ctx);
+      return ErrFailed;
+  }
+
+  uint8_t bin_address[36] = {0};
+  uint8_t pubkeyhash[25] = {0};
+
+  switch (ctx->state) {
+      case BTC_Inputs:
+          printf("OutputsCnt: %d, InputsCnt: %d\n", msg->tx.outputs_count,
+                            msg->tx.inputs_count);
+
+          if (!msg->tx.inputs_count || msg->tx.outputs_count) {
+            TxSignCtx_Destroy(ctx);
+            return ErrInvalidArg;
+          }
+
+          uint8_t sequence[4] = {0};
+
+          BTC_TxAddPrefix(&(ctx->hasher), ctx->version);
+          //set number of inputs
+          hasher_Update(&(ctx->hasher), &(ctx->nbIn), 1);
+
+          for(size_t i = 0; i < msg->tx.inputs_count; i++){
+
+              //calculate PKH
+              get_pubkeyhash(pubkeyhash, msg->tx.inputs[i].address_n - 1);
+              BTC_TxUpdateInput(&(ctx->hasher), msg->tx.inputs, pubkeyhash, i);
+              ctx->current_nbIn++;
+          }
+
+          //set sequence
+          for(size_t k = 0; k < VERSION_LENGTH; k++){
+            sequence[k] = 0xff;
+          }
+
+          hasher_Update(&(ctx->hasher), sequence, VERSION_LENGTH);
+
+          if (ctx->current_nbIn != ctx->nbIn) {
+
+              resp->request_type = TxRequest_RequestType_TXINPUT;
+
+          } else {
+
+              ctx->current_nbOut = 0;
+              resp->request_type = TxRequest_RequestType_TXOUTPUT;
+              ctx->state = BTC_Outputs;
+
+          }
+
+          break;
+      case BTC_Outputs:
+        if (!msg->tx.outputs_count || msg->tx.inputs_count) {
+          TxSignCtx_Destroy(ctx);
+          return ErrInvalidArg;
+        }
+
+        uint8_t lock_time[VERSION_LENGTH] = {0};
+        uint8_t sigHashAll[4] = {0x01, 0x00, 0x00, 0x00};
+
+        //set number of inputs
+        hasher_Update(&(ctx->hasher), &(ctx->nbOut), 1);
+
+        for (uint8_t i = 0; i < msg->tx.outputs_count; ++i) {
 #if !EMULATOR
-                ErrCode_t err = reqConfirmBitcoinTransaction(msg->tx.outputs[i].coin, msg->tx.outputs[i].address);
-                if (err != ErrOk)
-                    return err;
+          ErrCode_t err = reqConfirmBitcoinTransaction(msg->tx.outputs[i].coin, msg->tx.outputs[i].address);
+          if (err != ErrOk)
+            return err;
 #endif
-                btc_tx->outputs[i].amount = msg->tx.outputs[i].coin;
+          size_t len = 36;
+          uint8_t b58string[36];
 
-                size_t len = 36;
-                uint8_t b58string[36];
-                b58tobin(b58string, &len, msg->tx.outputs[i].address);
-                memcpy(btc_tx->outputs[i].address, &b58string[36 - len], len);
-                compile_locking_script(btc_tx->outputs[i].address, btc_tx->outputs[i].lockScript);
-                btc_tx->current_nbOut++;
-            }
-            if (btc_tx->current_nbOut != btc_tx->nbOut) {
-                resp->request_type = TxRequest_RequestType_TXOUTPUT;
-            } else {
-                btc_tx->state = BTC_Signature;
-                btc_tx->current_nbIn = 0;
-                resp->request_type = TxRequest_RequestType_TXINPUT;
-            }
-            break;
-        case BTC_Signature:
-            if (!msg->tx.inputs_count || msg->tx.outputs_count) {
-                BTC_Transaction_Destroy(btc_tx);
-                return ErrInvalidArg;
-            }
-            if(ErrOk != set_prev_outputs_script(btc_tx)){
-              BTC_Transaction_Destroy(btc_tx);
-              return ErrFailed;
-            }
+          //compute pubkeyhash
+          b58tobin(b58string, &len, msg->tx.outputs[i].address);
+          memcpy(bin_address, &b58string[36 - len], len);
+          compile_script(bin_address + 1, pubkeyhash);
+          memset(bin_address, 0, 25);
+          //update output in hasher
+          BTC_TxUpdateOutput(&(ctx->hasher), msg->tx.outputs, pubkeyhash, i);
+          ctx->current_nbOut++;
 
-            size_t hash_len = compile_btc_tx_hash(btc_tx, msg->tx.inputs, btc_tx->tx_hash, false);
+        }
 
-            uint8_t double_tx_hash[32] = {0};
+        //set locktime
+        for(size_t k = 0; k < VERSION_LENGTH; k++){
 
-            hasher_Update(&(btc_tx->hasher), btc_tx->tx_hash, hash_len);
-            hasher_Final(&(btc_tx->hasher), double_tx_hash);
-
-            uint8_t signCount = 0;
-
-            for (uint8_t i = 0; i < btc_tx->nbIn; ++i) {
-                ErrCode_t err = msgSignBitcoinTransactionMessageImpl(double_tx_hash,
-                                                                     msg->tx.inputs[i].index,
-                                                                     resp->sign_result[signCount].signature);
-                if (err != ErrOk)
-                    return err;
-
-                uint8_t signature_rs[BITCOIN_RS_SIG_LEN];
-                uint8_t signature_der[BITCOIN_DER_SIG_LEN];
-                tobuff(resp->sign_result[signCount].signature, signature_rs, BITCOIN_RS_SIG_LEN);
-                int siglen = ecdsa_sig_to_der(signature_rs, signature_der);
-
-                compile_unlocking_script(signature_der, siglen,
-                                            btc_tx->inputs[i].pubkey,
-                                            btc_tx->inputs[i].unlockScript);
+          lock_time[k] = (ctx->lock_time >> k * 8);
 
 
-                resp->sign_result[signCount].has_signature = true;
-                resp->sign_result[signCount].has_signature_index = true;
-                resp->sign_result[signCount].signature_index = i;
-                signCount++;
-                }
+        }
 
-            btc_tx->current_nbIn += signCount;
-            resp->sign_result_count = signCount;
-            if (btc_tx->current_nbIn != btc_tx->nbIn)
-                resp->request_type = TxRequest_RequestType_TXINPUT;
-            else {
-                hash_len = compile_btc_tx_hash(btc_tx, msg->tx.inputs, btc_tx->tx_hash, true);
-                for(size_t k =0; k < hash_len; k++){
-                  printf("%02x", btc_tx->tx_hash[k]);
-                }
-                printf("\n");
-                resp->request_type = TxRequest_RequestType_TXFINISHED;
-            }
-            break;
-        default:
-            break;
-    }
-    resp->has_details = true;
-    resp->details.has_request_index = true;
-    btc_tx->requestIndex++;
-    resp->details.request_index = btc_tx->requestIndex;
-    resp->details.has_tx_hash = true;
-    // memcpy(resp->details.tx_hash, ctx->tx_hash, strlen(ctx->tx_hash) * sizeof(char));
-    if (resp->request_type == TxRequest_RequestType_TXFINISHED)
-        BTC_Transaction_Destroy(btc_tx);
-    return ErrOk;
+        hasher_Update(&(ctx->hasher), lock_time, VERSION_LENGTH);
+
+        //set SIGHASH_ALL flag
+        hasher_Update(&(ctx->hasher), sigHashAll, 4);
+
+
+        if (ctx->current_nbOut != ctx->nbOut) {
+            resp->request_type = TxRequest_RequestType_TXOUTPUT;
+        } else {
+            ctx->state = BTC_Signature;
+            ctx->current_nbIn = 0;
+            resp->request_type = TxRequest_RequestType_TXINPUT;
+        }
+        break;
+      case BTC_Signature:
+        if (!msg->tx.inputs_count || msg->tx.outputs_count) {
+          TxSignCtx_Destroy(ctx);
+          return ErrInvalidArg;
+        }
+
+          uint8_t double_tx_hash[32] = {0};
+          hasher_Final(&(ctx->hasher), double_tx_hash);
+          uint8_t signCount = 0;
+
+          for (uint8_t i = 0; i < ctx->nbIn; ++i) {
+              ErrCode_t err = msgSignBitcoinTransactionMessageImpl(double_tx_hash,
+                                                                   msg->tx.inputs[i].index,
+                                                                   resp->sign_result[signCount].signature);
+              if (err != ErrOk)
+                  return err;
+
+              resp->sign_result[signCount].has_signature = true;
+              resp->sign_result[signCount].has_signature_index = true;
+              resp->sign_result[signCount].signature_index = i;
+              signCount++;
+              }
+
+          ctx->current_nbIn += signCount;
+          resp->sign_result_count = signCount;
+          if (ctx->current_nbIn != ctx->nbIn)
+              resp->request_type = TxRequest_RequestType_TXINPUT;
+          else {
+              resp->request_type = TxRequest_RequestType_TXFINISHED;
+          }
+          break;
+      default:
+          break;
+  }
+  resp->has_details = true;
+  resp->details.has_request_index = true;
+  ctx->requestIndex++;
+  resp->details.request_index = ctx->requestIndex;
+  resp->details.has_tx_hash = true;
+  if (resp->request_type == TxRequest_RequestType_TXFINISHED)
+      TxSignCtx_Destroy(ctx);
+  return ErrOk;
 }

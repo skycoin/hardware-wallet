@@ -13,6 +13,7 @@
 #define SKYCOIN_CRYPTO_H
 
 #include "tools/sha2.h"
+#include "tools/hasher.h"
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -41,6 +42,7 @@ typedef enum {
     InnerHashInputs,
     InnerHashOutputs,
     Signature,
+    BTC_Inputs,
     BTC_Outputs,
     BTC_Signature
 } TxSignState;
@@ -60,6 +62,7 @@ typedef struct _TxSignContext {
     uint8_t innerHash[32];
     uint64_t requestIndex;
     SHA256_CTX sha256_ctx;
+    Hasher hasher;
 } TxSignContext;
 
 void transaction_initZeroTransaction(Transaction* self);

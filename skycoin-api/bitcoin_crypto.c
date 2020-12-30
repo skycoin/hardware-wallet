@@ -59,6 +59,18 @@ int bitcoin_ecdsa_sign_digest(const uint8_t* priv_key, const uint8_t* digest, ui
     return ret;
 }
 
+int compile_script(uint8_t* pubkeyhash, uint8_t* script){
+
+  script[0] = BITCOIN_SCRIPT_OP_DUP;
+  script[1] = BITCOIN_SCRIPT_OP_HASH160;
+  script[2] = BITCOIN_PUSH_DATA;
+  script[23] = BITCOIN_SCRIPT_OP_EQUALVERIFY;
+  script[24] = BITCOIN_SCRIPT_OP_CHECKSIG;
+  memcpy(script + 3, pubkeyhash, 20);
+
+  return 0;
+}
+
 int compile_locking_script(uint8_t* b58_addr, uint8_t* pubkeyhash){
 
   pubkeyhash[0] = BITCOIN_SCRIPT_OP_DUP;

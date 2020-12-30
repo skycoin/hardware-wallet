@@ -10,6 +10,15 @@
 #define LOCKTIME_LENGTH 4
 #define SEQUENCE 0xffffffff
 
+ErrCode_t get_pubkeyhash(uint8_t* pubkeyhash, uint8_t address_n);
+
+void BTC_TxAddPrefix(Hasher* hasher, uint32_t version);
+
+void BTC_TxUpdateInput(Hasher* hasher, BitcoinTransactionInput* inputs,
+                        uint8_t* pubkeyhash, size_t i);
+
+void BTC_TxUpdateOutput(Hasher* hasher, BitcoinTransactionOutput* outputs,
+                        uint8_t* pubkeyhash, size_t i);
 
 ErrCode_t sign_tx(SignTx* msg, TxRequest* resp);
 
