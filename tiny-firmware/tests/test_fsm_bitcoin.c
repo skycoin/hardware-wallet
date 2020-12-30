@@ -253,7 +253,7 @@ START_TEST(test_BitcoinTransactionMoreInputsThanOutputs){
   sign_tx.lock_time = 0;
   TxRequest response = TxRequest_init_default;
   ck_assert_int_eq(msgSignTxImpl(&sign_tx, &response), ErrOk);
-  ck_assert_int_eq(response.request_type, TxRequest_RequestType_TXOUTPUT);
+  ck_assert_int_eq(response.request_type, TxRequest_RequestType_TXINPUT);
   ck_assert_int_eq(response.has_details, true);
   ck_assert_int_eq(response.details.request_index, 1);
 
@@ -314,7 +314,7 @@ START_TEST(test_BitcoinTransactionChangeMnemonic){
   sign_tx.lock_time = 0;
   TxRequest response = TxRequest_init_default;
   ck_assert_int_eq(msgSignTxImpl(&sign_tx, &response), ErrOk);
-  ck_assert_int_eq(response.request_type, TxRequest_RequestType_TXOUTPUT);
+  ck_assert_int_eq(response.request_type, TxRequest_RequestType_TXINPUT);
   ck_assert_int_eq(response.has_details, true);
   ck_assert_int_eq(response.details.request_index, 1);
 
@@ -371,7 +371,7 @@ START_TEST(test_BitcoinTransactionSignNoData){
   sign_tx.lock_time = 0;
   TxRequest response = TxRequest_init_default;
   ck_assert_int_eq(msgSignTxImpl(&sign_tx, &response), ErrOk);
-  ck_assert_int_eq(response.request_type, TxRequest_RequestType_TXOUTPUT);
+  ck_assert_int_eq(response.request_type, TxRequest_RequestType_TXINPUT);
   ck_assert_int_eq(response.has_details, true);
   ck_assert_int_eq(response.details.request_index, 1);
 
