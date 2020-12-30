@@ -41,6 +41,24 @@ int bitcoin_address_from_pubkey(const uint8_t* pubkey, char* b58address, size_t*
     return 0;
 }
 
+int bitcoin_ecdsa_sign_digest(const uint8_t* priv_key, const uint8_t* digest, uint8_t* sig)
+{
+    int ret;
+    const curve_info* curve = get_curve_by_name(SECP256K1_NAME);
+    uint8_t recid = 0;
+#if USE_RFC6979
+    ret = ecdsa_sign_deterministic_digest(curve->params, priv_key, digest, sig, &recid, NULL);
+#else
+    ret = ecdsa_sign_digest(curve->params, priv_key, digest, sig, &recid, NULL);
+#endif
+    if (recid >= 4) {
+        // This should never happen; we can abort() here, as a sanity check
+        return -3;
+    }
+    sig[64] = recid;
+    return ret;
+}
+
 int compile_locking_script(uint8_t* b58_addr, uint8_t* pubkeyhash){
 
   pubkeyhash[0] = BITCOIN_SCRIPT_OP_DUP;

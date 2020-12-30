@@ -53,6 +53,8 @@ typedef struct BTC_Transaction {
 
 int bitcoin_address_from_pubkey(const uint8_t* pubkey, char* b58address, size_t* size_b58address);
 
+int bitcoin_ecdsa_sign_digest(const uint8_t* priv_key, const uint8_t* digest, uint8_t* sig);
+
 int compile_locking_script(uint8_t* b58_addr, uint8_t* pubkeyhash);
 
 int compile_unlocking_script(const uint8_t* signature, int siglen, uint8_t* pubkey, uint8_t* script);
