@@ -222,6 +222,174 @@ START_TEST(test_msgBitcoinAddressesFailWithoutMnemonic)
 }
 END_TEST
 
+/**
+ * Test cases : BitcoinAddresses
+ */
+
+ static void fill_txids(BitcoinTransactionInput inputs[], char* txids[], int txids_n){
+  uint8_t hex_raw_tx[32] = {0};
+  for(int iter = 0; iter < txids_n; iter++){
+    tobuff(txids[iter], hex_raw_tx, 32);
+    memcpy(inputs[iter].prev_hash.bytes, hex_raw_tx, 32);
+    memset(hex_raw_tx, 0, 32);
+  }
+}
+
+
+START_TEST(test_BitcoinTransactionMoreInputsThanOutputs){
+  SetMnemonic mnemonic = SetMnemonic_init_zero;
+  char mnemonic_str[] = {"network hurdle trash obvious soccer sunset side merit horn author horn you"};
+  memcpy(mnemonic.mnemonic, mnemonic_str, sizeof(mnemonic_str));
+  ck_assert_int_eq(msgSetMnemonicImpl(&mnemonic), ErrOk);
+
+  SignTx sign_tx = SignTx_init_default;
+  sign_tx.outputs_count = 2;
+  sign_tx.inputs_count = 3;
+  sign_tx.has_coin_name = true;
+  strcpy((char *) sign_tx.coin_name, "Bitcoin");
+  sign_tx.has_version = true;
+  sign_tx.version = 1;
+  sign_tx.has_lock_time = true;
+  sign_tx.lock_time = 0;
+  TxRequest response = TxRequest_init_default;
+  ck_assert_int_eq(msgSignTxImpl(&sign_tx, &response), ErrOk);
+  ck_assert_int_eq(response.request_type, TxRequest_RequestType_TXINPUT);
+  ck_assert_int_eq(response.has_details, true);
+  ck_assert_int_eq(response.details.request_index, 1);
+
+  BitcoinTxAck tx_ack = BitcoinTxAck_init_default;
+
+  char *txids[] = {
+    "dec6c7e07b66e88053a721dba3e5a379766ba7dd11f654b53dd6b2b28d37c4",
+    "dec6c7e07b66e88053a721dba3e5a379766ba7dd11f654b53dd6b2b28d37c4",
+    "dec6c7e07b66e88053a721dba3e5a379766ba7dd11f654b53dd6b2b28d37c4"
+  };
+
+  BitcoinTransactionInput inputs1[] = {
+    {.address_n = 1,
+     .index = 1,
+     .value = 100000},
+    {.address_n = 1,
+     .index = 2,
+     .value = 100000},
+    {.address_n = 1,
+     .index = 3,
+     .value = 100000}
+   };
+
+   fill_txids(inputs1, txids, 3);
+
+  BitcoinTransactionOutput outputs1[] = {
+    {
+      .address = "mvQrmmzFroQS9Z6vZ8J4YGBjGWuACbiQ72",
+      .coin = 80000
+    },
+    {
+      .address = "mhQftxKfYHD22MVFheUyRtoMq3RAjNcXuy",
+      .coin = 10000
+    }
+  };
+
+  memcpy(tx_ack.tx.inputs, inputs1, sizeof(inputs1));
+  memcpy(tx_ack.tx.outputs, outputs1, sizeof(outputs1));
+  ck_assert_int_eq(msgBitcoinTxAckImpl(&tx_ack, &response), ErrInvalidArg);
+}
+END_TEST
+
+
+START_TEST(test_BitcoinTransactionChangeMnemonic){
+  SetMnemonic mnemonic = SetMnemonic_init_zero;
+  char mnemonic_str[] = {"network hurdle trash obvious soccer sunset side merit horn author horn you"};
+  memcpy(mnemonic.mnemonic, mnemonic_str, sizeof(mnemonic_str));
+  ck_assert_int_eq(msgSetMnemonicImpl(&mnemonic), ErrOk);
+
+  SignTx sign_tx = SignTx_init_default;
+  sign_tx.outputs_count = 2;
+  sign_tx.inputs_count = 1;
+  sign_tx.has_coin_name = true;
+  strcpy((char *) sign_tx.coin_name, "Bitcoin");
+  sign_tx.has_version = true;
+  sign_tx.version = 1;
+  sign_tx.has_lock_time = true;
+  sign_tx.lock_time = 0;
+  TxRequest response = TxRequest_init_default;
+  ck_assert_int_eq(msgSignTxImpl(&sign_tx, &response), ErrOk);
+  ck_assert_int_eq(response.request_type, TxRequest_RequestType_TXINPUT);
+  ck_assert_int_eq(response.has_details, true);
+  ck_assert_int_eq(response.details.request_index, 1);
+
+  char nemonic_str[] = {"all all all all all all all all all all all all"};
+  memcpy(mnemonic.mnemonic, nemonic_str, sizeof(nemonic_str));
+  ck_assert_int_eq(msgSetMnemonicImpl(&mnemonic), ErrOk);
+
+  BitcoinTxAck tx_ack = BitcoinTxAck_init_default;
+
+  BitcoinTransactionInput inputs1[] = {
+    {.address_n = 1,
+     .index = 1,
+     .value = 31000000}
+   };
+
+   uint8_t hex_txid[32] = {0};
+   tobuff("e5040e1bc1ae7667ffb9e5248e90b2fb93cd9150234151ce90e14ab2f5933bcd", hex_txid, 32);
+
+   memcpy(inputs1[0].prev_hash.bytes, hex_txid, 32);
+
+   BitcoinTransactionOutput outputs1[] = {
+     {
+       .address = "msj42CCGruhRsFrGATiUuh25dtxYtnpbTx",
+       .coin = 30090000
+     },
+     {
+       .address = "mm6kLYbGEL1tGe4ZA8xacfgRPdW1NLjCbZ",
+       .coin = 900000
+     }
+   };
+
+   memcpy(tx_ack.tx.outputs, outputs1, sizeof(outputs1));
+   tx_ack.tx.outputs_cnt = 2;
+   tx_ack.tx.inputs_cnt = 0;
+   ck_assert_int_eq(msgBitcoinTxAckImpl(&tx_ack, &response), ErrFailed);
+
+}
+END_TEST
+
+START_TEST(test_BitcoinTransactionSignNoData){
+  SetMnemonic mnemonic = SetMnemonic_init_zero;
+  char mnemonic_str[] = {"network hurdle trash obvious soccer sunset side merit horn author horn you"};
+  memcpy(mnemonic.mnemonic, mnemonic_str, sizeof(mnemonic_str));
+  ck_assert_int_eq(msgSetMnemonicImpl(&mnemonic), ErrOk);
+
+  SignTx sign_tx = SignTx_init_default;
+  sign_tx.outputs_count = 14;
+  sign_tx.inputs_count = 14;
+  sign_tx.has_coin_name = true;
+  strcpy((char *) sign_tx.coin_name, "Bitcoin");
+  sign_tx.has_version = true;
+  sign_tx.version = 1;
+  sign_tx.has_lock_time = true;
+  sign_tx.lock_time = 0;
+  TxRequest response = TxRequest_init_default;
+  ck_assert_int_eq(msgSignTxImpl(&sign_tx, &response), ErrOk);
+  ck_assert_int_eq(response.request_type, TxRequest_RequestType_TXINPUT);
+  ck_assert_int_eq(response.has_details, true);
+  ck_assert_int_eq(response.details.request_index, 1);
+
+  sign_tx.outputs_count = 14;
+  sign_tx.inputs_count = 14;
+  sign_tx.has_coin_name = true;
+  strcpy(sign_tx.coin_name, "Bitcoin");
+  sign_tx.has_version = true;
+  sign_tx.version = 1;
+  sign_tx.has_lock_time = true;
+  sign_tx.lock_time = 3;
+  sign_tx.has_tx_hash = false;
+
+  ck_assert_int_eq(msgSignTxImpl(&sign_tx, &response), ErrFailed);
+
+}
+END_TEST
+
 
 TCase* add_fsm_bitcoin_tests(TCase* tc)
 {
@@ -232,5 +400,8 @@ TCase* add_fsm_bitcoin_tests(TCase* tc)
   tcase_add_test(tc, test_msgBitcoinAddressesStartIndexEmptyPassphrase);
   tcase_add_test(tc, test_msgBitcoinAddressesTooMany);
   tcase_add_test(tc, test_msgBitcoinAddressesFailWithoutMnemonic);
+  tcase_add_test(tc, test_BitcoinTransactionMoreInputsThanOutputs);
+  tcase_add_test(tc, test_BitcoinTransactionChangeMnemonic);
+  tcase_add_test(tc, test_BitcoinTransactionSignNoData);
   return tc;
 }

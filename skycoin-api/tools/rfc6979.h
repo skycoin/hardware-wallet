@@ -1,5 +1,7 @@
 /**
- * Copyright (c) 2017 Saleem Rashid
+ * Copyright (c) 2013-2014 Tomas Dzetkulic
+ * Copyright (c) 2013-2014 Pavol Rusnak
+ * Copyright (c) 2015-2017 Jochen Hoenicke
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the "Software"),
@@ -20,38 +22,19 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef __HASHER_H__
-#define __HASHER_H__
+#ifndef __RFC6979_H__
+#define __RFC6979_H__
 
-#include <stddef.h>
 #include <stdint.h>
+#include "bignum.h"
+#include "hmac_drbg.h"
 
-#include "blake256.h"
-#include "sha2.h"
+// rfc6979 pseudo random number generator state
+typedef HMAC_DRBG_CTX rfc6979_state;
 
-#define HASHER_DIGEST_LENGTH 32
-
-typedef enum {
-    HASHER_SHA2,
-    HASHER_SHA2D,
-    HASHER_BLAKE,
-} HasherType;
-
-typedef struct {
-    HasherType type;
-
-    union {
-        SHA256_CTX sha2;
-        BLAKE256_CTX blake;
-    } ctx;
-} Hasher;
-
-void hasher_Init(Hasher* hasher, HasherType type);
-void hasher_Reset(Hasher* hasher);
-void hasher_Update(Hasher* hasher, const uint8_t* data, size_t length);
-void hasher_Final(Hasher* hasher, uint8_t hash[HASHER_DIGEST_LENGTH]);
-void hasher_Double(Hasher* hasher, uint8_t hash[HASHER_DIGEST_LENGTH]);
-
-void hasher_Raw(HasherType type, const uint8_t* data, size_t length, uint8_t hash[HASHER_DIGEST_LENGTH]);
+void init_rfc6979(const uint8_t *priv_key, const uint8_t *hash,
+                  rfc6979_state *rng);
+void generate_rfc6979(uint8_t rnd[32], rfc6979_state *rng);
+void generate_k_rfc6979(bignum256 *k, rfc6979_state *rng);
 
 #endif

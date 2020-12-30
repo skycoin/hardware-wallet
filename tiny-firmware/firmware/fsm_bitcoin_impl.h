@@ -25,5 +25,8 @@
 #include "tiny-firmware/firmware/error.h"
 
 ErrCode_t msgBitcoinAddressImpl(BitcoinAddress *msg, ResponseSkycoinAddress *resp);
+ErrCode_t reqConfirmBitcoinTransaction(uint64_t coins, char *address);
+ErrCode_t msgSignBitcoinTransactionMessageImpl(uint8_t *message_digest, uint32_t index, char *signed_message);
+ErrCode_t msgBitcoinTxAckImpl(BitcoinTxAck *msg, TxRequest *resp);
 
 #endif

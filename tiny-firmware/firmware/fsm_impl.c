@@ -32,11 +32,13 @@
 #include "tiny-firmware/firmware/protect.h"
 #include "tiny-firmware/firmware/recovery.h"
 #include "tiny-firmware/firmware/reset.h"
+#include "tiny-firmware/firmware/signing.h"
 #include "tiny-firmware/memory.h"
 #include "tiny-firmware/usb.h"
 #include "tiny-firmware/util.h"
 #include "skycoin-crypto/skycoin_constants.h"
 #include "skycoin-crypto/skycoin_crypto.h"
+#include "skycoin-crypto/bitcoin_crypto.h"
 #include "skycoin-crypto/skycoin_signature.h"
 #include "tiny-firmware/firmware/skyparams.h"
 
@@ -567,23 +569,41 @@ ErrCode_t msgRecoveryDeviceImpl(RecoveryDevice *msg, ErrCode_t (*funcConfirmReco
 
 ErrCode_t msgSignTxImpl(SignTx *msg, TxRequest *resp) {
 #if EMULATOR
-    printf("%s: %d. nbOut: %d\n",
+    printf("%s: %d. nbOut: %d coin: %s\n",
            _("Transaction signed nbIn"),
-           msg->inputs_count, msg->outputs_count);
+           msg->inputs_count, msg->outputs_count, msg->coin_name);
 #endif
+
+    msg->coin_name[7] = '\0';
+
     TxSignContext *context = TxSignCtx_Get();
+
     if (context->state != Destroyed) {
         TxSignCtx_Destroy(context);
         return ErrFailed;
     }
     // Init TxSignContext
     context = TxSignCtx_Init();
+
     if (context->mnemonic_change) {
         TxSignCtx_Destroy(context);
         return ErrFailed;
     }
+
     memcpy(context->coin_name, msg->coin_name, 36 * sizeof(char));
-    context->state = InnerHashInputs;
+
+    if(!strcmp(msg->coin_name, "Skycoin")){
+
+      context->state = InnerHashInputs;
+      sha256_Init(&context->sha256_ctx);
+
+    }else if(!strcmp(msg->coin_name, "Bitcoin")){
+
+      context->state = BTC_Inputs;
+      hasher_Init(&context->hasher, HASHER_SHA2D);
+
+    }
+
     context->current_nbIn = 0;
     context->current_nbOut = 0;
     context->lock_time = msg->lock_time;
@@ -604,6 +624,7 @@ ErrCode_t msgSignTxImpl(SignTx *msg, TxRequest *resp) {
     resp->details.request_index = 1;
     memcpy(resp->details.tx_hash, msg->tx_hash, 65 * sizeof(char));
     resp->request_type = TxRequest_RequestType_TXINPUT;
+
     return ErrOk;
 }
 
@@ -769,11 +790,5 @@ ErrCode_t msgTxAckImpl(TxAck *msg, TxRequest *resp) {
     memcpy(resp->details.tx_hash, ctx->tx_hash, strlen(ctx->tx_hash) * sizeof(char));
     if (resp->request_type == TxRequest_RequestType_TXFINISHED)
         TxSignCtx_Destroy(ctx);
-    return ErrOk;
-}
-
-ErrCode_t msgBitcoinTxAckImpl(BitcoinTxAck *msg, TxRequest *resp) {
-    UNUSED(msg);
-    UNUSED(resp);
     return ErrOk;
 }

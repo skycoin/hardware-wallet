@@ -1,4 +1,5 @@
 #include "skycoin_crypto.h"
+#include "bitcoin_crypto.h"
 
 #include <stdio.h> //sprintf
 #include <string.h>
@@ -38,4 +39,34 @@ int bitcoin_address_from_pubkey(const uint8_t* pubkey, char* b58address, size_t*
         return 1;
     }
     return 0;
+}
+
+int bitcoin_ecdsa_sign_digest(const uint8_t* priv_key, const uint8_t* digest, uint8_t* sig)
+{
+    int ret;
+    const curve_info* curve = get_curve_by_name(SECP256K1_NAME);
+    uint8_t recid = 0;
+#if USE_RFC6979
+    ret = ecdsa_sign_deterministic_digest(curve->params, priv_key, digest, sig, &recid, NULL);
+#else
+    ret = ecdsa_sign_digest(curve->params, priv_key, digest, sig, &recid, NULL);
+#endif
+    if (recid >= 4) {
+        // This should never happen; we can abort() here, as a sanity check
+        return -3;
+    }
+    sig[64] = recid;
+    return ret;
+}
+
+int compile_script(uint8_t* pubkeyhash, uint8_t* script){
+
+  script[0] = BITCOIN_SCRIPT_OP_DUP;
+  script[1] = BITCOIN_SCRIPT_OP_HASH160;
+  script[2] = BITCOIN_PUSH_DATA;
+  script[23] = BITCOIN_SCRIPT_OP_EQUALVERIFY;
+  script[24] = BITCOIN_SCRIPT_OP_CHECKSIG;
+  memcpy(script + 3, pubkeyhash, 20);
+
+  return 0;
 }

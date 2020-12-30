@@ -85,8 +85,6 @@ ErrCode_t msgSignTxImpl(SignTx *msg, TxRequest *resp);
 
 ErrCode_t msgTxAckImpl(TxAck *msg, TxRequest *resp);
 
-ErrCode_t msgBitcoinTxAckImpl(BitcoinTxAck *msg, TxRequest *resp);
-
 ErrCode_t reqConfirmTransaction(uint64_t coins, uint64_t hours, char *address);
 
 #endif // __TINYFIRMWARE_FIRMWARE_FSMIMPL_H__
