@@ -19,5 +19,4 @@ sudo apt-get install -y build-essential curl unzip git python3 python3-pip pytho
 wget -qO- https://developer.arm.com/-/media/Files/downloads/gnu-rm/6-2017q2/gcc-arm-none-eabi-6-2017-q2-update-linux.tar.bz2 | tar xjf - -C /opt
 
 # Install SDL
-sudo apt-get install -y libegl1-mesa-dev libgles2-mesa-dev libsdl2-dev libsdl2-image-dev
-
+sudo aptitude install -y libegl1-mesa-dev libgles2-mesa-dev libsdl2-dev libsdl2-image-dev
