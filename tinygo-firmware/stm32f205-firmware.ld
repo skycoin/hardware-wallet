@@ -2,8 +2,10 @@
 
 MEMORY
 {
-    /* Firmware code starts at 0x08010100 (after 256-byte metadata header at 0x08010000) */
-    FLASH_TEXT (rx) : ORIGIN = 0x08010100, LENGTH = 448K - 256
+    /* Firmware code starts at 0x08010000
+     * The 256-byte metadata header is stored separately at 0x08008000 by bootloader
+     * So the vector table goes directly at 0x08010000 */
+    FLASH_TEXT (rx) : ORIGIN = 0x08010000, LENGTH = 448K
     RAM (rwx)       : ORIGIN = 0x20000000, LENGTH = 128K
 }
 
