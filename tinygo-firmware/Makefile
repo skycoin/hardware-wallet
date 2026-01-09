@@ -3,7 +3,7 @@ ELF = skyfirmware-tinygo.elf
 TARGET = ./stm32f205.json
 
 # All Go source files
-SOURCES = main.go oled.go \
+SOURCES = _early_init.go main.go oled.go \
 	usb_descriptors.go usb_device.go \
 	messages.go protobuf.go dispatch.go \
 	types.go handlers.go
