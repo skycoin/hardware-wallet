@@ -98,7 +98,7 @@ ifeq ($(OS),Windows_NT)
 endif
 
 firmware-deps: build-deps ## Build firmware dependencies
-	$(MAKE) -C tiny-firmware/vendor/libopencm3/
+	$(MAKE) -C tiny-firmware/vendor/libopencm3/ SRCLIBDIR=$(CURDIR)/tiny-firmware/vendor/libopencm3/lib
 
 generate-bitmaps:
 	cd tiny-firmware/gen/bitmaps/ && python2 generate.py

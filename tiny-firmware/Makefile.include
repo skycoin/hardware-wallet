@@ -86,6 +86,7 @@ CFLAGS   += $(OPTFLAGS) \
             -Wformat-security \
             -Werror \
             -Wno-sequence-point \
+            -Wno-array-parameter \
             -fno-common \
             -fno-exceptions \
             -fvisibility=internal \

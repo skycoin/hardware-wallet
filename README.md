@@ -50,6 +50,26 @@ The [Skywallet Go CLI](https://github.com/SkycoinProject/hardware-wallet-go/rele
 
 Get the development dependencies and tools from the [tiny-firware/README.md](https://github.com/SkycoinProject/hardware-wallet/blob/master/tiny-firmware/README.md) first, before continuing with the build instructions.
 
+### Build Requirements (Modern Toolchains)
+
+This firmware has been updated to build with modern toolchains. The following versions are known to work:
+
+- **ARM GCC**: 14.2.0 (arm-none-eabi-gcc)
+- **Python**: 3.11+ (3.13 tested)
+- **Protobuf compiler**: System protoc (33.1 tested) - must be available at `/usr/bin/protoc`
+- **Make**: 4.4+
+
+**Important Notes:**
+
+1. The system protoc (`/usr/bin/protoc`) is used instead of the bundled old version (3.6.1) for compatibility with modern Python protobuf libraries.
+
+2. The `messages_map.h` file is now manually maintained because the Python generator (`messages_map.py`) produces empty output with modern protobuf versions due to extension compatibility issues. Do not regenerate this file.
+
+3. If you encounter build errors:
+   - Ensure `/usr/bin/protoc` exists and is version 19+ (check with `/usr/bin/protoc --version`)
+   - The build uses `PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python` for compatibility
+   - GCC 14+ requires `-Wno-array-parameter` flag (already configured)
+
 ## Build instructions:
 
 After cloning this repository, make sure the submodules are up-to-date by executing the following command:
