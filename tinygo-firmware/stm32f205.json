@@ -1,0 +1,4 @@
+{
+  "inherits": ["stm32f4disco"],
+  "linkerscript": "stm32f205-firmware.ld"
+}
