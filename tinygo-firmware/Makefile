@@ -3,10 +3,13 @@ ELF = skyfirmware-tinygo.elf
 TARGET = ./stm32f205.json
 
 # All Go source files
-SOURCES = _early_init.go main.go oled.go \
-	usb_descriptors.go usb_device.go \
-	messages.go protobuf.go dispatch.go \
-	types.go handlers.go
+# Minimal test - self-contained main.go
+SOURCES = main.go
+# Full firmware sources:
+#SOURCES = _early_init.go main.go oled.go \
+#	usb_descriptors.go usb_device.go \
+#	messages.go protobuf.go dispatch.go \
+#	types.go handlers.go
 
 .PHONY: all build flash clean
 
@@ -14,15 +17,25 @@ all: build
 
 build: $(BINARY)
 
-$(BINARY): $(SOURCES) $(TARGET) stm32f205-firmware.ld
+DEVICE_ASM = device_stm32f205.s
+DEVICE_OBJ = device_stm32f205.o
+
+$(DEVICE_OBJ): $(DEVICE_ASM)
+	@echo "Assembling device startup code..."
+	arm-none-eabi-as -mcpu=cortex-m3 -mthumb -o $(DEVICE_OBJ) $(DEVICE_ASM)
+
+$(BINARY): $(SOURCES) $(TARGET) stm32f205-firmware.ld $(DEVICE_OBJ)
 	@echo "Building TinyGo firmware with OLED support..."
 	tinygo build -o $(ELF) \
 		-target=$(TARGET) \
 		-opt=z \
 		-gc=leaking \
+		-scheduler=none \
 		.
 	@echo "Converting to binary..."
 	arm-none-eabi-objcopy -O binary $(ELF) temp.bin
+	@echo "Padding to minimum 4KB..."
+	@SIZE=$$(stat -c%s temp.bin); if [ $$SIZE -lt 4096 ]; then truncate -s 4096 temp.bin; fi
 	@echo "Signing firmware..."
 	../tiny-firmware/bootloader/firmware_sign.py -f temp.bin \
 		-pk 03d7fe879bea92c657797881cc2437fea86337ed4dce19859f43d023c1772c81dd \
@@ -41,7 +54,7 @@ flash: $(BINARY)
 	@echo "  curl -X PUT http://127.0.0.1:9510/api/v1/firmware_update -F \"file=@$(BINARY)\""
 
 clean:
-	rm -f $(BINARY) $(ELF)
+	rm -f $(BINARY) $(ELF) $(DEVICE_OBJ)
 
 size: $(ELF)
 	arm-none-eabi-size $(ELF)

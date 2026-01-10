@@ -27,12 +27,12 @@ const (
 	GPIOB_ODR   = GPIOB_BASE + 0x14
 	GPIOB_BSRR  = GPIOB_BASE + 0x18
 
-	// OLED pins
-	OLED_CS_PIN  = 4 // PA4 - Chip Select
-	OLED_SCK_PIN = 5 // PA5 - SPI Clock
+	// OLED pins (from C firmware oled.c)
+	OLED_CS_PIN   = 4 // PA4 - Chip Select
+	OLED_SCK_PIN  = 5 // PA5 - SPI Clock
 	OLED_MOSI_PIN = 7 // PA7 - SPI MOSI
-	OLED_RST_PIN = 0 // PB0 - Reset
-	OLED_DC_PIN  = 1 // PB1 - Data/Command
+	OLED_DC_PIN   = 0 // PB0 - Data/Command
+	OLED_RST_PIN  = 1 // PB1 - Reset
 
 	// SPI1 CR1 bits
 	SPI_CR1_CPHA     = 1 << 0
@@ -52,7 +52,7 @@ var oledBuffer [OLED_WIDTH * OLED_HEIGHT / 8]byte
 
 func oledDelay(us uint32) {
 	for i := uint32(0); i < us*120/4; i++ {
-		_ = regGet(USB_GINTSTS) // Volatile read
+		_ = regGet(RCC_AHB1ENR) // Volatile read from always-accessible register
 	}
 }
 
