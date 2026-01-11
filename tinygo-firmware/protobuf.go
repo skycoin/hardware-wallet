@@ -651,3 +651,73 @@ func pbDecodeWordAck(data []byte) string {
 	}
 	return ""
 }
+
+// SkycoinAddress field numbers
+const (
+	SkycoinAddress_address_n    = 1
+	SkycoinAddress_start_index  = 2
+	SkycoinAddress_confirm_addr = 3
+)
+
+// pbDecodeSkycoinAddress decodes a SkycoinAddress message
+// Returns the address index (default 0)
+func pbDecodeSkycoinAddress(data []byte) int {
+	startIndex := 0
+	i := 0
+	for i < len(data) {
+		if i >= len(data) {
+			break
+		}
+
+		tag := uint32(data[i])
+		i++
+		if tag&0x80 != 0 {
+			continue
+		}
+
+		fieldNum := tag >> 3
+		wireType := tag & 0x7
+
+		if fieldNum == 2 && wireType == PB_VARINT {
+			// start_index field
+			if i >= len(data) {
+				break
+			}
+			val := int(data[i])
+			i++
+			startIndex = val
+			continue
+		}
+
+		// Skip other fields
+		switch wireType {
+		case PB_VARINT:
+			for i < len(data) && data[i]&0x80 != 0 {
+				i++
+			}
+			i++
+		case PB_BYTES:
+			if i < len(data) {
+				length := int(data[i])
+				i++
+				i += length
+			}
+		case PB_FIXED32:
+			i += 4
+		case PB_FIXED64:
+			i += 8
+		}
+	}
+	return startIndex
+}
+
+// ResponseSkycoinAddress field numbers
+const (
+	ResponseSkycoinAddress_addresses = 1
+)
+
+// pbEncodeSkycoinAddressResponse encodes a ResponseSkycoinAddress message
+func pbEncodeSkycoinAddressResponse(buf []byte, address string) int {
+	// addresses is a repeated string field, but we only send one
+	return pbEncodeString(buf, ResponseSkycoinAddress_addresses, address)
+}

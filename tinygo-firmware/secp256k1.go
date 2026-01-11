@@ -2,6 +2,12 @@ package main
 
 // secp256k1 implementation adapted from github.com/skycoin/skycoin/src/cipher/secp256k1-go
 // Modified for TinyGo compatibility (no math/big, no encoding/hex)
+//
+// TODO: Refactor to use skycoin's secp256k1 directly by:
+// 1. Moving TinyGo-incompatible helpers (String, GetBig, SetHex, InvVar) to a separate package
+// 2. Creating a thin wrapper package that excludes those helpers
+// 3. Using go:build constraints to select TinyGo-compatible code
+// This would reduce code duplication and ensure crypto correctness from upstream
 
 // Field represents a field element (256-bit mod p)
 // Uses 10 x 26-bit limb encoding

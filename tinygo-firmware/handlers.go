@@ -74,6 +74,9 @@ func dispatchMessage() {
 	case MessageType_ButtonAck:
 		handleButtonAck()
 
+	case MessageType_SkycoinAddress:
+		handleSkycoinAddress()
+
 	default:
 		// Unknown message type
 		sendFailure(FailureType_UnexpectedMessage, "Unknown message")
@@ -510,4 +513,80 @@ func clearBackupDisplay() {
 	}
 	oledDrawString(4, 32, "Backup complete!")
 	oledRefresh()
+}
+
+// handleSkycoinAddress handles the SkycoinAddress message
+func handleSkycoinAddress() {
+	storageInit()
+
+	// Check if device is initialized
+	if !storageIsInitialized() {
+		sendFailure(FailureType_NotInitialized, "Not initialized")
+		return
+	}
+
+	// Check PIN if required
+	if !requirePIN() {
+		return // Waiting for PIN
+	}
+
+	// Get address index from message (default 0)
+	addrIndex := pbDecodeSkycoinAddress(msgInBuffer[:msgInSize])
+
+	// Get mnemonic from storage
+	mnemonic := storageGetMnemonic()
+	if mnemonic == "" {
+		sendFailure(FailureType_NotInitialized, "No mnemonic")
+		return
+	}
+
+	// Convert mnemonic to seed
+	seed := mnemonicToSeed(mnemonic, "")
+
+	// Derive key from seed (simplified - just use first 32 bytes for now)
+	// TODO: Implement proper BIP32/BIP44 derivation with address index
+	_ = addrIndex
+	seckey := deriveKeyFromSeed(seed[:])
+
+	// Generate address
+	address := skycoinAddressFromSeckey(seckey)
+
+	// Display address on OLED
+	displayAddress(address)
+
+	// Send response
+	sendSkycoinAddressResponse(address)
+}
+
+// displayAddress shows an address on the OLED display
+func displayAddress(address string) {
+	// Clear display area
+	for y := 16; y < 64; y++ {
+		for x := 0; x < 128; x++ {
+			oledSetPixel(x, y, false)
+		}
+	}
+
+	oledDrawString(4, 24, "Address:")
+
+	// Show address in parts (it's too long for one line)
+	if len(address) > 16 {
+		oledDrawString(4, 36, address[:16])
+		if len(address) > 32 {
+			oledDrawString(4, 48, address[16:32])
+		} else {
+			oledDrawString(4, 48, address[16:])
+		}
+	} else {
+		oledDrawString(4, 36, address)
+	}
+
+	oledRefresh()
+}
+
+// sendSkycoinAddressResponse sends a ResponseSkycoinAddress message
+func sendSkycoinAddressResponse(address string) {
+	var buf [64]byte
+	n := pbEncodeSkycoinAddressResponse(buf[:], address)
+	msgWrite(MessageType_ResponseSkycoinAddress, buf[:n])
 }

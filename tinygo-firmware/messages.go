@@ -33,8 +33,12 @@ const (
 	MessageType_WordRequest     uint16 = 46
 	MessageType_WordAck         uint16 = 47
 	MessageType_GetFeatures     uint16 = 55
-	MessageType_SetMnemonic     uint16 = 113
+	MessageType_SetMnemonic      uint16 = 113
 	MessageType_GenerateMnemonic uint16 = 114
+	MessageType_SkycoinAddress   uint16 = 115
+	MessageType_ResponseSkycoinAddress uint16 = 116
+	MessageType_SkycoinSignMessage uint16 = 117
+	MessageType_ResponseSkycoinSignMessage uint16 = 118
 )
 
 // Message read state
