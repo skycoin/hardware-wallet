@@ -809,3 +809,266 @@ const (
 func pbEncodeSkycoinSignMessageResponse(buf []byte, signedMessage string) int {
 	return pbEncodeString(buf, ResponseSkycoinSignMessage_signed_message, signedMessage)
 }
+
+// TransactionSign field numbers
+const (
+	TransactionSign_nbIn          = 1
+	TransactionSign_transactionIn = 2
+	TransactionSign_nbOut         = 3
+	TransactionSign_transactionOut = 4
+)
+
+// SkycoinTransactionInput field numbers
+const (
+	SkycoinTransactionInput_hashIn = 1
+	SkycoinTransactionInput_index  = 2
+)
+
+// SkycoinTransactionOutput field numbers
+const (
+	SkycoinTransactionOutput_address       = 1
+	SkycoinTransactionOutput_coin          = 2
+	SkycoinTransactionOutput_hour          = 3
+	SkycoinTransactionOutput_address_index = 4
+)
+
+// pbDecodeTransactionSign decodes a TransactionSign message
+// Returns nbIn, inputs, nbOut, outputs
+func pbDecodeTransactionSign(data []byte) (int, []TransactionInput, int, []TransactionOutput) {
+	var nbIn, nbOut int
+	inputs := make([]TransactionInput, 0, MAX_TX_INPUTS)
+	outputs := make([]TransactionOutput, 0, MAX_TX_OUTPUTS)
+
+	i := 0
+	for i < len(data) {
+		if i >= len(data) {
+			break
+		}
+
+		// Read tag
+		tag := uint32(data[i])
+		i++
+		if tag&0x80 != 0 {
+			// Multi-byte tag - read rest
+			tag &= 0x7F
+			for i < len(data) && data[i-1]&0x80 != 0 {
+				i++
+			}
+		}
+
+		fieldNum := tag >> 3
+		wireType := tag & 0x7
+
+		switch fieldNum {
+		case TransactionSign_nbIn:
+			if wireType == PB_VARINT && i < len(data) {
+				nbIn = int(data[i])
+				i++
+			}
+
+		case TransactionSign_nbOut:
+			if wireType == PB_VARINT && i < len(data) {
+				nbOut = int(data[i])
+				i++
+			}
+
+		case TransactionSign_transactionIn:
+			if wireType == PB_BYTES && i < len(data) {
+				length := int(data[i])
+				i++
+				if i+length <= len(data) {
+					input := decodeTransactionInput(data[i : i+length])
+					inputs = append(inputs, input)
+					i += length
+				}
+			}
+
+		case TransactionSign_transactionOut:
+			if wireType == PB_BYTES && i < len(data) {
+				length := int(data[i])
+				i++
+				if i+length <= len(data) {
+					output := decodeTransactionOutput(data[i : i+length])
+					outputs = append(outputs, output)
+					i += length
+				}
+			}
+
+		default:
+			// Skip unknown field
+			switch wireType {
+			case PB_VARINT:
+				for i < len(data) && data[i]&0x80 != 0 {
+					i++
+				}
+				i++
+			case PB_BYTES:
+				if i < len(data) {
+					length := int(data[i])
+					i++
+					i += length
+				}
+			case PB_FIXED32:
+				i += 4
+			case PB_FIXED64:
+				i += 8
+			}
+		}
+	}
+
+	return nbIn, inputs, nbOut, outputs
+}
+
+// decodeTransactionInput decodes a SkycoinTransactionInput
+func decodeTransactionInput(data []byte) TransactionInput {
+	var input TransactionInput
+	i := 0
+
+	for i < len(data) {
+		tag := uint32(data[i])
+		i++
+		fieldNum := tag >> 3
+		wireType := tag & 0x7
+
+		switch fieldNum {
+		case SkycoinTransactionInput_hashIn:
+			if wireType == PB_BYTES && i < len(data) {
+				length := int(data[i])
+				i++
+				if i+length <= len(data) {
+					input.hashIn = string(data[i : i+length])
+					i += length
+				}
+			}
+
+		case SkycoinTransactionInput_index:
+			if wireType == PB_VARINT && i < len(data) {
+				input.index = int(data[i])
+				i++
+			}
+
+		default:
+			// Skip
+			switch wireType {
+			case PB_VARINT:
+				for i < len(data) && data[i]&0x80 != 0 {
+					i++
+				}
+				i++
+			case PB_BYTES:
+				if i < len(data) {
+					length := int(data[i])
+					i++
+					i += length
+				}
+			}
+		}
+	}
+
+	return input
+}
+
+// decodeTransactionOutput decodes a SkycoinTransactionOutput
+func decodeTransactionOutput(data []byte) TransactionOutput {
+	var output TransactionOutput
+	i := 0
+
+	for i < len(data) {
+		tag := uint32(data[i])
+		i++
+		fieldNum := tag >> 3
+		wireType := tag & 0x7
+
+		switch fieldNum {
+		case SkycoinTransactionOutput_address:
+			if wireType == PB_BYTES && i < len(data) {
+				length := int(data[i])
+				i++
+				if i+length <= len(data) {
+					output.address = string(data[i : i+length])
+					i += length
+				}
+			}
+
+		case SkycoinTransactionOutput_coin:
+			if wireType == PB_VARINT && i < len(data) {
+				output.coin = pbDecodeUint64(data[i:])
+				// Skip varint bytes
+				for i < len(data) && data[i]&0x80 != 0 {
+					i++
+				}
+				i++
+			}
+
+		case SkycoinTransactionOutput_hour:
+			if wireType == PB_VARINT && i < len(data) {
+				output.hour = pbDecodeUint64(data[i:])
+				// Skip varint bytes
+				for i < len(data) && data[i]&0x80 != 0 {
+					i++
+				}
+				i++
+			}
+
+		case SkycoinTransactionOutput_address_index:
+			if wireType == PB_VARINT && i < len(data) {
+				output.addressIndex = int(data[i])
+				i++
+			}
+
+		default:
+			// Skip
+			switch wireType {
+			case PB_VARINT:
+				for i < len(data) && data[i]&0x80 != 0 {
+					i++
+				}
+				i++
+			case PB_BYTES:
+				if i < len(data) {
+					length := int(data[i])
+					i++
+					i += length
+				}
+			}
+		}
+	}
+
+	return output
+}
+
+// pbDecodeUint64 decodes a varint as uint64
+func pbDecodeUint64(data []byte) uint64 {
+	var val uint64
+	var shift uint
+	for i := 0; i < len(data) && i < 10; i++ {
+		b := data[i]
+		val |= uint64(b&0x7F) << shift
+		if b&0x80 == 0 {
+			break
+		}
+		shift += 7
+	}
+	return val
+}
+
+// ResponseTransactionSign field numbers
+const (
+	ResponseTransactionSign_signatures = 1
+	ResponseTransactionSign_padding    = 2
+)
+
+// pbEncodeTransactionSignResponse encodes a ResponseTransactionSign message
+func pbEncodeTransactionSignResponse(buf []byte, signatures []string) int {
+	n := 0
+
+	// Encode each signature as repeated string field
+	for _, sig := range signatures {
+		n += pbEncodeString(buf[n:], ResponseTransactionSign_signatures, sig)
+	}
+
+	// Encode padding field (required bool)
+	n += pbEncodeBool(buf[n:], ResponseTransactionSign_padding, false)
+
+	return n
+}

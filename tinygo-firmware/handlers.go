@@ -80,6 +80,9 @@ func dispatchMessage() {
 	case MessageType_SkycoinSignMessage:
 		handleSkycoinSignMessage()
 
+	case MessageType_TransactionSign:
+		handleTransactionSign()
+
 	default:
 		// Unknown message type
 		sendFailure(FailureType_UnexpectedMessage, "Unknown message")
