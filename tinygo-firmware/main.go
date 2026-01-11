@@ -15,27 +15,14 @@ func GoMain() {
 	// Initialize button input
 	buttonInit()
 
-	// Display orientation will be fixed in oledSetPixel
-
-	// Clear buffer and show initial text
-	oledClear()
-
-	// Draw title
-	oledDrawString(4, 0, "TinyGo Skywallet")
-	oledRefresh()
+	// Initialize storage
+	storageInit()
 
 	// Initialize USB device
 	usbDeviceInit()
 
-	// Show USB init complete
-	oledDrawString(4, 8, "USB Init OK")
-
-	// Test lines to check vertical boundaries (8-pixel spacing)
-	oledDrawString(4, 32, "1")
-	oledDrawString(4, 40, "2")
-	oledDrawString(4, 48, "3")
-	oledDrawString(4, 56, "4")
-	oledRefresh()
+	// Show appropriate homescreen
+	layoutHome()
 
 	// Main loop - poll USB
 	for {
@@ -49,6 +36,25 @@ func GoMain() {
 			}
 		}
 	}
+}
+
+// layoutHome shows the home screen based on device state
+func layoutHome() {
+	oledClear()
+
+	// Draw Skycoin logo area (simple text for now)
+	oledDrawString(28, 8, "SKYCOIN")
+	oledDrawString(20, 20, "Hardware Wallet")
+
+	// Show status based on initialization
+	if storageIsInitialized() {
+		oledDrawString(40, 40, "Ready")
+	} else {
+		oledDrawString(24, 40, "Not initialized")
+		oledDrawString(28, 52, "Needs seed")
+	}
+
+	oledRefresh()
 }
 
 // drawDebugMarker draws a debug marker (number of vertical lines)
@@ -70,111 +76,26 @@ const DEBUG_START_Y = 16 // After 2 title lines at y=0 and y=8
 // displayNeedsRefresh is set when debug functions update the buffer
 var displayNeedsRefresh = false
 
-// debugShowUSBEvent shows a USB event on the display with text
-// Events: 1=Reset, 2=EnumDone, 3=Setup, 4=SendData
-// NOTE: Does NOT call oledRefresh() - main loop handles that
+// debugShowUSBEvent shows a USB event on the display (disabled for production)
 func debugShowUSBEvent(event int) {
-	y := DEBUG_START_Y + usbDebugLine*LINE_HEIGHT
-	if y > 54 {
-		// Clear area and restart
-		for cy := DEBUG_START_Y; cy < 64; cy++ {
-			for cx := 0; cx < 128; cx++ {
-				oledSetPixel(cx, cy, false)
-			}
-		}
-		usbDebugLine = 0
-		y = DEBUG_START_Y
-	}
-
-	switch event {
-	case 1:
-		oledDrawString(4, y, "RST")
-	case 2:
-		oledDrawString(4, y, "ENUM")
-	case 3:
-		oledDrawString(4, y, "SETUP")
-	case 4:
-		oledDrawString(4, y, "SEND")
-	case 5:
-		oledDrawString(4, y, "ADDR")
-	case 9:
-		oledDrawString(4, y, "UNK")
-	case 10:
-		oledDrawString(4, y, "FEAT")
-	case 11:
-		oledDrawString(4, y, "RX")
-	case 12:
-		oledDrawString(4, y, "HID")
-	case 13:
-		oledDrawString(4, y, "CFG")
-	case 14:
-		oledDrawString(4, y, "TX")
-	case 15:
-		oledDrawString(4, y, "DONE")
-	case 16:
-		oledDrawString(4, y, "MSG!")
-	default:
-		oledDrawString(4, y, "E:")
-		oledDrawInt(20, y, event)
-	}
-
-	usbDebugLine++
-	oledRefresh()
+	// Debug output disabled - homescreen should remain visible
+	_ = event
 }
 
-// debugShowDescType shows the descriptor type being requested
+// debugShowDescType shows the descriptor type being requested (disabled)
 func debugShowDescType(descType uint8) {
-	y := DEBUG_START_Y + usbDebugLine*LINE_HEIGHT
-	if y > 54 {
-		for cy := DEBUG_START_Y; cy < 64; cy++ {
-			for cx := 0; cx < 128; cx++ {
-				oledSetPixel(cx, cy, false)
-			}
-		}
-		usbDebugLine = 0
-		y = DEBUG_START_Y
-	}
-
-	oledDrawString(4, y, "DT:")
-	oledDrawInt(28, y, int(descType))
-
-	usbDebugLine++
-	oledRefresh()
+	_ = descType
 }
 
-// debugShowRequest shows the request type and bRequest
+// debugShowRequest shows the request type and bRequest (disabled)
 func debugShowRequest(bmReqType, bReq uint8) {
-	y := 16 + usbDebugLine*8
-	if y > 56 {
-		for cy := 16; cy < 64; cy++ {
-			for cx := 0; cx < 128; cx++ {
-				oledSetPixel(cx, cy, false)
-			}
-		}
-		usbDebugLine = 0
-		y = 16
-	}
-
-	oledDrawString(4, y, "RQ:")
-	oledDrawHex(28, y, uint32(bmReqType), 2)
-	oledDrawString(52, y, "/")
-	oledDrawHex(58, y, uint32(bReq), 2)
-
-	usbDebugLine++
-	oledRefresh()
+	_ = bmReqType
+	_ = bReq
 }
 
-// debugShowSetupCount shows SETUP packet count (updates in place)
+// debugShowSetupCount shows SETUP packet count (disabled)
 func debugShowSetupCount(count int) {
-	// Clear the count area and redraw
-	for x := 70; x < 128; x++ {
-		for y := 2; y < 9; y++ {
-			oledSetPixel(x, y, false)
-		}
-	}
-	oledDrawString(70, 2, "S:")
-	oledDrawInt(88, 2, count)
-	oledRefresh()
+	_ = count
 }
 
 // drawUSBIndicator draws a simple USB status indicator

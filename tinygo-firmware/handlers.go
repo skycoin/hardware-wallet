@@ -95,22 +95,9 @@ func dispatchMessage() {
 	}
 }
 
-// debugShowMsgID shows the message ID on display
+// debugShowMsgID shows the message ID on display (disabled)
 func debugShowMsgID(id uint16) {
-	y := 16 + usbDebugLine*8
-	if y > 56 {
-		for cy := 16; cy < 64; cy++ {
-			for cx := 0; cx < 128; cx++ {
-				oledSetPixel(cx, cy, false)
-			}
-		}
-		usbDebugLine = 0
-		y = 16
-	}
-	oledDrawString(4, y, "ID:")
-	oledDrawInt(28, y, int(id))
-	usbDebugLine++
-	oledRefresh()
+	_ = id
 }
 
 // handleInitialize handles the Initialize message
@@ -126,57 +113,16 @@ func handleInitialize() {
 func handleGetFeatures() {
 	// Use global buffer to avoid stack overflow
 	n := pbEncodeFeatures(pbEncodeBuf[:])
-
-	// Debug: show payload size
-	debugShowPayloadSize(n)
-
 	msgWrite(MessageType_Features, pbEncodeBuf[:n])
-
-	// Debug: show first bytes of output packet
-	debugShowOutBytes()
-
-	// Debug: show we sent features
-	debugShowUSBEvent(10) // Custom: FEAT
 }
 
-// debugShowOutBytes shows first bytes of output buffer
+// debugShowOutBytes shows first bytes of output buffer (disabled)
 func debugShowOutBytes() {
-	y := 16 + usbDebugLine*8
-	if y > 56 {
-		for cy := 16; cy < 64; cy++ {
-			for cx := 0; cx < 128; cx++ {
-				oledSetPixel(cx, cy, false)
-			}
-		}
-		usbDebugLine = 0
-		y = 16
-	}
-	// Show bytes 0-4 of output buffer as hex
-	oledDrawHex(4, y, uint32(msgOutBuffer[0]), 2)
-	oledDrawHex(20, y, uint32(msgOutBuffer[1]), 2)
-	oledDrawHex(36, y, uint32(msgOutBuffer[2]), 2)
-	oledDrawHex(52, y, uint32(msgOutBuffer[3]), 2)
-	oledDrawHex(68, y, uint32(msgOutBuffer[4]), 2)
-	usbDebugLine++
-	oledRefresh()
 }
 
-// debugShowPayloadSize shows the protobuf payload size
+// debugShowPayloadSize shows the protobuf payload size (disabled)
 func debugShowPayloadSize(size int) {
-	y := 16 + usbDebugLine*8
-	if y > 56 {
-		for cy := 16; cy < 64; cy++ {
-			for cx := 0; cx < 128; cx++ {
-				oledSetPixel(cx, cy, false)
-			}
-		}
-		usbDebugLine = 0
-		y = 16
-	}
-	oledDrawString(4, y, "SZ:")
-	oledDrawInt(28, y, size)
-	usbDebugLine++
-	oledRefresh()
+	_ = size
 }
 
 // handlePing handles the Ping message
@@ -326,21 +272,31 @@ func handleGenerateMnemonic() {
 	}
 
 	// Get word count from message
-	mnemonicWordCount = pbDecodeGenerateMnemonic(msgInBuffer[:msgInSize])
-	if mnemonicWordCount != 12 && mnemonicWordCount != 24 {
-		mnemonicWordCount = 12
+	wordCount := pbDecodeGenerateMnemonic(msgInBuffer[:msgInSize])
+	if wordCount != 12 && wordCount != 24 {
+		wordCount = 12
 	}
 
-	// Request entropy from host (for mixing with hardware RNG)
-	entropySize := uint32(32)
-	if mnemonicWordCount == 24 {
+	// Generate entropy using hardware RNG
+	entropySize := 16 // 128 bits for 12 words
+	if wordCount == 24 {
 		entropySize = 32 // 256 bits for 24 words
-	} else {
-		entropySize = 32 // Use 32 bytes and only use first 16 for 12 words
 	}
+	entropy := make([]byte, entropySize)
+	getEntropy(entropy)
 
-	mnemonicState = MNEMONIC_STATE_WAIT_ENTROPY
-	sendEntropyRequest(entropySize)
+	// Generate mnemonic from entropy
+	mnemonic := entropyToMnemonic(entropy)
+
+	// Store mnemonic in flash (mark needs_backup = true)
+	storageSetMnemonic(mnemonic)
+	storageSetNeedsBackup(true)
+
+	// Update display to show initialized
+	layoutHome()
+
+	// Send success
+	sendSuccess("Mnemonic successfully configured")
 }
 
 // sendEntropyRequest sends an EntropyRequest message
