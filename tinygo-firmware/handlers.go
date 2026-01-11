@@ -74,6 +74,12 @@ func dispatchMessage() {
 	case MessageType_ButtonAck:
 		handleButtonAck()
 
+	case MessageType_RecoveryDevice:
+		handleRecoveryDevice()
+
+	case MessageType_WordAck:
+		handleWordAck()
+
 	case MessageType_SkycoinAddress:
 		handleSkycoinAddress()
 
@@ -546,16 +552,12 @@ func handleSkycoinAddress() {
 		return
 	}
 
-	// Convert mnemonic to seed
-	seed := mnemonicToSeed(mnemonic, "")
-
-	// Derive key from seed (simplified - just use first 32 bytes for now)
-	// TODO: Implement proper BIP32/BIP44 derivation with address index
-	_ = addrIndex
-	seckey := deriveKeyFromSeed(seed[:])
-
-	// Generate address
-	address := skycoinAddressFromSeckey(seckey)
+	// Derive address at specified index using Skycoin's deterministic derivation
+	address := deriveAddressAtIndex(mnemonic, addrIndex)
+	if address == "" {
+		sendFailure(FailureType_ProcessError, "Key derivation failed")
+		return
+	}
 
 	// Display address on OLED
 	displayAddress(address)
@@ -622,13 +624,24 @@ func handleSkycoinSignMessage() {
 		return
 	}
 
-	// Convert mnemonic to seed
-	seed := mnemonicToSeed(mnemonic, "")
+	// Derive key at specified index
+	seckey := deriveSecretKeyAtIndex(mnemonic, addrIndex)
+	if seckey == nil {
+		sendFailure(FailureType_ProcessError, "Key derivation failed")
+		return
+	}
 
-	// Derive key from seed (simplified - just use first 32 bytes for now)
-	// TODO: Implement proper BIP32/BIP44 derivation with address index
-	_ = addrIndex
-	seckey := deriveKeyFromSeed(seed[:])
+	// Get address to display for confirmation
+	address := skycoinAddressFromSeckey(seckey)
+
+	// Show confirmation dialog
+	layoutConfirmSign("Sign message?", address)
+
+	// Wait for button confirmation
+	if !waitForButton(false) {
+		sendFailure(FailureType_ActionCancelled, "Cancelled")
+		return
+	}
 
 	// Determine if message is already a hex digest
 	var digest [32]byte

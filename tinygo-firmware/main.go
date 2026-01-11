@@ -12,13 +12,16 @@ func GoMain() {
 
 	initSPI()
 
+	// Initialize button input
+	buttonInit()
+
 	// Display orientation will be fixed in oledSetPixel
 
 	// Clear buffer and show initial text
 	oledClear()
 
 	// Draw title
-	oledDrawString(4, 0, "TinyGo USB Test")
+	oledDrawString(4, 0, "TinyGo Skywallet")
 	oledRefresh()
 
 	// Initialize USB device

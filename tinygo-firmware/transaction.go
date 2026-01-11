@@ -201,6 +201,17 @@ func handleTransactionSign() {
 		return
 	}
 
+	// Show confirmation for each output
+	for i := 0; i < nbOut; i++ {
+		layoutConfirmTx(outputs[i].address, outputs[i].coin, outputs[i].hour)
+
+		// Wait for button confirmation
+		if !waitForButton(false) {
+			sendFailure(FailureType_ActionCancelled, "Cancelled")
+			return
+		}
+	}
+
 	// Build transaction
 	var tx Transaction
 	txInit(&tx)
@@ -241,10 +252,6 @@ func handleTransactionSign() {
 		return
 	}
 
-	// Convert mnemonic to seed
-	seed := mnemonicToSeed(mnemonic, "")
-	masterKey := deriveKeyFromSeed(seed[:])
-
 	// Sign each input
 	var signatures [MAX_TX_INPUTS]string
 	for i := 0; i < nbIn; i++ {
@@ -252,10 +259,11 @@ func handleTransactionSign() {
 		digest := txMsgToSign(&tx, i)
 
 		// Derive key for this input's address index
-		// TODO: Implement proper BIP32 derivation
-		// For now, use same key for all (index 0)
-		_ = inputs[i].index
-		seckey := masterKey
+		seckey := deriveSecretKeyAtIndex(mnemonic, inputs[i].index)
+		if seckey == nil {
+			sendFailure(FailureType_ProcessError, "Key derivation failed")
+			return
+		}
 
 		// Sign
 		sig := ecdsaSignDigest(seckey, digest[:])

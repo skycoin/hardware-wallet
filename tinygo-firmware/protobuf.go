@@ -1072,3 +1072,82 @@ func pbEncodeTransactionSignResponse(buf []byte, signatures []string) int {
 
 	return n
 }
+
+// RecoveryDevice field numbers
+const (
+	RecoveryDevice_word_count            = 1
+	RecoveryDevice_passphrase_protection = 2
+	RecoveryDevice_pin_protection        = 3
+	RecoveryDevice_language              = 4
+	RecoveryDevice_label                 = 5
+	RecoveryDevice_dry_run               = 6
+)
+
+// pbDecodeRecoveryDevice decodes a RecoveryDevice message
+// Returns word_count, passphrase_protection, pin_protection, dry_run
+func pbDecodeRecoveryDevice(data []byte) (int, bool, bool, bool) {
+	wordCount := 12 // default
+	passphraseProtection := false
+	pinProtection := false
+	dryRun := false
+
+	i := 0
+	for i < len(data) {
+		if i >= len(data) {
+			break
+		}
+
+		tag := uint32(data[i])
+		i++
+		fieldNum := tag >> 3
+		wireType := tag & 0x7
+
+		switch fieldNum {
+		case RecoveryDevice_word_count:
+			if wireType == PB_VARINT && i < len(data) {
+				wordCount = int(data[i])
+				i++
+			}
+
+		case RecoveryDevice_passphrase_protection:
+			if wireType == PB_VARINT && i < len(data) {
+				passphraseProtection = data[i] != 0
+				i++
+			}
+
+		case RecoveryDevice_pin_protection:
+			if wireType == PB_VARINT && i < len(data) {
+				pinProtection = data[i] != 0
+				i++
+			}
+
+		case RecoveryDevice_dry_run:
+			if wireType == PB_VARINT && i < len(data) {
+				dryRun = data[i] != 0
+				i++
+			}
+
+		default:
+			// Skip
+			switch wireType {
+			case PB_VARINT:
+				for i < len(data) && data[i]&0x80 != 0 {
+					i++
+				}
+				i++
+			case PB_BYTES:
+				if i < len(data) {
+					length := int(data[i])
+					i++
+					i += length
+				}
+			case PB_FIXED32:
+				i += 4
+			case PB_FIXED64:
+				i += 8
+			}
+		}
+	}
+
+	return wordCount, passphraseProtection, pinProtection, dryRun
+}
