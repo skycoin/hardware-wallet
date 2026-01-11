@@ -721,3 +721,91 @@ func pbEncodeSkycoinAddressResponse(buf []byte, address string) int {
 	// addresses is a repeated string field, but we only send one
 	return pbEncodeString(buf, ResponseSkycoinAddress_addresses, address)
 }
+
+// SkycoinSignMessage field numbers
+const (
+	SkycoinSignMessage_address_n = 1
+	SkycoinSignMessage_message   = 2
+)
+
+// pbDecodeSkycoinSignMessage decodes a SkycoinSignMessage
+// Returns address_n (index) and message string
+func pbDecodeSkycoinSignMessage(data []byte) (int, string) {
+	i := 0
+	addressN := 0
+	message := ""
+
+	for i < len(data) {
+		if i >= len(data) {
+			break
+		}
+
+		tag := uint32(data[i])
+		i++
+		if tag&0x80 != 0 {
+			continue
+		}
+
+		fieldNum := tag >> 3
+		wireType := tag & 0x7
+
+		if fieldNum == 1 && wireType == PB_VARINT {
+			// address_n field
+			if i >= len(data) {
+				break
+			}
+			val := int(data[i])
+			i++
+			addressN = val
+			continue
+		}
+
+		if fieldNum == 2 && wireType == PB_BYTES {
+			// message field
+			if i >= len(data) {
+				break
+			}
+			length := int(data[i])
+			i++
+			if length&0x80 != 0 {
+				continue
+			}
+			if i+length > len(data) {
+				break
+			}
+			message = string(data[i : i+length])
+			i += length
+			continue
+		}
+
+		// Skip other fields
+		switch wireType {
+		case PB_VARINT:
+			for i < len(data) && data[i]&0x80 != 0 {
+				i++
+			}
+			i++
+		case PB_BYTES:
+			if i < len(data) {
+				length := int(data[i])
+				i++
+				i += length
+			}
+		case PB_FIXED32:
+			i += 4
+		case PB_FIXED64:
+			i += 8
+		}
+	}
+	return addressN, message
+}
+
+// ResponseSkycoinSignMessage field numbers
+const (
+	ResponseSkycoinSignMessage_signed_message = 1
+)
+
+// pbEncodeSkycoinSignMessageResponse encodes a ResponseSkycoinSignMessage
+func pbEncodeSkycoinSignMessageResponse(buf []byte, signedMessage string) int {
+	return pbEncodeString(buf, ResponseSkycoinSignMessage_signed_message, signedMessage)
+}

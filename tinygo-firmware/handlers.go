@@ -77,6 +77,9 @@ func dispatchMessage() {
 	case MessageType_SkycoinAddress:
 		handleSkycoinAddress()
 
+	case MessageType_SkycoinSignMessage:
+		handleSkycoinSignMessage()
+
 	default:
 		// Unknown message type
 		sendFailure(FailureType_UnexpectedMessage, "Unknown message")
@@ -589,4 +592,108 @@ func sendSkycoinAddressResponse(address string) {
 	var buf [64]byte
 	n := pbEncodeSkycoinAddressResponse(buf[:], address)
 	msgWrite(MessageType_ResponseSkycoinAddress, buf[:n])
+}
+
+// handleSkycoinSignMessage handles the SkycoinSignMessage message
+func handleSkycoinSignMessage() {
+	storageInit()
+
+	// Check if device is initialized
+	if !storageIsInitialized() {
+		sendFailure(FailureType_NotInitialized, "Not initialized")
+		return
+	}
+
+	// Check PIN if required
+	if !requirePIN() {
+		return // Waiting for PIN
+	}
+
+	// Decode the message
+	addrIndex, message := pbDecodeSkycoinSignMessage(msgInBuffer[:msgInSize])
+
+	// Get mnemonic from storage
+	mnemonic := storageGetMnemonic()
+	if mnemonic == "" {
+		sendFailure(FailureType_NotInitialized, "No mnemonic")
+		return
+	}
+
+	// Convert mnemonic to seed
+	seed := mnemonicToSeed(mnemonic, "")
+
+	// Derive key from seed (simplified - just use first 32 bytes for now)
+	// TODO: Implement proper BIP32/BIP44 derivation with address index
+	_ = addrIndex
+	seckey := deriveKeyFromSeed(seed[:])
+
+	// Determine if message is already a hex digest
+	var digest [32]byte
+	if isHexDigit(message) {
+		// Message is a hex-encoded SHA256 digest
+		digestBytes := hexToBytes(message)
+		if len(digestBytes) == 32 {
+			copy(digest[:], digestBytes)
+		} else {
+			// Invalid hex, hash the message instead
+			digest = sha256Sum([]byte(message))
+		}
+	} else {
+		// Hash the message
+		digest = sha256Sum([]byte(message))
+	}
+
+	// Sign the digest
+	sig := ecdsaSignDigest(seckey, digest[:])
+
+	// Check if signature is valid (not all zeros)
+	allZero := true
+	for i := 0; i < 65; i++ {
+		if sig[i] != 0 {
+			allZero = false
+			break
+		}
+	}
+	if allZero {
+		sendFailure(FailureType_ProcessError, "Signature failed")
+		return
+	}
+
+	// Convert to hex string (130 chars = 65 bytes * 2)
+	sigHex := bytesToHex(sig[:])
+
+	// Display on OLED
+	displaySignature(sigHex)
+
+	// Send response
+	sendSkycoinSignMessageResponse(sigHex)
+}
+
+// displaySignature shows a signature on the OLED display
+func displaySignature(sigHex string) {
+	// Clear display area
+	for y := 16; y < 64; y++ {
+		for x := 0; x < 128; x++ {
+			oledSetPixel(x, y, false)
+		}
+	}
+
+	oledDrawString(4, 24, "Signed!")
+
+	// Show first part of signature
+	if len(sigHex) > 20 {
+		oledDrawString(4, 36, sigHex[:20])
+	}
+	if len(sigHex) > 40 {
+		oledDrawString(4, 48, sigHex[20:40])
+	}
+
+	oledRefresh()
+}
+
+// sendSkycoinSignMessageResponse sends a ResponseSkycoinSignMessage
+func sendSkycoinSignMessageResponse(sigHex string) {
+	var buf [140]byte // 130 hex chars + overhead
+	n := pbEncodeSkycoinSignMessageResponse(buf[:], sigHex)
+	msgWrite(MessageType_ResponseSkycoinSignMessage, buf[:n])
 }
