@@ -34,8 +34,8 @@ $(BINARY): $(SOURCES) $(TARGET) stm32f205-firmware.ld $(DEVICE_OBJ)
 		.
 	@echo "Converting to binary..."
 	arm-none-eabi-objcopy -O binary $(ELF) temp.bin
-	@echo "Padding to minimum 4KB..."
-	@SIZE=$$(stat -c%s temp.bin); if [ $$SIZE -lt 4096 ]; then truncate -s 4096 temp.bin; fi
+	@echo "Padding to minimum 8KB (daemon buffer alignment)..."
+	@SIZE=$$(stat -c%s temp.bin); if [ $$SIZE -lt 8192 ]; then truncate -s 8192 temp.bin; fi
 	@echo "Signing firmware..."
 	../tiny-firmware/bootloader/firmware_sign.py -f temp.bin \
 		-pk 03d7fe879bea92c657797881cc2437fea86337ed4dce19859f43d023c1772c81dd \

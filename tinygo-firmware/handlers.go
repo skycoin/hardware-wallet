@@ -1,0 +1,513 @@
+package main
+
+// Global buffer for encoding protobuf messages (avoid stack overflow)
+var pbEncodeBuf [512]byte
+
+// PIN state machine
+const (
+	PIN_STATE_IDLE = iota
+	PIN_STATE_VERIFY
+	PIN_STATE_CHANGE_OLD
+	PIN_STATE_CHANGE_NEW1
+	PIN_STATE_CHANGE_NEW2
+)
+
+var pinState = PIN_STATE_IDLE
+var pinNewFirst [10]byte
+var pinNewFirstLen int
+
+// Mnemonic generation state machine
+const (
+	MNEMONIC_STATE_IDLE = iota
+	MNEMONIC_STATE_WAIT_ENTROPY
+	MNEMONIC_STATE_BACKUP
+)
+
+var mnemonicState = MNEMONIC_STATE_IDLE
+var mnemonicWordCount = 12
+var mnemonicBackupIndex = 0
+var pendingMnemonic [512]byte // Buffer for generated mnemonic
+var pendingMnemonicLen = 0
+
+// dispatchMessage handles an incoming message based on its type
+func dispatchMessage() {
+	// Debug: show received message ID
+	debugShowMsgID(msgInID)
+
+	switch msgInID {
+	case MessageType_Initialize:
+		handleInitialize()
+
+	case MessageType_GetFeatures:
+		handleGetFeatures()
+
+	case MessageType_Ping:
+		handlePing()
+
+	case MessageType_ChangePin:
+		handleChangePin()
+
+	case MessageType_PinMatrixAck:
+		handlePinMatrixAck()
+
+	case MessageType_Cancel:
+		handleCancel()
+
+	case MessageType_WipeDevice:
+		handleWipeDevice()
+
+	case MessageType_GenerateMnemonic:
+		handleGenerateMnemonic()
+
+	case MessageType_SetMnemonic:
+		handleSetMnemonic()
+
+	case MessageType_GetEntropy:
+		handleGetEntropy()
+
+	case MessageType_EntropyAck:
+		handleEntropyAck()
+
+	case MessageType_BackupDevice:
+		handleBackupDevice()
+
+	case MessageType_ButtonAck:
+		handleButtonAck()
+
+	default:
+		// Unknown message type
+		sendFailure(FailureType_UnexpectedMessage, "Unknown message")
+	}
+}
+
+// debugShowMsgID shows the message ID on display
+func debugShowMsgID(id uint16) {
+	y := 16 + usbDebugLine*8
+	if y > 56 {
+		for cy := 16; cy < 64; cy++ {
+			for cx := 0; cx < 128; cx++ {
+				oledSetPixel(cx, cy, false)
+			}
+		}
+		usbDebugLine = 0
+		y = 16
+	}
+	oledDrawString(4, y, "ID:")
+	oledDrawInt(28, y, int(id))
+	usbDebugLine++
+	oledRefresh()
+}
+
+// handleInitialize handles the Initialize message
+// This is sent when the host first connects to get device info
+func handleInitialize() {
+	// Clear any session state (none for now)
+
+	// Respond with Features
+	handleGetFeatures()
+}
+
+// handleGetFeatures handles the GetFeatures message
+func handleGetFeatures() {
+	// Use global buffer to avoid stack overflow
+	n := pbEncodeFeatures(pbEncodeBuf[:])
+
+	// Debug: show payload size
+	debugShowPayloadSize(n)
+
+	msgWrite(MessageType_Features, pbEncodeBuf[:n])
+
+	// Debug: show first bytes of output packet
+	debugShowOutBytes()
+
+	// Debug: show we sent features
+	debugShowUSBEvent(10) // Custom: FEAT
+}
+
+// debugShowOutBytes shows first bytes of output buffer
+func debugShowOutBytes() {
+	y := 16 + usbDebugLine*8
+	if y > 56 {
+		for cy := 16; cy < 64; cy++ {
+			for cx := 0; cx < 128; cx++ {
+				oledSetPixel(cx, cy, false)
+			}
+		}
+		usbDebugLine = 0
+		y = 16
+	}
+	// Show bytes 0-4 of output buffer as hex
+	oledDrawHex(4, y, uint32(msgOutBuffer[0]), 2)
+	oledDrawHex(20, y, uint32(msgOutBuffer[1]), 2)
+	oledDrawHex(36, y, uint32(msgOutBuffer[2]), 2)
+	oledDrawHex(52, y, uint32(msgOutBuffer[3]), 2)
+	oledDrawHex(68, y, uint32(msgOutBuffer[4]), 2)
+	usbDebugLine++
+	oledRefresh()
+}
+
+// debugShowPayloadSize shows the protobuf payload size
+func debugShowPayloadSize(size int) {
+	y := 16 + usbDebugLine*8
+	if y > 56 {
+		for cy := 16; cy < 64; cy++ {
+			for cx := 0; cx < 128; cx++ {
+				oledSetPixel(cx, cy, false)
+			}
+		}
+		usbDebugLine = 0
+		y = 16
+	}
+	oledDrawString(4, y, "SZ:")
+	oledDrawInt(28, y, size)
+	usbDebugLine++
+	oledRefresh()
+}
+
+// handlePing handles the Ping message
+func handlePing() {
+	// Decode the ping message to get the echo string
+	message := pbDecodePing(msgInBuffer[:msgInSize])
+
+	// Send Success with the same message
+	sendSuccess(message)
+}
+
+// handleChangePin handles the ChangePin message
+func handleChangePin() {
+	storageInit()
+
+	if storageHasPIN() {
+		// Need to verify current PIN first
+		pinState = PIN_STATE_CHANGE_OLD
+		sendPinMatrixRequest(PinMatrixRequestType_Current)
+	} else {
+		// No current PIN, go straight to setting new one
+		pinState = PIN_STATE_CHANGE_NEW1
+		sendPinMatrixRequest(PinMatrixRequestType_NewFirst)
+	}
+}
+
+// handlePinMatrixAck handles the PinMatrixAck message (PIN entry response)
+func handlePinMatrixAck() {
+	pin := pbDecodePinMatrixAck(msgInBuffer[:msgInSize])
+
+	switch pinState {
+	case PIN_STATE_VERIFY:
+		// Verifying PIN for protected operation
+		if storagePINCompare(pin) {
+			sessionCachePIN()
+			pinState = PIN_STATE_IDLE
+			sendSuccess("")
+		} else {
+			pinState = PIN_STATE_IDLE
+			sendFailure(FailureType_PinInvalid, "Invalid PIN")
+		}
+
+	case PIN_STATE_CHANGE_OLD:
+		// Verifying old PIN for change
+		if storagePINCompare(pin) {
+			pinState = PIN_STATE_CHANGE_NEW1
+			sendPinMatrixRequest(PinMatrixRequestType_NewFirst)
+		} else {
+			pinState = PIN_STATE_IDLE
+			sendFailure(FailureType_PinInvalid, "Invalid PIN")
+		}
+
+	case PIN_STATE_CHANGE_NEW1:
+		// First entry of new PIN
+		pinNewFirstLen = len(pin)
+		if pinNewFirstLen > 9 {
+			pinNewFirstLen = 9
+		}
+		copy(pinNewFirst[:], pin)
+		pinState = PIN_STATE_CHANGE_NEW2
+		sendPinMatrixRequest(PinMatrixRequestType_NewSecond)
+
+	case PIN_STATE_CHANGE_NEW2:
+		// Second entry of new PIN - verify match
+		if len(pin) == pinNewFirstLen {
+			match := true
+			for i := 0; i < pinNewFirstLen; i++ {
+				if pin[i] != pinNewFirst[i] {
+					match = false
+					break
+				}
+			}
+			if match {
+				// PINs match - save new PIN
+				storageSetPIN(string(pinNewFirst[:pinNewFirstLen]))
+				pinState = PIN_STATE_IDLE
+				// Clear cached PIN data
+				for i := range pinNewFirst {
+					pinNewFirst[i] = 0
+				}
+				pinNewFirstLen = 0
+				sendSuccess("PIN changed")
+			} else {
+				pinState = PIN_STATE_IDLE
+				sendFailure(FailureType_PinMismatch, "PIN mismatch")
+			}
+		} else {
+			pinState = PIN_STATE_IDLE
+			sendFailure(FailureType_PinMismatch, "PIN mismatch")
+		}
+
+	default:
+		pinState = PIN_STATE_IDLE
+		sendFailure(FailureType_UnexpectedMessage, "Unexpected PIN")
+	}
+}
+
+// handleCancel handles the Cancel message
+func handleCancel() {
+	pinState = PIN_STATE_IDLE
+	// Clear any pending PIN data
+	for i := range pinNewFirst {
+		pinNewFirst[i] = 0
+	}
+	pinNewFirstLen = 0
+	sendFailure(FailureType_ActionCancelled, "Cancelled")
+}
+
+// handleWipeDevice handles the WipeDevice message
+func handleWipeDevice() {
+	// Wipe storage - no PIN verification required (device reset)
+	storageWipe()
+	sendSuccess("Device wiped")
+}
+
+// sendPinMatrixRequest sends a PinMatrixRequest message
+func sendPinMatrixRequest(pinType uint32) {
+	var buf [8]byte
+	n := pbEncodePinMatrixRequest(buf[:], pinType)
+	msgWrite(MessageType_PinMatrixRequest, buf[:n])
+}
+
+// requirePIN checks if PIN is required and starts verification if needed
+// Returns true if operation can proceed, false if waiting for PIN
+func requirePIN() bool {
+	storageInit()
+	if !storageHasPIN() {
+		return true // No PIN set
+	}
+	if sessionIsPINcached() {
+		return true // PIN already verified this session
+	}
+	// Need PIN verification
+	pinState = PIN_STATE_VERIFY
+	sendPinMatrixRequest(PinMatrixRequestType_Current)
+	return false
+}
+
+// handleGenerateMnemonic handles the GenerateMnemonic message
+func handleGenerateMnemonic() {
+	storageInit()
+
+	// Check if device is already initialized
+	if storageIsInitialized() {
+		sendFailure(FailureType_UnexpectedMessage, "Already initialized")
+		return
+	}
+
+	// Get word count from message
+	mnemonicWordCount = pbDecodeGenerateMnemonic(msgInBuffer[:msgInSize])
+	if mnemonicWordCount != 12 && mnemonicWordCount != 24 {
+		mnemonicWordCount = 12
+	}
+
+	// Request entropy from host (for mixing with hardware RNG)
+	entropySize := uint32(32)
+	if mnemonicWordCount == 24 {
+		entropySize = 32 // 256 bits for 24 words
+	} else {
+		entropySize = 32 // Use 32 bytes and only use first 16 for 12 words
+	}
+
+	mnemonicState = MNEMONIC_STATE_WAIT_ENTROPY
+	sendEntropyRequest(entropySize)
+}
+
+// sendEntropyRequest sends an EntropyRequest message
+func sendEntropyRequest(size uint32) {
+	var buf [8]byte
+	n := pbEncodeEntropyRequest(buf[:], size)
+	msgWrite(MessageType_EntropyRequest, buf[:n])
+}
+
+// handleEntropyAck handles the EntropyAck message (entropy from host)
+func handleEntropyAck() {
+	if mnemonicState != MNEMONIC_STATE_WAIT_ENTROPY {
+		sendFailure(FailureType_UnexpectedMessage, "Unexpected entropy")
+		return
+	}
+
+	// Get host entropy
+	hostEntropy := pbDecodeEntropyAck(msgInBuffer[:msgInSize])
+
+	// Generate device entropy
+	entropySize := 16
+	if mnemonicWordCount == 24 {
+		entropySize = 32
+	}
+	deviceEntropy := make([]byte, entropySize)
+	getEntropy(deviceEntropy)
+
+	// Mix entropy: XOR host entropy with device entropy
+	mixedEntropy := make([]byte, entropySize)
+	for i := 0; i < entropySize; i++ {
+		if i < len(hostEntropy) {
+			mixedEntropy[i] = deviceEntropy[i] ^ hostEntropy[i]
+		} else {
+			mixedEntropy[i] = deviceEntropy[i]
+		}
+	}
+
+	// Generate mnemonic from mixed entropy
+	mnemonic := entropyToMnemonic(mixedEntropy)
+	pendingMnemonicLen = copy(pendingMnemonic[:], mnemonic)
+
+	// Store mnemonic in flash (but mark needs_backup = true)
+	storageSetMnemonic(mnemonic)
+	storageSetNeedsBackup(true)
+
+	mnemonicState = MNEMONIC_STATE_IDLE
+
+	// Send success with mnemonic (for debug/testing - real implementation should show on screen)
+	sendSuccess("Mnemonic generated")
+}
+
+// handleSetMnemonic handles the SetMnemonic message (import mnemonic)
+func handleSetMnemonic() {
+	storageInit()
+
+	// Check if device is already initialized
+	if storageIsInitialized() {
+		sendFailure(FailureType_UnexpectedMessage, "Already initialized")
+		return
+	}
+
+	// Get mnemonic from message
+	mnemonic := pbDecodeSetMnemonic(msgInBuffer[:msgInSize])
+
+	// Validate mnemonic
+	if !validateMnemonic(mnemonic) {
+		sendFailure(FailureType_DataError, "Invalid mnemonic")
+		return
+	}
+
+	// Store mnemonic
+	storageSetMnemonic(mnemonic)
+	storageSetNeedsBackup(false) // Imported = already backed up
+
+	sendSuccess("Mnemonic set")
+}
+
+// handleGetEntropy handles the GetEntropy message
+func handleGetEntropy() {
+	// GetEntropy returns raw entropy from hardware RNG
+	// Size is specified in the message (default 32 bytes)
+	size := 32
+
+	entropy := make([]byte, size)
+	getEntropy(entropy)
+
+	var buf [64]byte
+	n := pbEncodeEntropy(buf[:], entropy)
+	msgWrite(MessageType_Entropy, buf[:n])
+}
+
+// handleBackupDevice handles the BackupDevice message
+func handleBackupDevice() {
+	storageInit()
+
+	// Check if device is initialized
+	if !storageIsInitialized() {
+		sendFailure(FailureType_NotInitialized, "Not initialized")
+		return
+	}
+
+	// Check if backup is needed
+	if !storageNeedsBackup() {
+		sendFailure(FailureType_UnexpectedMessage, "Already backed up")
+		return
+	}
+
+	// Start backup process - show words one at a time
+	mnemonicBackupIndex = 0
+	mnemonicState = MNEMONIC_STATE_BACKUP
+
+	// Get mnemonic from storage
+	mnemonic := storageGetMnemonic()
+	pendingMnemonicLen = copy(pendingMnemonic[:], mnemonic)
+
+	// Send button request to start backup
+	sendButtonRequest(ButtonRequestType_ConfirmWord)
+}
+
+// sendButtonRequest sends a ButtonRequest message
+func sendButtonRequest(code uint32) {
+	var buf [8]byte
+	n := pbEncodeButtonRequest(buf[:], code)
+	msgWrite(MessageType_ButtonRequest, buf[:n])
+}
+
+// handleButtonAck handles the ButtonAck message
+func handleButtonAck() {
+	if mnemonicState == MNEMONIC_STATE_BACKUP {
+		// Show next word
+		words := splitMnemonic(string(pendingMnemonic[:pendingMnemonicLen]))
+		if mnemonicBackupIndex < len(words) {
+			// Display word on OLED
+			displayBackupWord(mnemonicBackupIndex+1, words[mnemonicBackupIndex])
+			mnemonicBackupIndex++
+
+			if mnemonicBackupIndex < len(words) {
+				// More words to show
+				sendButtonRequest(ButtonRequestType_ConfirmWord)
+			} else {
+				// All words shown
+				storageSetNeedsBackup(false)
+				mnemonicState = MNEMONIC_STATE_IDLE
+				clearBackupDisplay()
+				sendSuccess("Backup complete")
+			}
+		}
+		return
+	}
+
+	// Unexpected ButtonAck
+	sendFailure(FailureType_UnexpectedMessage, "Unexpected button ack")
+}
+
+// displayBackupWord shows a backup word on the OLED
+func displayBackupWord(index int, word string) {
+	// Clear display area
+	for y := 16; y < 64; y++ {
+		for x := 0; x < 128; x++ {
+			oledSetPixel(x, y, false)
+		}
+	}
+
+	// Show word number
+	oledDrawString(4, 24, "Word")
+	oledDrawInt(36, 24, index)
+	oledDrawString(48, 24, "of")
+	oledDrawInt(68, 24, mnemonicWordCount)
+
+	// Show the word
+	oledDrawString(4, 40, word)
+
+	oledRefresh()
+}
+
+// clearBackupDisplay clears the backup word display
+func clearBackupDisplay() {
+	for y := 16; y < 64; y++ {
+		for x := 0; x < 128; x++ {
+			oledSetPixel(x, y, false)
+		}
+	}
+	oledDrawString(4, 32, "Backup complete!")
+	oledRefresh()
+}
