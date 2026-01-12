@@ -25,8 +25,8 @@ type SetupPacket struct {
 
 // USB OTG FS base and register addresses
 const (
-	USB_OTG_FS uintptr = 0x50000000
-	RCC_BASE   uintptr = 0x40023800
+	USB_OTG_FS  uintptr = 0x50000000
+	RCC_BASE    uintptr = 0x40023800
 	RCC_AHB2ENR uintptr = RCC_BASE + 0x34
 
 	// USB Core registers
@@ -332,7 +332,7 @@ func handleRxFifoNonEmpty() {
 			ureg(USB_DOEPCTL0).SetBits((1 << 31) | (1 << 26))   // EPENA | CNAK
 		} else if epnum == 1 {
 			// Re-enable EP1 OUT for next HID packet
-			ureg(USB_DOEPTSIZ1).Set((1 << 19) | 64) // PKTCNT=1, XFRSIZ=64
+			ureg(USB_DOEPTSIZ1).Set((1 << 19) | 64)           // PKTCNT=1, XFRSIZ=64
 			ureg(USB_DOEPCTL1).SetBits((1 << 31) | (1 << 26)) // EPENA | CNAK
 		}
 		return // Don't process further, like the C firmware does
@@ -457,8 +457,8 @@ func handleSetAddress(setup *SetupPacket) {
 
 	// Set address IMMEDIATELY (before status ZLP) - matching C firmware
 	dcfg := ureg(USB_DCFG).Get()
-	dcfg &^= (0x7F << 4)       // Clear DAD field
-	dcfg |= uint32(addr) << 4  // Set new address
+	dcfg &^= (0x7F << 4)      // Clear DAD field
+	dcfg |= uint32(addr) << 4 // Set new address
 	ureg(USB_DCFG).Set(dcfg)
 
 	usbAddress = addr

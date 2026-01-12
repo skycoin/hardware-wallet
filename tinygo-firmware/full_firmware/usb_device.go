@@ -57,9 +57,9 @@ var (
 	ep0TxOffset int
 
 	// EP1 HID packet buffers
-	ep1RxBuf    [64]byte
-	ep1RxReady  bool
-	ep1TxBuf    [64]byte
+	ep1RxBuf     [64]byte
+	ep1RxReady   bool
+	ep1TxBuf     [64]byte
 	ep1TxPending bool
 )
 
@@ -137,7 +137,7 @@ func usbDeviceInit() {
 			(1<<12)| // USBRST
 			(1<<11)| // USBSUSP
 			(1<<10)| // ESUSP (early suspend)
-			(1<<4)|  // RXFLVL
+			(1<<4)| // RXFLVL
 			(1<<18)| // IEPINT (IN endpoint)
 			(1<<19)) // OEPINT (OUT endpoint)
 
@@ -145,7 +145,7 @@ func usbDeviceInit() {
 	regSet(USB_DAINTMSK, 0x00030003) // EP0+EP1 IN and OUT
 
 	// Enable endpoint interrupt masks
-	regSet(USB_DIEPMSK, (1<<0)|(1<<3)) // XFRCM, TOC
+	regSet(USB_DIEPMSK, (1<<0)|(1<<3))        // XFRCM, TOC
 	regSet(USB_DOEPMSK, (1<<0)|(1<<3)|(1<<5)) // XFRCM, STUP, STSPHSRX
 
 	// Enable global USB interrupt
@@ -171,20 +171,20 @@ func setupEP1() {
 	// EP1 IN (device to host)
 	// Type = Interrupt (11), Max packet = 64
 	regSet(USB_DIEPCTL1,
-		(1<<15)|  // USBAEP (active)
-			(3<<18)|  // EPTYP = Interrupt
-			(1<<22)|  // TXFNUM = 1
-			64)       // MPSIZ = 64
+		(1<<15)| // USBAEP (active)
+			(3<<18)| // EPTYP = Interrupt
+			(1<<22)| // TXFNUM = 1
+			64) // MPSIZ = 64
 
 	// EP1 OUT (host to device)
 	// Type = Interrupt (11), Max packet = 64
 	regSet(USB_DOEPTSIZ1, (1<<19)|64) // PKTCNT=1, XFRSIZ=64
 	regSet(USB_DOEPCTL1,
-		(1<<31)|  // EPENA
-			(1<<26)|  // CNAK
-			(1<<15)|  // USBAEP
-			(3<<18)|  // EPTYP = Interrupt
-			64)       // MPSIZ = 64
+		(1<<31)| // EPENA
+			(1<<26)| // CNAK
+			(1<<15)| // USBAEP
+			(3<<18)| // EPTYP = Interrupt
+			64) // MPSIZ = 64
 
 	println("EP1 configured")
 }
@@ -493,7 +493,7 @@ func ep0SendNextChunk() {
 
 // Send Zero-Length Packet on EP0
 func ep0SendZLP() {
-	regSet(USB_DIEPTSIZ0, (1<<19)|0) // PKTCNT=1, XFRSIZ=0
+	regSet(USB_DIEPTSIZ0, (1<<19)|0)                           // PKTCNT=1, XFRSIZ=0
 	regSet(USB_DIEPCTL0, regGet(USB_DIEPCTL0)|(1<<31)|(1<<26)) // EPENA, CNAK
 }
 

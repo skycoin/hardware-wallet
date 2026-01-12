@@ -29,11 +29,15 @@ func pbEncodeTag(buf []byte, fieldNum int, wireType int) int {
 }
 
 // pbEncodeString encodes a string field
+// Note: Manual copy is used instead of copy(buf, str) due to TinyGo bare-metal limitations
 func pbEncodeString(buf []byte, fieldNum int, val string) int {
 	n := 0
 	n += pbEncodeTag(buf[n:], fieldNum, PB_BYTES)
 	n += pbEncodeVarint(buf[n:], uint64(len(val)))
-	copy(buf[n:], val)
+	// Manual copy - TinyGo bare-metal doesn't handle copy from string correctly
+	for i := 0; i < len(val); i++ {
+		buf[n+i] = val[i]
+	}
 	n += len(val)
 	return n
 }
@@ -67,29 +71,29 @@ func pbEncodeBool(buf []byte, fieldNum int, val bool) int {
 
 // Features message field numbers (from messages.proto)
 const (
-	Features_vendor              = 1
-	Features_major_version       = 2
-	Features_minor_version       = 3
-	Features_patch_version       = 4
-	Features_bootloader_mode     = 5
-	Features_device_id           = 6
-	Features_pin_protection      = 7
+	Features_vendor                = 1
+	Features_major_version         = 2
+	Features_minor_version         = 3
+	Features_patch_version         = 4
+	Features_bootloader_mode       = 5
+	Features_device_id             = 6
+	Features_pin_protection        = 7
 	Features_passphrase_protection = 8
-	Features_language            = 9
-	Features_label               = 10
-	Features_initialized         = 12
-	Features_bootloader_hash     = 14
-	Features_pin_cached          = 16
-	Features_passphrase_cached   = 17
-	Features_firmware_present    = 18
-	Features_needs_backup        = 19
-	Features_model               = 21
-	Features_fw_major            = 22  // Fixed: was 24
-	Features_fw_minor            = 23  // Fixed: was 25
-	Features_fw_patch            = 24  // Fixed: was 26
-	Features_fw_vendor           = 26  // Fixed: was 27
-	Features_fw_vendor_keys      = 27  // Fixed: was 28
-	Features_firmware_features   = 29
+	Features_language              = 9
+	Features_label                 = 10
+	Features_initialized           = 12
+	Features_bootloader_hash       = 14
+	Features_pin_cached            = 16
+	Features_passphrase_cached     = 17
+	Features_firmware_present      = 18
+	Features_needs_backup          = 19
+	Features_model                 = 21
+	Features_fw_major              = 22 // Fixed: was 24
+	Features_fw_minor              = 23 // Fixed: was 25
+	Features_fw_patch              = 24 // Fixed: was 26
+	Features_fw_vendor             = 26 // Fixed: was 27
+	Features_fw_vendor_keys        = 27 // Fixed: was 28
+	Features_firmware_features     = 29
 )
 
 // pbEncodeFeatures encodes a Features message
@@ -123,8 +127,8 @@ func pbEncodeFeatures(buf []byte) int {
 	// passphrase_protection (field 8)
 	n += pbEncodeBool(buf[n:], Features_passphrase_protection, storage.PassphraseProtection)
 
-	// language (field 9)
-	n += pbEncodeString(buf[n:], Features_language, string(storage.Language[:]))
+	// language (field 9) - use "en-US" as default
+	n += pbEncodeString(buf[n:], Features_language, "en-US")
 
 	// label (field 10)
 	if storage.HasLabel {
@@ -161,9 +165,11 @@ func pbEncodeFeatures(buf []byte) int {
 	return n
 }
 
-// Success message field numbers
+// Success message field numbers (from messages.proto)
+// msg_type = 1, message = 2
 const (
-	Success_message = 1
+	Success_msg_type = 1
+	Success_message  = 2
 )
 
 // pbEncodeSuccess encodes a Success message
@@ -174,10 +180,12 @@ func pbEncodeSuccess(buf []byte, message string) int {
 	return pbEncodeString(buf, Success_message, message)
 }
 
-// Failure message field numbers
+// Failure message field numbers (from messages.proto)
+// msg_type = 1, code = 2, message = 3
 const (
-	Failure_code    = 1
-	Failure_message = 2
+	Failure_msg_type = 1
+	Failure_code     = 2
+	Failure_message  = 3
 )
 
 // FailureType codes
@@ -207,11 +215,14 @@ func pbEncodeFailure(buf []byte, code uint32, message string) int {
 
 // Ping message field numbers
 const (
-	Ping_message           = 1
-	Ping_button_protection = 2
-	Ping_pin_protection    = 3
+	Ping_message               = 1
+	Ping_button_protection     = 2
+	Ping_pin_protection        = 3
 	Ping_passphrase_protection = 4
 )
+
+// pingMsgBuf is a fixed buffer for decoded ping messages
+var pingMsgBuf [256]byte
 
 // pbDecodePing decodes a Ping message, returns the message string
 func pbDecodePing(data []byte) string {
@@ -248,8 +259,15 @@ func pbDecodePing(data []byte) string {
 			if i+length > len(data) {
 				break
 			}
-			// Return the message string
-			return string(data[i : i+length])
+			// Copy to buffer and return string
+			// Manual copy due to TinyGo bare-metal limitations
+			if length > len(pingMsgBuf) {
+				length = len(pingMsgBuf)
+			}
+			for j := 0; j < length; j++ {
+				pingMsgBuf[j] = data[i+j]
+			}
+			return string(pingMsgBuf[:length])
 		}
 
 		// Skip other fields
@@ -359,15 +377,15 @@ const (
 
 // ButtonRequestType enum
 const (
-	ButtonRequestType_Other            = 1
-	ButtonRequestType_ConfirmWord      = 8
-	ButtonRequestType_WipeDevice       = 9
-	ButtonRequestType_ProtectCall      = 10
-	ButtonRequestType_SignTx           = 11
-	ButtonRequestType_Address          = 13
-	ButtonRequestType_PublicKey        = 14
+	ButtonRequestType_Other             = 1
+	ButtonRequestType_ConfirmWord       = 8
+	ButtonRequestType_WipeDevice        = 9
+	ButtonRequestType_ProtectCall       = 10
+	ButtonRequestType_SignTx            = 11
+	ButtonRequestType_Address           = 13
+	ButtonRequestType_PublicKey         = 14
 	ButtonRequestType_MnemonicWordCount = 15
-	ButtonRequestType_MnemonicInput    = 16
+	ButtonRequestType_MnemonicInput     = 16
 )
 
 // pbEncodeButtonRequest encodes a ButtonRequest message
@@ -660,9 +678,11 @@ const (
 )
 
 // pbDecodeSkycoinAddress decodes a SkycoinAddress message
-// Returns the address index (default 0)
-func pbDecodeSkycoinAddress(data []byte) int {
-	startIndex := 0
+// Returns addressN (count), startIndex, confirmAddress
+func pbDecodeSkycoinAddress(data []byte) (int, int, bool) {
+	addressN := 1   // default 1
+	startIndex := 0 // default 0
+	confirmAddress := false
 	i := 0
 	for i < len(data) {
 		if i >= len(data) {
@@ -678,6 +698,17 @@ func pbDecodeSkycoinAddress(data []byte) int {
 		fieldNum := tag >> 3
 		wireType := tag & 0x7
 
+		if fieldNum == 1 && wireType == PB_VARINT {
+			// address_n field (count)
+			if i >= len(data) {
+				break
+			}
+			val := int(data[i])
+			i++
+			addressN = val
+			continue
+		}
+
 		if fieldNum == 2 && wireType == PB_VARINT {
 			// start_index field
 			if i >= len(data) {
@@ -686,6 +717,17 @@ func pbDecodeSkycoinAddress(data []byte) int {
 			val := int(data[i])
 			i++
 			startIndex = val
+			continue
+		}
+
+		if fieldNum == 3 && wireType == PB_VARINT {
+			// confirm_address field
+			if i >= len(data) {
+				break
+			}
+			val := data[i]
+			i++
+			confirmAddress = val != 0
 			continue
 		}
 
@@ -708,7 +750,7 @@ func pbDecodeSkycoinAddress(data []byte) int {
 			i += 8
 		}
 	}
-	return startIndex
+	return addressN, startIndex, confirmAddress
 }
 
 // ResponseSkycoinAddress field numbers
@@ -812,9 +854,9 @@ func pbEncodeSkycoinSignMessageResponse(buf []byte, signedMessage string) int {
 
 // TransactionSign field numbers
 const (
-	TransactionSign_nbIn          = 1
-	TransactionSign_transactionIn = 2
-	TransactionSign_nbOut         = 3
+	TransactionSign_nbIn           = 1
+	TransactionSign_transactionIn  = 2
+	TransactionSign_nbOut          = 3
 	TransactionSign_transactionOut = 4
 )
 

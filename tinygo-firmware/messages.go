@@ -9,39 +9,39 @@ const (
 
 // Message type IDs (from protobuf definitions)
 const (
-	MessageType_Initialize      uint16 = 0
-	MessageType_Ping            uint16 = 1
-	MessageType_Success         uint16 = 2
-	MessageType_Failure         uint16 = 3
-	MessageType_ChangePin       uint16 = 4
-	MessageType_WipeDevice      uint16 = 5
-	MessageType_GetEntropy      uint16 = 9
-	MessageType_Entropy         uint16 = 10
-	MessageType_LoadDevice      uint16 = 13
-	MessageType_ResetDevice     uint16 = 14
-	MessageType_Features        uint16 = 17
-	MessageType_PinMatrixRequest uint16 = 18
-	MessageType_PinMatrixAck    uint16 = 19
-	MessageType_Cancel          uint16 = 20
-	MessageType_ApplySettings   uint16 = 25
-	MessageType_ButtonRequest   uint16 = 26
-	MessageType_ButtonAck       uint16 = 27
-	MessageType_BackupDevice    uint16 = 34
-	MessageType_EntropyRequest  uint16 = 35
-	MessageType_EntropyAck      uint16 = 36
-	MessageType_RecoveryDevice  uint16 = 45
-	MessageType_WordRequest     uint16 = 46
-	MessageType_WordAck         uint16 = 47
-	MessageType_GetFeatures     uint16 = 55
-	MessageType_SetMnemonic                uint16 = 113
-	MessageType_SkycoinAddress             uint16 = 114
+	MessageType_Initialize                   uint16 = 0
+	MessageType_Ping                         uint16 = 1
+	MessageType_Success                      uint16 = 2
+	MessageType_Failure                      uint16 = 3
+	MessageType_ChangePin                    uint16 = 4
+	MessageType_WipeDevice                   uint16 = 5
+	MessageType_GetEntropy                   uint16 = 9
+	MessageType_Entropy                      uint16 = 10
+	MessageType_LoadDevice                   uint16 = 13
+	MessageType_ResetDevice                  uint16 = 14
+	MessageType_Features                     uint16 = 17
+	MessageType_PinMatrixRequest             uint16 = 18
+	MessageType_PinMatrixAck                 uint16 = 19
+	MessageType_Cancel                       uint16 = 20
+	MessageType_ApplySettings                uint16 = 25
+	MessageType_ButtonRequest                uint16 = 26
+	MessageType_ButtonAck                    uint16 = 27
+	MessageType_BackupDevice                 uint16 = 34
+	MessageType_EntropyRequest               uint16 = 35
+	MessageType_EntropyAck                   uint16 = 36
+	MessageType_RecoveryDevice               uint16 = 45
+	MessageType_WordRequest                  uint16 = 46
+	MessageType_WordAck                      uint16 = 47
+	MessageType_GetFeatures                  uint16 = 55
+	MessageType_SetMnemonic                  uint16 = 113
+	MessageType_SkycoinAddress               uint16 = 114
 	MessageType_SkycoinCheckMessageSignature uint16 = 115
-	MessageType_SkycoinSignMessage         uint16 = 116
-	MessageType_ResponseSkycoinAddress     uint16 = 117
-	MessageType_ResponseSkycoinSignMessage uint16 = 118
-	MessageType_GenerateMnemonic           uint16 = 119
-	MessageType_TransactionSign            uint16 = 122
-	MessageType_ResponseTransactionSign    uint16 = 123
+	MessageType_SkycoinSignMessage           uint16 = 116
+	MessageType_ResponseSkycoinAddress       uint16 = 117
+	MessageType_ResponseSkycoinSignMessage   uint16 = 118
+	MessageType_GenerateMnemonic             uint16 = 119
+	MessageType_TransactionSign              uint16 = 122
+	MessageType_ResponseTransactionSign      uint16 = 123
 )
 
 // Message read state
@@ -52,11 +52,11 @@ const (
 
 // Incoming message buffer
 var (
-	msgReadState  int
-	msgInBuffer   [MSG_IN_SIZE]byte
-	msgInID       uint16
-	msgInSize     uint32
-	msgInPos      uint32
+	msgReadState int
+	msgInBuffer  [MSG_IN_SIZE]byte
+	msgInID      uint16
+	msgInSize    uint32
+	msgInPos     uint32
 )
 
 // Outgoing message circular buffer

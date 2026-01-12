@@ -122,9 +122,6 @@ func drawUSBIndicator(x, y int, connected bool) {
 
 // handleHIDPacket handles a received HID packet
 func handleHIDPacket(pkt *[64]byte) {
-	// Debug: show first 3 bytes of packet
-	debugShowUSBEvent(11) // HID received
-
 	// Process through message protocol
 	if msgReadPacket(pkt) {
 		// Complete message received - dispatch it
@@ -209,7 +206,7 @@ func oledCmd(cmd byte) {
 	reg(GPIOB_BSRR).Set(1 << 16) // DC low
 	reg(GPIOA_BSRR).Set(1 << 20) // CS low
 	spiSend(cmd)
-	reg(GPIOA_BSRR).Set(1 << 4)  // CS high
+	reg(GPIOA_BSRR).Set(1 << 4) // CS high
 }
 
 func oledClear() {

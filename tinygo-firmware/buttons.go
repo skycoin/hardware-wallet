@@ -4,7 +4,7 @@ import "unsafe"
 
 // GPIO registers for button input (GPIOC)
 const (
-	GPIOC_BASE = 0x40020800
+	GPIOC_BASE  = 0x40020800
 	GPIOC_MODER = GPIOC_BASE + 0x00 // Mode register
 	GPIOC_IDR   = GPIOC_BASE + 0x10 // Input data register
 	GPIOC_PUPDR = GPIOC_BASE + 0x0C // Pull-up/pull-down register

@@ -299,285 +299,207 @@ func (fd *Field) Inv(r *Field) {
 	t1.Mul(r, fd)
 }
 
-// Sqrt computes square root
-func (fd *Field) Sqrt(r *Field) {
-	var x2, x3, x6, x9, x11, x22, x44, x88, x176, x220, x223, t1 Field
-	var j int
-
-	fd.Sqr(&x2)
-	x2.Mul(&x2, fd)
-
-	x2.Sqr(&x3)
-	x3.Mul(&x3, fd)
-
-	x3.Sqr(&x6)
-	x6.Sqr(&x6)
-	x6.Sqr(&x6)
-	x6.Mul(&x6, &x3)
-
-	x6.Sqr(&x9)
-	x9.Sqr(&x9)
-	x9.Sqr(&x9)
-	x9.Mul(&x9, &x3)
-
-	x9.Sqr(&x11)
-	x11.Sqr(&x11)
-	x11.Mul(&x11, &x2)
-
-	x11.Sqr(&x22)
-	for j = 1; j < 11; j++ {
-		x22.Sqr(&x22)
-	}
-	x22.Mul(&x22, &x11)
-
-	x22.Sqr(&x44)
-	for j = 1; j < 22; j++ {
-		x44.Sqr(&x44)
-	}
-	x44.Mul(&x44, &x22)
-
-	x44.Sqr(&x88)
-	for j = 1; j < 44; j++ {
-		x88.Sqr(&x88)
-	}
-	x88.Mul(&x88, &x44)
-
-	x88.Sqr(&x176)
-	for j = 1; j < 88; j++ {
-		x176.Sqr(&x176)
-	}
-	x176.Mul(&x176, &x88)
-
-	x176.Sqr(&x220)
-	for j = 1; j < 44; j++ {
-		x220.Sqr(&x220)
-	}
-	x220.Mul(&x220, &x44)
-
-	x220.Sqr(&x223)
-	x223.Sqr(&x223)
-	x223.Sqr(&x223)
-	x223.Mul(&x223, &x3)
-
-	x223.Sqr(&t1)
-	for j = 1; j < 23; j++ {
-		t1.Sqr(&t1)
-	}
-	t1.Mul(&t1, &x22)
-	for j = 0; j < 6; j++ {
-		t1.Sqr(&t1)
-	}
-	t1.Mul(&t1, &x2)
-	t1.Sqr(&t1)
-	t1.Sqr(r)
+// sqrtExp is (p+1)/4 for secp256k1 in big-endian bytes
+// p = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F
+// (p+1)/4 = 0x3FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFBFFFFF0C
+var sqrtExp = [32]byte{
+	0x3F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+	0xFF, 0xFF, 0xFF, 0xFF, 0xBF, 0xFF, 0xFF, 0x0C,
 }
 
-// Mul multiplies two field elements
+// Sqrt computes square root using simple binary exponentiation
+// sqrt(a) = a^((p+1)/4) for p ≡ 3 (mod 4)
+func (fd *Field) Sqrt(r *Field) {
+	var result, base, temp Field
+	result.SetInt(1)
+	base = *fd
+	base.Normalize()
+
+	// Binary exponentiation: result = fd^sqrtExp
+	for i := 31; i >= 0; i-- {
+		for j := 0; j < 8; j++ {
+			result.Sqr(&temp)
+			temp.Normalize()
+			result = temp
+			if (sqrtExp[31-i]>>(7-uint(j)))&1 == 1 {
+				result.Mul(&temp, &base)
+				temp.Normalize()
+				result = temp
+			}
+		}
+	}
+
+	*r = result
+}
+
+// mulTemp is a fixed intermediate buffer for Mul (reduces stack usage)
+var mulTemp [20]uint64
+
+// Mul multiplies two field elements using loop-based convolution
 func (fd *Field) Mul(r, b *Field) {
+	mulStage1(fd, b)
+	mulStage2(r)
+}
+
+// mulStage1 computes convolution using loops
+func mulStage1(a, b *Field) {
+	var temp uint64
+	var i, j int
+
+	// Lower half: terms 0-9
+	for i = 0; i < 10; i++ {
+		for j = 0; j <= i; j++ {
+			temp += uint64(a.n[j]) * uint64(b.n[i-j])
+		}
+		mulTemp[i] = temp & 0x3FFFFFF
+		temp >>= 26
+	}
+
+	// Upper half: terms 10-18
+	for i = 10; i < 19; i++ {
+		for j = i - 9; j < 10; j++ {
+			temp += uint64(a.n[j]) * uint64(b.n[i-j])
+		}
+		mulTemp[i] = temp & 0x3FFFFFF
+		temp >>= 26
+	}
+	mulTemp[19] = temp
+}
+
+// mulStage2 performs the reduction
+func mulStage2(r *Field) {
 	var c, d uint64
-	var t0, t1, t2, t3, t4, t5, t6 uint64
-	var t7, t8, t9, t10, t11, t12, t13 uint64
-	var t14, t15, t16, t17, t18, t19 uint64
 
-	c = uint64(fd.n[0]) * uint64(b.n[0])
-	t0 = c & 0x3FFFFFF
+	c = mulTemp[0] + mulTemp[10]*0x3D10
+	mulTemp[0] = c & 0x3FFFFFF
 	c = c >> 26
-	c = c + uint64(fd.n[0])*uint64(b.n[1]) + uint64(fd.n[1])*uint64(b.n[0])
-	t1 = c & 0x3FFFFFF
+	c = c + mulTemp[1] + mulTemp[10]*0x400 + mulTemp[11]*0x3D10
+	mulTemp[1] = c & 0x3FFFFFF
 	c = c >> 26
-	c = c + uint64(fd.n[0])*uint64(b.n[2]) + uint64(fd.n[1])*uint64(b.n[1]) + uint64(fd.n[2])*uint64(b.n[0])
-	t2 = c & 0x3FFFFFF
+	c = c + mulTemp[2] + mulTemp[11]*0x400 + mulTemp[12]*0x3D10
+	mulTemp[2] = c & 0x3FFFFFF
 	c = c >> 26
-	c = c + uint64(fd.n[0])*uint64(b.n[3]) + uint64(fd.n[1])*uint64(b.n[2]) + uint64(fd.n[2])*uint64(b.n[1]) + uint64(fd.n[3])*uint64(b.n[0])
-	t3 = c & 0x3FFFFFF
-	c = c >> 26
-	c = c + uint64(fd.n[0])*uint64(b.n[4]) + uint64(fd.n[1])*uint64(b.n[3]) + uint64(fd.n[2])*uint64(b.n[2]) + uint64(fd.n[3])*uint64(b.n[1]) + uint64(fd.n[4])*uint64(b.n[0])
-	t4 = c & 0x3FFFFFF
-	c = c >> 26
-	c = c + uint64(fd.n[0])*uint64(b.n[5]) + uint64(fd.n[1])*uint64(b.n[4]) + uint64(fd.n[2])*uint64(b.n[3]) + uint64(fd.n[3])*uint64(b.n[2]) + uint64(fd.n[4])*uint64(b.n[1]) + uint64(fd.n[5])*uint64(b.n[0])
-	t5 = c & 0x3FFFFFF
-	c = c >> 26
-	c = c + uint64(fd.n[0])*uint64(b.n[6]) + uint64(fd.n[1])*uint64(b.n[5]) + uint64(fd.n[2])*uint64(b.n[4]) + uint64(fd.n[3])*uint64(b.n[3]) + uint64(fd.n[4])*uint64(b.n[2]) + uint64(fd.n[5])*uint64(b.n[1]) + uint64(fd.n[6])*uint64(b.n[0])
-	t6 = c & 0x3FFFFFF
-	c = c >> 26
-	c = c + uint64(fd.n[0])*uint64(b.n[7]) + uint64(fd.n[1])*uint64(b.n[6]) + uint64(fd.n[2])*uint64(b.n[5]) + uint64(fd.n[3])*uint64(b.n[4]) + uint64(fd.n[4])*uint64(b.n[3]) + uint64(fd.n[5])*uint64(b.n[2]) + uint64(fd.n[6])*uint64(b.n[1]) + uint64(fd.n[7])*uint64(b.n[0])
-	t7 = c & 0x3FFFFFF
-	c = c >> 26
-	c = c + uint64(fd.n[0])*uint64(b.n[8]) + uint64(fd.n[1])*uint64(b.n[7]) + uint64(fd.n[2])*uint64(b.n[6]) + uint64(fd.n[3])*uint64(b.n[5]) + uint64(fd.n[4])*uint64(b.n[4]) + uint64(fd.n[5])*uint64(b.n[3]) + uint64(fd.n[6])*uint64(b.n[2]) + uint64(fd.n[7])*uint64(b.n[1]) + uint64(fd.n[8])*uint64(b.n[0])
-	t8 = c & 0x3FFFFFF
-	c = c >> 26
-	c = c + uint64(fd.n[0])*uint64(b.n[9]) + uint64(fd.n[1])*uint64(b.n[8]) + uint64(fd.n[2])*uint64(b.n[7]) + uint64(fd.n[3])*uint64(b.n[6]) + uint64(fd.n[4])*uint64(b.n[5]) + uint64(fd.n[5])*uint64(b.n[4]) + uint64(fd.n[6])*uint64(b.n[3]) + uint64(fd.n[7])*uint64(b.n[2]) + uint64(fd.n[8])*uint64(b.n[1]) + uint64(fd.n[9])*uint64(b.n[0])
-	t9 = c & 0x3FFFFFF
-	c = c >> 26
-	c = c + uint64(fd.n[1])*uint64(b.n[9]) + uint64(fd.n[2])*uint64(b.n[8]) + uint64(fd.n[3])*uint64(b.n[7]) + uint64(fd.n[4])*uint64(b.n[6]) + uint64(fd.n[5])*uint64(b.n[5]) + uint64(fd.n[6])*uint64(b.n[4]) + uint64(fd.n[7])*uint64(b.n[3]) + uint64(fd.n[8])*uint64(b.n[2]) + uint64(fd.n[9])*uint64(b.n[1])
-	t10 = c & 0x3FFFFFF
-	c = c >> 26
-	c = c + uint64(fd.n[2])*uint64(b.n[9]) + uint64(fd.n[3])*uint64(b.n[8]) + uint64(fd.n[4])*uint64(b.n[7]) + uint64(fd.n[5])*uint64(b.n[6]) + uint64(fd.n[6])*uint64(b.n[5]) + uint64(fd.n[7])*uint64(b.n[4]) + uint64(fd.n[8])*uint64(b.n[3]) + uint64(fd.n[9])*uint64(b.n[2])
-	t11 = c & 0x3FFFFFF
-	c = c >> 26
-	c = c + uint64(fd.n[3])*uint64(b.n[9]) + uint64(fd.n[4])*uint64(b.n[8]) + uint64(fd.n[5])*uint64(b.n[7]) + uint64(fd.n[6])*uint64(b.n[6]) + uint64(fd.n[7])*uint64(b.n[5]) + uint64(fd.n[8])*uint64(b.n[4]) + uint64(fd.n[9])*uint64(b.n[3])
-	t12 = c & 0x3FFFFFF
-	c = c >> 26
-	c = c + uint64(fd.n[4])*uint64(b.n[9]) + uint64(fd.n[5])*uint64(b.n[8]) + uint64(fd.n[6])*uint64(b.n[7]) + uint64(fd.n[7])*uint64(b.n[6]) + uint64(fd.n[8])*uint64(b.n[5]) + uint64(fd.n[9])*uint64(b.n[4])
-	t13 = c & 0x3FFFFFF
-	c = c >> 26
-	c = c + uint64(fd.n[5])*uint64(b.n[9]) + uint64(fd.n[6])*uint64(b.n[8]) + uint64(fd.n[7])*uint64(b.n[7]) + uint64(fd.n[8])*uint64(b.n[6]) + uint64(fd.n[9])*uint64(b.n[5])
-	t14 = c & 0x3FFFFFF
-	c = c >> 26
-	c = c + uint64(fd.n[6])*uint64(b.n[9]) + uint64(fd.n[7])*uint64(b.n[8]) + uint64(fd.n[8])*uint64(b.n[7]) + uint64(fd.n[9])*uint64(b.n[6])
-	t15 = c & 0x3FFFFFF
-	c = c >> 26
-	c = c + uint64(fd.n[7])*uint64(b.n[9]) + uint64(fd.n[8])*uint64(b.n[8]) + uint64(fd.n[9])*uint64(b.n[7])
-	t16 = c & 0x3FFFFFF
-	c = c >> 26
-	c = c + uint64(fd.n[8])*uint64(b.n[9]) + uint64(fd.n[9])*uint64(b.n[8])
-	t17 = c & 0x3FFFFFF
-	c = c >> 26
-	c = c + uint64(fd.n[9])*uint64(b.n[9])
-	t18 = c & 0x3FFFFFF
-	c = c >> 26
-	t19 = c
-
-	c = t0 + t10*0x3D10
-	t0 = c & 0x3FFFFFF
-	c = c >> 26
-	c = c + t1 + t10*0x400 + t11*0x3D10
-	t1 = c & 0x3FFFFFF
-	c = c >> 26
-	c = c + t2 + t11*0x400 + t12*0x3D10
-	t2 = c & 0x3FFFFFF
-	c = c >> 26
-	c = c + t3 + t12*0x400 + t13*0x3D10
+	c = c + mulTemp[3] + mulTemp[12]*0x400 + mulTemp[13]*0x3D10
 	r.n[3] = uint32(c) & 0x3FFFFFF
 	c = c >> 26
-	c = c + t4 + t13*0x400 + t14*0x3D10
+	c = c + mulTemp[4] + mulTemp[13]*0x400 + mulTemp[14]*0x3D10
 	r.n[4] = uint32(c) & 0x3FFFFFF
 	c = c >> 26
-	c = c + t5 + t14*0x400 + t15*0x3D10
+	c = c + mulTemp[5] + mulTemp[14]*0x400 + mulTemp[15]*0x3D10
 	r.n[5] = uint32(c) & 0x3FFFFFF
 	c = c >> 26
-	c = c + t6 + t15*0x400 + t16*0x3D10
+	c = c + mulTemp[6] + mulTemp[15]*0x400 + mulTemp[16]*0x3D10
 	r.n[6] = uint32(c) & 0x3FFFFFF
 	c = c >> 26
-	c = c + t7 + t16*0x400 + t17*0x3D10
+	c = c + mulTemp[7] + mulTemp[16]*0x400 + mulTemp[17]*0x3D10
 	r.n[7] = uint32(c) & 0x3FFFFFF
 	c = c >> 26
-	c = c + t8 + t17*0x400 + t18*0x3D10
+	c = c + mulTemp[8] + mulTemp[17]*0x400 + mulTemp[18]*0x3D10
 	r.n[8] = uint32(c) & 0x3FFFFFF
 	c = c >> 26
-	c = c + t9 + t18*0x400 + t19*0x1000003D10
+	c = c + mulTemp[9] + mulTemp[18]*0x400 + mulTemp[19]*0x1000003D10
 	r.n[9] = uint32(c) & 0x03FFFFF
 	c = c >> 22
-	d = t0 + c*0x3D1
+	d = mulTemp[0] + c*0x3D1
 	r.n[0] = uint32(d) & 0x3FFFFFF
 	d = d >> 26
-	d = d + t1 + c*0x40
+	d = d + mulTemp[1] + c*0x40
 	r.n[1] = uint32(d) & 0x3FFFFFF
 	d = d >> 26
-	r.n[2] = uint32(t2 + d)
+	r.n[2] = uint32(mulTemp[2] + d)
 }
+
+// sqrTemp is a fixed intermediate buffer for Sqr (reduces stack usage)
+var sqrTemp [20]uint64
 
 // Sqr squares a field element
+// Split into stages to reduce stack pressure for TinyGo
 func (fd *Field) Sqr(r *Field) {
+	sqrStage1(fd)
+	sqrStage2(r)
+}
+
+// sqrStage1 computes the convolution using loops (smaller code)
+func sqrStage1(fd *Field) {
+	var temp uint64
+	var i, j int
+
+	// Lower half: terms 0-9
+	for i = 0; i < 10; i++ {
+		for j = 0; j <= i; j++ {
+			k := i - j
+			prod := uint64(fd.n[j]) * uint64(fd.n[k])
+			if j == k {
+				temp += prod
+			} else if j < k {
+				temp += prod << 1 // 2 * product for off-diagonal
+			}
+		}
+		sqrTemp[i] = temp & 0x3FFFFFF
+		temp >>= 26
+	}
+
+	// Upper half: terms 10-18
+	for i = 10; i < 19; i++ {
+		for j = i - 9; j < 10 && j <= i-j; j++ {
+			k := i - j
+			if k >= 10 {
+				continue
+			}
+			prod := uint64(fd.n[j]) * uint64(fd.n[k])
+			if j == k {
+				temp += prod
+			} else {
+				temp += prod << 1
+			}
+		}
+		sqrTemp[i] = temp & 0x3FFFFFF
+		temp >>= 26
+	}
+	sqrTemp[19] = temp
+}
+
+// sqrStage2 performs the reduction
+func sqrStage2(r *Field) {
 	var c, d uint64
-	var t0, t1, t2, t3, t4, t5, t6 uint64
-	var t7, t8, t9, t10, t11, t12, t13 uint64
-	var t14, t15, t16, t17, t18, t19 uint64
 
-	c = uint64(fd.n[0]) * uint64(fd.n[0])
-	t0 = c & 0x3FFFFFF
+	c = sqrTemp[0] + sqrTemp[10]*0x3D10
+	sqrTemp[0] = c & 0x3FFFFFF
 	c = c >> 26
-	c = c + (uint64(fd.n[0])*2)*uint64(fd.n[1])
-	t1 = c & 0x3FFFFFF
+	c = c + sqrTemp[1] + sqrTemp[10]*0x400 + sqrTemp[11]*0x3D10
+	sqrTemp[1] = c & 0x3FFFFFF
 	c = c >> 26
-	c = c + (uint64(fd.n[0])*2)*uint64(fd.n[2]) + uint64(fd.n[1])*uint64(fd.n[1])
-	t2 = c & 0x3FFFFFF
+	c = c + sqrTemp[2] + sqrTemp[11]*0x400 + sqrTemp[12]*0x3D10
+	sqrTemp[2] = c & 0x3FFFFFF
 	c = c >> 26
-	c = c + (uint64(fd.n[0])*2)*uint64(fd.n[3]) + (uint64(fd.n[1])*2)*uint64(fd.n[2])
-	t3 = c & 0x3FFFFFF
-	c = c >> 26
-	c = c + (uint64(fd.n[0])*2)*uint64(fd.n[4]) + (uint64(fd.n[1])*2)*uint64(fd.n[3]) + uint64(fd.n[2])*uint64(fd.n[2])
-	t4 = c & 0x3FFFFFF
-	c = c >> 26
-	c = c + (uint64(fd.n[0])*2)*uint64(fd.n[5]) + (uint64(fd.n[1])*2)*uint64(fd.n[4]) + (uint64(fd.n[2])*2)*uint64(fd.n[3])
-	t5 = c & 0x3FFFFFF
-	c = c >> 26
-	c = c + (uint64(fd.n[0])*2)*uint64(fd.n[6]) + (uint64(fd.n[1])*2)*uint64(fd.n[5]) + (uint64(fd.n[2])*2)*uint64(fd.n[4]) + uint64(fd.n[3])*uint64(fd.n[3])
-	t6 = c & 0x3FFFFFF
-	c = c >> 26
-	c = c + (uint64(fd.n[0])*2)*uint64(fd.n[7]) + (uint64(fd.n[1])*2)*uint64(fd.n[6]) + (uint64(fd.n[2])*2)*uint64(fd.n[5]) + (uint64(fd.n[3])*2)*uint64(fd.n[4])
-	t7 = c & 0x3FFFFFF
-	c = c >> 26
-	c = c + (uint64(fd.n[0])*2)*uint64(fd.n[8]) + (uint64(fd.n[1])*2)*uint64(fd.n[7]) + (uint64(fd.n[2])*2)*uint64(fd.n[6]) + (uint64(fd.n[3])*2)*uint64(fd.n[5]) + uint64(fd.n[4])*uint64(fd.n[4])
-	t8 = c & 0x3FFFFFF
-	c = c >> 26
-	c = c + (uint64(fd.n[0])*2)*uint64(fd.n[9]) + (uint64(fd.n[1])*2)*uint64(fd.n[8]) + (uint64(fd.n[2])*2)*uint64(fd.n[7]) + (uint64(fd.n[3])*2)*uint64(fd.n[6]) + (uint64(fd.n[4])*2)*uint64(fd.n[5])
-	t9 = c & 0x3FFFFFF
-	c = c >> 26
-	c = c + (uint64(fd.n[1])*2)*uint64(fd.n[9]) + (uint64(fd.n[2])*2)*uint64(fd.n[8]) + (uint64(fd.n[3])*2)*uint64(fd.n[7]) + (uint64(fd.n[4])*2)*uint64(fd.n[6]) + uint64(fd.n[5])*uint64(fd.n[5])
-	t10 = c & 0x3FFFFFF
-	c = c >> 26
-	c = c + (uint64(fd.n[2])*2)*uint64(fd.n[9]) + (uint64(fd.n[3])*2)*uint64(fd.n[8]) + (uint64(fd.n[4])*2)*uint64(fd.n[7]) + (uint64(fd.n[5])*2)*uint64(fd.n[6])
-	t11 = c & 0x3FFFFFF
-	c = c >> 26
-	c = c + (uint64(fd.n[3])*2)*uint64(fd.n[9]) + (uint64(fd.n[4])*2)*uint64(fd.n[8]) + (uint64(fd.n[5])*2)*uint64(fd.n[7]) + uint64(fd.n[6])*uint64(fd.n[6])
-	t12 = c & 0x3FFFFFF
-	c = c >> 26
-	c = c + (uint64(fd.n[4])*2)*uint64(fd.n[9]) + (uint64(fd.n[5])*2)*uint64(fd.n[8]) + (uint64(fd.n[6])*2)*uint64(fd.n[7])
-	t13 = c & 0x3FFFFFF
-	c = c >> 26
-	c = c + (uint64(fd.n[5])*2)*uint64(fd.n[9]) + (uint64(fd.n[6])*2)*uint64(fd.n[8]) + uint64(fd.n[7])*uint64(fd.n[7])
-	t14 = c & 0x3FFFFFF
-	c = c >> 26
-	c = c + (uint64(fd.n[6])*2)*uint64(fd.n[9]) + (uint64(fd.n[7])*2)*uint64(fd.n[8])
-	t15 = c & 0x3FFFFFF
-	c = c >> 26
-	c = c + (uint64(fd.n[7])*2)*uint64(fd.n[9]) + uint64(fd.n[8])*uint64(fd.n[8])
-	t16 = c & 0x3FFFFFF
-	c = c >> 26
-	c = c + (uint64(fd.n[8])*2)*uint64(fd.n[9])
-	t17 = c & 0x3FFFFFF
-	c = c >> 26
-	c = c + uint64(fd.n[9])*uint64(fd.n[9])
-	t18 = c & 0x3FFFFFF
-	c = c >> 26
-	t19 = c
-
-	c = t0 + t10*0x3D10
-	t0 = c & 0x3FFFFFF
-	c = c >> 26
-	c = c + t1 + t10*0x400 + t11*0x3D10
-	t1 = c & 0x3FFFFFF
-	c = c >> 26
-	c = c + t2 + t11*0x400 + t12*0x3D10
-	t2 = c & 0x3FFFFFF
-	c = c >> 26
-	c = c + t3 + t12*0x400 + t13*0x3D10
+	c = c + sqrTemp[3] + sqrTemp[12]*0x400 + sqrTemp[13]*0x3D10
 	r.n[3] = uint32(c) & 0x3FFFFFF
 	c = c >> 26
-	c = c + t4 + t13*0x400 + t14*0x3D10
+	c = c + sqrTemp[4] + sqrTemp[13]*0x400 + sqrTemp[14]*0x3D10
 	r.n[4] = uint32(c) & 0x3FFFFFF
 	c = c >> 26
-	c = c + t5 + t14*0x400 + t15*0x3D10
+	c = c + sqrTemp[5] + sqrTemp[14]*0x400 + sqrTemp[15]*0x3D10
 	r.n[5] = uint32(c) & 0x3FFFFFF
 	c = c >> 26
-	c = c + t6 + t15*0x400 + t16*0x3D10
+	c = c + sqrTemp[6] + sqrTemp[15]*0x400 + sqrTemp[16]*0x3D10
 	r.n[6] = uint32(c) & 0x3FFFFFF
 	c = c >> 26
-	c = c + t7 + t16*0x400 + t17*0x3D10
+	c = c + sqrTemp[7] + sqrTemp[16]*0x400 + sqrTemp[17]*0x3D10
 	r.n[7] = uint32(c) & 0x3FFFFFF
 	c = c >> 26
-	c = c + t8 + t17*0x400 + t18*0x3D10
+	c = c + sqrTemp[8] + sqrTemp[17]*0x400 + sqrTemp[18]*0x3D10
 	r.n[8] = uint32(c) & 0x3FFFFFF
 	c = c >> 26
-	c = c + t9 + t18*0x400 + t19*0x1000003D10
+	c = c + sqrTemp[9] + sqrTemp[18]*0x400 + sqrTemp[19]*0x1000003D10
 	r.n[9] = uint32(c) & 0x03FFFFF
 	c = c >> 22
-	d = t0 + c*0x3D1
+	d = sqrTemp[0] + c*0x3D1
 	r.n[0] = uint32(d) & 0x3FFFFFF
 	d = d >> 26
-	d = d + t1 + c*0x40
+	d = d + sqrTemp[1] + c*0x40
 	r.n[1] = uint32(d) & 0x3FFFFFF
 	d = d >> 26
-	r.n[2] = uint32(t2 + d)
+	r.n[2] = uint32(sqrTemp[2] + d)
 }

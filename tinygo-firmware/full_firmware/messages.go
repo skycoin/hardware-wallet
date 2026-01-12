@@ -2,8 +2,8 @@ package main
 
 // Message buffer sizes
 const (
-	MsgInSize  = 12 * 1024 // 12KB input buffer
-	MsgOutSize = 12 * 1024 // 12KB output buffer
+	MsgInSize   = 12 * 1024       // 12KB input buffer
+	MsgOutSize  = 12 * 1024       // 12KB output buffer
 	MsgOutSlots = MsgOutSize / 64 // Number of 64-byte slots
 )
 
@@ -177,7 +177,7 @@ func (w *MsgWriter) NextPacket() *[64]byte {
 
 	// Get pointer to the packet
 	offset := w.start * 64
-	packet := (*[64]byte)(w.buffer[offset:offset+64])
+	packet := (*[64]byte)(w.buffer[offset : offset+64])
 
 	// Advance start pointer
 	w.start = (w.start + 1) % MsgOutSlots

@@ -1,0 +1,11 @@
+=== Daemon started at Mon Jan 12 10:40:44 AM CST 2026 ===
+[2026-01-12T10:40:46-06:00] ERROR [skywallet]: libusb: bad access [code -3]
+[2026-01-12T10:40:46-06:00] INFO [daemon-api]: 200 GET /api/v1/available 540.103µs
+[2026-01-12T10:40:48-06:00] ERROR [daemon-api]: features failed: no device connected
+[2026-01-12T10:40:48-06:00] ERROR [daemon-api]: 500 GET /api/v1/features 423.384µs body=""
+[2026-01-12T10:44:28-06:00] ERROR [skywallet]: libusb: bad access [code -3]
+[2026-01-12T10:44:28-06:00] INFO [daemon-api]: 200 GET /api/v1/available 467.26µs
+[2026-01-12T10:44:28-06:00] ERROR [daemon-api]: firmwareUpdate failed: no device connected
+[2026-01-12T10:44:28-06:00] ERROR [daemon-api]: 500 PUT /api/v1/firmware_update 2.724951ms body=""
+[2026-01-12T10:45:05-06:00] ERROR [daemon-api]: firmwareUpdate failed: no device connected
+[2026-01-12T10:45:05-06:00] ERROR [daemon-api]: 500 PUT /api/v1/firmware_update 2.671076ms body=""

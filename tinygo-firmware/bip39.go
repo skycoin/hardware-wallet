@@ -15,6 +15,9 @@ const (
 	MnemonicWords24 = 24
 )
 
+// entropyBuffer is a fixed buffer for entropy generation
+var entropyBuffer [32]byte
+
 // generateMnemonic generates a BIP39 mnemonic phrase
 // wordCount must be 12 or 24
 // Returns the mnemonic as a space-separated string
@@ -29,12 +32,15 @@ func generateMnemonic(wordCount int) string {
 		return "" // Invalid word count
 	}
 
-	// Generate random entropy
-	entropy := make([]byte, entropyBytes)
-	getEntropy(entropy)
+	// Generate random entropy using fixed buffer
+	getEntropy(entropyBuffer[:entropyBytes])
 
-	return entropyToMnemonic(entropy)
+	return entropyToMnemonic(entropyBuffer[:entropyBytes])
 }
+
+// mnemonicBuffer is a fixed buffer for mnemonic generation
+// 24 words * max 8 chars per word + 23 spaces = 215 max
+var mnemonicBuffer [256]byte
 
 // entropyToMnemonic converts entropy bytes to a mnemonic phrase
 func entropyToMnemonic(entropy []byte) string {
@@ -50,21 +56,26 @@ func entropyToMnemonic(entropy []byte) string {
 	// Extract 11-bit groups to get word indices
 	wordCount := totalBits / 11
 
-	// Build result
-	result := make([]byte, 0, wordCount*10) // ~10 chars per word average
+	// Build result in fixed buffer
+	pos := 0
 
 	for i := 0; i < wordCount; i++ {
 		// Get 11 bits starting at bit position i*11
 		index := getWordIndex(entropy, hash[:], i*11)
 		word := bip39Words[index]
 
-		if i > 0 {
-			result = append(result, ' ')
+		if i > 0 && pos < len(mnemonicBuffer) {
+			mnemonicBuffer[pos] = ' '
+			pos++
 		}
-		result = append(result, word...)
+		// Copy word to buffer
+		for j := 0; j < len(word) && pos < len(mnemonicBuffer); j++ {
+			mnemonicBuffer[pos] = word[j]
+			pos++
+		}
 	}
 
-	return string(result)
+	return string(mnemonicBuffer[:pos])
 }
 
 // getWordIndex extracts 11 bits from entropy+checksum at the given bit offset

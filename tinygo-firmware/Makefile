@@ -11,7 +11,7 @@ SOURCES = main.go
 #	messages.go protobuf.go dispatch.go \
 #	types.go handlers.go
 
-.PHONY: all build flash clean
+.PHONY: all build flash clean format lint check tidy
 
 all: build
 
@@ -58,3 +58,18 @@ clean:
 
 size: $(ELF)
 	arm-none-eabi-size $(ELF)
+
+# Linting and formatting
+tidy:
+	go mod tidy
+
+format: tidy
+	goimports -w -local github.com/0pcom/hardware-wallet .
+	gofmt -s -w .
+
+lint:
+	golangci-lint --version
+	golangci-lint run -c .golangci.yml .
+
+check: format lint
+	@echo "Format and lint checks complete"

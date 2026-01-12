@@ -24,13 +24,13 @@ const (
 	FLASH_KEY2 = 0xCDEF89AB
 
 	// Flash CR bits
-	FLASH_CR_PG     = 1 << 0  // Programming
-	FLASH_CR_SER    = 1 << 1  // Sector erase
-	FLASH_CR_MER    = 1 << 2  // Mass erase
-	FLASH_CR_SNB    = 3       // Sector number shift
-	FLASH_CR_PSIZE  = 8       // Program size shift
-	FLASH_CR_STRT   = 1 << 16 // Start
-	FLASH_CR_LOCK   = 1 << 31 // Lock
+	FLASH_CR_PG    = 1 << 0  // Programming
+	FLASH_CR_SER   = 1 << 1  // Sector erase
+	FLASH_CR_MER   = 1 << 2  // Mass erase
+	FLASH_CR_SNB   = 3       // Sector number shift
+	FLASH_CR_PSIZE = 8       // Program size shift
+	FLASH_CR_STRT  = 1 << 16 // Start
+	FLASH_CR_LOCK  = 1 << 31 // Lock
 
 	// Flash SR bits
 	FLASH_SR_BSY = 1 << 16 // Busy
@@ -77,10 +77,10 @@ type Storage struct {
 	HasPIN               bool
 
 	// Device settings
-	Language  [17]byte
-	HasLabel  bool
-	Label     [33]byte
-	LabelLen  uint8
+	Language [17]byte
+	HasLabel bool
+	Label    [33]byte
+	LabelLen uint8
 
 	// Flags
 	Imported         bool
@@ -137,7 +137,7 @@ func flashEraseSector(sector uint8) {
 
 	// Set sector number and erase bit
 	cr := flashReg(FLASH_CR).Get()
-	cr &^= 0x78       // Clear sector bits
+	cr &^= 0x78        // Clear sector bits
 	cr |= FLASH_CR_SER // Sector erase
 	cr |= uint32(sector) << FLASH_CR_SNB
 	cr |= 2 << FLASH_CR_PSIZE // 32-bit parallelism
@@ -356,26 +356,7 @@ func storageSetMnemonic(mnemonic string) {
 
 // storageGetDeviceID returns a unique device ID
 func storageGetDeviceID() string {
-	// Read STM32 unique ID from ROM
-	// Located at 0x1FFF7A10 (96 bits = 12 bytes)
-	uid0 := flashRead32(0x1FFF7A10)
-	uid1 := flashRead32(0x1FFF7A14)
-	_ = flashRead32(0x1FFF7A18) // uid2 - available if needed
-
-	// Convert to hex string (simplified - first 11 chars)
-	var id [11]byte
-	hexChars := "0123456789ABCDEF"
-	id[0] = hexChars[(uid0>>28)&0xF]
-	id[1] = hexChars[(uid0>>24)&0xF]
-	id[2] = hexChars[(uid0>>20)&0xF]
-	id[3] = hexChars[(uid0>>16)&0xF]
-	id[4] = hexChars[(uid0>>12)&0xF]
-	id[5] = hexChars[(uid0>>8)&0xF]
-	id[6] = hexChars[(uid0>>4)&0xF]
-	id[7] = hexChars[uid0&0xF]
-	id[8] = hexChars[(uid1>>28)&0xF]
-	id[9] = hexChars[(uid1>>24)&0xF]
-	id[10] = hexChars[(uid1>>20)&0xF]
-
-	return string(id[:])
+	// TODO: Read STM32 unique ID from ROM at 0x1FFF7A10
+	// For now, return a static ID
+	return "SKYWLT-TGO1"
 }

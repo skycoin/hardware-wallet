@@ -138,7 +138,7 @@ func oledInit() {
 
 	// Initialize SPI1 as master
 	// CPOL=0, CPHA=0, MSB first, 8-bit, baudrate=fPCLK/8
-	regSet(SPI1_CR1, 0) // Disable SPI first
+	regSet(SPI1_CR1, 0)            // Disable SPI first
 	regSet(SPI1_CR2, SPI_CR2_SSOE) // Enable SS output
 	regSet(SPI1_CR1, SPI_CR1_MSTR|SPI_CR1_BR_DIV8|SPI_CR1_SSI|SPI_CR1_SSM)
 	regSetBits(SPI1_CR1, SPI_CR1_SPE) // Enable SPI
@@ -223,10 +223,10 @@ func oledDrawPixel(x, y int, on bool) {
 	if x < 0 || x >= OLED_WIDTH || y < 0 || y >= OLED_HEIGHT {
 		return
 	}
-	
+
 	idx := x + (y/8)*OLED_WIDTH
 	bit := byte(1 << (y % 8))
-	
+
 	if on {
 		oledBuffer[idx] |= bit
 	} else {

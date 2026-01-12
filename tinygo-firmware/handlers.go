@@ -31,9 +31,9 @@ var pendingMnemonicLen = 0
 
 // dispatchMessage handles an incoming message based on its type
 func dispatchMessage() {
-	// Debug: show received message ID
 	debugShowMsgID(msgInID)
-
+	// Also show first 8 bytes of payload for debugging
+	debugShowPayload(msgInBuffer[:], msgInSize)
 	switch msgInID {
 	case MessageType_Initialize:
 		handleInitialize()
@@ -95,9 +95,88 @@ func dispatchMessage() {
 	}
 }
 
-// debugShowMsgID shows the message ID on display (disabled)
+// hexDigit converts 0-15 to hex char
+func hexDigit(n byte) byte {
+	if n < 10 {
+		return '0' + n
+	}
+	return 'A' + n - 10
+}
+
+// debugShowPayload shows first bytes of message payload
+func debugShowPayload(data []byte, size uint32) {
+	// Display on line 24 and 34 (below msgID debug)
+	x := 0
+	y := 24
+	// Show size
+	oledDrawChar(x, y, 'S')
+	x += oledDrawChar(x, y, 'z')
+	x += oledDrawChar(x, y, ':')
+	val := int(size)
+	if val == 0 {
+		x += oledDrawChar(x, y, '0')
+	} else {
+		var digits [5]byte
+		dpos := 4
+		for val > 0 && dpos >= 0 {
+			digits[dpos] = '0' + byte(val%10)
+			val /= 10
+			dpos--
+		}
+		for i := dpos + 1; i <= 4; i++ {
+			x += oledDrawChar(x, y, digits[i])
+		}
+	}
+	// Show first 8 bytes of payload as hex
+	y = 34
+	x = 0
+	showLen := 8
+	if int(size) < showLen {
+		showLen = int(size)
+	}
+	for i := 0; i < showLen; i++ {
+		x += oledDrawChar(x, y, hexDigit(data[i]>>4))
+		x += oledDrawChar(x, y, hexDigit(data[i]&0xF))
+	}
+	oledRefresh()
+}
+
+// debugShowMsgID shows the message ID on display using direct char output
 func debugShowMsgID(id uint16) {
-	_ = id
+	oledClear()
+	// Draw "ID:" manually
+	x := 0
+	x += oledDrawChar(x, 0, 'I')
+	x += oledDrawChar(x, 0, 'D')
+	x += oledDrawChar(x, 0, ':')
+	// Draw hex value
+	x += oledDrawChar(x, 0, '0')
+	x += oledDrawChar(x, 0, 'x')
+	x += oledDrawChar(x, 0, hexDigit(byte(id>>12)&0xF))
+	x += oledDrawChar(x, 0, hexDigit(byte(id>>8)&0xF))
+	x += oledDrawChar(x, 0, hexDigit(byte(id>>4)&0xF))
+	x += oledDrawChar(x, 0, hexDigit(byte(id)&0xF))
+	// Draw decimal on second line
+	x = 0
+	x += oledDrawChar(x, 10, '(')
+	// Convert to decimal digits manually
+	val := int(id)
+	if val == 0 {
+		x += oledDrawChar(x, 10, '0')
+	} else {
+		var digits [5]byte
+		dpos := 4
+		for val > 0 && dpos >= 0 {
+			digits[dpos] = '0' + byte(val%10)
+			val /= 10
+			dpos--
+		}
+		for i := dpos + 1; i <= 4; i++ {
+			x += oledDrawChar(x, 10, digits[i])
+		}
+	}
+	x += oledDrawChar(x, 10, ')')
+	oledRefresh()
 }
 
 // handleInitialize handles the Initialize message
@@ -126,12 +205,153 @@ func debugShowPayloadSize(size int) {
 }
 
 // handlePing handles the Ping message
+// Supports test commands when message starts with "TEST:"
 func handlePing() {
 	// Decode the ping message to get the echo string
 	message := pbDecodePing(msgInBuffer[:msgInSize])
 
-	// Send Success with the same message
+	// Check for test commands
+	if len(message) > 5 && message[:5] == "TEST:" {
+		handleTestCommand(message[5:])
+		return
+	}
+
+	// Echo the message back
 	sendSuccess(message)
+}
+
+// handleTestCommand runs crypto test commands
+// Commands:
+//   SHA256 - SHA256("abc"), expect ba7816bf...
+//   RIPEMD - RIPEMD160("abc"), expect 8eb208f7...
+//   B58    - Base58Check([0x00,0x00...]), expect 1111...
+//   PUBKEY1 - pubkey from seckey=1, expect G point
+//   PUBKEY2 - pubkey from seckey=2
+//   SQR    - square 2, expect 4
+//   MUL    - multiply 3*5, expect 15
+//   ADDR   - address from test mnemonic
+func handleTestCommand(cmd string) {
+	var result string
+
+	switch cmd {
+	case "SHA256":
+		// SHA256("abc") = ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad
+		hash := sha256Sum([]byte("abc"))
+		result = "SHA256:" + hexBytes(hash[:8]) // First 8 bytes
+
+	case "RIPEMD":
+		// RIPEMD160("abc") = 8eb208f7e05d987a9b044a8e98c6b087f15a0bfc
+		hash := ripemd160Sum([]byte("abc"))
+		result = "RIPEMD:" + hexBytes(hash[:8])
+
+	case "B58":
+		// Base58 encode [0x00, 0x00, 0x00, 0x00, 0x01]
+		data := []byte{0x00, 0x00, 0x00, 0x00, 0x01}
+		encoded := base58Encode(data)
+		result = "B58:" + encoded
+
+	case "SQR":
+		// Test squaring: 2^2 = 4
+		var a, r Field
+		a.SetInt(2)
+		a.Sqr(&r)
+		r.Normalize()
+		result = "SQR:" + fieldToHex(&r)
+
+	case "MUL":
+		// Test multiplication: 3 * 5 = 15
+		var a, b, r Field
+		a.SetInt(3)
+		b.SetInt(5)
+		a.Mul(&r, &b)
+		r.Normalize()
+		result = "MUL:" + fieldToHex(&r)
+
+	case "PUBKEY1":
+		// Public key from secret key = 1 (should be generator G)
+		var seckey [32]byte
+		seckey[31] = 1
+		pubkey := pubkeyFromSeckey(seckey[:])
+		result = "PK1:" + hexBytes(pubkey[:8])
+
+	case "PUBKEY2":
+		// Public key from secret key = 2
+		var seckey [32]byte
+		seckey[31] = 2
+		pubkey := pubkeyFromSeckey(seckey[:])
+		result = "PK2:" + hexBytes(pubkey[:8])
+
+	case "ECMULT":
+		// Test ECmultGen directly with seckey=1
+		var seckey [32]byte
+		seckey[31] = 1
+		var xyz XYZ
+		ECmultGen(&xyz, seckey[:])
+		var xy XY
+		xy.SetXYZ(&xyz)
+		if xy.Infinity {
+			result = "ECMULT:INF"
+		} else {
+			var xBytes [32]byte
+			xy.X.GetB32(xBytes[:])
+			result = "ECMULT:" + hexBytes(xBytes[:8])
+		}
+
+	case "GPOINT":
+		// Get generator point X coordinate
+		initSecp256k1G()
+		var xBytes [32]byte
+		secp256k1G.X.GetB32(xBytes[:])
+		result = "GPOINT:" + hexBytes(xBytes[:8])
+
+	case "ADDR":
+		// Test full address generation with test mnemonic
+		mnemonic := "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
+		addr := deriveAddressAtIndex(mnemonic, 0)
+		if addr == "" {
+			result = "ADDR:FAIL"
+		} else if len(addr) > 16 {
+			result = "ADDR:" + addr[:16]
+		} else {
+			result = "ADDR:" + addr
+		}
+
+	default:
+		result = "UNKNOWN:" + cmd
+	}
+
+	sendSuccess(result)
+}
+
+// hexBuf is a fixed buffer for hex encoding
+var hexBuf [64]byte
+
+// hexBytes converts bytes to hex string (max 32 bytes input)
+func hexBytes(data []byte) string {
+	const hexChars = "0123456789abcdef"
+	n := len(data)
+	if n > 32 {
+		n = 32
+	}
+	for i := 0; i < n; i++ {
+		hexBuf[i*2] = hexChars[data[i]>>4]
+		hexBuf[i*2+1] = hexChars[data[i]&0x0f]
+	}
+	return string(hexBuf[:n*2])
+}
+
+// fieldHexBuf is a fixed buffer for field hex encoding
+var fieldHexBuf [8]byte
+
+// fieldToHex converts a field element to hex (just low 32 bits for testing)
+func fieldToHex(f *Field) string {
+	val := f.n[0]
+	const hexChars = "0123456789abcdef"
+	for i := 7; i >= 0; i-- {
+		fieldHexBuf[i] = hexChars[val&0x0f]
+		val >>= 4
+	}
+	return string(fieldHexBuf[:])
 }
 
 // handleChangePin handles the ChangePin message
@@ -282,11 +502,91 @@ func handleGenerateMnemonic() {
 	if wordCount == 24 {
 		entropySize = 32 // 256 bits for 24 words
 	}
-	entropy := make([]byte, entropySize)
-	getEntropy(entropy)
+	// Use fixed buffer from bip39.go
+	getEntropy(entropyBuffer[:entropySize])
+	entropy := entropyBuffer[:entropySize]
+
+	// Debug: show raw entropy and wordlist check
+	oledClear()
+	x := 0
+	// Line 0: "E:" + first 4 bytes of entropy in hex
+	x += oledDrawChar(x, 0, 'E')
+	x += oledDrawChar(x, 0, ':')
+	for i := 0; i < 4; i++ {
+		x += oledDrawChar(x, 0, hexDigit(entropy[i]>>4))
+		x += oledDrawChar(x, 0, hexDigit(entropy[i]&0xF))
+	}
+
+	// Line 10: "W:" + first word from bip39Words (should be "abandon")
+	x = 0
+	x += oledDrawChar(x, 10, 'W')
+	x += oledDrawChar(x, 10, ':')
+	firstWord := bip39Words[0]
+	for i := 0; i < len(firstWord) && i < 10; i++ {
+		x += oledDrawChar(x, 10, firstWord[i])
+	}
+
+	// Line 20: "N:" + number of words in bip39Words
+	x = 0
+	x += oledDrawChar(x, 20, 'N')
+	x += oledDrawChar(x, 20, ':')
+	numWords := len(bip39Words)
+	if numWords == 0 {
+		x += oledDrawChar(x, 20, '0')
+	} else {
+		var digits [5]byte
+		dpos := 4
+		for numWords > 0 && dpos >= 0 {
+			digits[dpos] = '0' + byte(numWords%10)
+			numWords /= 10
+			dpos--
+		}
+		for i := dpos + 1; i <= 4; i++ {
+			x += oledDrawChar(x, 20, digits[i])
+		}
+	}
+
+	oledRefresh()
+	// Wait 3 seconds to see debug
+	usbDelay(3000000)
 
 	// Generate mnemonic from entropy
 	mnemonic := entropyToMnemonic(entropy)
+
+	// Debug screen 2: show mnemonic result
+	oledClear()
+	// Line 0: "L:" + mnemonic length
+	x = 0
+	x += oledDrawChar(x, 0, 'L')
+	x += oledDrawChar(x, 0, ':')
+	mlen := len(mnemonic)
+	if mlen == 0 {
+		x += oledDrawChar(x, 0, '0')
+	} else {
+		var digits [3]byte
+		dpos := 2
+		for mlen > 0 && dpos >= 0 {
+			digits[dpos] = '0' + byte(mlen%10)
+			mlen /= 10
+			dpos--
+		}
+		for i := dpos + 1; i <= 2; i++ {
+			x += oledDrawChar(x, 0, digits[i])
+		}
+	}
+	// Line 10: first 16 chars of mnemonic
+	x = 0
+	for i := 0; i < 16 && i < len(mnemonic); i++ {
+		x += oledDrawChar(x, 10, mnemonic[i])
+	}
+	// Line 20: next 16 chars of mnemonic (chars 16-31)
+	x = 0
+	for i := 16; i < 32 && i < len(mnemonic); i++ {
+		x += oledDrawChar(x, 20, mnemonic[i])
+	}
+	oledRefresh()
+	// Wait 3 seconds to see debug
+	usbDelay(3000000)
 
 	// Store mnemonic in flash (mark needs_backup = true)
 	storageSetMnemonic(mnemonic)
@@ -425,6 +725,13 @@ func sendButtonRequest(code uint32) {
 
 // handleButtonAck handles the ButtonAck message
 func handleButtonAck() {
+	// Check address confirmation state
+	if addrState == ADDR_STATE_WAIT_BUTTON {
+		// User confirmed - send all pending addresses
+		sendAllSkycoinAddresses()
+		return
+	}
+
 	if mnemonicState == MNEMONIC_STATE_BACKUP {
 		// Show next word
 		words := splitMnemonic(string(pendingMnemonic[:pendingMnemonicLen]))
@@ -483,6 +790,16 @@ func clearBackupDisplay() {
 	oledRefresh()
 }
 
+// Address generation state for button confirmation flow
+const (
+	ADDR_STATE_IDLE = iota
+	ADDR_STATE_WAIT_BUTTON
+)
+
+var addrState = ADDR_STATE_IDLE
+var pendingAddresses [10]string // Max 10 addresses
+var pendingAddressCount = 0
+
 // handleSkycoinAddress handles the SkycoinAddress message
 func handleSkycoinAddress() {
 	storageInit()
@@ -498,8 +815,16 @@ func handleSkycoinAddress() {
 		return // Waiting for PIN
 	}
 
-	// Get address index from message (default 0)
-	addrIndex := pbDecodeSkycoinAddress(msgInBuffer[:msgInSize])
+	// Decode message fields
+	addressN, startIndex, confirmAddress := pbDecodeSkycoinAddress(msgInBuffer[:msgInSize])
+
+	// Limit addressN to reasonable value
+	if addressN <= 0 {
+		addressN = 1
+	}
+	if addressN > 10 {
+		addressN = 10
+	}
 
 	// Get mnemonic from storage
 	mnemonic := storageGetMnemonic()
@@ -508,18 +833,133 @@ func handleSkycoinAddress() {
 		return
 	}
 
-	// Derive address at specified index using Skycoin's deterministic derivation
-	address := deriveAddressAtIndex(mnemonic, addrIndex)
-	if address == "" {
-		sendFailure(FailureType_ProcessError, "Key derivation failed")
+	// Debug: show mnemonic info using direct char output
+	oledClear()
+	// Show raw MnemonicLen from storage
+	x := 0
+	x += oledDrawChar(x, 0, 'L')
+	x += oledDrawChar(x, 0, 'e')
+	x += oledDrawChar(x, 0, 'n')
+	x += oledDrawChar(x, 0, ':')
+	mlen := int(storage.MnemonicLen)
+	if mlen == 0 {
+		x += oledDrawChar(x, 0, '0')
+	} else {
+		var digits [3]byte
+		dpos := 2
+		for mlen > 0 && dpos >= 0 {
+			digits[dpos] = '0' + byte(mlen%10)
+			mlen /= 10
+			dpos--
+		}
+		for i := dpos + 1; i <= 2; i++ {
+			x += oledDrawChar(x, 0, digits[i])
+		}
+	}
+	// Show first 10 chars of mnemonic on second line
+	x = 0
+	for i := 0; i < 10 && i < len(mnemonic); i++ {
+		x += oledDrawChar(x, 10, mnemonic[i])
+	}
+	oledRefresh()
+
+	// Generate all requested addresses
+	pendingAddressCount = 0
+
+	for i := 0; i < addressN; i++ {
+		address := deriveAddressAtIndex(mnemonic, startIndex+i)
+		if address == "" {
+			// Debug: show which step failed
+			oledDrawString(0, 16, "Derive FAILED")
+			oledDrawString(0, 24, "idx:")
+			oledDrawString(32, 24, intToStr(startIndex+i))
+			oledDrawString(0, 32, "pk:")
+			oledDrawChar(24, 32, '0'+debugPubkeyState)
+			oledDrawString(32, 32, " ecdh:")
+			oledDrawChar(72, 32, '0'+debugEcdhState)
+			oledDrawString(0, 42, "decomp:")
+			oledDrawChar(56, 42, '0'+debugDecompressState)
+			oledRefresh()
+			// Include debug state in failure message using switch
+			// debugDecompressState: 0=not called, 1=len, 2=prefix, 3=isvalid fail, 4=ok, 5=sqrt fail, 6=sqrt4 fail
+			// Use constant strings to avoid encoding issues
+			if debugDecompressState == 1 {
+				sendFailure(FailureType_ProcessError, "dec len")
+			} else if debugDecompressState == 2 {
+				sendFailure(FailureType_ProcessError, "dec pre")
+			} else if debugDecompressState == 3 {
+				sendFailure(FailureType_ProcessError, "IsValid")
+			} else if debugDecompressState == 4 {
+				sendFailure(FailureType_ProcessError, "dec ok")
+			} else if debugDecompressState == 5 {
+				sendFailure(FailureType_ProcessError, "Sqrt bad")
+			} else if debugDecompressState == 6 {
+				sendFailure(FailureType_ProcessError, "Sqrt4 bad")
+			} else if debugDecompressState == 7 {
+				sendFailure(FailureType_ProcessError, "Sqr2 bad")
+			} else if debugDecompressState == 8 {
+				sendFailure(FailureType_ProcessError, "SetInt bad")
+			} else if debugEcdhState == 3 {
+				sendFailure(FailureType_ProcessError, "ecdh inf")
+			} else {
+				sendFailure(FailureType_ProcessError, "unknown")
+			}
+			return
+		}
+		pendingAddresses[i] = address
+		pendingAddressCount++
+	}
+
+	// Display first address on OLED
+	if pendingAddressCount > 0 {
+		displayAddress(pendingAddresses[0])
+	}
+
+	// If confirmAddress is set, send ButtonRequest and wait for ButtonAck
+	if confirmAddress {
+		addrState = ADDR_STATE_WAIT_BUTTON
+		sendButtonRequest(ButtonRequestType_Address)
 		return
 	}
 
-	// Display address on OLED
-	displayAddress(address)
+	// No confirmation needed - send addresses directly
+	sendAllSkycoinAddresses()
+}
 
-	// Send response
-	sendSkycoinAddressResponse(address)
+// sendAllSkycoinAddresses sends all pending addresses
+func sendAllSkycoinAddresses() {
+	// Encode all addresses in response
+	var buf [512]byte
+	n := 0
+	for i := 0; i < pendingAddressCount; i++ {
+		n += pbEncodeString(buf[n:], ResponseSkycoinAddress_addresses, pendingAddresses[i])
+	}
+
+	msgWrite(MessageType_ResponseSkycoinAddress, buf[:n])
+	addrState = ADDR_STATE_IDLE
+}
+
+// intToStr converts int to string (simple implementation)
+func intToStr(n int) string {
+	if n == 0 {
+		return "0"
+	}
+	var buf [10]byte
+	i := 9
+	neg := n < 0
+	if neg {
+		n = -n
+	}
+	for n > 0 && i >= 0 {
+		buf[i] = '0' + byte(n%10)
+		n /= 10
+		i--
+	}
+	if neg && i >= 0 {
+		buf[i] = '-'
+		i--
+	}
+	return string(buf[i+1:])
 }
 
 // displayAddress shows an address on the OLED display
@@ -546,13 +986,6 @@ func displayAddress(address string) {
 	}
 
 	oledRefresh()
-}
-
-// sendSkycoinAddressResponse sends a ResponseSkycoinAddress message
-func sendSkycoinAddressResponse(address string) {
-	var buf [64]byte
-	n := pbEncodeSkycoinAddressResponse(buf[:], address)
-	msgWrite(MessageType_ResponseSkycoinAddress, buf[:n])
 }
 
 // handleSkycoinSignMessage handles the SkycoinSignMessage message

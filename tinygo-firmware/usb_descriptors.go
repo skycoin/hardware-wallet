@@ -68,9 +68,9 @@ const (
 
 // Device Descriptor (18 bytes)
 var deviceDescriptor = [18]byte{
-	18,             // bLength
-	USB_DT_DEVICE,  // bDescriptorType
-	0x00, 0x02,     // bcdUSB = 2.00
+	18,            // bLength
+	USB_DT_DEVICE, // bDescriptorType
+	0x00, 0x02,    // bcdUSB = 2.00
 	0x00,           // bDeviceClass (defined at interface level)
 	0x00,           // bDeviceSubClass
 	0x00,           // bDeviceProtocol
@@ -90,21 +90,21 @@ var deviceDescriptor = [18]byte{
 // Vendor-defined 64-byte input/output reports
 var hidReportDescriptor = [34]byte{
 	0x06, 0x00, 0xFF, // USAGE_PAGE (Vendor Defined)
-	0x09, 0x01,       // USAGE (1)
-	0xA1, 0x01,       // COLLECTION (Application)
-	0x09, 0x20,       // USAGE (Input Report Data)
-	0x15, 0x00,       // LOGICAL_MINIMUM (0)
+	0x09, 0x01, // USAGE (1)
+	0xA1, 0x01, // COLLECTION (Application)
+	0x09, 0x20, // USAGE (Input Report Data)
+	0x15, 0x00, // LOGICAL_MINIMUM (0)
 	0x26, 0xFF, 0x00, // LOGICAL_MAXIMUM (255)
-	0x75, 0x08,       // REPORT_SIZE (8)
-	0x95, 0x40,       // REPORT_COUNT (64)
-	0x81, 0x02,       // INPUT (Data,Var,Abs)
-	0x09, 0x21,       // USAGE (Output Report Data)
-	0x15, 0x00,       // LOGICAL_MINIMUM (0)
+	0x75, 0x08, // REPORT_SIZE (8)
+	0x95, 0x40, // REPORT_COUNT (64)
+	0x81, 0x02, // INPUT (Data,Var,Abs)
+	0x09, 0x21, // USAGE (Output Report Data)
+	0x15, 0x00, // LOGICAL_MINIMUM (0)
 	0x26, 0xFF, 0x00, // LOGICAL_MAXIMUM (255)
-	0x75, 0x08,       // REPORT_SIZE (8)
-	0x95, 0x40,       // REPORT_COUNT (64)
-	0x91, 0x02,       // OUTPUT (Data,Var,Abs)
-	0xC0,             // END_COLLECTION
+	0x75, 0x08, // REPORT_SIZE (8)
+	0x95, 0x40, // REPORT_COUNT (64)
+	0x91, 0x02, // OUTPUT (Data,Var,Abs)
+	0xC0, // END_COLLECTION
 }
 
 // Configuration Descriptor with Interface, HID, and Endpoints
@@ -121,22 +121,22 @@ var configDescriptor = [41]byte{
 	50,   // bMaxPower (100mA)
 
 	// Interface Descriptor (9 bytes)
-	9,                // bLength
-	USB_DT_INTERFACE, // bDescriptorType
-	0,                // bInterfaceNumber
-	0,                // bAlternateSetting
-	2,                // bNumEndpoints
-	USB_CLASS_HID,    // bInterfaceClass
-	0,                // bInterfaceSubClass
-	0,                // bInterfaceProtocol
+	9,                    // bLength
+	USB_DT_INTERFACE,     // bDescriptorType
+	0,                    // bInterfaceNumber
+	0,                    // bAlternateSetting
+	2,                    // bNumEndpoints
+	USB_CLASS_HID,        // bInterfaceClass
+	0,                    // bInterfaceSubClass
+	0,                    // bInterfaceProtocol
 	USB_STRING_INTERFACE, // iInterface
 
 	// HID Descriptor (9 bytes)
 	9,          // bLength
 	USB_DT_HID, // bDescriptorType
 	0x11, 0x01, // bcdHID = 1.11
-	0,          // bCountryCode
-	1,          // bNumDescriptors
+	0,                                   // bCountryCode
+	1,                                   // bNumDescriptors
 	USB_DT_REPORT,                       // bDescriptorType (Report)
 	byte(len(hidReportDescriptor)),      // wDescriptorLength low
 	byte(len(hidReportDescriptor) >> 8), // wDescriptorLength high

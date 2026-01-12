@@ -15,15 +15,15 @@ const FIRMWARE_VECTOR_TABLE = 0x08010000
 
 // RCC registers for clock configuration
 const (
-	RCC_BASE_ADDR = 0x40023800
-	RCC_CR        = RCC_BASE_ADDR + 0x00
-	RCC_CFGR      = RCC_BASE_ADDR + 0x08
+	RCC_BASE_ADDR    = 0x40023800
+	RCC_CR           = RCC_BASE_ADDR + 0x00
+	RCC_CFGR         = RCC_BASE_ADDR + 0x08
 	RCC_AHB2ENR_ADDR = RCC_BASE_ADDR + 0x34
 
 	// RNG registers
-	RNG_BASE = 0x50060800
+	RNG_BASE    = 0x50060800
 	RNG_CR_ADDR = RNG_BASE + 0x00
-	RNG_SR   = RNG_BASE + 0x04
+	RNG_SR      = RNG_BASE + 0x04
 )
 
 func init() {

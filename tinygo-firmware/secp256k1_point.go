@@ -17,9 +17,13 @@ type XYZ struct {
 
 // Generator point G
 var secp256k1G XY
+var secp256k1GInitialized bool
 
-// Initialize generator point
-func init() {
+// initSecp256k1G initializes the generator point (call once before use)
+func initSecp256k1G() {
+	if secp256k1GInitialized {
+		return
+	}
 	// G.x = 79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798
 	secp256k1G.X.SetBytes([]byte{
 		0x79, 0xBE, 0x66, 0x7E, 0xF9, 0xDC, 0xBB, 0xAC,
@@ -35,6 +39,7 @@ func init() {
 		0x9C, 0x47, 0xD0, 0x8F, 0xFB, 0x10, 0xD4, 0xB8,
 	})
 	secp256k1G.Infinity = false
+	secp256k1GInitialized = true
 }
 
 // SetXY sets XYZ from XY (converts affine to Jacobian)
@@ -190,6 +195,9 @@ func (xyz *XYZ) AddXY(r *XYZ, xy *XY) {
 
 // ECmultGen computes r = a*G using simple double-and-add
 func ECmultGen(r *XYZ, seckey []byte) {
+	// Initialize generator point if not done
+	initSecp256k1G()
+
 	r.Infinity = true
 
 	var gj XYZ
@@ -206,12 +214,16 @@ func ECmultGen(r *XYZ, seckey []byte) {
 	}
 }
 
+// Debug state for key derivation
+var debugPubkeyState byte // 0=not called, 1=length error, 2=infinity, 3=success
+
 // pubkeyFromSeckey derives public key from 32-byte secret key
 // Returns 33-byte compressed public key
 func pubkeyFromSeckey(seckey []byte) [33]byte {
 	var result [33]byte
 
 	if len(seckey) != 32 {
+		debugPubkeyState = 1
 		return result
 	}
 
@@ -222,8 +234,11 @@ func pubkeyFromSeckey(seckey []byte) [33]byte {
 	xy.SetXYZ(&xyz)
 
 	if xy.Infinity {
+		debugPubkeyState = 2
 		return result
 	}
+
+	debugPubkeyState = 3
 
 	// Compressed format: prefix (02/03) + X coordinate
 	var xBytes [32]byte
@@ -239,6 +254,9 @@ func pubkeyFromSeckey(seckey []byte) [33]byte {
 	return result
 }
 
+// addrBuffer is a fixed buffer for address generation (avoids heap allocation)
+var addrBuffer [21]byte
+
 // skycoinAddressFromPubkey generates a Skycoin address from a compressed public key
 func skycoinAddressFromPubkey(pubkey []byte) string {
 	if len(pubkey) != 33 {
@@ -251,11 +269,12 @@ func skycoinAddressFromPubkey(pubkey []byte) string {
 	ripemdHash := ripemd160Sum(hash2[:])
 
 	// Version 0x00 + 20-byte hash
-	addrBytes := make([]byte, 21)
-	addrBytes[0] = 0x00
-	copy(addrBytes[1:], ripemdHash[:])
+	addrBuffer[0] = 0x00
+	for i := 0; i < 20; i++ {
+		addrBuffer[1+i] = ripemdHash[i]
+	}
 
-	return base58CheckEncode(addrBytes)
+	return base58CheckEncode(addrBuffer[:])
 }
 
 // skycoinAddressFromSeckey generates a Skycoin address from a secret key
