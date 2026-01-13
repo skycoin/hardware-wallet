@@ -43,11 +43,15 @@ func pbEncodeString(buf []byte, fieldNum int, val string) int {
 }
 
 // pbEncodeBytes encodes a bytes field
+// Uses manual copy instead of copy() for TinyGo bare-metal compatibility
 func pbEncodeBytes(buf []byte, fieldNum int, val []byte) int {
 	n := 0
 	n += pbEncodeTag(buf[n:], fieldNum, PB_BYTES)
 	n += pbEncodeVarint(buf[n:], uint64(len(val)))
-	copy(buf[n:], val)
+	// Manual copy - TinyGo bare-metal may not handle copy() correctly
+	for i := 0; i < len(val); i++ {
+		buf[n+i] = val[i]
+	}
 	n += len(val)
 	return n
 }
@@ -118,8 +122,8 @@ func pbEncodeFeatures(buf []byte) int {
 	// bootloader_mode (field 5)
 	n += pbEncodeBool(buf[n:], Features_bootloader_mode, false)
 
-	// device_id (field 6)
-	n += pbEncodeString(buf[n:], Features_device_id, storageGetDeviceID())
+	// device_id (field 6) - TEST: use fixed "AB" to verify encoding works
+	n += pbEncodeString(buf[n:], Features_device_id, "AB")
 
 	// pin_protection (field 7)
 	n += pbEncodeBool(buf[n:], Features_pin_protection, storageHasPIN())
@@ -180,6 +184,15 @@ func pbEncodeSuccess(buf []byte, message string) int {
 	return pbEncodeString(buf, Success_message, message)
 }
 
+// pbEncodeSuccessBytes encodes a Success message from a byte slice
+// This avoids string() conversion which doesn't work on TinyGo bare-metal
+func pbEncodeSuccessBytes(buf []byte, message []byte) int {
+	if len(message) == 0 {
+		return 0
+	}
+	return pbEncodeBytes(buf, Success_message, message)
+}
+
 // Failure message field numbers (from messages.proto)
 // msg_type = 1, code = 2, message = 3
 const (
@@ -223,9 +236,13 @@ const (
 
 // pingMsgBuf is a fixed buffer for decoded ping messages
 var pingMsgBuf [256]byte
+var pingMsgLen int
 
-// pbDecodePing decodes a Ping message, returns the message string
-func pbDecodePing(data []byte) string {
+// pbDecodePingBytes decodes a Ping message, returns the message as byte slice
+// Returns slice of pingMsgBuf with decoded data - avoids string() conversion
+// which doesn't work correctly in TinyGo bare-metal
+func pbDecodePingBytes(data []byte) []byte {
+	pingMsgLen = 0
 	// Simple protobuf decoding for Ping message
 	// We only care about field 1 (message)
 	i := 0
@@ -259,15 +276,15 @@ func pbDecodePing(data []byte) string {
 			if i+length > len(data) {
 				break
 			}
-			// Copy to buffer and return string
-			// Manual copy due to TinyGo bare-metal limitations
+			// Copy to buffer and return byte slice (NOT string!)
 			if length > len(pingMsgBuf) {
 				length = len(pingMsgBuf)
 			}
 			for j := 0; j < length; j++ {
 				pingMsgBuf[j] = data[i+j]
 			}
-			return string(pingMsgBuf[:length])
+			pingMsgLen = length
+			return pingMsgBuf[:length]
 		}
 
 		// Skip other fields
@@ -289,7 +306,7 @@ func pbDecodePing(data []byte) string {
 			i += 8
 		}
 	}
-	return ""
+	return nil
 }
 
 // PinMatrixRequest field numbers

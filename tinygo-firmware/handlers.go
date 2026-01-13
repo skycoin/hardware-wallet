@@ -207,20 +207,127 @@ func debugShowPayloadSize(size int) {
 // handlePing handles the Ping message
 // Supports test commands when message starts with "TEST:"
 func handlePing() {
-	// Decode the ping message to get the echo string
-	message := pbDecodePing(msgInBuffer[:msgInSize])
+	// Decode the ping message to get the echo bytes (NOT string!)
+	message := pbDecodePingBytes(msgInBuffer[:msgInSize])
 
-	// Check for test commands
-	if len(message) > 5 && message[:5] == "TEST:" {
-		handleTestCommand(message[5:])
-		return
+	// Debug: show message length and first 5 chars on OLED
+	oledClear()
+	oledDrawString(0, 0, "MSG:")
+	oledDrawChar(32, 0, '0'+byte(len(message)/10))
+	oledDrawChar(40, 0, '0'+byte(len(message)%10))
+	// Show first 5 bytes
+	for i := 0; i < 5 && i < len(message); i++ {
+		oledDrawChar(i*8, 10, message[i])
+	}
+	oledRefresh()
+	usbDelay(2000000)
+
+	// Check for test commands - use byte comparison
+	if len(message) > 5 {
+		isTest := message[0] == 'T' && message[1] == 'E' && message[2] == 'S' && message[3] == 'T' && message[4] == ':'
+		if isTest {
+			handleTestCommandBytes(message[5:])
+			return
+		}
 	}
 
-	// Echo the message back
-	sendSuccess(message)
+	// Echo the message back using byte slice (no string conversion!)
+	sendSuccessBytes(message)
 }
 
-// handleTestCommand runs crypto test commands
+// Response buffer for test commands - avoids string allocation
+var testResultBuf [128]byte
+
+// Byte slice literals for test command prefixes
+// Using byte slices instead of strings to avoid any string operations in TinyGo
+var (
+	prefixSHA256  = []byte{'S', 'H', 'A', '2', '5', '6', ':'}
+	prefixRIPEMD  = []byte{'R', 'I', 'P', 'E', 'M', 'D', ':'}
+	prefixB58     = []byte{'B', '5', '8', ':'}
+	prefixSQR     = []byte{'S', 'Q', 'R', ':'}
+	prefixMUL     = []byte{'M', 'U', 'L', ':'}
+	prefixPK1     = []byte{'P', 'K', '1', ':'}
+	prefixPK2     = []byte{'P', 'K', '2', ':'}
+	prefixECMULT  = []byte{'E', 'C', 'M', 'U', 'L', 'T', ':'}
+	prefixECINF   = []byte{'E', 'C', 'M', 'U', 'L', 'T', ':', 'I', 'N', 'F'}
+	prefixGPOINT  = []byte{'G', 'P', 'O', 'I', 'N', 'T', ':'}
+	prefixADDR    = []byte{'A', 'D', 'D', 'R', ':'}
+	prefixADDRF   = []byte{'A', 'D', 'D', 'R', ':', 'F', 'A', 'I', 'L'}
+	prefixUNKNOWN = []byte{'U', 'N', 'K', 'N', 'O', 'W', 'N', ':'}
+	// Debug test pattern - "ABCD1234" in bytes
+	debugPattern  = []byte{'A', 'B', 'C', 'D', '1', '2', '3', '4'}
+)
+
+// copyBytes copies a byte slice into buf, returns bytes written
+func copyBytes(buf []byte, src []byte) int {
+	for i := 0; i < len(src); i++ {
+		buf[i] = src[i]
+	}
+	return len(src)
+}
+
+// hexCharsBytes is used for hex encoding without string operations
+var hexCharsBytes = []byte{'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'}
+
+// copyHexBytes writes hex encoding of data into buf, returns bytes written
+func copyHexBytes(buf []byte, data []byte) int {
+	n := len(data)
+	if n > 32 {
+		n = 32
+	}
+	for i := 0; i < n; i++ {
+		buf[i*2] = hexCharsBytes[data[i]>>4]
+		buf[i*2+1] = hexCharsBytes[data[i]&0x0f]
+	}
+	return n * 2
+}
+
+// copyFieldHex writes hex encoding of field's low 32 bits into buf
+func copyFieldHex(buf []byte, f *Field) int {
+	val := f.n[0]
+	for i := 7; i >= 0; i-- {
+		buf[i] = hexCharsBytes[val&0x0f]
+		val >>= 4
+	}
+	return 8
+}
+
+// bytesEqual compares two byte slices for equality
+func bytesEqual(a, b []byte) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := 0; i < len(a); i++ {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
+}
+
+// Test command names as byte slices (no string conversion needed)
+var (
+	cmdDEBUG   = []byte{'D', 'E', 'B', 'U', 'G'}
+	cmdLITERAL = []byte{'L', 'I', 'T', 'E', 'R', 'A', 'L'}
+	cmdA       = []byte{'A'}
+	cmdABC     = []byte{'A', 'B', 'C'}
+	cmdRAW     = []byte{'R', 'A', 'W'}
+	cmdDIRECT  = []byte{'D', 'I', 'R', 'E', 'C', 'T'}
+	cmdECHO    = []byte{'E', 'C', 'H', 'O'}
+	cmdFIXED   = []byte{'F', 'I', 'X', 'E', 'D'}
+	cmdSHA256  = []byte{'S', 'H', 'A', '2', '5', '6'}
+	cmdRIPEMD  = []byte{'R', 'I', 'P', 'E', 'M', 'D'}
+	cmdB58     = []byte{'B', '5', '8'}
+	cmdSQR     = []byte{'S', 'Q', 'R'}
+	cmdMUL     = []byte{'M', 'U', 'L'}
+	cmdPUBKEY1 = []byte{'P', 'U', 'B', 'K', 'E', 'Y', '1'}
+	cmdPUBKEY2 = []byte{'P', 'U', 'B', 'K', 'E', 'Y', '2'}
+	cmdECMULT  = []byte{'E', 'C', 'M', 'U', 'L', 'T'}
+	cmdGPOINT  = []byte{'G', 'P', 'O', 'I', 'N', 'T'}
+	cmdADDR    = []byte{'A', 'D', 'D', 'R'}
+)
+
+// handleTestCommandBytes runs crypto test commands using byte slice input
 // Commands:
 //   SHA256 - SHA256("abc"), expect ba7816bf...
 //   RIPEMD - RIPEMD160("abc"), expect 8eb208f7...
@@ -230,58 +337,173 @@ func handlePing() {
 //   SQR    - square 2, expect 4
 //   MUL    - multiply 3*5, expect 15
 //   ADDR   - address from test mnemonic
-func handleTestCommand(cmd string) {
-	var result string
+func handleTestCommandBytes(cmd []byte) {
+	n := 0 // position in testResultBuf
 
-	switch cmd {
-	case "SHA256":
+	if bytesEqual(cmd, cmdDEBUG) {
+		// Simple debug test - return fixed pattern "ABCD1234"
+		n += copyBytes(testResultBuf[n:], debugPattern)
+		sendSuccessBytes(testResultBuf[:n])
+		return
+	}
+
+	if bytesEqual(cmd, cmdLITERAL) {
+		// Test using sendSuccess with literal string (bypasses byte buffer)
+		sendSuccess("LITERAL:OK")
+		return
+	}
+
+	if bytesEqual(cmd, cmdA) {
+		// Single byte test
+		testResultBuf[0] = 'A'
+		sendSuccessBytes(testResultBuf[:1])
+		return
+	}
+
+	if bytesEqual(cmd, cmdABC) {
+		// Three byte test
+		testResultBuf[0] = 'A'
+		testResultBuf[1] = 'B'
+		testResultBuf[2] = 'C'
+		sendSuccessBytes(testResultBuf[:3])
+		return
+	}
+
+	if bytesEqual(cmd, cmdRAW) {
+		// Raw bytes sent directly via msgWrite - bypass all encoding
+		// Send 4 bytes: 0x12, 0x02, 0x41, 0x42 = protobuf field 2, len 2, "AB"
+		var rawBuf [4]byte
+		rawBuf[0] = 0x12 // field 2, wire type 2
+		rawBuf[1] = 0x02 // length 2
+		rawBuf[2] = 0x41 // 'A'
+		rawBuf[3] = 0x42 // 'B'
+		msgWrite(MessageType_Success, rawBuf[:])
+		return
+	}
+
+	if bytesEqual(cmd, cmdDIRECT) {
+		// Bypass msgWrite completely - write directly to output buffer
+		// Format: ## + msgID(2) + len(4) + payload + padding
+		// This sends MessageType_Success (2) with payload "AB" (0x12 0x02 0x41 0x42)
+		msgOutAppend('#')
+		msgOutAppend('#')
+		msgOutAppend(0x00) // msgID high byte
+		msgOutAppend(0x02) // msgID low byte (MessageType_Success = 2)
+		msgOutAppend(0x00) // length byte 0
+		msgOutAppend(0x00) // length byte 1
+		msgOutAppend(0x00) // length byte 2
+		msgOutAppend(0x04) // length byte 3 (4 bytes)
+		msgOutAppend(0x12) // protobuf field 2, wire type 2
+		msgOutAppend(0x02) // length 2
+		msgOutAppend(0x41) // 'A'
+		msgOutAppend(0x42) // 'B'
+		msgOutPad()
+		return
+	}
+
+	if bytesEqual(cmd, cmdECHO) {
+		// Echo back first 16 bytes of msgInBuffer as hex
+		// This tests if input is being received correctly
+		pos := 0
+		testResultBuf[pos] = 'I'
+		pos++
+		testResultBuf[pos] = 'N'
+		pos++
+		testResultBuf[pos] = ':'
+		pos++
+		for i := 0; i < 16 && i < int(msgInSize); i++ {
+			testResultBuf[pos] = hexCharsBytes[msgInBuffer[i]>>4]
+			pos++
+			testResultBuf[pos] = hexCharsBytes[msgInBuffer[i]&0x0f]
+			pos++
+		}
+		sendSuccessBytes(testResultBuf[:pos])
+		return
+	}
+
+	if bytesEqual(cmd, cmdFIXED) {
+		// Test sending as Features type with our test data
+		nn := pbEncodeString(pbEncodeBuf[:], Success_message, "TEST_OK")
+		msgWrite(MessageType_Features, pbEncodeBuf[:nn])
+		return
+	}
+
+	if bytesEqual(cmd, cmdSHA256) {
 		// SHA256("abc") = ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad
 		hash := sha256Sum([]byte("abc"))
-		result = "SHA256:" + hexBytes(hash[:8]) // First 8 bytes
+		n += copyBytes(testResultBuf[n:], prefixSHA256)
+		n += copyHexBytes(testResultBuf[n:], hash[:8])
+		sendSuccessBytes(testResultBuf[:n])
+		return
+	}
 
-	case "RIPEMD":
+	if bytesEqual(cmd, cmdRIPEMD) {
 		// RIPEMD160("abc") = 8eb208f7e05d987a9b044a8e98c6b087f15a0bfc
 		hash := ripemd160Sum([]byte("abc"))
-		result = "RIPEMD:" + hexBytes(hash[:8])
+		n += copyBytes(testResultBuf[n:], prefixRIPEMD)
+		n += copyHexBytes(testResultBuf[n:], hash[:8])
+		sendSuccessBytes(testResultBuf[:n])
+		return
+	}
 
-	case "B58":
+	if bytesEqual(cmd, cmdB58) {
 		// Base58 encode [0x00, 0x00, 0x00, 0x00, 0x01]
 		data := []byte{0x00, 0x00, 0x00, 0x00, 0x01}
-		encoded := base58Encode(data)
-		result = "B58:" + encoded
+		encoded := base58EncodeToBytes(data)
+		n += copyBytes(testResultBuf[n:], prefixB58)
+		n += copyBytes(testResultBuf[n:], encoded)
+		sendSuccessBytes(testResultBuf[:n])
+		return
+	}
 
-	case "SQR":
+	if bytesEqual(cmd, cmdSQR) {
 		// Test squaring: 2^2 = 4
 		var a, r Field
 		a.SetInt(2)
 		a.Sqr(&r)
 		r.Normalize()
-		result = "SQR:" + fieldToHex(&r)
+		n += copyBytes(testResultBuf[n:], prefixSQR)
+		n += copyFieldHex(testResultBuf[n:], &r)
+		sendSuccessBytes(testResultBuf[:n])
+		return
+	}
 
-	case "MUL":
+	if bytesEqual(cmd, cmdMUL) {
 		// Test multiplication: 3 * 5 = 15
 		var a, b, r Field
 		a.SetInt(3)
 		b.SetInt(5)
 		a.Mul(&r, &b)
 		r.Normalize()
-		result = "MUL:" + fieldToHex(&r)
+		n += copyBytes(testResultBuf[n:], prefixMUL)
+		n += copyFieldHex(testResultBuf[n:], &r)
+		sendSuccessBytes(testResultBuf[:n])
+		return
+	}
 
-	case "PUBKEY1":
+	if bytesEqual(cmd, cmdPUBKEY1) {
 		// Public key from secret key = 1 (should be generator G)
 		var seckey [32]byte
 		seckey[31] = 1
 		pubkey := pubkeyFromSeckey(seckey[:])
-		result = "PK1:" + hexBytes(pubkey[:8])
+		n += copyBytes(testResultBuf[n:], prefixPK1)
+		n += copyHexBytes(testResultBuf[n:], pubkey[:8])
+		sendSuccessBytes(testResultBuf[:n])
+		return
+	}
 
-	case "PUBKEY2":
+	if bytesEqual(cmd, cmdPUBKEY2) {
 		// Public key from secret key = 2
 		var seckey [32]byte
 		seckey[31] = 2
 		pubkey := pubkeyFromSeckey(seckey[:])
-		result = "PK2:" + hexBytes(pubkey[:8])
+		n += copyBytes(testResultBuf[n:], prefixPK2)
+		n += copyHexBytes(testResultBuf[n:], pubkey[:8])
+		sendSuccessBytes(testResultBuf[:n])
+		return
+	}
 
-	case "ECMULT":
+	if bytesEqual(cmd, cmdECMULT) {
 		// Test ECmultGen directly with seckey=1
 		var seckey [32]byte
 		seckey[31] = 1
@@ -290,37 +512,50 @@ func handleTestCommand(cmd string) {
 		var xy XY
 		xy.SetXYZ(&xyz)
 		if xy.Infinity {
-			result = "ECMULT:INF"
+			n += copyBytes(testResultBuf[n:], prefixECINF)
 		} else {
 			var xBytes [32]byte
 			xy.X.GetB32(xBytes[:])
-			result = "ECMULT:" + hexBytes(xBytes[:8])
+			n += copyBytes(testResultBuf[n:], prefixECMULT)
+			n += copyHexBytes(testResultBuf[n:], xBytes[:8])
 		}
+		sendSuccessBytes(testResultBuf[:n])
+		return
+	}
 
-	case "GPOINT":
+	if bytesEqual(cmd, cmdGPOINT) {
 		// Get generator point X coordinate
 		initSecp256k1G()
 		var xBytes [32]byte
 		secp256k1G.X.GetB32(xBytes[:])
-		result = "GPOINT:" + hexBytes(xBytes[:8])
-
-	case "ADDR":
-		// Test full address generation with test mnemonic
-		mnemonic := "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
-		addr := deriveAddressAtIndex(mnemonic, 0)
-		if addr == "" {
-			result = "ADDR:FAIL"
-		} else if len(addr) > 16 {
-			result = "ADDR:" + addr[:16]
-		} else {
-			result = "ADDR:" + addr
-		}
-
-	default:
-		result = "UNKNOWN:" + cmd
+		n += copyBytes(testResultBuf[n:], prefixGPOINT)
+		n += copyHexBytes(testResultBuf[n:], xBytes[:8])
+		sendSuccessBytes(testResultBuf[:n])
+		return
 	}
 
-	sendSuccess(result)
+	if bytesEqual(cmd, cmdADDR) {
+		// Test full address generation with test mnemonic
+		mnemonic := "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
+		addrBytes := deriveAddressAtIndexBytes(mnemonic, 0)
+		if len(addrBytes) == 0 {
+			n += copyBytes(testResultBuf[n:], prefixADDRF)
+		} else {
+			n += copyBytes(testResultBuf[n:], prefixADDR)
+			maxLen := 16
+			if len(addrBytes) < maxLen {
+				maxLen = len(addrBytes)
+			}
+			n += copyBytes(testResultBuf[n:], addrBytes[:maxLen])
+		}
+		sendSuccessBytes(testResultBuf[:n])
+		return
+	}
+
+	// Unknown command - echo it back
+	n += copyBytes(testResultBuf[n:], prefixUNKNOWN)
+	n += copyBytes(testResultBuf[n:], cmd)
+	sendSuccessBytes(testResultBuf[:n])
 }
 
 // hexBuf is a fixed buffer for hex encoding

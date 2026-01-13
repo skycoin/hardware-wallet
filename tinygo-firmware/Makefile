@@ -11,7 +11,7 @@ SOURCES = main.go
 #	messages.go protobuf.go dispatch.go \
 #	types.go handlers.go
 
-.PHONY: all build flash clean format lint check tidy
+.PHONY: all build flash clean format lint check tidy daemon stop ping crypto features test
 
 all: build
 
@@ -73,3 +73,27 @@ lint:
 
 check: format lint
 	@echo "Format and lint checks complete"
+
+# Device testing targets (use test-flash.sh)
+daemon:
+	@./test-flash.sh daemon
+
+stop:
+	@./test-flash.sh stop
+
+flash: $(BINARY)
+	@./test-flash.sh flash
+
+features:
+	@./test-flash.sh features
+
+ping:
+	@./test-flash.sh ping "hello"
+
+crypto:
+	@./test-flash.sh crypto
+
+test: $(BINARY)
+	@./test-flash.sh flash
+	@sleep 2
+	@./test-flash.sh features
