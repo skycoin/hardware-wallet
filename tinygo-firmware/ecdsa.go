@@ -502,3 +502,259 @@ func hexDigitValue(c byte) int {
 	}
 	return -1
 }
+
+// ecdsaRecoverPubkey recovers the public key from a 65-byte signature and 32-byte digest
+// Signature format: r (32) + s (32) + recovery_id (1)
+// Returns 33-byte compressed public key, or nil on failure
+func ecdsaRecoverPubkey(sig []byte, digest []byte) []byte {
+	if len(sig) != 65 || len(digest) != 32 {
+		return nil
+	}
+
+	// Parse signature components
+	var r, s Scalar
+	r.SetB32(sig[0:32])
+	s.SetB32(sig[32:64])
+	recid := sig[64]
+
+	// Validate r and s are in valid range
+	if r.IsZero() || s.IsZero() {
+		return nil
+	}
+
+	// Parse digest as scalar z
+	var z Scalar
+	z.SetB32(digest)
+
+	// Recover R.x from r
+	// If recid & 2, R.x = r + n (rare case where R.x >= n)
+	var Rx Field
+	Rx.SetBytes(sig[0:32])
+	if recid&2 != 0 {
+		// R.x = r + n - this is very rare
+		// For simplicity, we don't support this case
+		return nil
+	}
+
+	// Compute R.y from curve equation: y² = x³ + 7
+	var x2, x3, y2 Field
+	Rx.Sqr(&x2)
+	x2.Mul(&x3, &Rx)
+	var seven Field
+	seven.SetInt(7)
+	x3.SetAdd(&seven)
+	x3.Normalize()
+	y2 = x3
+
+	// y = sqrt(y²)
+	var Ry Field
+	y2.Sqrt(&Ry)
+	Ry.Normalize()
+
+	// Verify sqrt is correct
+	var check Field
+	Ry.Sqr(&check)
+	check.Normalize()
+	y2.Normalize()
+	if !fieldEqual(&check, &y2) {
+		return nil
+	}
+
+	// Choose correct Y based on parity from recid
+	if Ry.IsOdd() != (recid&1 != 0) {
+		Ry.Negate(&Ry, 1)
+		Ry.Normalize()
+	}
+
+	// R is the recovered point
+	var R XY
+	R.X = Rx
+	R.Y = Ry
+	R.Infinity = false
+
+	// Compute public key: P = r⁻¹ * (s*R - z*G)
+	// This is equivalent to: P = r⁻¹*s*R - r⁻¹*z*G
+
+	// First compute r⁻¹
+	var rInv Scalar
+	scalarInverse(&rInv, &r)
+
+	// Compute r⁻¹ * s
+	var rInvS Scalar
+	scalarMul(&rInvS, &rInv, &s)
+
+	// Compute r⁻¹ * z
+	var rInvZ Scalar
+	scalarMul(&rInvZ, &rInv, &z)
+
+	// Negate r⁻¹ * z (because we want -z*G)
+	var negRInvZ Scalar
+	scalarNegate(&negRInvZ, &rInvZ)
+
+	// Compute (r⁻¹*s)*R
+	var rInvSBytes [32]byte
+	rInvS.GetB32(rInvSBytes[:])
+	var sR XYZ
+	ecmult(&sR, &R, rInvSBytes[:])
+
+	// Compute (r⁻¹*z)*G (we negate it to get -(r⁻¹*z)*G)
+	var negRInvZBytes [32]byte
+	negRInvZ.GetB32(negRInvZBytes[:])
+	var zG XYZ
+	ECmultGen(&zG, negRInvZBytes[:])
+
+	// Convert both to affine for addition
+	var sRxy, zGxy XY
+	sRxy.SetXYZ(&sR)
+	zGxy.SetXYZ(&zG)
+
+	if sRxy.Infinity {
+		return nil
+	}
+
+	// Add the two points: P = sR + (-zG)
+	var P XY
+	if zGxy.Infinity {
+		P = sRxy
+	} else {
+		// Point addition
+		xyAdd(&P, &sRxy, &zGxy)
+	}
+
+	if P.Infinity {
+		return nil
+	}
+
+	// Compress the public key
+	pubkey := make([]byte, 33)
+	P.X.Normalize()
+	P.Y.Normalize()
+	var xBytes [32]byte
+	P.X.GetB32(xBytes[:])
+	copy(pubkey[1:], xBytes[:])
+	if P.Y.IsOdd() {
+		pubkey[0] = 0x03
+	} else {
+		pubkey[0] = 0x02
+	}
+
+	return pubkey
+}
+
+// fieldEqual compares two field elements
+func fieldEqual(a, b *Field) bool {
+	for i := 0; i < 10; i++ {
+		if a.n[i] != b.n[i] {
+			return false
+		}
+	}
+	return true
+}
+
+// xyAdd adds two affine points
+func xyAdd(r, a, b *XY) {
+	if a.Infinity {
+		*r = *b
+		return
+	}
+	if b.Infinity {
+		*r = *a
+		return
+	}
+
+	// Check if points are the same (need doubling)
+	a.X.Normalize()
+	a.Y.Normalize()
+	b.X.Normalize()
+	b.Y.Normalize()
+
+	if fieldEqual(&a.X, &b.X) {
+		if fieldEqual(&a.Y, &b.Y) {
+			// Point doubling: use tangent slope
+			// λ = (3x² + a) / (2y), a=0 for secp256k1
+			// λ = 3x² / 2y
+			var x2, num, denom, denomInv, lambda Field
+			a.X.Sqr(&x2)
+			// num = 3 * x²
+			num = x2
+			num.MulInt(3)
+			// denom = 2 * y
+			denom = a.Y
+			denom.MulInt(2)
+			// lambda = num / denom (compute inverse first)
+			denom.Inv(&denomInv)
+			num.Mul(&lambda, &denomInv)
+			lambda.Normalize()
+
+			// x3 = λ² - 2x
+			var lambda2, x3, twoX Field
+			lambda.Sqr(&lambda2)
+			twoX = a.X
+			twoX.MulInt(2)
+			// x3 = lambda2 - 2x
+			twoX.Negate(&twoX, 1)
+			x3 = lambda2
+			x3.SetAdd(&twoX)
+			x3.Normalize()
+
+			// y3 = λ(x - x3) - y
+			var diff, y3 Field
+			x3.Negate(&diff, 1)
+			diff.SetAdd(&a.X)
+			diff.Normalize()
+			diff.Mul(&y3, &lambda)
+			a.Y.Negate(&diff, 1)
+			y3.SetAdd(&diff)
+			y3.Normalize()
+
+			r.X = x3
+			r.Y = y3
+			r.Infinity = false
+			return
+		}
+		// Points are negatives of each other
+		r.Infinity = true
+		return
+	}
+
+	// Regular point addition
+	// λ = (y2 - y1) / (x2 - x1)
+	var dy, dx, dxInv, lambda Field
+	// dy = b.Y - a.Y
+	a.Y.Negate(&dy, 1)
+	dy.SetAdd(&b.Y)
+	dy.Normalize()
+	// dx = b.X - a.X
+	a.X.Negate(&dx, 1)
+	dx.SetAdd(&b.X)
+	dx.Normalize()
+	// lambda = dy / dx
+	dx.Inv(&dxInv)
+	dy.Mul(&lambda, &dxInv)
+	lambda.Normalize()
+
+	// x3 = λ² - x1 - x2
+	var lambda2, x3 Field
+	lambda.Sqr(&lambda2)
+	// x3 = lambda2 - x1 - x2
+	a.X.Negate(&x3, 1)
+	x3.SetAdd(&lambda2)
+	b.X.Negate(&lambda2, 1)
+	x3.SetAdd(&lambda2)
+	x3.Normalize()
+
+	// y3 = λ(x1 - x3) - y1
+	var diff, y3 Field
+	// diff = x1 - x3
+	x3.Negate(&diff, 1)
+	diff.SetAdd(&a.X)
+	diff.Normalize()
+	diff.Mul(&y3, &lambda)
+	a.Y.Negate(&diff, 1)
+	y3.SetAdd(&diff)
+	y3.Normalize()
+
+	r.X = x3
+	r.Y = y3
+	r.Infinity = false
+}

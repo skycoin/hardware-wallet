@@ -360,3 +360,85 @@ func storageGetDeviceID() string {
 	// For now, return a static ID
 	return "SKYWLT-TGO1"
 }
+
+// storageSetLanguage sets the device language
+func storageSetLanguage(language string) {
+	langLen := len(language)
+	if langLen > 16 {
+		langLen = 16
+	}
+	copy(storage.Language[:], language[:langLen])
+	if langLen < 17 {
+		storage.Language[langLen] = 0 // null terminate
+	}
+	storageSave()
+}
+
+// storageGetLanguage returns the device language
+func storageGetLanguage() string {
+	// Find null terminator or end of array
+	n := 0
+	for n < len(storage.Language) && storage.Language[n] != 0 {
+		n++
+	}
+	return string(storage.Language[:n])
+}
+
+// storageSetPassphraseProtection sets the passphrase protection flag
+func storageSetPassphraseProtection(enabled bool) {
+	storage.PassphraseProtection = enabled
+	storageSave()
+}
+
+// PIN retry limiting constants
+const (
+	PIN_MAX_ATTEMPTS = 10         // Max attempts before device wipe
+	PIN_BASE_DELAY   = 500000     // Base delay in microseconds (0.5 second)
+	PIN_MAX_DELAY    = 60000000   // Max delay 60 seconds
+)
+
+// storageGetPINFailures returns the current PIN failure count
+func storageGetPINFailures() uint32 {
+	storageInit()
+	return storage.PinFailedAttempts
+}
+
+// storageIncrementPINFailures increments the PIN failure counter and saves
+func storageIncrementPINFailures() uint32 {
+	storage.PinFailedAttempts++
+	storageSave()
+	return storage.PinFailedAttempts
+}
+
+// storageResetPINFailures resets the PIN failure counter
+func storageResetPINFailures() {
+	storage.PinFailedAttempts = 0
+	storageSave()
+}
+
+// storagePINLockedOut returns true if too many failures occurred (requires wipe)
+func storagePINLockedOut() bool {
+	storageInit()
+	return storage.PinFailedAttempts >= PIN_MAX_ATTEMPTS
+}
+
+// storagePINDelay returns the delay in microseconds before next PIN attempt
+// Uses exponential backoff: delay = base * 2^failures, capped at max
+func storagePINDelay() uint32 {
+	failures := storageGetPINFailures()
+	if failures == 0 {
+		return 0
+	}
+
+	// Exponential backoff: base * 2^(failures-1)
+	// Start delay after first failure
+	delay := uint32(PIN_BASE_DELAY)
+	for i := uint32(1); i < failures && delay < PIN_MAX_DELAY; i++ {
+		delay *= 2
+		if delay > PIN_MAX_DELAY {
+			delay = PIN_MAX_DELAY
+			break
+		}
+	}
+	return delay
+}

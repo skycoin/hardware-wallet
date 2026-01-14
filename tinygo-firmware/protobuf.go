@@ -1132,6 +1132,177 @@ func pbEncodeTransactionSignResponse(buf []byte, signatures []string) int {
 	return n
 }
 
+// ApplySettings field numbers
+const (
+	ApplySettings_language       = 1
+	ApplySettings_label          = 2
+	ApplySettings_use_passphrase = 3
+	ApplySettings_homescreen     = 4
+)
+
+// pbDecodeApplySettings decodes an ApplySettings message
+// Returns language, label, usePassphrase, hasLanguage, hasLabel, hasUsePassphrase
+func pbDecodeApplySettings(data []byte) (string, string, bool, bool, bool, bool) {
+	language := ""
+	label := ""
+	usePassphrase := false
+	hasLanguage := false
+	hasLabel := false
+	hasUsePassphrase := false
+	i := 0
+
+	for i < len(data) {
+		if i >= len(data) {
+			break
+		}
+
+		tag := uint32(data[i])
+		i++
+		if tag&0x80 != 0 {
+			continue
+		}
+
+		fieldNum := tag >> 3
+		wireType := tag & 0x7
+
+		switch fieldNum {
+		case ApplySettings_language:
+			if wireType == PB_BYTES && i < len(data) {
+				length := int(data[i])
+				i++
+				if length&0x80 != 0 {
+					continue
+				}
+				if i+length <= len(data) {
+					language = string(data[i : i+length])
+					hasLanguage = true
+					i += length
+				}
+			}
+		case ApplySettings_label:
+			if wireType == PB_BYTES && i < len(data) {
+				length := int(data[i])
+				i++
+				if length&0x80 != 0 {
+					continue
+				}
+				if i+length <= len(data) {
+					label = string(data[i : i+length])
+					hasLabel = true
+					i += length
+				}
+			}
+		case ApplySettings_use_passphrase:
+			if wireType == PB_VARINT && i < len(data) {
+				usePassphrase = data[i] != 0
+				hasUsePassphrase = true
+				i++
+			}
+		case ApplySettings_homescreen:
+			// Skip homescreen for now (bytes field)
+			if wireType == PB_BYTES && i < len(data) {
+				length := int(data[i])
+				i++
+				if length&0x80 != 0 {
+					continue
+				}
+				i += length
+			}
+		default:
+			// Skip other fields
+			switch wireType {
+			case PB_VARINT:
+				for i < len(data) && data[i]&0x80 != 0 {
+					i++
+				}
+				i++
+			case PB_BYTES:
+				if i < len(data) {
+					length := int(data[i])
+					i++
+					i += length
+				}
+			case PB_FIXED32:
+				i += 4
+			case PB_FIXED64:
+				i += 8
+			}
+		}
+	}
+	return language, label, usePassphrase, hasLanguage, hasLabel, hasUsePassphrase
+}
+
+// SkycoinCheckMessageSignature field numbers
+const (
+	SkycoinCheckMessageSignature_address   = 1
+	SkycoinCheckMessageSignature_message   = 2
+	SkycoinCheckMessageSignature_signature = 3
+)
+
+// pbDecodeSkycoinCheckMessageSignature decodes a SkycoinCheckMessageSignature message
+// Returns address (expected), message, signature (hex-encoded)
+func pbDecodeSkycoinCheckMessageSignature(data []byte) (string, string, string) {
+	address := ""
+	message := ""
+	signature := ""
+	i := 0
+
+	for i < len(data) {
+		if i >= len(data) {
+			break
+		}
+
+		tag := uint32(data[i])
+		i++
+		if tag&0x80 != 0 {
+			continue
+		}
+
+		fieldNum := tag >> 3
+		wireType := tag & 0x7
+
+		if wireType == PB_BYTES {
+			if i >= len(data) {
+				break
+			}
+			length := int(data[i])
+			i++
+			if length&0x80 != 0 {
+				// Multi-byte length
+				continue
+			}
+			if i+length > len(data) {
+				break
+			}
+
+			switch fieldNum {
+			case SkycoinCheckMessageSignature_address:
+				address = string(data[i : i+length])
+			case SkycoinCheckMessageSignature_message:
+				message = string(data[i : i+length])
+			case SkycoinCheckMessageSignature_signature:
+				signature = string(data[i : i+length])
+			}
+			i += length
+			continue
+		}
+
+		// Skip other fields
+		switch wireType {
+		case PB_VARINT:
+			for i < len(data) && data[i]&0x80 != 0 {
+				i++
+			}
+			i++
+		case PB_FIXED32:
+			i += 4
+		case PB_FIXED64:
+			i += 8
+		}
+	}
+	return address, message, signature
+}
+
 // RecoveryDevice field numbers
 const (
 	RecoveryDevice_word_count            = 1

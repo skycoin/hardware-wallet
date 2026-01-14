@@ -196,11 +196,24 @@ var secp256k1CombinedBuf [65]byte // 32 + 33
 // secp256k1Sum computes the Skycoin secp256k1 hash
 // This is a special construction used in key derivation
 func secp256k1Sum(seed []byte) []byte {
+	// Debug: show we entered secp256k1Sum and seed length
+	oledDrawChar(64, 30, 'S')
+	oledDrawChar(72, 30, 'E')
+	// Show seed length for secp256k1Sum
+	slen := len(seed)
+	oledDrawChar(80, 30, hexDigit(byte(slen/10)))
+	oledDrawChar(88, 30, hexDigit(byte(slen%10)))
+	oledRefresh()
+
 	// hash = SHA256(seed)
 	hash := sha256Sum(seed)
 
+	// Debug: show we completed SHA256
+	oledDrawChar(96, 30, 'H')
+	oledRefresh()
+
 	// Debug: show step 1
-	oledDrawChar(0, 44, '1')
+	oledDrawChar(0, 40, '1')
 	oledRefresh()
 
 	// seckey, pubkey1 = deterministic_key_pair_iterator_step(hash)
@@ -278,6 +291,13 @@ var dkpiCombinedBuf [512]byte
 // deterministicKeyPairIterator generates a keypair and next seed
 // Based on Skycoin's DeterministicKeyPairIterator
 func deterministicKeyPairIterator(seed []byte, nextSeed, seckey, pubkey []byte) bool {
+	// Debug: show we entered deterministicKeyPairIterator
+	oledDrawChar(32, 30, 'D')
+	oledDrawChar(40, 30, 'K')
+	oledDrawChar(48, 30, 'P')
+	oledDrawChar(56, 30, 'I')
+	oledRefresh()
+
 	if len(nextSeed) < 32 || len(seckey) < 32 || len(pubkey) < 33 {
 		return false
 	}
@@ -333,13 +353,31 @@ func deriveKeyPairAtIndex(mnemonic string, index int) (seckey [32]byte, pubkey [
 			x += oledDrawChar(x, 0, digits[i])
 		}
 	}
-	// Show first 16 chars of seed
+	// Show first 8 bytes of seed as HEX (to see actual byte values)
 	x = 0
-	for i := 0; i < 16 && i < len(seed); i++ {
-		x += oledDrawChar(x, 10, seed[i])
+	for i := 0; i < 8 && i < len(seed); i++ {
+		x += oledDrawChar(x, 10, hexDigit(seed[i]>>4))
+		x += oledDrawChar(x, 10, hexDigit(seed[i]&0xF))
+	}
+	// Show first 8 chars on line 20 (ASCII)
+	x = 0
+	for i := 0; i < 8 && i < len(seed); i++ {
+		c := seed[i]
+		if c >= 32 && c < 127 {
+			x += oledDrawChar(x, 20, c)
+		} else {
+			x += oledDrawChar(x, 20, '?')
+		}
 	}
 	oledRefresh()
 	usbDelay(2000000)
+
+	// Debug: show we're about to call deterministicKeyPairIterator
+	oledDrawChar(0, 30, 'C')
+	oledDrawChar(8, 30, 'A')
+	oledDrawChar(16, 30, 'L')
+	oledDrawChar(24, 30, 'L')
+	oledRefresh()
 
 	var nextSeed [32]byte
 	var sk [32]byte
@@ -388,6 +426,16 @@ func deriveAddressAtIndex(mnemonic string, index int) string {
 		return ""
 	}
 	return skycoinAddressFromSeckey(seckey[:])
+}
+
+// deriveAddressAtIndexBytes derives the Skycoin address at a specific index
+// Returns byte slice instead of string to avoid string() conversion issues on TinyGo bare-metal
+func deriveAddressAtIndexBytes(mnemonic string, index int) []byte {
+	seckey, _, ok := deriveKeyPairAtIndex(mnemonic, index)
+	if !ok {
+		return nil
+	}
+	return skycoinAddressFromSeckeyBytes(seckey[:])
 }
 
 // deriveSecretKeyAtIndex derives just the secret key at a specific index

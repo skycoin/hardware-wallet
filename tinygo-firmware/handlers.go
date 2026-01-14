@@ -89,6 +89,12 @@ func dispatchMessage() {
 	case MessageType_TransactionSign:
 		handleTransactionSign()
 
+	case MessageType_SkycoinCheckMessageSignature:
+		handleSkycoinCheckMessageSignature()
+
+	case MessageType_ApplySettings:
+		handleApplySettings()
+
 	default:
 		// Unknown message type
 		sendFailure(FailureType_UnexpectedMessage, "Unknown message")
@@ -606,28 +612,61 @@ func handleChangePin() {
 
 // handlePinMatrixAck handles the PinMatrixAck message (PIN entry response)
 func handlePinMatrixAck() {
+	// Check if device is locked out due to too many failures
+	if storagePINLockedOut() {
+		pinState = PIN_STATE_IDLE
+		sendFailure(FailureType_PinInvalid, "Too many failures. Wipe required.")
+		return
+	}
+
+	// Apply delay based on failure count (exponential backoff)
+	delay := storagePINDelay()
+	if delay > 0 {
+		// Show delay message on OLED
+		oledClear()
+		oledDrawString(4, 20, "PIN delay...")
+		oledDrawInt(4, 32, int(delay/1000000))
+		oledDrawString(20, 32, "sec")
+		oledRefresh()
+
+		// Wait for the delay
+		usbDelay(int(delay))
+	}
+
 	pin := pbDecodePinMatrixAck(msgInBuffer[:msgInSize])
 
 	switch pinState {
 	case PIN_STATE_VERIFY:
 		// Verifying PIN for protected operation
 		if storagePINCompare(pin) {
+			storageResetPINFailures() // Reset on success
 			sessionCachePIN()
 			pinState = PIN_STATE_IDLE
 			sendSuccess("")
 		} else {
+			failures := storageIncrementPINFailures()
 			pinState = PIN_STATE_IDLE
-			sendFailure(FailureType_PinInvalid, "Invalid PIN")
+			if failures >= PIN_MAX_ATTEMPTS {
+				sendFailure(FailureType_PinInvalid, "Device locked. Wipe required.")
+			} else {
+				sendFailure(FailureType_PinInvalid, "Invalid PIN")
+			}
 		}
 
 	case PIN_STATE_CHANGE_OLD:
 		// Verifying old PIN for change
 		if storagePINCompare(pin) {
+			storageResetPINFailures() // Reset on success
 			pinState = PIN_STATE_CHANGE_NEW1
 			sendPinMatrixRequest(PinMatrixRequestType_NewFirst)
 		} else {
+			failures := storageIncrementPINFailures()
 			pinState = PIN_STATE_IDLE
-			sendFailure(FailureType_PinInvalid, "Invalid PIN")
+			if failures >= PIN_MAX_ATTEMPTS {
+				sendFailure(FailureType_PinInvalid, "Device locked. Wipe required.")
+			} else {
+				sendFailure(FailureType_PinInvalid, "Invalid PIN")
+			}
 		}
 
 	case PIN_STATE_CHANGE_NEW1:
@@ -1336,4 +1375,108 @@ func sendSkycoinSignMessageResponse(sigHex string) {
 	var buf [140]byte // 130 hex chars + overhead
 	n := pbEncodeSkycoinSignMessageResponse(buf[:], sigHex)
 	msgWrite(MessageType_ResponseSkycoinSignMessage, buf[:n])
+}
+
+// handleSkycoinCheckMessageSignature handles the SkycoinCheckMessageSignature message
+// Verifies that a signature was produced by the private key corresponding to an address
+func handleSkycoinCheckMessageSignature() {
+	// Decode the message
+	expectedAddress, message, sigHex := pbDecodeSkycoinCheckMessageSignature(msgInBuffer[:msgInSize])
+
+	if expectedAddress == "" || sigHex == "" {
+		sendFailure(FailureType_DataError, "Missing address or signature")
+		return
+	}
+
+	// Convert signature from hex to bytes (65 bytes)
+	if len(sigHex) != 130 {
+		sendFailure(FailureType_DataError, "Invalid signature length")
+		return
+	}
+	sigBytes := hexToBytes(sigHex)
+	if sigBytes == nil || len(sigBytes) != 65 {
+		sendFailure(FailureType_DataError, "Invalid signature hex")
+		return
+	}
+
+	// Determine if message is already a hex digest
+	var digest [32]byte
+	if isHexDigit(message) {
+		// Message is a hex-encoded SHA256 digest
+		digestBytes := hexToBytes(message)
+		if len(digestBytes) == 32 {
+			copy(digest[:], digestBytes)
+		} else {
+			// Invalid hex, hash the message instead
+			digest = sha256Sum([]byte(message))
+		}
+	} else {
+		// Hash the message
+		digest = sha256Sum([]byte(message))
+	}
+
+	// Recover public key from signature
+	recoveredPubkey := ecdsaRecoverPubkey(sigBytes, digest[:])
+	if recoveredPubkey == nil {
+		sendFailure(FailureType_InvalidSignature, "Cannot recover public key")
+		return
+	}
+
+	// Generate address from recovered public key
+	recoveredAddress := skycoinAddressFromPubkey(recoveredPubkey)
+	if recoveredAddress == "" {
+		sendFailure(FailureType_ProcessError, "Cannot generate address")
+		return
+	}
+
+	// Compare addresses
+	if recoveredAddress != expectedAddress {
+		sendFailure(FailureType_InvalidSignature, "Address mismatch")
+		return
+	}
+
+	// Signature is valid
+	sendSuccess("Signature is valid")
+}
+
+// handleApplySettings handles the ApplySettings message
+// Allows setting device label, language, and passphrase protection
+func handleApplySettings() {
+	storageInit()
+
+	// Check PIN if required
+	if !requirePIN() {
+		return // Waiting for PIN
+	}
+
+	// Decode the message
+	language, label, usePassphrase, hasLanguage, hasLabel, hasUsePassphrase := pbDecodeApplySettings(msgInBuffer[:msgInSize])
+
+	// Check at least one field is provided
+	if !hasLanguage && !hasLabel && !hasUsePassphrase {
+		sendFailure(FailureType_DataError, "No settings provided")
+		return
+	}
+
+	// Apply label if provided
+	if hasLabel {
+		storageSetLabel(label)
+	}
+
+	// Apply language if provided (validate it's "english" or "en")
+	if hasLanguage {
+		// Only validate - we accept "english", "en", or "en-US"
+		if language != "english" && language != "en" && language != "en-US" {
+			sendFailure(FailureType_DataError, "Invalid language")
+			return
+		}
+		storageSetLanguage(language)
+	}
+
+	// Apply passphrase protection if provided
+	if hasUsePassphrase {
+		storageSetPassphraseProtection(usePassphrase)
+	}
+
+	sendSuccess("Settings applied")
 }
