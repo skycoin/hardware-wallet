@@ -6,7 +6,7 @@ MEMORY
     RAM (rwx)       : ORIGIN = 0x20000000, LENGTH = 128K
 }
 
-_stack_size = 4K;
+_stack_size = 16K;
 _estack = ORIGIN(RAM) + LENGTH(RAM);
 
 /* Include pre-assembled device startup code */

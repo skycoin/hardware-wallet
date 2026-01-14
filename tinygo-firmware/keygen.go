@@ -145,6 +145,9 @@ func ecmult(r *XYZ, point *XY, scalar []byte) {
 var debugEcdhState byte     // 0=not called, 1=len error, 2=decompress fail, 3=infinity, 4=success
 var debugPubkey2Prefix byte // Store pubkey2[0] for debug
 
+// ecdhResultBuf is a global buffer for ecdh result (avoids returning slice to stack)
+var ecdhResultBuf [33]byte
+
 // ecdh performs ECDH: multiply public key by secret key scalar
 // Returns compressed public key result
 func ecdh(pubkey, seckey []byte) []byte {
@@ -175,69 +178,44 @@ func ecdh(pubkey, seckey []byte) []byte {
 
 	debugEcdhState = 4
 
-	// Compress the result
-	var compressed [33]byte
+	// Compress the result into global buffer
 	var xBytes [32]byte
 	resultXY.X.GetB32(xBytes[:])
 
 	if resultXY.Y.IsOdd() {
-		compressed[0] = 0x03
+		ecdhResultBuf[0] = 0x03
 	} else {
-		compressed[0] = 0x02
+		ecdhResultBuf[0] = 0x02
 	}
-	copy(compressed[1:], xBytes[:])
+	copy(ecdhResultBuf[1:], xBytes[:])
 
-	return compressed[:]
+	return ecdhResultBuf[:]
 }
 
 // secp256k1CombinedBuf is a fixed buffer for secp256k1Sum
 var secp256k1CombinedBuf [65]byte // 32 + 33
 
+// secp256k1SumResult is a global buffer for secp256k1Sum return value
+var secp256k1SumResult [32]byte
+
+// Debug state for secp256k1Sum
+var debugSecp256k1SumState byte // 0=not called, 1=step1 fail, 2=step2 fail, 3=ecdh fail, 4=success
+
 // secp256k1Sum computes the Skycoin secp256k1 hash
 // This is a special construction used in key derivation
 func secp256k1Sum(seed []byte) []byte {
-	// Debug: show we entered secp256k1Sum and seed length
-	oledDrawChar(64, 30, 'S')
-	oledDrawChar(72, 30, 'E')
-	// Show seed length for secp256k1Sum
-	slen := len(seed)
-	oledDrawChar(80, 30, hexDigit(byte(slen/10)))
-	oledDrawChar(88, 30, hexDigit(byte(slen%10)))
-	oledRefresh()
+	debugSecp256k1SumState = 0
 
 	// hash = SHA256(seed)
 	hash := sha256Sum(seed)
-
-	// Debug: show we completed SHA256
-	oledDrawChar(96, 30, 'H')
-	oledRefresh()
-
-	// Debug: show step 1
-	oledDrawChar(0, 40, '1')
-	oledRefresh()
 
 	// seckey, pubkey1 = deterministic_key_pair_iterator_step(hash)
 	var seckey [32]byte
 	var pubkey1 [33]byte
 	if !deterministicKeyPairIteratorStep(hash[:], seckey[:], pubkey1[:]) {
-		oledDrawChar(8, 44, 'X')
-		oledRefresh()
-		usbDelay(2000000)
+		debugSecp256k1SumState = 1
 		return nil
 	}
-
-	// Debug: show pubkey1 prefix (should be 02 or 03) and debug state
-	oledDrawChar(8, 44, hexDigit(pubkey1[0]>>4))
-	oledDrawChar(16, 44, hexDigit(pubkey1[0]&0xF))
-	// Show debug state: 0=none, 1=len, 2=inf, 3=ok
-	oledDrawChar(24, 44, 'S')
-	oledDrawChar(32, 44, '0'+debugPubkeyState)
-	oledRefresh()
-	usbDelay(3000000) // Wait to see the debug
-
-	// Debug: show step 2
-	oledDrawChar(40, 44, '2')
-	oledRefresh()
 
 	// hash2 = SHA256(hash)
 	hash2 := sha256Sum(hash[:])
@@ -246,42 +224,28 @@ func secp256k1Sum(seed []byte) []byte {
 	var dummySeckey [32]byte
 	var pubkey2 [33]byte
 	if !deterministicKeyPairIteratorStep(hash2[:], dummySeckey[:], pubkey2[:]) {
-		oledDrawChar(24, 44, 'Y')
-		oledRefresh()
-		usbDelay(2000000)
+		debugSecp256k1SumState = 2
 		return nil
 	}
-
-	// Debug: show pubkey2 prefix and state
-	debugPubkey2Prefix = pubkey2[0] // Store for error message
-	oledDrawChar(48, 44, hexDigit(pubkey2[0]>>4))
-	oledDrawChar(56, 44, hexDigit(pubkey2[0]&0xF))
-	oledDrawChar(64, 44, '0'+debugPubkeyState)
-	oledRefresh()
-	usbDelay(2000000)
 
 	// ecdh_key = ECDH(pubkey2, seckey)
+	debugPubkey2Prefix = pubkey2[0] // Store for error message
 	ecdhKey := ecdh(pubkey2[:], seckey[:])
 	if ecdhKey == nil {
-		// Line 54 for ecdh debug - show state
-		oledDrawChar(0, 54, 'E')
-		oledDrawChar(8, 54, '=')
-		oledDrawChar(16, 54, '0'+debugEcdhState)
-		oledRefresh()
-		usbDelay(2000000)
+		debugSecp256k1SumState = 3
 		return nil
 	}
-
-	// Debug: show step 4 (success)
-	oledDrawChar(72, 44, '4')
-	oledRefresh()
 
 	// digest = SHA256(hash + ecdh_key)
 	copy(secp256k1CombinedBuf[:32], hash[:])
 	copy(secp256k1CombinedBuf[32:], ecdhKey)
 	digest := sha256Sum(secp256k1CombinedBuf[:65])
 
-	return digest[:]
+	// Copy to global buffer to avoid returning slice to stack
+	copy(secp256k1SumResult[:], digest[:])
+
+	debugSecp256k1SumState = 4
+	return secp256k1SumResult[:]
 }
 
 // dkpiCombinedBuf is a fixed buffer for deterministicKeyPairIterator
@@ -291,13 +255,6 @@ var dkpiCombinedBuf [512]byte
 // deterministicKeyPairIterator generates a keypair and next seed
 // Based on Skycoin's DeterministicKeyPairIterator
 func deterministicKeyPairIterator(seed []byte, nextSeed, seckey, pubkey []byte) bool {
-	// Debug: show we entered deterministicKeyPairIterator
-	oledDrawChar(32, 30, 'D')
-	oledDrawChar(40, 30, 'K')
-	oledDrawChar(48, 30, 'P')
-	oledDrawChar(56, 30, 'I')
-	oledRefresh()
-
 	if len(nextSeed) < 32 || len(seckey) < 32 || len(pubkey) < 33 {
 		return false
 	}
@@ -332,68 +289,12 @@ func deriveKeyPairAtIndex(mnemonic string, index int) (seckey [32]byte, pubkey [
 	// Convert mnemonic to bytes
 	seed := []byte(mnemonic)
 
-	// Debug: show seed length
-	oledClear()
-	x := 0
-	x += oledDrawChar(x, 0, 'S')
-	x += oledDrawChar(x, 0, 'L')
-	x += oledDrawChar(x, 0, ':')
-	slen := len(seed)
-	if slen == 0 {
-		x += oledDrawChar(x, 0, '0')
-	} else {
-		var digits [3]byte
-		dpos := 2
-		for slen > 0 && dpos >= 0 {
-			digits[dpos] = '0' + byte(slen%10)
-			slen /= 10
-			dpos--
-		}
-		for i := dpos + 1; i <= 2; i++ {
-			x += oledDrawChar(x, 0, digits[i])
-		}
-	}
-	// Show first 8 bytes of seed as HEX (to see actual byte values)
-	x = 0
-	for i := 0; i < 8 && i < len(seed); i++ {
-		x += oledDrawChar(x, 10, hexDigit(seed[i]>>4))
-		x += oledDrawChar(x, 10, hexDigit(seed[i]&0xF))
-	}
-	// Show first 8 chars on line 20 (ASCII)
-	x = 0
-	for i := 0; i < 8 && i < len(seed); i++ {
-		c := seed[i]
-		if c >= 32 && c < 127 {
-			x += oledDrawChar(x, 20, c)
-		} else {
-			x += oledDrawChar(x, 20, '?')
-		}
-	}
-	oledRefresh()
-	usbDelay(2000000)
-
-	// Debug: show we're about to call deterministicKeyPairIterator
-	oledDrawChar(0, 30, 'C')
-	oledDrawChar(8, 30, 'A')
-	oledDrawChar(16, 30, 'L')
-	oledDrawChar(24, 30, 'L')
-	oledRefresh()
-
 	var nextSeed [32]byte
 	var sk [32]byte
 	var pk [33]byte
 
 	// First iteration uses mnemonic directly
 	if !deterministicKeyPairIterator(seed, nextSeed[:], sk[:], pk[:]) {
-		// Debug: show failure at step 1
-		oledClear()
-		oledDrawChar(0, 0, 'F')
-		oledDrawChar(8, 0, 'A')
-		oledDrawChar(16, 0, 'I')
-		oledDrawChar(24, 0, 'L')
-		oledDrawChar(32, 0, '1')
-		oledRefresh()
-		usbDelay(2000000)
 		return seckey, pubkey, false
 	}
 

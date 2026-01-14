@@ -86,40 +86,65 @@ func (xy *XY) SetXYZ(xyz *XYZ) {
 }
 
 // Double doubles a point in Jacobian coordinates
+// For secp256k1 (a=0): 2P where P=(X,Y,Z)
+// M = 3*X^2, S = 4*X*Y^2
+// X' = M^2 - 2*S
+// Y' = M*(S - X') - 8*Y^4
+// Z' = 2*Y*Z
 func (xyz *XYZ) Double(r *XYZ) {
 	if xyz.Infinity {
 		r.Infinity = true
 		return
 	}
 
-	var t1, t2, t3, t4, t5 Field
+	// Save inputs in case r aliases xyz
+	var X, Y, Z Field
+	X = xyz.X
+	Y = xyz.Y
+	Z = xyz.Z
 
-	xyz.Y.Sqr(&t5)
-	t5.Mul(&t1, &xyz.X)
-	t1.MulInt(4)
+	var M, S, Y2, Y4, tmp Field
 
-	xyz.X.Sqr(&t2)
-	t2.MulInt(3)
+	// Y2 = Y^2
+	Y.Sqr(&Y2)
 
-	t2.Sqr(&r.X)
-	t1.Negate(&t3, 1)
-	t3.MulInt(2)
-	r.X.SetAdd(&t3)
+	// S = 4*X*Y^2
+	Y2.Mul(&S, &X)
+	S.MulInt(4)
+	S.Normalize()
 
+	// M = 3*X^2
+	X.Sqr(&M)
+	M.MulInt(3)
+	M.Normalize()
+
+	// X' = M^2 - 2*S
+	M.Sqr(&r.X)
+	S.Negate(&tmp, 1)
+	tmp.MulInt(2)
+	r.X.SetAdd(&tmp)
 	r.X.Normalize()
-	t1.SetAdd(&t3)
-	t1.Normalize()
-	t1.Negate(&t3, 3)
-	r.X.SetAdd(&t3)
-	r.X.Normalize()
-	t2.Mul(&r.Y, &r.X)
-	t5.Sqr(&t3)
-	t3.MulInt(8)
-	t3.Negate(&t4, 1)
-	r.Y.SetAdd(&t4)
 
-	xyz.Y.Mul(&r.Z, &xyz.Z)
+	// Y4 = Y^4 (= Y2^2)
+	Y2.Sqr(&Y4)
+
+	// Y' = M*(S - X') - 8*Y^4
+	// tmp = S - X'
+	r.X.Negate(&tmp, 1)
+	tmp.SetAdd(&S)
+	tmp.Normalize()
+	// r.Y = M * tmp
+	M.Mul(&r.Y, &tmp)
+	// r.Y = r.Y - 8*Y^4
+	Y4.MulInt(8)
+	Y4.Negate(&tmp, 1)
+	r.Y.SetAdd(&tmp)
+	r.Y.Normalize()
+
+	// Z' = 2*Y*Z
+	Y.Mul(&r.Z, &Z)
 	r.Z.MulInt(2)
+	r.Z.Normalize()
 
 	r.Infinity = false
 }
@@ -281,6 +306,34 @@ func skycoinAddressFromPubkey(pubkey []byte) string {
 func skycoinAddressFromSeckey(seckey []byte) string {
 	pubkey := pubkeyFromSeckey(seckey)
 	return skycoinAddressFromPubkey(pubkey[:])
+}
+
+// skycoinAddressFromPubkeyBytes generates a Skycoin address from a compressed public key
+// Returns byte slice instead of string for TinyGo bare-metal compatibility
+func skycoinAddressFromPubkeyBytes(pubkey []byte) []byte {
+	if len(pubkey) != 33 {
+		return nil
+	}
+
+	// Skycoin address = Base58Check(version || RIPEMD160(SHA256(SHA256(pubkey))))
+	hash1 := sha256Sum(pubkey)
+	hash2 := sha256Sum(hash1[:])
+	ripemdHash := ripemd160Sum(hash2[:])
+
+	// Version 0x00 + 20-byte hash
+	addrBuffer[0] = 0x00
+	for i := 0; i < 20; i++ {
+		addrBuffer[1+i] = ripemdHash[i]
+	}
+
+	return base58CheckEncodeBytes(addrBuffer[:])
+}
+
+// skycoinAddressFromSeckeyBytes generates a Skycoin address from a secret key
+// Returns byte slice instead of string for TinyGo bare-metal compatibility
+func skycoinAddressFromSeckeyBytes(seckey []byte) []byte {
+	pubkey := pubkeyFromSeckey(seckey)
+	return skycoinAddressFromPubkeyBytes(pubkey[:])
 }
 
 // deriveKeyFromSeed derives a secret key from a BIP39 seed using simplified BIP32

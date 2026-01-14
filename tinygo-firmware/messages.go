@@ -216,6 +216,14 @@ func sendSuccess(message string) {
 	msgWrite(MessageType_Success, buf[:n])
 }
 
+// sendSuccessBytes sends a Success message from a byte slice
+// This avoids string() conversion which doesn't work on TinyGo bare-metal
+func sendSuccessBytes(message []byte) {
+	var buf [128]byte
+	n := pbEncodeSuccessBytes(buf[:], message)
+	msgWrite(MessageType_Success, buf[:n])
+}
+
 // sendFailure sends a Failure message
 func sendFailure(code uint32, message string) {
 	var buf [128]byte

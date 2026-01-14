@@ -216,18 +216,6 @@ func handlePing() {
 	// Decode the ping message to get the echo bytes (NOT string!)
 	message := pbDecodePingBytes(msgInBuffer[:msgInSize])
 
-	// Debug: show message length and first 5 chars on OLED
-	oledClear()
-	oledDrawString(0, 0, "MSG:")
-	oledDrawChar(32, 0, '0'+byte(len(message)/10))
-	oledDrawChar(40, 0, '0'+byte(len(message)%10))
-	// Show first 5 bytes
-	for i := 0; i < 5 && i < len(message); i++ {
-		oledDrawChar(i*8, 10, message[i])
-	}
-	oledRefresh()
-	usbDelay(2000000)
-
 	// Check for test commands - use byte comparison
 	if len(message) > 5 {
 		isTest := message[0] == 'T' && message[1] == 'E' && message[2] == 'S' && message[3] == 'T' && message[4] == ':'
@@ -331,6 +319,18 @@ var (
 	cmdECMULT  = []byte{'E', 'C', 'M', 'U', 'L', 'T'}
 	cmdGPOINT  = []byte{'G', 'P', 'O', 'I', 'N', 'T'}
 	cmdADDR    = []byte{'A', 'D', 'D', 'R'}
+	cmdDECOMP  = []byte{'D', 'E', 'C', 'O', 'M', 'P'}
+	cmdECDH    = []byte{'E', 'C', 'D', 'H'}
+	cmdSTEP1   = []byte{'S', 'T', 'E', 'P', '1'}
+	cmdSECP    = []byte{'S', 'E', 'C', 'P'}
+	cmdVALID   = []byte{'V', 'A', 'L', 'I', 'D'}
+	cmdLOOP    = []byte{'L', 'O', 'O', 'P'}
+	cmdBENCH   = []byte{'B', 'E', 'N', 'C', 'H'}
+	cmdINV     = []byte{'I', 'N', 'V'}
+	cmdDBL     = []byte{'D', 'B', 'L'}
+	cmdLOOP2   = []byte{'L', 'O', 'O', 'P', '2'}
+	cmdECM     = []byte{'E', 'C', 'M'}
+	cmdSETXYZ  = []byte{'S', 'E', 'T', 'X', 'Y', 'Z'}
 )
 
 // handleTestCommandBytes runs crypto test commands using byte slice input
@@ -498,6 +498,92 @@ func handleTestCommandBytes(cmd []byte) {
 		return
 	}
 
+	// ADDR1 - test address from seckey=1
+	if len(cmd) == 5 && cmd[0] == 'A' && cmd[1] == 'D' && cmd[2] == 'D' && cmd[3] == 'R' && cmd[4] == '1' {
+		var seckey [32]byte
+		seckey[31] = 1
+		addrBytes := skycoinAddressFromSeckeyBytes(seckey[:])
+		if len(addrBytes) == 0 {
+			testResultBuf[n] = 'A'
+			n++
+			testResultBuf[n] = '1'
+			n++
+			testResultBuf[n] = ':'
+			n++
+			testResultBuf[n] = 'F'
+			n++
+			testResultBuf[n] = 'A'
+			n++
+			testResultBuf[n] = 'I'
+			n++
+			testResultBuf[n] = 'L'
+			n++
+		} else {
+			testResultBuf[n] = 'A'
+			n++
+			testResultBuf[n] = '1'
+			n++
+			testResultBuf[n] = ':'
+			n++
+			maxLen := 16
+			if len(addrBytes) < maxLen {
+				maxLen = len(addrBytes)
+			}
+			n += copyBytes(testResultBuf[n:], addrBytes[:maxLen])
+		}
+		sendSuccessBytes(testResultBuf[:n])
+		return
+	}
+
+	// DKPI - test deterministicKeyPairIterator directly with mnemonic
+	if len(cmd) == 4 && cmd[0] == 'D' && cmd[1] == 'K' && cmd[2] == 'P' && cmd[3] == 'I' {
+		mnemonic := "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
+		seed := []byte(mnemonic)
+		var nextSeed [32]byte
+		var sk [32]byte
+		var pk [33]byte
+		ok := deterministicKeyPairIterator(seed, nextSeed[:], sk[:], pk[:])
+		testResultBuf[n] = 'D'
+		n++
+		testResultBuf[n] = 'K'
+		n++
+		testResultBuf[n] = 'P'
+		n++
+		testResultBuf[n] = 'I'
+		n++
+		testResultBuf[n] = ':'
+		n++
+		if ok {
+			testResultBuf[n] = 'O'
+			n++
+			testResultBuf[n] = 'K'
+			n++
+			testResultBuf[n] = ':'
+			n++
+			// Show first 4 bytes of seckey
+			n += copyHexBytes(testResultBuf[n:], sk[:4])
+		} else {
+			testResultBuf[n] = 'F'
+			n++
+			testResultBuf[n] = ':'
+			n++
+			testResultBuf[n] = 'S'
+			n++
+			testResultBuf[n] = '0' + debugSecp256k1SumState
+			n++
+			testResultBuf[n] = 'P'
+			n++
+			testResultBuf[n] = '0' + debugPubkeyState
+			n++
+			testResultBuf[n] = 'E'
+			n++
+			testResultBuf[n] = '0' + debugEcdhState
+			n++
+		}
+		sendSuccessBytes(testResultBuf[:n])
+		return
+	}
+
 	if bytesEqual(cmd, cmdPUBKEY2) {
 		// Public key from secret key = 2
 		var seckey [32]byte
@@ -540,12 +626,396 @@ func handleTestCommandBytes(cmd []byte) {
 		return
 	}
 
+	if bytesEqual(cmd, cmdDECOMP) {
+		// Test point decompression: decompress pubkey for seckey=1 (the generator)
+		// First get compressed pubkey for seckey=1
+		var seckey1 [32]byte
+		seckey1[31] = 1
+		pk := pubkeyFromSeckey(seckey1[:])
+		// Now decompress it
+		xy, ok := decompressPubkey(pk[:])
+		testResultBuf[n] = 'D'
+		n++
+		testResultBuf[n] = 'C'
+		n++
+		testResultBuf[n] = ':'
+		n++
+		if !ok {
+			testResultBuf[n] = 'F'
+			n++
+			testResultBuf[n] = 'A'
+			n++
+			testResultBuf[n] = 'I'
+			n++
+			testResultBuf[n] = 'L'
+			n++
+			testResultBuf[n] = '0' + debugDecompressState
+			n++
+		} else {
+			testResultBuf[n] = 'O'
+			n++
+			testResultBuf[n] = 'K'
+			n++
+			// Show first 4 bytes of X
+			var xBytes [32]byte
+			xy.X.GetB32(xBytes[:])
+			n += copyHexBytes(testResultBuf[n:], xBytes[:4])
+		}
+		sendSuccessBytes(testResultBuf[:n])
+		return
+	}
+
+	if bytesEqual(cmd, cmdECDH) {
+		// Test ECDH: multiply pubkey2 by seckey1
+		// seckey1 = 1, pubkey2 = pubkey for seckey=2
+		var seckey1 [32]byte
+		seckey1[31] = 1
+		var seckey2 [32]byte
+		seckey2[31] = 2
+		pk2 := pubkeyFromSeckey(seckey2[:])
+		result := ecdh(pk2[:], seckey1[:])
+		testResultBuf[n] = 'E'
+		n++
+		testResultBuf[n] = 'C'
+		n++
+		testResultBuf[n] = 'D'
+		n++
+		testResultBuf[n] = 'H'
+		n++
+		testResultBuf[n] = ':'
+		n++
+		if result == nil {
+			testResultBuf[n] = 'F'
+			n++
+			testResultBuf[n] = '0' + debugEcdhState
+			n++
+		} else {
+			n += copyHexBytes(testResultBuf[n:], result[:8])
+		}
+		sendSuccessBytes(testResultBuf[:n])
+		return
+	}
+
+	if bytesEqual(cmd, cmdVALID) {
+		// Test seckeyIsValid with SHA256("test")
+		testHash := sha256Sum([]byte("test"))
+		valid := seckeyIsValid(testHash[:])
+		testResultBuf[n] = 'V'
+		n++
+		testResultBuf[n] = 'A'
+		n++
+		testResultBuf[n] = 'L'
+		n++
+		testResultBuf[n] = ':'
+		n++
+		if valid {
+			testResultBuf[n] = 'Y'
+			n++
+			testResultBuf[n] = 'E'
+			n++
+			testResultBuf[n] = 'S'
+			n++
+		} else {
+			testResultBuf[n] = 'N'
+			n++
+			testResultBuf[n] = 'O'
+			n++
+		}
+		// Show first 4 bytes of hash
+		n += copyHexBytes(testResultBuf[n:], testHash[:4])
+		sendSuccessBytes(testResultBuf[:n])
+		return
+	}
+
+	if bytesEqual(cmd, cmdLOOP) {
+		// Test the hash-until-valid loop with counter
+		testHash := sha256Sum([]byte("test"))
+		var sk [32]byte
+		copy(sk[:], testHash[:])
+		iterations := 0
+		for iterations < 100 { // Limit to 100 iterations
+			hash := sha256Sum(sk[:])
+			copy(sk[:], hash[:])
+			iterations++
+			if seckeyIsValid(sk[:]) {
+				break
+			}
+		}
+		testResultBuf[n] = 'L'
+		n++
+		testResultBuf[n] = 'O'
+		n++
+		testResultBuf[n] = 'O'
+		n++
+		testResultBuf[n] = 'P'
+		n++
+		testResultBuf[n] = ':'
+		n++
+		// Show iteration count
+		testResultBuf[n] = hexDigit(byte(iterations / 10))
+		n++
+		testResultBuf[n] = hexDigit(byte(iterations % 10))
+		n++
+		// Show if we found a valid key
+		if seckeyIsValid(sk[:]) {
+			testResultBuf[n] = 'V'
+			n++
+		} else {
+			testResultBuf[n] = 'X'
+			n++
+		}
+		sendSuccessBytes(testResultBuf[:n])
+		return
+	}
+
+	if bytesEqual(cmd, cmdSTEP1) {
+		// Test deterministicKeyPairIteratorStep with a fixed hash
+		testHash := sha256Sum([]byte("test"))
+		var sk [32]byte
+		var pk [33]byte
+		ok := deterministicKeyPairIteratorStep(testHash[:], sk[:], pk[:])
+		testResultBuf[n] = 'S'
+		n++
+		testResultBuf[n] = 'T'
+		n++
+		testResultBuf[n] = 'E'
+		n++
+		testResultBuf[n] = 'P'
+		n++
+		testResultBuf[n] = ':'
+		n++
+		if !ok {
+			testResultBuf[n] = 'F'
+			n++
+			testResultBuf[n] = 'A'
+			n++
+			testResultBuf[n] = 'I'
+			n++
+			testResultBuf[n] = 'L'
+			n++
+		} else {
+			// Show pubkey prefix and first 4 bytes of X
+			n += copyHexBytes(testResultBuf[n:], pk[:5])
+		}
+		sendSuccessBytes(testResultBuf[:n])
+		return
+	}
+
+	if bytesEqual(cmd, cmdSECP) {
+		// Test secp256k1Sum with short seed
+		seed := []byte("test")
+		result := secp256k1Sum(seed)
+		testResultBuf[n] = 'S'
+		n++
+		testResultBuf[n] = 'E'
+		n++
+		testResultBuf[n] = 'C'
+		n++
+		testResultBuf[n] = 'P'
+		n++
+		testResultBuf[n] = ':'
+		n++
+		if result == nil {
+			testResultBuf[n] = 'F'
+			n++
+			testResultBuf[n] = 'A'
+			n++
+			testResultBuf[n] = 'I'
+			n++
+			testResultBuf[n] = 'L'
+			n++
+		} else {
+			n += copyHexBytes(testResultBuf[n:], result[:8])
+		}
+		sendSuccessBytes(testResultBuf[:n])
+		return
+	}
+
+	if bytesEqual(cmd, cmdBENCH) {
+		// Benchmark: self-assignment Mul like Inv uses: a.Mul(&a, &b)
+		var a, b Field
+		a.SetInt(1)
+		b.SetInt(2)
+		a.Mul(&a, &b) // a = a * b (self-assignment)
+		a.Normalize()
+		testResultBuf[n] = 'B'
+		n++
+		testResultBuf[n] = 'E'
+		n++
+		testResultBuf[n] = 'N'
+		n++
+		testResultBuf[n] = 'C'
+		n++
+		testResultBuf[n] = 'H'
+		n++
+		testResultBuf[n] = ':'
+		n++
+		n += copyFieldHex(testResultBuf[n:], &a)
+		sendSuccessBytes(testResultBuf[:n])
+		return
+	}
+
+	if bytesEqual(cmd, cmdINV) {
+		// Test Inv(1) using the actual Inv function
+		var fd, result Field
+		fd.SetInt(1)
+		fd.Inv(&result)
+		result.Normalize()
+		testResultBuf[n] = 'I'
+		n++
+		testResultBuf[n] = 'N'
+		n++
+		testResultBuf[n] = 'V'
+		n++
+		testResultBuf[n] = ':'
+		n++
+		n += copyFieldHex(testResultBuf[n:], &result)
+		sendSuccessBytes(testResultBuf[:n])
+		return
+	}
+
+	if bytesEqual(cmd, cmdDBL) {
+		// Test single point Double (non-infinity)
+		initSecp256k1G()
+		var xyz XYZ
+		xyz.SetXY(&secp256k1G)
+		xyz.Double(&xyz)
+		var xy XY
+		xy.SetXYZ(&xyz)
+		var xBytes [32]byte
+		xy.X.GetB32(xBytes[:])
+		testResultBuf[n] = 'D'
+		n++
+		testResultBuf[n] = 'B'
+		n++
+		testResultBuf[n] = 'L'
+		n++
+		testResultBuf[n] = ':'
+		n++
+		n += copyHexBytes(testResultBuf[n:], xBytes[:8])
+		sendSuccessBytes(testResultBuf[:n])
+		return
+	}
+
+	if bytesEqual(cmd, cmdSETXYZ) {
+		// Test SetXYZ on result of ECmultGen with seckey=1
+		var seckey [32]byte
+		seckey[31] = 1
+		var xyz XYZ
+		ECmultGen(&xyz, seckey[:])
+		// Now do SetXYZ
+		var xy XY
+		xy.SetXYZ(&xyz)
+		var xBytes [32]byte
+		xy.X.GetB32(xBytes[:])
+		testResultBuf[n] = 'S'
+		n++
+		testResultBuf[n] = 'X'
+		n++
+		testResultBuf[n] = 'Y'
+		n++
+		testResultBuf[n] = 'Z'
+		n++
+		testResultBuf[n] = ':'
+		n++
+		n += copyHexBytes(testResultBuf[n:], xBytes[:8])
+		sendSuccessBytes(testResultBuf[:n])
+		return
+	}
+
+	if bytesEqual(cmd, cmdLOOP2) {
+		// Test 256 iterations of Double on infinity point
+		var r XYZ
+		r.Infinity = true
+		for i := 0; i < 256; i++ {
+			r.Double(&r)
+		}
+		testResultBuf[n] = 'L'
+		n++
+		testResultBuf[n] = '2'
+		n++
+		testResultBuf[n] = ':'
+		n++
+		if r.Infinity {
+			testResultBuf[n] = 'I'
+			n++
+			testResultBuf[n] = 'N'
+			n++
+			testResultBuf[n] = 'F'
+			n++
+		} else {
+			testResultBuf[n] = 'P'
+			n++
+			testResultBuf[n] = 'T'
+			n++
+		}
+		sendSuccessBytes(testResultBuf[:n])
+		return
+	}
+
+	if bytesEqual(cmd, cmdECM) {
+		// Test just ECmultGen (no SetXYZ conversion)
+		var seckey [32]byte
+		seckey[31] = 1
+		var xyz XYZ
+		ECmultGen(&xyz, seckey[:])
+		testResultBuf[n] = 'E'
+		n++
+		testResultBuf[n] = 'C'
+		n++
+		testResultBuf[n] = 'M'
+		n++
+		testResultBuf[n] = ':'
+		n++
+		if xyz.Infinity {
+			testResultBuf[n] = 'I'
+			n++
+			testResultBuf[n] = 'N'
+			n++
+			testResultBuf[n] = 'F'
+			n++
+		} else {
+			// Show Z coordinate (should be 1)
+			var zBytes [32]byte
+			xyz.Z.GetB32(zBytes[:])
+			n += copyHexBytes(testResultBuf[n:], zBytes[28:32])
+		}
+		sendSuccessBytes(testResultBuf[:n])
+		return
+	}
+
 	if bytesEqual(cmd, cmdADDR) {
 		// Test full address generation with test mnemonic
 		mnemonic := "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
 		addrBytes := deriveAddressAtIndexBytes(mnemonic, 0)
 		if len(addrBytes) == 0 {
-			n += copyBytes(testResultBuf[n:], prefixADDRF)
+			// Report debug states on failure
+			testResultBuf[n] = 'A'
+			n++
+			testResultBuf[n] = 'D'
+			n++
+			testResultBuf[n] = 'D'
+			n++
+			testResultBuf[n] = 'R'
+			n++
+			testResultBuf[n] = ':'
+			n++
+			testResultBuf[n] = 'F'
+			n++
+			testResultBuf[n] = ':'
+			n++
+			testResultBuf[n] = 'P'
+			n++
+			testResultBuf[n] = '0' + debugPubkeyState
+			n++
+			testResultBuf[n] = 'E'
+			n++
+			testResultBuf[n] = '0' + debugEcdhState
+			n++
+			testResultBuf[n] = 'D'
+			n++
+			testResultBuf[n] = '0' + debugDecompressState
+			n++
 		} else {
 			n += copyBytes(testResultBuf[n:], prefixADDR)
 			maxLen := 16

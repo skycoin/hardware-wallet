@@ -25,6 +25,16 @@ func base58Encode(data []byte) string {
 	return string(base58Result[:base58EncodeLen])
 }
 
+// base58EncodeToBytes encodes data to base58, returns byte slice
+// Returns slice pointing to base58Result buffer
+func base58EncodeToBytes(data []byte) []byte {
+	n := base58EncodeBytes(data)
+	if n == 0 {
+		return nil
+	}
+	return base58Result[:n]
+}
+
 // base58EncodeBytes encodes data to base58 in base58Result buffer
 // Returns the length of the encoded string
 func base58EncodeBytes(data []byte) int {
@@ -162,6 +172,34 @@ func base58CheckEncode(data []byte) string {
 	base58CheckBuffer[dataLen+3] = hash2[3]
 
 	return base58Encode(base58CheckBuffer[:dataLen+4])
+}
+
+// base58CheckEncodeBytes encodes data with a 4-byte checksum, returns bytes
+// Result is in base58Result buffer, returns slice pointing to it
+func base58CheckEncodeBytes(data []byte) []byte {
+	if len(data) > 60 {
+		return nil // Max 60 bytes input (+ 4 byte checksum)
+	}
+
+	// Calculate double SHA256 checksum
+	hash1 := sha256Sum(data)
+	hash2 := sha256Sum(hash1[:])
+
+	// Copy data and append first 4 bytes of checksum
+	dataLen := len(data)
+	for i := 0; i < dataLen; i++ {
+		base58CheckBuffer[i] = data[i]
+	}
+	base58CheckBuffer[dataLen] = hash2[0]
+	base58CheckBuffer[dataLen+1] = hash2[1]
+	base58CheckBuffer[dataLen+2] = hash2[2]
+	base58CheckBuffer[dataLen+3] = hash2[3]
+
+	n := base58EncodeBytes(base58CheckBuffer[:dataLen+4])
+	if n == 0 {
+		return nil
+	}
+	return base58Result[:n]
 }
 
 // base58CheckDecode decodes base58check string, returns data without checksum
