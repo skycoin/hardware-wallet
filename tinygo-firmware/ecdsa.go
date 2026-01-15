@@ -449,15 +449,22 @@ func signMessage(seckey []byte, message string) string {
 	return bytesToHex(sig[:])
 }
 
+// Fixed buffer for bytesToHex (max 130 chars for 65-byte signature)
+var bytesToHexBuf [256]byte
+
 // bytesToHex converts bytes to hex string
+// Uses fixed buffer, max 128 bytes input
 func bytesToHex(data []byte) string {
 	const hexChars = "0123456789abcdef"
-	result := make([]byte, len(data)*2)
-	for i, b := range data {
-		result[i*2] = hexChars[b>>4]
-		result[i*2+1] = hexChars[b&0x0f]
+	if len(data) > 128 {
+		return ""
 	}
-	return string(result)
+	resultLen := len(data) * 2
+	for i := 0; i < len(data); i++ {
+		bytesToHexBuf[i*2] = hexChars[data[i]>>4]
+		bytesToHexBuf[i*2+1] = hexChars[data[i]&0x0f]
+	}
+	return string(bytesToHexBuf[:resultLen])
 }
 
 // isHexDigit checks if message is a hex-encoded SHA256 digest (64 hex chars)
@@ -474,21 +481,25 @@ func isHexDigit(s string) bool {
 	return true
 }
 
+// Fixed buffer for hexToBytes (max 64 bytes output = 128 hex chars input)
+var hexToBytesBuf [64]byte
+
 // hexToBytes converts hex string to bytes
+// Uses fixed buffer, max 128 hex chars input (64 bytes output)
 func hexToBytes(s string) []byte {
-	if len(s)%2 != 0 {
+	if len(s)%2 != 0 || len(s) > 128 {
 		return nil
 	}
-	result := make([]byte, len(s)/2)
-	for i := 0; i < len(result); i++ {
+	resultLen := len(s) / 2
+	for i := 0; i < resultLen; i++ {
 		hi := hexDigitValue(s[i*2])
 		lo := hexDigitValue(s[i*2+1])
 		if hi < 0 || lo < 0 {
 			return nil
 		}
-		result[i] = byte(hi<<4 | lo)
+		hexToBytesBuf[i] = byte(hi<<4 | lo)
 	}
-	return result
+	return hexToBytesBuf[:resultLen]
 }
 
 func hexDigitValue(c byte) int {
@@ -502,6 +513,9 @@ func hexDigitValue(c byte) int {
 	}
 	return -1
 }
+
+// Fixed buffer for recovered pubkey (33 bytes compressed)
+var recoverPubkeyBuf [33]byte
 
 // ecdsaRecoverPubkey recovers the public key from a 65-byte signature and 32-byte digest
 // Signature format: r (32) + s (32) + recovery_id (1)
@@ -625,20 +639,19 @@ func ecdsaRecoverPubkey(sig []byte, digest []byte) []byte {
 		return nil
 	}
 
-	// Compress the public key
-	pubkey := make([]byte, 33)
+	// Compress the public key using fixed buffer
 	P.X.Normalize()
 	P.Y.Normalize()
 	var xBytes [32]byte
 	P.X.GetB32(xBytes[:])
-	copy(pubkey[1:], xBytes[:])
+	copy(recoverPubkeyBuf[1:], xBytes[:])
 	if P.Y.IsOdd() {
-		pubkey[0] = 0x03
+		recoverPubkeyBuf[0] = 0x03
 	} else {
-		pubkey[0] = 0x02
+		recoverPubkeyBuf[0] = 0x02
 	}
 
-	return pubkey
+	return recoverPubkeyBuf[:]
 }
 
 // fieldEqual compares two field elements

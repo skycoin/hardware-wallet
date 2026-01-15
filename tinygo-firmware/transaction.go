@@ -78,6 +78,10 @@ func txAddOutput(tx *Transaction, address []byte, coin, hour uint32) bool {
 	return true
 }
 
+// txInnerHashBuf is a fixed buffer for transaction serialization
+// Max size: 4 + (8 * 32) + 4 + (8 * 33) = 528 bytes
+var txInnerHashBuf [528]byte
+
 // txComputeInnerHash computes the transaction inner hash
 func txComputeInnerHash(tx *Transaction) {
 	// Serialize transaction data
@@ -89,7 +93,12 @@ func txComputeInnerHash(tx *Transaction) {
 
 	// Calculate total size
 	size := 4 + (int(tx.nbIn) * 32) + 4 + (int(tx.nbOut) * 33)
-	data := make([]byte, size)
+	// Use fixed buffer instead of make()
+	data := txInnerHashBuf[:size]
+	// Clear buffer
+	for i := 0; i < size; i++ {
+		data[i] = 0
+	}
 
 	pos := 0
 
@@ -184,10 +193,16 @@ func handleTransactionSign() {
 	}
 
 	// Check PIN if required
-	if !requirePIN() {
-		return // Waiting for PIN
+	if !requirePINForOp(PENDING_OP_TRANSACTION_SIGN) {
+		return // Waiting for PIN - will resume after verification
 	}
 
+	// Continue with signing
+	doTransactionSign()
+}
+
+// doTransactionSign performs the actual transaction signing (after PIN verification)
+func doTransactionSign() {
 	// Decode the message
 	nbIn, inputs, nbOut, outputs := pbDecodeTransactionSign(msgInBuffer[:msgInSize])
 

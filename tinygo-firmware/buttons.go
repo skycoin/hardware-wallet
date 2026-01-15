@@ -12,9 +12,9 @@ const (
 	// RCC for enabling GPIOC clock
 	RCC_AHB1ENR_ADDR = 0x40023830
 
-	// Button pins on GPIOC
-	BTN_PIN_YES = 1 << 2 // PC2
-	BTN_PIN_NO  = 1 << 5 // PC5
+	// Button pins on GPIOC (swapped from default - Yes is PC5, No is PC2)
+	BTN_PIN_YES = 1 << 5 // PC5
+	BTN_PIN_NO  = 1 << 2 // PC2
 )
 
 // ButtonState tracks button press state
@@ -196,15 +196,19 @@ func layoutConfirmSign(action string, details string) {
 	// Draw confirmation dialog
 	oledDrawString(4, 0, "Confirm?")
 	oledDrawString(4, 16, action)
-	if len(details) > 20 {
-		oledDrawString(4, 28, details[:20])
-		if len(details) > 40 {
-			oledDrawString(4, 40, details[20:40])
-		} else {
-			oledDrawString(4, 40, details[20:])
+	// Draw details character by character to avoid string slicing
+	detailsLen := len(details)
+	x := 4
+	// First line: chars 0-19
+	for i := 0; i < 20 && i < detailsLen; i++ {
+		x += oledDrawChar(x, 28, details[i])
+	}
+	// Second line: chars 20-39
+	if detailsLen > 20 {
+		x = 4
+		for i := 20; i < 40 && i < detailsLen; i++ {
+			x += oledDrawChar(x, 40, details[i])
 		}
-	} else {
-		oledDrawString(4, 28, details)
 	}
 
 	// Draw button labels
@@ -222,12 +226,15 @@ func layoutConfirmTx(toAddress string, coins, hours uint64) {
 	// Title
 	oledDrawString(4, 0, "Confirm TX?")
 
-	// Address (truncated)
+	// Address (truncated) - draw character by character
 	oledDrawString(4, 12, "To:")
-	if len(toAddress) > 14 {
-		oledDrawString(28, 12, toAddress[:14])
-	} else {
-		oledDrawString(28, 12, toAddress)
+	addrLen := len(toAddress)
+	if addrLen > 14 {
+		addrLen = 14
+	}
+	x := 28
+	for i := 0; i < addrLen; i++ {
+		x += oledDrawChar(x, 12, toAddress[i])
 	}
 
 	// Amount

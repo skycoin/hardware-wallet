@@ -78,6 +78,44 @@ func entropyToMnemonic(entropy []byte) string {
 	return string(mnemonicBuffer[:pos])
 }
 
+// entropyToMnemonicBytes writes mnemonic directly to a destination buffer
+// Returns the number of bytes written
+// This avoids string conversion which causes corruption in TinyGo bare-metal
+func entropyToMnemonicBytes(entropy []byte, dest []byte) int {
+	// Calculate checksum (first n bits of SHA256 hash)
+	// n = entropy_bits / 32
+	hash := sha256Sum(entropy)
+	checksumBits := len(entropy) * 8 / 32
+
+	// Combine entropy and checksum into bit string
+	// Total bits = entropy_bits + checksum_bits
+	totalBits := len(entropy)*8 + checksumBits
+
+	// Extract 11-bit groups to get word indices
+	wordCount := totalBits / 11
+
+	// Build result directly in destination buffer
+	pos := 0
+
+	for i := 0; i < wordCount; i++ {
+		// Get 11 bits starting at bit position i*11
+		index := getWordIndex(entropy, hash[:], i*11)
+		word := bip39Words[index]
+
+		if i > 0 && pos < len(dest) {
+			dest[pos] = ' '
+			pos++
+		}
+		// Copy word to buffer
+		for j := 0; j < len(word) && pos < len(dest); j++ {
+			dest[pos] = word[j]
+			pos++
+		}
+	}
+
+	return pos
+}
+
 // getWordIndex extracts 11 bits from entropy+checksum at the given bit offset
 func getWordIndex(entropy, checksum []byte, bitOffset int) uint16 {
 	entropyBits := len(entropy) * 8
@@ -106,11 +144,56 @@ func getWordIndex(entropy, checksum []byte, bitOffset int) uint16 {
 	return index
 }
 
-// validateMnemonic checks if a mnemonic phrase is valid
-func validateMnemonic(mnemonic string) bool {
-	// Split into words
-	words := splitMnemonic(mnemonic)
-	wordCount := len(words)
+// validateMnemonicEntropy is a fixed buffer for validation
+var validateMnemonicEntropy [32]byte
+
+// splitMnemonicBytesInto parses a mnemonic byte slice into word offsets/lengths
+// Stores results in global arrays to avoid any string/slice allocation
+func splitMnemonicBytesInto(mnemonic []byte) int {
+	wordIdx := 0
+	start := 0
+	for i := 0; i <= len(mnemonic); i++ {
+		if i == len(mnemonic) || mnemonic[i] == ' ' {
+			if i > start && wordIdx < 24 {
+				splitMnemonicOffsets[wordIdx] = start
+				splitMnemonicLengths[wordIdx] = i - start
+				wordIdx++
+			}
+			start = i + 1
+		}
+	}
+	splitMnemonicCount = wordIdx
+	return wordIdx
+}
+
+// findWordIndexInMnemonicBytes finds the BIP39 word index for a word in a byte slice
+// Uses offset and length to avoid any string operations
+func findWordIndexInMnemonicBytes(mnemonic []byte, offset, length int) int {
+	// Linear search with manual byte comparison
+	for i := 0; i < 2048; i++ {
+		w := bip39Words[i]
+		if len(w) != length {
+			continue
+		}
+		match := true
+		for j := 0; j < length; j++ {
+			if w[j] != mnemonic[offset+j] {
+				match = false
+				break
+			}
+		}
+		if match {
+			return i
+		}
+	}
+	return -1
+}
+
+// validateMnemonicBytes checks if a mnemonic byte slice is valid
+// Works directly with byte slices to avoid TinyGo string allocation issues
+func validateMnemonicBytes(mnemonic []byte) bool {
+	// Split into word offsets (no string allocation)
+	wordCount := splitMnemonicBytesInto(mnemonic)
 
 	// Check word count
 	if wordCount != 12 && wordCount != 15 && wordCount != 18 && wordCount != 21 && wordCount != 24 {
@@ -122,13 +205,17 @@ func validateMnemonic(mnemonic string) bool {
 	checksumBits := entropyBits / 33
 	entropyBytes := (entropyBits - checksumBits) / 8
 
-	entropy := make([]byte, entropyBytes)
+	// Use fixed buffer and clear it
+	for i := 0; i < entropyBytes; i++ {
+		validateMnemonicEntropy[i] = 0
+	}
 	var checksumByte byte
 
 	bitPos := 0
-	for _, word := range words {
-		// Find word index
-		idx := findWordIndex(word)
+	// Process each word using offset/length (no string conversion)
+	for wi := 0; wi < wordCount; wi++ {
+		// Find word index using offset directly into mnemonic bytes
+		idx := findWordIndexInMnemonicBytes(mnemonic, splitMnemonicOffsets[wi], splitMnemonicLengths[wi])
 		if idx < 0 {
 			return false // Word not found
 		}
@@ -141,7 +228,7 @@ func validateMnemonic(mnemonic string) bool {
 				byteIdx := bitPos / 8
 				bitIdx := 7 - (bitPos % 8)
 				if bit == 1 {
-					entropy[byteIdx] |= 1 << bitIdx
+					validateMnemonicEntropy[byteIdx] |= 1 << bitIdx
 				}
 			} else {
 				// Store in checksum
@@ -156,34 +243,175 @@ func validateMnemonic(mnemonic string) bool {
 	}
 
 	// Verify checksum
-	hash := sha256Sum(entropy)
+	hash := sha256Sum(validateMnemonicEntropy[:entropyBytes])
 	expectedChecksum := hash[0] >> (8 - checksumBits)
 	actualChecksum := checksumByte >> (8 - checksumBits)
 
 	return expectedChecksum == actualChecksum
 }
 
-// splitMnemonic splits a mnemonic string into words
-func splitMnemonic(mnemonic string) []string {
-	var words []string
+// validateMnemonic checks if a mnemonic phrase is valid
+// Uses offset-based word parsing to avoid TinyGo string allocation issues
+func validateMnemonic(mnemonic string) bool {
+	// Split into word offsets (no string allocation)
+	wordCount := splitMnemonicInto(mnemonic)
+
+	// Check word count
+	if wordCount != 12 && wordCount != 15 && wordCount != 18 && wordCount != 21 && wordCount != 24 {
+		return false
+	}
+
+	// Convert words to indices and extract entropy+checksum bits
+	entropyBits := wordCount * 11
+	checksumBits := entropyBits / 33
+	entropyBytes := (entropyBits - checksumBits) / 8
+
+	// Use fixed buffer and clear it
+	for i := 0; i < entropyBytes; i++ {
+		validateMnemonicEntropy[i] = 0
+	}
+	var checksumByte byte
+
+	bitPos := 0
+	// Process each word using offset/length (no string conversion)
+	for wi := 0; wi < wordCount; wi++ {
+		// Find word index using offset directly into mnemonic string
+		idx := findWordIndexInMnemonic(mnemonic, splitMnemonicOffsets[wi], splitMnemonicLengths[wi])
+		if idx < 0 {
+			return false // Word not found
+		}
+
+		// Extract 11 bits from index
+		for j := 10; j >= 0; j-- {
+			bit := (idx >> j) & 1
+			if bitPos < entropyBytes*8 {
+				// Store in entropy
+				byteIdx := bitPos / 8
+				bitIdx := 7 - (bitPos % 8)
+				if bit == 1 {
+					validateMnemonicEntropy[byteIdx] |= 1 << bitIdx
+				}
+			} else {
+				// Store in checksum
+				checksumPos := bitPos - entropyBytes*8
+				bitIdx := 7 - checksumPos
+				if bit == 1 {
+					checksumByte |= 1 << bitIdx
+				}
+			}
+			bitPos++
+		}
+	}
+
+	// Verify checksum
+	hash := sha256Sum(validateMnemonicEntropy[:entropyBytes])
+	expectedChecksum := hash[0] >> (8 - checksumBits)
+	actualChecksum := checksumByte >> (8 - checksumBits)
+
+	return expectedChecksum == actualChecksum
+}
+
+// splitMnemonicOffsets stores word start positions in the mnemonic
+var splitMnemonicOffsets [24]int
+
+// splitMnemonicLengths stores word lengths
+var splitMnemonicLengths [24]int
+
+// splitMnemonicCount stores the number of words found
+var splitMnemonicCount int
+
+// splitMnemonicInto parses a mnemonic into word offsets/lengths
+// Stores results in global arrays to avoid any string/slice allocation
+func splitMnemonicInto(mnemonic string) int {
+	wordIdx := 0
 	start := 0
 	for i := 0; i <= len(mnemonic); i++ {
 		if i == len(mnemonic) || mnemonic[i] == ' ' {
-			if i > start {
-				words = append(words, mnemonic[start:i])
+			if i > start && wordIdx < 24 {
+				splitMnemonicOffsets[wordIdx] = start
+				splitMnemonicLengths[wordIdx] = i - start
+				wordIdx++
 			}
 			start = i + 1
 		}
 	}
-	return words
+	splitMnemonicCount = wordIdx
+	return wordIdx
+}
+
+// findWordIndexInMnemonic finds the BIP39 word index for a word in the mnemonic
+// Uses offset and length to avoid any string operations
+func findWordIndexInMnemonic(mnemonic string, offset, length int) int {
+	// Linear search with manual byte comparison
+	for i := 0; i < 2048; i++ {
+		w := bip39Words[i]
+		if len(w) != length {
+			continue
+		}
+		match := true
+		for j := 0; j < length; j++ {
+			if w[j] != mnemonic[offset+j] {
+				match = false
+				break
+			}
+		}
+		if match {
+			return i
+		}
+	}
+	return -1
+}
+
+// splitMnemonicWords is kept for compatibility but not used in validation
+var splitMnemonicWords [24][9]byte
+var splitMnemonicWordLens [24]int
+var splitMnemonicResult [24]string
+
+// splitMnemonic splits a mnemonic string into words
+// NOTE: This function is kept for compatibility but may have issues in TinyGo bare-metal
+// Use splitMnemonicInto + findWordIndexInMnemonic for validation instead
+func splitMnemonic(mnemonic string) []string {
+	wordIdx := 0
+	start := 0
+	for i := 0; i <= len(mnemonic); i++ {
+		if i == len(mnemonic) || mnemonic[i] == ' ' {
+			if i > start && wordIdx < 24 {
+				wordLen := i - start
+				if wordLen > 8 {
+					wordLen = 8
+				}
+				for j := 0; j < wordLen; j++ {
+					splitMnemonicWords[wordIdx][j] = mnemonic[start+j]
+				}
+				splitMnemonicWordLens[wordIdx] = wordLen
+				splitMnemonicResult[wordIdx] = string(splitMnemonicWords[wordIdx][:wordLen])
+				wordIdx++
+			}
+			start = i + 1
+		}
+	}
+	return splitMnemonicResult[:wordIdx]
 }
 
 // findWordIndex finds the index of a word in the BIP39 wordlist
 // Returns -1 if not found
+// Uses byte-by-byte comparison to avoid TinyGo bare-metal string comparison issues
 func findWordIndex(word string) int {
-	// Linear search (could be optimized with binary search)
-	for i, w := range bip39Words {
-		if w == word {
+	wordLen := len(word)
+	// Linear search with manual byte comparison
+	for i := 0; i < 2048; i++ {
+		w := bip39Words[i]
+		if len(w) != wordLen {
+			continue
+		}
+		match := true
+		for j := 0; j < wordLen; j++ {
+			if w[j] != word[j] {
+				match = false
+				break
+			}
+		}
+		if match {
 			return i
 		}
 	}
@@ -192,6 +420,10 @@ func findWordIndex(word string) int {
 
 // mnemonicToSeed converts a mnemonic to a 512-bit seed using PBKDF2-HMAC-SHA512
 // This is the full BIP39 seed derivation
+// Fixed buffers for PBKDF2 (avoid make/append)
+var pbkdf2SaltBuf [128]byte   // "mnemonic" + passphrase + 4 byte block number
+var pbkdf2PasswordBuf [256]byte // mnemonic as bytes
+
 // passphrase is optional (typically empty string)
 func mnemonicToSeed(mnemonic, passphrase string) [64]byte {
 	// PBKDF2-HMAC-SHA512 with:
@@ -200,13 +432,39 @@ func mnemonicToSeed(mnemonic, passphrase string) [64]byte {
 	// - iterations = 2048
 	// - dkLen = 64 bytes
 
-	password := []byte(mnemonic)
-	salt := append([]byte("mnemonic"), []byte(passphrase)...)
+	// Copy mnemonic to fixed buffer
+	passwordLen := len(mnemonic)
+	if passwordLen > 255 {
+		passwordLen = 255
+	}
+	for i := 0; i < passwordLen; i++ {
+		pbkdf2PasswordBuf[i] = mnemonic[i]
+	}
 
-	return pbkdf2Sha512(password, salt, 2048, 64)
+	// Build salt: "mnemonic" + passphrase
+	saltLen := 8 + len(passphrase)
+	if saltLen > 124 { // Leave room for block number
+		saltLen = 124
+	}
+	// Copy "mnemonic"
+	pbkdf2SaltBuf[0] = 'm'
+	pbkdf2SaltBuf[1] = 'n'
+	pbkdf2SaltBuf[2] = 'e'
+	pbkdf2SaltBuf[3] = 'm'
+	pbkdf2SaltBuf[4] = 'o'
+	pbkdf2SaltBuf[5] = 'n'
+	pbkdf2SaltBuf[6] = 'i'
+	pbkdf2SaltBuf[7] = 'c'
+	// Copy passphrase
+	for i := 0; i < len(passphrase) && i < 116; i++ {
+		pbkdf2SaltBuf[8+i] = passphrase[i]
+	}
+
+	return pbkdf2Sha512(pbkdf2PasswordBuf[:passwordLen], pbkdf2SaltBuf[:saltLen], 2048, 64)
 }
 
 // pbkdf2Sha512 implements PBKDF2 with HMAC-SHA512
+// Uses fixed buffer for salt with block number
 func pbkdf2Sha512(password, salt []byte, iterations, keyLen int) [64]byte {
 	var result [64]byte
 
@@ -216,16 +474,19 @@ func pbkdf2Sha512(password, salt []byte, iterations, keyLen int) [64]byte {
 	// ...
 	// DK = U1 ^ U2 ^ ... ^ Uc
 
-	// Append block number (1) to salt
-	saltBlock := make([]byte, len(salt)+4)
-	copy(saltBlock, salt)
-	saltBlock[len(salt)+0] = 0
-	saltBlock[len(salt)+1] = 0
-	saltBlock[len(salt)+2] = 0
-	saltBlock[len(salt)+3] = 1
+	// Copy salt and append block number (1)
+	saltLen := len(salt)
+	if saltLen > 124 {
+		saltLen = 124
+	}
+	// Salt is already in pbkdf2SaltBuf from caller, just add block number
+	pbkdf2SaltBuf[saltLen+0] = 0
+	pbkdf2SaltBuf[saltLen+1] = 0
+	pbkdf2SaltBuf[saltLen+2] = 0
+	pbkdf2SaltBuf[saltLen+3] = 1
 
 	// U1 = HMAC-SHA512(password, salt || 1)
-	u := hmacSha512(password, saltBlock)
+	u := hmacSha512(password, pbkdf2SaltBuf[:saltLen+4])
 	copy(result[:], u[:])
 
 	// Iterate

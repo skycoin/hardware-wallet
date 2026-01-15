@@ -56,6 +56,12 @@ func pbEncodeBytes(buf []byte, fieldNum int, val []byte) int {
 	return n
 }
 
+// pbEncodeBytesAsString encodes a byte slice as a string field
+// Wire format is the same, this is for semantic clarity
+func pbEncodeBytesAsString(buf []byte, fieldNum int, val []byte) int {
+	return pbEncodeBytes(buf, fieldNum, val)
+}
+
 // pbEncodeUint32 encodes a uint32 field
 func pbEncodeUint32(buf []byte, fieldNum int, val uint32) int {
 	n := 0
@@ -386,6 +392,61 @@ func pbDecodePinMatrixAck(data []byte) string {
 	return ""
 }
 
+// pbDecodePinMatrixAckBytes decodes a PinMatrixAck message into a byte slice
+// Returns the slice and length without string conversion (safer for TinyGo bare-metal)
+func pbDecodePinMatrixAckBytes(data []byte) ([]byte, int) {
+	i := 0
+	for i < len(data) {
+		if i >= len(data) {
+			break
+		}
+
+		tag := uint32(data[i])
+		i++
+		if tag&0x80 != 0 {
+			continue
+		}
+
+		fieldNum := tag >> 3
+		wireType := tag & 0x7
+
+		if fieldNum == 1 && wireType == PB_BYTES {
+			if i >= len(data) {
+				break
+			}
+			length := int(data[i])
+			i++
+			if length&0x80 != 0 {
+				continue
+			}
+			if i+length > len(data) {
+				break
+			}
+			return data[i : i+length], length
+		}
+
+		// Skip other fields
+		switch wireType {
+		case PB_VARINT:
+			for i < len(data) && data[i]&0x80 != 0 {
+				i++
+			}
+			i++
+		case PB_BYTES:
+			if i < len(data) {
+				length := int(data[i])
+				i++
+				i += length
+			}
+		case PB_FIXED32:
+			i += 4
+		case PB_FIXED64:
+			i += 8
+		}
+	}
+	return nil, 0
+}
+
 // ButtonRequest field numbers
 const (
 	ButtonRequest_code = 1
@@ -476,8 +537,61 @@ const (
 	SetMnemonic_mnemonic = 1
 )
 
+// pbDecodeSetMnemonicBytes decodes a SetMnemonic message
+// Returns offset and length of the mnemonic string in the original buffer
+// This avoids string allocation which causes issues in TinyGo bare-metal
+func pbDecodeSetMnemonicBytes(data []byte) (offset int, length int) {
+	i := 0
+	for i < len(data) {
+		if i >= len(data) {
+			break
+		}
+
+		tag := uint32(data[i])
+		i++
+		if tag&0x80 != 0 {
+			continue
+		}
+
+		fieldNum := tag >> 3
+		wireType := tag & 0x7
+
+		if fieldNum == 1 && wireType == PB_BYTES {
+			if i >= len(data) {
+				break
+			}
+			length := int(data[i])
+			i++
+			if length&0x80 != 0 {
+				continue
+			}
+			if i+length > len(data) {
+				break
+			}
+			return i, length
+		}
+
+		// Skip other fields
+		switch wireType {
+		case PB_VARINT:
+			for i < len(data) && data[i]&0x80 != 0 {
+				i++
+			}
+			i++
+		case PB_BYTES:
+			if i < len(data) {
+				length := int(data[i])
+				i++
+				i += length
+			}
+		}
+	}
+	return 0, 0
+}
+
 // pbDecodeSetMnemonic decodes a SetMnemonic message
 // Returns the mnemonic string
+// NOTE: This may have issues in TinyGo bare-metal due to string allocation
 func pbDecodeSetMnemonic(data []byte) string {
 	i := 0
 	for i < len(data) {
@@ -601,6 +715,74 @@ func pbDecodeEntropyAck(data []byte) []byte {
 	return nil
 }
 
+// GetRawEntropy / GetMixedEntropy field numbers
+const (
+	GetEntropy_size = 1
+)
+
+// pbDecodeGetEntropy decodes a GetRawEntropy or GetMixedEntropy message
+// Returns the requested entropy size (default 32)
+func pbDecodeGetEntropy(data []byte) int {
+	size := 32 // default
+	i := 0
+	for i < len(data) {
+		if i >= len(data) {
+			break
+		}
+
+		tag := uint32(data[i])
+		i++
+		if tag&0x80 != 0 {
+			continue
+		}
+
+		fieldNum := tag >> 3
+		wireType := tag & 0x7
+
+		if fieldNum == 1 && wireType == PB_VARINT {
+			// Size field
+			if i >= len(data) {
+				break
+			}
+			val := 0
+			shift := 0
+			for i < len(data) {
+				b := int(data[i])
+				i++
+				val |= (b & 0x7F) << shift
+				if b&0x80 == 0 {
+					break
+				}
+				shift += 7
+			}
+			if val > 0 && val <= 1024 {
+				size = val
+			}
+			continue
+		}
+
+		// Skip other fields
+		switch wireType {
+		case PB_VARINT:
+			for i < len(data) && data[i]&0x80 != 0 {
+				i++
+			}
+			i++
+		case PB_BYTES:
+			if i < len(data) {
+				length := int(data[i])
+				i++
+				i += length
+			}
+		case PB_FIXED32:
+			i += 4
+		case PB_FIXED64:
+			i += 8
+		}
+	}
+	return size
+}
+
 // Entropy field numbers (response to GetEntropy)
 const (
 	Entropy_entropy = 1
@@ -633,7 +815,63 @@ const (
 	WordAck_word = 1
 )
 
+// pbDecodeWordAckBytes decodes a WordAck message, returning offset and length
+// This avoids string allocation issues in TinyGo bare-metal
+func pbDecodeWordAckBytes(data []byte) (offset int, length int) {
+	i := 0
+	for i < len(data) {
+		if i >= len(data) {
+			break
+		}
+
+		tag := uint32(data[i])
+		i++
+		if tag&0x80 != 0 {
+			continue
+		}
+
+		fieldNum := tag >> 3
+		wireType := tag & 0x7
+
+		if fieldNum == 1 && wireType == PB_BYTES {
+			if i >= len(data) {
+				break
+			}
+			length := int(data[i])
+			i++
+			if length&0x80 != 0 {
+				continue
+			}
+			if i+length > len(data) {
+				break
+			}
+			return i, length
+		}
+
+		// Skip other fields
+		switch wireType {
+		case PB_VARINT:
+			for i < len(data) && data[i]&0x80 != 0 {
+				i++
+			}
+			i++
+		case PB_BYTES:
+			if i < len(data) {
+				length := int(data[i])
+				i++
+				i += length
+			}
+		case PB_FIXED32:
+			i += 4
+		case PB_FIXED64:
+			i += 8
+		}
+	}
+	return 0, 0
+}
+
 // pbDecodeWordAck decodes a WordAck message
+// NOTE: This may have issues in TinyGo bare-metal due to string allocation
 func pbDecodeWordAck(data []byte) string {
 	i := 0
 	for i < len(data) {
@@ -891,12 +1129,16 @@ const (
 	SkycoinTransactionOutput_address_index = 4
 )
 
+// Fixed arrays for transaction input/output (avoid make/append)
+var txInputsBuf [MAX_TX_INPUTS]TransactionInput
+var txOutputsBuf [MAX_TX_OUTPUTS]TransactionOutput
+
 // pbDecodeTransactionSign decodes a TransactionSign message
 // Returns nbIn, inputs, nbOut, outputs
 func pbDecodeTransactionSign(data []byte) (int, []TransactionInput, int, []TransactionOutput) {
 	var nbIn, nbOut int
-	inputs := make([]TransactionInput, 0, MAX_TX_INPUTS)
-	outputs := make([]TransactionOutput, 0, MAX_TX_OUTPUTS)
+	inputCount := 0
+	outputCount := 0
 
 	i := 0
 	for i < len(data) {
@@ -935,9 +1177,9 @@ func pbDecodeTransactionSign(data []byte) (int, []TransactionInput, int, []Trans
 			if wireType == PB_BYTES && i < len(data) {
 				length := int(data[i])
 				i++
-				if i+length <= len(data) {
-					input := decodeTransactionInput(data[i : i+length])
-					inputs = append(inputs, input)
+				if i+length <= len(data) && inputCount < MAX_TX_INPUTS {
+					txInputsBuf[inputCount] = decodeTransactionInput(data[i : i+length])
+					inputCount++
 					i += length
 				}
 			}
@@ -946,9 +1188,9 @@ func pbDecodeTransactionSign(data []byte) (int, []TransactionInput, int, []Trans
 			if wireType == PB_BYTES && i < len(data) {
 				length := int(data[i])
 				i++
-				if i+length <= len(data) {
-					output := decodeTransactionOutput(data[i : i+length])
-					outputs = append(outputs, output)
+				if i+length <= len(data) && outputCount < MAX_TX_OUTPUTS {
+					txOutputsBuf[outputCount] = decodeTransactionOutput(data[i : i+length])
+					outputCount++
 					i += length
 				}
 			}
@@ -975,7 +1217,7 @@ func pbDecodeTransactionSign(data []byte) (int, []TransactionInput, int, []Trans
 		}
 	}
 
-	return nbIn, inputs, nbOut, outputs
+	return nbIn, txInputsBuf[:inputCount], nbOut, txOutputsBuf[:outputCount]
 }
 
 // decodeTransactionInput decodes a SkycoinTransactionInput
@@ -1301,6 +1543,239 @@ func pbDecodeSkycoinCheckMessageSignature(data []byte) (string, string, string) 
 		}
 	}
 	return address, message, signature
+}
+
+// ResetDevice field numbers
+const (
+	ResetDevice_display_random       = 1
+	ResetDevice_strength             = 2
+	ResetDevice_passphrase_protection = 3
+	ResetDevice_pin_protection       = 4
+	ResetDevice_language             = 5
+	ResetDevice_label                = 6
+	ResetDevice_u2f_counter          = 7
+	ResetDevice_skip_backup          = 8
+)
+
+// pbDecodeResetDevice decodes a ResetDevice message
+// Returns strength (bits), passphraseProtection, pinProtection, language, label, skipBackup
+func pbDecodeResetDevice(data []byte) (int, bool, bool, string, string, bool) {
+	strength := 256 // default 256 bits = 24 words
+	passphraseProtection := false
+	pinProtection := false
+	language := ""
+	label := ""
+	skipBackup := false
+
+	i := 0
+	for i < len(data) {
+		if i >= len(data) {
+			break
+		}
+
+		tag := uint32(data[i])
+		i++
+		if tag&0x80 != 0 {
+			continue
+		}
+
+		fieldNum := tag >> 3
+		wireType := tag & 0x7
+
+		switch fieldNum {
+		case ResetDevice_strength:
+			if wireType == PB_VARINT && i < len(data) {
+				// Read varint for strength
+				val := pbDecodeUint64(data[i:])
+				strength = int(val)
+				for i < len(data) && data[i]&0x80 != 0 {
+					i++
+				}
+				i++
+			}
+		case ResetDevice_passphrase_protection:
+			if wireType == PB_VARINT && i < len(data) {
+				passphraseProtection = data[i] != 0
+				i++
+			}
+		case ResetDevice_pin_protection:
+			if wireType == PB_VARINT && i < len(data) {
+				pinProtection = data[i] != 0
+				i++
+			}
+		case ResetDevice_language:
+			if wireType == PB_BYTES && i < len(data) {
+				length := int(data[i])
+				i++
+				if length&0x80 != 0 {
+					continue
+				}
+				if i+length <= len(data) {
+					language = string(data[i : i+length])
+					i += length
+				}
+			}
+		case ResetDevice_label:
+			if wireType == PB_BYTES && i < len(data) {
+				length := int(data[i])
+				i++
+				if length&0x80 != 0 {
+					continue
+				}
+				if i+length <= len(data) {
+					label = string(data[i : i+length])
+					i += length
+				}
+			}
+		case ResetDevice_skip_backup:
+			if wireType == PB_VARINT && i < len(data) {
+				skipBackup = data[i] != 0
+				i++
+			}
+		default:
+			// Skip other fields
+			switch wireType {
+			case PB_VARINT:
+				for i < len(data) && data[i]&0x80 != 0 {
+					i++
+				}
+				i++
+			case PB_BYTES:
+				if i < len(data) {
+					length := int(data[i])
+					i++
+					i += length
+				}
+			case PB_FIXED32:
+				i += 4
+			case PB_FIXED64:
+				i += 8
+			}
+		}
+	}
+
+	return strength, passphraseProtection, pinProtection, language, label, skipBackup
+}
+
+// LoadDevice field numbers
+const (
+	LoadDevice_mnemonic              = 1
+	LoadDevice_node                  = 2 // HDNodeType - not used
+	LoadDevice_pin                   = 3
+	LoadDevice_passphrase_protection = 4
+	LoadDevice_language              = 5
+	LoadDevice_label                 = 6
+	LoadDevice_skip_checksum         = 7
+	LoadDevice_u2f_counter           = 8
+)
+
+// pbDecodeLoadDevice decodes a LoadDevice message
+// Returns mnemonic, pin, passphraseProtection, language, label, skipChecksum
+func pbDecodeLoadDevice(data []byte) (string, string, bool, string, string, bool) {
+	mnemonic := ""
+	pin := ""
+	passphraseProtection := false
+	language := ""
+	label := ""
+	skipChecksum := false
+
+	i := 0
+	for i < len(data) {
+		if i >= len(data) {
+			break
+		}
+
+		tag := uint32(data[i])
+		i++
+		if tag&0x80 != 0 {
+			continue
+		}
+
+		fieldNum := tag >> 3
+		wireType := tag & 0x7
+
+		switch fieldNum {
+		case LoadDevice_mnemonic:
+			if wireType == PB_BYTES && i < len(data) {
+				length := int(data[i])
+				i++
+				if length&0x80 != 0 {
+					continue
+				}
+				if i+length <= len(data) {
+					mnemonic = string(data[i : i+length])
+					i += length
+				}
+			}
+		case LoadDevice_pin:
+			if wireType == PB_BYTES && i < len(data) {
+				length := int(data[i])
+				i++
+				if length&0x80 != 0 {
+					continue
+				}
+				if i+length <= len(data) {
+					pin = string(data[i : i+length])
+					i += length
+				}
+			}
+		case LoadDevice_passphrase_protection:
+			if wireType == PB_VARINT && i < len(data) {
+				passphraseProtection = data[i] != 0
+				i++
+			}
+		case LoadDevice_language:
+			if wireType == PB_BYTES && i < len(data) {
+				length := int(data[i])
+				i++
+				if length&0x80 != 0 {
+					continue
+				}
+				if i+length <= len(data) {
+					language = string(data[i : i+length])
+					i += length
+				}
+			}
+		case LoadDevice_label:
+			if wireType == PB_BYTES && i < len(data) {
+				length := int(data[i])
+				i++
+				if length&0x80 != 0 {
+					continue
+				}
+				if i+length <= len(data) {
+					label = string(data[i : i+length])
+					i += length
+				}
+			}
+		case LoadDevice_skip_checksum:
+			if wireType == PB_VARINT && i < len(data) {
+				skipChecksum = data[i] != 0
+				i++
+			}
+		default:
+			// Skip other fields (including node, u2f_counter)
+			switch wireType {
+			case PB_VARINT:
+				for i < len(data) && data[i]&0x80 != 0 {
+					i++
+				}
+				i++
+			case PB_BYTES:
+				if i < len(data) {
+					length := int(data[i])
+					i++
+					i += length
+				}
+			case PB_FIXED32:
+				i += 4
+			case PB_FIXED64:
+				i += 8
+			}
+		}
+	}
+
+	return mnemonic, pin, passphraseProtection, language, label, skipChecksum
 }
 
 // RecoveryDevice field numbers

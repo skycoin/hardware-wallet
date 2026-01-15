@@ -11,8 +11,14 @@ const (
 var recoveryState = RECOVERY_IDLE
 var recoveryWordCount = 12
 var recoveryWordIndex = 0
-var recoveryWords [24]string
 var recoveryDryRun = false
+
+// recoveryWordBufs stores words as byte buffers to avoid TinyGo string issues
+var recoveryWordBufs [24][9]byte // Max 24 words, max 8 chars each + null
+var recoveryWordLens [24]int
+
+// Legacy string array - kept for any code that needs it
+var recoveryWords [24]string
 
 // handleRecoveryDevice handles the RecoveryDevice message
 func handleRecoveryDevice() {
@@ -57,18 +63,27 @@ func handleWordAck() {
 		return
 	}
 
-	// Get word from message
-	word := pbDecodeWordAck(msgInBuffer[:msgInSize])
+	// Get word offset and length from message buffer (avoid string allocation)
+	wordOffset, wordLen := pbDecodeWordAckBytes(msgInBuffer[:msgInSize])
+	if wordLen == 0 || wordLen > 8 {
+		sendFailure(FailureType_DataError, "Invalid word length")
+		recoveryState = RECOVERY_IDLE
+		return
+	}
 
-	// Validate word is in BIP39 wordlist
-	if !isValidWord(word) {
+	// Validate word using byte-based lookup
+	wordIdx := findWordIndexInMnemonicBytes(msgInBuffer[:], wordOffset, wordLen)
+	if wordIdx < 0 {
 		sendFailure(FailureType_DataError, "Invalid word")
 		recoveryState = RECOVERY_IDLE
 		return
 	}
 
-	// Store word
-	recoveryWords[recoveryWordIndex] = word
+	// Copy word to fixed buffer
+	for j := 0; j < wordLen; j++ {
+		recoveryWordBufs[recoveryWordIndex][j] = msgInBuffer[wordOffset+j]
+	}
+	recoveryWordLens[recoveryWordIndex] = wordLen
 	recoveryWordIndex++
 
 	// Display progress
@@ -111,25 +126,32 @@ func handleWordAck() {
 }
 
 // isValidWord checks if word is in BIP39 wordlist
+// Uses byte comparison to avoid TinyGo string issues
 func isValidWord(word string) bool {
-	for _, w := range bip39Words {
-		if w == word {
-			return true
-		}
-	}
-	return false
+	// Use findWordIndex which has proper byte comparison
+	return findWordIndex(word) >= 0
 }
 
+// recoveryMnemonicBuf is a fixed buffer for building recovery mnemonic
+var recoveryMnemonicBuf [256]byte
+
 // buildMnemonicString builds mnemonic from collected words
+// Uses fixed byte buffers to avoid TinyGo string allocation issues
 func buildMnemonicString() string {
-	result := ""
+	pos := 0
 	for i := 0; i < recoveryWordCount; i++ {
-		if i > 0 {
-			result += " "
+		if i > 0 && pos < 255 {
+			recoveryMnemonicBuf[pos] = ' '
+			pos++
 		}
-		result += recoveryWords[i]
+		// Copy from byte buffer
+		wordLen := recoveryWordLens[i]
+		for j := 0; j < wordLen && pos < 255; j++ {
+			recoveryMnemonicBuf[pos] = recoveryWordBufs[i][j]
+			pos++
+		}
 	}
-	return result
+	return string(recoveryMnemonicBuf[:pos])
 }
 
 // sendWordRequest sends a WordRequest message
@@ -160,10 +182,12 @@ func layoutRecoveryProgress(current, total int) {
 	oledRefresh()
 }
 
-// layoutRecoveryComplete shows recovery complete
+// layoutRecoveryComplete shows recovery complete, then returns to home
 func layoutRecoveryComplete() {
 	oledClear()
 	oledDrawString(4, 0, "Recovery Complete")
 	oledDrawString(4, 24, "Device is ready!")
 	oledRefresh()
+	usbDelay(2000000) // Show for 2 seconds
+	layoutHome()      // Return to home screen
 }

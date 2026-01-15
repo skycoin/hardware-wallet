@@ -39,22 +39,68 @@ func GoMain() {
 }
 
 // layoutHome shows the home screen based on device state
+// Matches the C firmware's layoutHome() behavior:
+// - Always shows Skycoin logo
+// - Top bar shows status: "NEEDS SEED!", "NEEDS BACKUP!", or device label
 func layoutHome() {
 	oledClear()
 
-	// Draw Skycoin logo area (simple text for now)
-	oledDrawString(28, 8, "SKYCOIN")
-	oledDrawString(20, 20, "Hardware Wallet")
+	// Draw Skycoin logo (full screen 128x64)
+	oledDrawBitmap(&bmpSkycoinLogo64)
+
+	// Clear top bar area (first 9 rows) for status text
+	for y := 0; y < 9; y++ {
+		for x := 0; x < 128; x++ {
+			oledSetPixel(x, y, false)
+		}
+	}
 
 	// Show status based on initialization
-	if storageIsInitialized() {
-		oledDrawString(40, 40, "Ready")
+	if !storageIsInitialized() {
+		// Not initialized - show "NEEDS SEED!"
+		oledDrawStringCenter(0, "NEEDS SEED!")
+	} else if storageNeedsBackup() {
+		// Initialized but not backed up - show "NEEDS BACKUP!"
+		oledDrawStringCenter(0, "NEEDS BACKUP!")
 	} else {
-		oledDrawString(24, 40, "Not initialized")
-		oledDrawString(28, 52, "Needs seed")
+		// Fully initialized - show device label or ID
+		label := storageGetLabel()
+		if label == "" {
+			label = storageGetDeviceID()
+		}
+		// Truncate long labels (max ~20 chars fit on screen)
+		if len(label) > 20 {
+			// Show first 17 chars + "..."
+			oledDrawStringCenterTrunc(0, label, 17)
+		} else {
+			oledDrawStringCenter(0, label)
+		}
 	}
 
 	oledRefresh()
+}
+
+// oledDrawStringCenterTrunc draws a truncated string with "..." centered
+func oledDrawStringCenterTrunc(y int, s string, maxChars int) {
+	if len(s) <= maxChars {
+		oledDrawStringCenter(y, s)
+		return
+	}
+	// Draw first maxChars characters + "..."
+	width := (maxChars + 3) * 6
+	x := (128 - width) / 2
+	if x < 0 {
+		x = 0
+	}
+	// Draw characters one by one
+	for i := 0; i < maxChars && i < len(s); i++ {
+		x += oledDrawChar(x, y, s[i])
+	}
+	oledDrawChar(x, y, '.')
+	x += 6
+	oledDrawChar(x, y, '.')
+	x += 6
+	oledDrawChar(x, y, '.')
 }
 
 // drawDebugMarker draws a debug marker (number of vertical lines)

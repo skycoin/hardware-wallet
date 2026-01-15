@@ -15,25 +15,58 @@ const (
 var pinState = PIN_STATE_IDLE
 var pinNewFirst [10]byte
 var pinNewFirstLen int
+var pinTranslated [10]byte // Buffer for translated PIN to avoid string conversion
+var pinTranslatedLen int
+
+// Pending operation state - saved when PIN verification is needed
+const (
+	PENDING_OP_NONE = iota
+	PENDING_OP_SKYCOIN_ADDRESS
+	PENDING_OP_SIGN_MESSAGE
+	PENDING_OP_TRANSACTION_SIGN
+)
+
+var pendingOperation = PENDING_OP_NONE
+
+// Button state machine for pending confirmations
+const (
+	BTN_STATE_IDLE = iota
+	BTN_STATE_WIPE_CONFIRM // Waiting for wipe confirmation
+)
+
+var btnState = BTN_STATE_IDLE
 
 // Mnemonic generation state machine
 const (
 	MNEMONIC_STATE_IDLE = iota
 	MNEMONIC_STATE_WAIT_ENTROPY
-	MNEMONIC_STATE_BACKUP
+	MNEMONIC_STATE_BACKUP_WAIT_ACK   // Waiting for ButtonAck from host
+	MNEMONIC_STATE_BACKUP_WAIT_BTN   // Got ButtonAck, waiting for physical button
 )
 
 var mnemonicState = MNEMONIC_STATE_IDLE
 var mnemonicWordCount = 12
 var mnemonicBackupIndex = 0
-var pendingMnemonic [512]byte // Buffer for generated mnemonic
+var mnemonicBackupPass = 0            // 0 = "Write down", 1 = "Check"
+var pendingMnemonic [512]byte         // Buffer for generated mnemonic
 var pendingMnemonicLen = 0
+var pendingMnemonicWordCount = 0
+
+// Word storage using byte buffers (TinyGo string arrays don't work)
+var backupWordBufs [24][10]byte  // Max 24 words, max 9 chars + null
+var backupWordLens [24]int
+
+// Fixed buffers for entropy mixing (avoid make() allocation)
+var entropyAckDeviceBuf [32]byte
+var entropyAckMixedBuf [32]byte
 
 // dispatchMessage handles an incoming message based on its type
 func dispatchMessage() {
-	debugShowMsgID(msgInID)
-	// Also show first 8 bytes of payload for debugging
-	debugShowPayload(msgInBuffer[:], msgInSize)
+	if DebugMode {
+		debugShowMsgID(msgInID)
+		// Also show first 8 bytes of payload for debugging
+		debugShowPayload(msgInBuffer[:], msgInSize)
+	}
 	switch msgInID {
 	case MessageType_Initialize:
 		handleInitialize()
@@ -62,8 +95,11 @@ func dispatchMessage() {
 	case MessageType_SetMnemonic:
 		handleSetMnemonic()
 
-	case MessageType_GetEntropy:
-		handleGetEntropy()
+	case MessageType_GetEntropy: // Same as GetRawEntropy (both are message type 9)
+		handleGetRawEntropy()
+
+	case MessageType_GetMixedEntropy:
+		handleGetMixedEntropy()
 
 	case MessageType_EntropyAck:
 		handleEntropyAck()
@@ -94,6 +130,12 @@ func dispatchMessage() {
 
 	case MessageType_ApplySettings:
 		handleApplySettings()
+
+	case MessageType_LoadDevice:
+		handleLoadDevice()
+
+	case MessageType_ResetDevice:
+		handleResetDevice()
 
 	default:
 		// Unknown message type
@@ -331,6 +373,7 @@ var (
 	cmdLOOP2   = []byte{'L', 'O', 'O', 'P', '2'}
 	cmdECM     = []byte{'E', 'C', 'M'}
 	cmdSETXYZ  = []byte{'S', 'E', 'T', 'X', 'Y', 'Z'}
+	cmdVMNEM   = []byte{'V', 'M', 'N', 'E', 'M'}
 )
 
 // handleTestCommandBytes runs crypto test commands using byte slice input
@@ -984,6 +1027,184 @@ func handleTestCommandBytes(cmd []byte) {
 		return
 	}
 
+	if bytesEqual(cmd, cmdVMNEM) {
+		// Test mnemonic validation with new offset-based approach
+		mnemonic := "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
+
+		testResultBuf[n] = 'V'
+		n++
+		testResultBuf[n] = 'M'
+		n++
+		testResultBuf[n] = ':'
+		n++
+
+		// Test splitMnemonicInto
+		wordCount := splitMnemonicInto(mnemonic)
+		testResultBuf[n] = 'C'
+		n++
+		testResultBuf[n] = '0' + byte(wordCount/10)
+		n++
+		testResultBuf[n] = '0' + byte(wordCount%10)
+		n++
+		testResultBuf[n] = ','
+		n++
+
+		// Test findWordIndexInMnemonic for first word (should be 0)
+		if wordCount > 0 {
+			idx0 := findWordIndexInMnemonic(mnemonic, splitMnemonicOffsets[0], splitMnemonicLengths[0])
+			testResultBuf[n] = 'W'
+			n++
+			testResultBuf[n] = '0'
+			n++
+			testResultBuf[n] = '='
+			n++
+			if idx0 < 0 {
+				testResultBuf[n] = 'N'
+				n++
+			} else {
+				testResultBuf[n] = '0' + byte(idx0)
+				n++
+			}
+			testResultBuf[n] = ','
+			n++
+		}
+
+		// Test findWordIndexInMnemonic for last word "about" (should be 3)
+		if wordCount >= 12 {
+			idx11 := findWordIndexInMnemonic(mnemonic, splitMnemonicOffsets[11], splitMnemonicLengths[11])
+			testResultBuf[n] = 'W'
+			n++
+			testResultBuf[n] = 'B'
+			n++
+			testResultBuf[n] = '='
+			n++
+			if idx11 < 0 {
+				testResultBuf[n] = 'N'
+				n++
+			} else {
+				testResultBuf[n] = '0' + byte(idx11)
+				n++
+			}
+			testResultBuf[n] = ','
+			n++
+		}
+
+		// Test full validation
+		valid := validateMnemonic(mnemonic)
+		testResultBuf[n] = 'V'
+		n++
+		testResultBuf[n] = '='
+		n++
+		if valid {
+			testResultBuf[n] = 'Y'
+			n++
+		} else {
+			testResultBuf[n] = 'N'
+			n++
+		}
+
+		sendSuccessBytes(testResultBuf[:n])
+		return
+	}
+
+	// GENM - test mnemonic generation directly using bytes-based approach
+	if len(cmd) == 4 && cmd[0] == 'G' && cmd[1] == 'E' && cmd[2] == 'N' && cmd[3] == 'M' {
+		testResultBuf[n] = 'G'
+		n++
+		testResultBuf[n] = 'M'
+		n++
+		testResultBuf[n] = ':'
+		n++
+		// Generate a test mnemonic from fixed entropy
+		var testEntropy [16]byte
+		// All zeros should give: "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
+		// Use bytes-based approach to avoid string corruption
+		var testMnemBuf [256]byte
+		mLen := entropyToMnemonicBytes(testEntropy[:], testMnemBuf[:])
+		testResultBuf[n] = 'L'
+		n++
+		testResultBuf[n] = hexDigit(byte(mLen / 100))
+		n++
+		testResultBuf[n] = hexDigit(byte((mLen / 10) % 10))
+		n++
+		testResultBuf[n] = hexDigit(byte(mLen % 10))
+		n++
+		testResultBuf[n] = ','
+		n++
+		// Show first 20 chars
+		showLen := 20
+		if mLen < showLen {
+			showLen = mLen
+		}
+		for i := 0; i < showLen; i++ {
+			c := testMnemBuf[i]
+			if c >= 32 && c < 127 {
+				testResultBuf[n] = c
+			} else {
+				testResultBuf[n] = '?'
+			}
+			n++
+		}
+		sendSuccessBytes(testResultBuf[:n])
+		return
+	}
+
+	// MNEM - show stored mnemonic info for debugging
+	if len(cmd) == 4 && cmd[0] == 'M' && cmd[1] == 'N' && cmd[2] == 'E' && cmd[3] == 'M' {
+		storageInit()
+		testResultBuf[n] = 'M'
+		n++
+		testResultBuf[n] = 'N'
+		n++
+		testResultBuf[n] = ':'
+		n++
+		// Show HasMnemonic flag
+		testResultBuf[n] = 'H'
+		n++
+		if storageHasMnemonic() {
+			testResultBuf[n] = '1'
+		} else {
+			testResultBuf[n] = '0'
+		}
+		n++
+		testResultBuf[n] = ','
+		n++
+		// Show MnemonicLen
+		testResultBuf[n] = 'L'
+		n++
+		mnemonicBytes, mnemonicLen := storageGetMnemonicBytes()
+		testResultBuf[n] = hexDigit(byte(mnemonicLen / 100))
+		n++
+		testResultBuf[n] = hexDigit(byte((mnemonicLen / 10) % 10))
+		n++
+		testResultBuf[n] = hexDigit(byte(mnemonicLen % 10))
+		n++
+		testResultBuf[n] = ','
+		n++
+		// Show first 20 bytes as chars
+		testResultBuf[n] = 'D'
+		n++
+		testResultBuf[n] = ':'
+		n++
+		showLen := 20
+		if mnemonicLen < showLen {
+			showLen = mnemonicLen
+		}
+		if mnemonicBytes != nil {
+			for i := 0; i < showLen; i++ {
+				c := mnemonicBytes[i]
+				if c >= 32 && c < 127 {
+					testResultBuf[n] = c
+				} else {
+					testResultBuf[n] = '?'
+				}
+				n++
+			}
+		}
+		sendSuccessBytes(testResultBuf[:n])
+		return
+	}
+
 	if bytesEqual(cmd, cmdADDR) {
 		// Test full address generation with test mnemonic
 		mnemonic := "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
@@ -1103,19 +1324,40 @@ func handlePinMatrixAck() {
 		usbDelay(int(delay))
 	}
 
-	pin := pbDecodePinMatrixAck(msgInBuffer[:msgInSize])
+	// Decode positions as bytes (avoid string conversion)
+	posBytes, posLen := pbDecodePinMatrixAckBytes(msgInBuffer[:msgInSize])
+
+	// Translate positions to actual digits using the displayed permutation
+	pinMatrixDoneBytes(posBytes, posLen)
+
+	// Return to home screen after PIN entry
+	layoutHome()
 
 	switch pinState {
 	case PIN_STATE_VERIFY:
 		// Verifying PIN for protected operation
-		if storagePINCompare(pin) {
+		if storagePINCompareBytes(pinTranslated[:], pinTranslatedLen) {
 			storageResetPINFailures() // Reset on success
 			sessionCachePIN()
 			pinState = PIN_STATE_IDLE
-			sendSuccess("")
+
+			// Resume pending operation
+			op := pendingOperation
+			pendingOperation = PENDING_OP_NONE
+			switch op {
+			case PENDING_OP_SKYCOIN_ADDRESS:
+				doSkycoinAddress()
+			case PENDING_OP_SIGN_MESSAGE:
+				doSkycoinSignMessage()
+			case PENDING_OP_TRANSACTION_SIGN:
+				doTransactionSign()
+			default:
+				sendSuccess("")
+			}
 		} else {
 			failures := storageIncrementPINFailures()
 			pinState = PIN_STATE_IDLE
+			pendingOperation = PENDING_OP_NONE
 			if failures >= PIN_MAX_ATTEMPTS {
 				sendFailure(FailureType_PinInvalid, "Device locked. Wipe required.")
 			} else {
@@ -1125,7 +1367,7 @@ func handlePinMatrixAck() {
 
 	case PIN_STATE_CHANGE_OLD:
 		// Verifying old PIN for change
-		if storagePINCompare(pin) {
+		if storagePINCompareBytes(pinTranslated[:], pinTranslatedLen) {
 			storageResetPINFailures() // Reset on success
 			pinState = PIN_STATE_CHANGE_NEW1
 			sendPinMatrixRequest(PinMatrixRequestType_NewFirst)
@@ -1140,28 +1382,30 @@ func handlePinMatrixAck() {
 		}
 
 	case PIN_STATE_CHANGE_NEW1:
-		// First entry of new PIN
-		pinNewFirstLen = len(pin)
+		// First entry of new PIN - store in pinNewFirst
+		pinNewFirstLen = pinTranslatedLen
 		if pinNewFirstLen > 9 {
 			pinNewFirstLen = 9
 		}
-		copy(pinNewFirst[:], pin)
+		for i := 0; i < pinNewFirstLen; i++ {
+			pinNewFirst[i] = pinTranslated[i]
+		}
 		pinState = PIN_STATE_CHANGE_NEW2
 		sendPinMatrixRequest(PinMatrixRequestType_NewSecond)
 
 	case PIN_STATE_CHANGE_NEW2:
 		// Second entry of new PIN - verify match
-		if len(pin) == pinNewFirstLen {
+		if pinTranslatedLen == pinNewFirstLen {
 			match := true
 			for i := 0; i < pinNewFirstLen; i++ {
-				if pin[i] != pinNewFirst[i] {
+				if pinTranslated[i] != pinNewFirst[i] {
 					match = false
 					break
 				}
 			}
 			if match {
 				// PINs match - save new PIN
-				storageSetPIN(string(pinNewFirst[:pinNewFirstLen]))
+				storageSetPINBytes(pinNewFirst[:], pinNewFirstLen)
 				pinState = PIN_STATE_IDLE
 				// Clear cached PIN data
 				for i := range pinNewFirst {
@@ -1192,18 +1436,179 @@ func handleCancel() {
 		pinNewFirst[i] = 0
 	}
 	pinNewFirstLen = 0
+	// Clear the PIN matrix permutation
+	for i := range pinMatrixPerm {
+		pinMatrixPerm[i] = 'X'
+	}
+	// Return to home screen
+	layoutHome()
 	sendFailure(FailureType_ActionCancelled, "Cancelled")
 }
 
 // handleWipeDevice handles the WipeDevice message
 func handleWipeDevice() {
-	// Wipe storage - no PIN verification required (device reset)
-	storageWipe()
-	sendSuccess("Device wiped")
+	// Request button confirmation - wipe is destructive!
+	oledClear()
+	oledDrawString(0, 0, "Wipe device?")
+	oledDrawString(0, 16, "All data will be")
+	oledDrawString(0, 26, "permanently lost!")
+	oledDrawString(0, 48, "Hold YES to confirm")
+	oledRefresh()
+
+	// Set state to wait for wipe confirmation
+	btnState = BTN_STATE_WIPE_CONFIRM
+
+	// Send button request to host
+	sendButtonRequest(ButtonRequestType_WipeDevice)
 }
 
-// sendPinMatrixRequest sends a PinMatrixRequest message
+// PIN matrix permutation - stores scrambled digit positions
+var pinMatrixPerm [10]byte
+
+// pinMatrixStart generates a random permutation and displays the PIN matrix
+func pinMatrixStart(text string) {
+	// Initialize with digits 1-9
+	for i := 0; i < 9; i++ {
+		pinMatrixPerm[i] = '1' + byte(i)
+	}
+	pinMatrixPerm[9] = 0
+
+	// Fisher-Yates shuffle using hardware RNG
+	var rngBuf [1]byte
+	for i := 8; i > 0; i-- {
+		getEntropy(rngBuf[:])
+		j := int(rngBuf[0]) % (i + 1)
+		pinMatrixPerm[i], pinMatrixPerm[j] = pinMatrixPerm[j], pinMatrixPerm[i]
+	}
+
+	// Draw the PIN matrix on OLED
+	pinMatrixDraw(text)
+}
+
+// pinMatrixDraw draws the PIN matrix on the OLED
+func pinMatrixDraw(text string) {
+	oledClear()
+
+	// Draw title text at top
+	if text != "" {
+		oledDrawString(0, 0, text)
+	}
+
+	// Draw 3x3 grid with scrambled digits
+	// Layout: positions on screen map to pinMatrixPerm indices
+	// Top row (y=16): positions 6,7,8 -> digits at perm[6],perm[7],perm[8]
+	// Mid row (y=32): positions 3,4,5 -> digits at perm[3],perm[4],perm[5]
+	// Bot row (y=48): positions 0,1,2 -> digits at perm[0],perm[1],perm[2]
+	// This gives visual layout:
+	//   perm[6] perm[7] perm[8]   (top)
+	//   perm[3] perm[4] perm[5]   (mid)
+	//   perm[0] perm[1] perm[2]   (bot)
+	// Which corresponds to standard numpad positions 7,8,9 / 4,5,6 / 1,2,3
+
+	// Cell dimensions
+	cellW := 30
+	cellH := 16
+	startX := (128 - 3*cellW) / 2
+	startY := 16
+
+	for row := 0; row < 3; row++ {
+		for col := 0; col < 3; col++ {
+			// Map visual position to permutation index
+			// row 0 (top of screen) = positions 6,7,8 (numpad 7,8,9)
+			// row 1 (mid) = positions 3,4,5 (numpad 4,5,6)
+			// row 2 (bot) = positions 0,1,2 (numpad 1,2,3)
+			permIdx := (2-row)*3 + col
+			digit := pinMatrixPerm[permIdx]
+
+			// Calculate cell position
+			x := startX + col*cellW
+			y := startY + row*cellH
+
+			// Draw cell border
+			oledDrawRect(x, y, x+cellW-2, y+cellH-2)
+
+			// Draw digit in center of cell
+			digitX := x + (cellW-6)/2
+			digitY := y + (cellH-8)/2
+			oledDrawChar(digitX, digitY, digit)
+		}
+	}
+
+	oledRefresh()
+}
+
+// oledDrawRect draws a rectangle outline
+func oledDrawRect(x1, y1, x2, y2 int) {
+	// Top and bottom lines
+	for x := x1; x <= x2; x++ {
+		oledSetPixel(x, y1, true)
+		oledSetPixel(x, y2, true)
+	}
+	// Left and right lines
+	for y := y1; y <= y2; y++ {
+		oledSetPixel(x1, y, true)
+		oledSetPixel(x2, y, true)
+	}
+}
+
+// pinMatrixDone translates entered positions to actual digits using the permutation
+// DEPRECATED: Use pinMatrixDoneBytes instead to avoid TinyGo string issues
+func pinMatrixDone(pin string) string {
+	var result [10]byte
+	for i := 0; i < len(pin) && i < 9; i++ {
+		k := pin[i] - '1'
+		if k >= 0 && k <= 8 {
+			result[i] = pinMatrixPerm[k]
+		} else {
+			break
+		}
+	}
+	// Clear permutation for security
+	for i := range pinMatrixPerm {
+		pinMatrixPerm[i] = 'X'
+	}
+	return string(result[:len(pin)])
+}
+
+// pinMatrixDoneBytes translates entered positions to actual digits using the permutation
+// Writes result to pinTranslated buffer and sets pinTranslatedLen
+// This avoids string conversion issues in TinyGo bare-metal mode
+func pinMatrixDoneBytes(positions []byte, posLen int) {
+	pinTranslatedLen = 0
+	for i := 0; i < posLen && i < 9; i++ {
+		k := positions[i] - '1'
+		if k <= 8 { // k is uint8, so k >= 0 is always true
+			pinTranslated[pinTranslatedLen] = pinMatrixPerm[k]
+			pinTranslatedLen++
+		} else {
+			break
+		}
+	}
+	// Clear permutation for security
+	for i := range pinMatrixPerm {
+		pinMatrixPerm[i] = 'X'
+	}
+}
+
+// sendPinMatrixRequest sends a PinMatrixRequest message and displays the matrix
 func sendPinMatrixRequest(pinType uint32) {
+	// Display appropriate text based on request type
+	var text string
+	switch pinType {
+	case PinMatrixRequestType_Current:
+		text = "Enter current PIN"
+	case PinMatrixRequestType_NewFirst:
+		text = "Enter new PIN"
+	case PinMatrixRequestType_NewSecond:
+		text = "Re-enter new PIN"
+	default:
+		text = "Enter PIN"
+	}
+
+	// Generate and display the PIN matrix (new random permutation each time)
+	pinMatrixStart(text)
+
+	// Send the request message
 	var buf [8]byte
 	n := pbEncodePinMatrixRequest(buf[:], pinType)
 	msgWrite(MessageType_PinMatrixRequest, buf[:n])
@@ -1212,6 +1617,11 @@ func sendPinMatrixRequest(pinType uint32) {
 // requirePIN checks if PIN is required and starts verification if needed
 // Returns true if operation can proceed, false if waiting for PIN
 func requirePIN() bool {
+	return requirePINForOp(PENDING_OP_NONE)
+}
+
+// requirePINForOp checks if PIN is required and saves the pending operation
+func requirePINForOp(op int) bool {
 	storageInit()
 	if !storageHasPIN() {
 		return true // No PIN set
@@ -1219,7 +1629,8 @@ func requirePIN() bool {
 	if sessionIsPINcached() {
 		return true // PIN already verified this session
 	}
-	// Need PIN verification
+	// Need PIN verification - save pending operation
+	pendingOperation = op
 	pinState = PIN_STATE_VERIFY
 	sendPinMatrixRequest(PinMatrixRequestType_Current)
 	return false
@@ -1250,91 +1661,92 @@ func handleGenerateMnemonic() {
 	getEntropy(entropyBuffer[:entropySize])
 	entropy := entropyBuffer[:entropySize]
 
-	// Debug: show raw entropy and wordlist check
-	oledClear()
-	x := 0
-	// Line 0: "E:" + first 4 bytes of entropy in hex
-	x += oledDrawChar(x, 0, 'E')
-	x += oledDrawChar(x, 0, ':')
-	for i := 0; i < 4; i++ {
-		x += oledDrawChar(x, 0, hexDigit(entropy[i]>>4))
-		x += oledDrawChar(x, 0, hexDigit(entropy[i]&0xF))
-	}
-
-	// Line 10: "W:" + first word from bip39Words (should be "abandon")
-	x = 0
-	x += oledDrawChar(x, 10, 'W')
-	x += oledDrawChar(x, 10, ':')
-	firstWord := bip39Words[0]
-	for i := 0; i < len(firstWord) && i < 10; i++ {
-		x += oledDrawChar(x, 10, firstWord[i])
-	}
-
-	// Line 20: "N:" + number of words in bip39Words
-	x = 0
-	x += oledDrawChar(x, 20, 'N')
-	x += oledDrawChar(x, 20, ':')
-	numWords := len(bip39Words)
-	if numWords == 0 {
-		x += oledDrawChar(x, 20, '0')
-	} else {
-		var digits [5]byte
-		dpos := 4
-		for numWords > 0 && dpos >= 0 {
-			digits[dpos] = '0' + byte(numWords%10)
-			numWords /= 10
-			dpos--
+	if DebugMode {
+		// Debug: show raw entropy and wordlist check
+		oledClear()
+		x := 0
+		// Line 0: "E:" + first 4 bytes of entropy in hex
+		x += oledDrawChar(x, 0, 'E')
+		x += oledDrawChar(x, 0, ':')
+		for i := 0; i < 4; i++ {
+			x += oledDrawChar(x, 0, hexDigit(entropy[i]>>4))
+			x += oledDrawChar(x, 0, hexDigit(entropy[i]&0xF))
 		}
-		for i := dpos + 1; i <= 4; i++ {
-			x += oledDrawChar(x, 20, digits[i])
+
+		// Line 10: "W:" + first word from bip39Words (should be "abandon")
+		x = 0
+		x += oledDrawChar(x, 10, 'W')
+		x += oledDrawChar(x, 10, ':')
+		firstWord := bip39Words[0]
+		for i := 0; i < len(firstWord) && i < 10; i++ {
+			x += oledDrawChar(x, 10, firstWord[i])
 		}
-	}
 
-	oledRefresh()
-	// Wait 3 seconds to see debug
-	usbDelay(3000000)
-
-	// Generate mnemonic from entropy
-	mnemonic := entropyToMnemonic(entropy)
-
-	// Debug screen 2: show mnemonic result
-	oledClear()
-	// Line 0: "L:" + mnemonic length
-	x = 0
-	x += oledDrawChar(x, 0, 'L')
-	x += oledDrawChar(x, 0, ':')
-	mlen := len(mnemonic)
-	if mlen == 0 {
-		x += oledDrawChar(x, 0, '0')
-	} else {
-		var digits [3]byte
-		dpos := 2
-		for mlen > 0 && dpos >= 0 {
-			digits[dpos] = '0' + byte(mlen%10)
-			mlen /= 10
-			dpos--
+		// Line 20: "N:" + number of words in bip39Words
+		x = 0
+		x += oledDrawChar(x, 20, 'N')
+		x += oledDrawChar(x, 20, ':')
+		numWords := len(bip39Words)
+		if numWords == 0 {
+			x += oledDrawChar(x, 20, '0')
+		} else {
+			var digits [5]byte
+			dpos := 4
+			for numWords > 0 && dpos >= 0 {
+				digits[dpos] = '0' + byte(numWords%10)
+				numWords /= 10
+				dpos--
+			}
+			for i := dpos + 1; i <= 4; i++ {
+				x += oledDrawChar(x, 20, digits[i])
+			}
 		}
-		for i := dpos + 1; i <= 2; i++ {
-			x += oledDrawChar(x, 0, digits[i])
-		}
-	}
-	// Line 10: first 16 chars of mnemonic
-	x = 0
-	for i := 0; i < 16 && i < len(mnemonic); i++ {
-		x += oledDrawChar(x, 10, mnemonic[i])
-	}
-	// Line 20: next 16 chars of mnemonic (chars 16-31)
-	x = 0
-	for i := 16; i < 32 && i < len(mnemonic); i++ {
-		x += oledDrawChar(x, 20, mnemonic[i])
-	}
-	oledRefresh()
-	// Wait 3 seconds to see debug
-	usbDelay(3000000)
 
-	// Store mnemonic in flash (mark needs_backup = true)
-	storageSetMnemonic(mnemonic)
-	storageSetNeedsBackup(true)
+		oledRefresh()
+		usbDelay(3000000)
+	}
+
+	// Generate mnemonic directly into storage buffer (avoids string conversion corruption)
+	storageInit()
+	mnemonicDest := storageGetMnemonicDest()
+	mnemonicLen := entropyToMnemonicBytes(entropy, mnemonicDest)
+	storageSetMnemonicBytes(mnemonicLen)
+
+	if DebugMode {
+		// Debug screen 2: show mnemonic result
+		oledClear()
+		x := 0
+		// Line 0: "L:" + mnemonic length
+		x += oledDrawChar(x, 0, 'L')
+		x += oledDrawChar(x, 0, ':')
+		mlen := mnemonicLen
+		if mlen == 0 {
+			x += oledDrawChar(x, 0, '0')
+		} else {
+			var digits [3]byte
+			dpos := 2
+			for mlen > 0 && dpos >= 0 {
+				digits[dpos] = '0' + byte(mlen%10)
+				mlen /= 10
+				dpos--
+			}
+			for i := dpos + 1; i <= 2; i++ {
+				x += oledDrawChar(x, 0, digits[i])
+			}
+		}
+		// Line 10: first 16 chars of mnemonic (read from storage)
+		x = 0
+		for i := 0; i < 16 && i < mnemonicLen; i++ {
+			x += oledDrawChar(x, 10, mnemonicDest[i])
+		}
+		// Line 20: next 16 chars of mnemonic (chars 16-31)
+		x = 0
+		for i := 16; i < 32 && i < mnemonicLen; i++ {
+			x += oledDrawChar(x, 20, mnemonicDest[i])
+		}
+		oledRefresh()
+		usbDelay(3000000)
+	}
 
 	// Update display to show initialized
 	layoutHome()
@@ -1360,35 +1772,31 @@ func handleEntropyAck() {
 	// Get host entropy
 	hostEntropy := pbDecodeEntropyAck(msgInBuffer[:msgInSize])
 
-	// Generate device entropy
+	// Generate device entropy using fixed buffer
 	entropySize := 16
 	if mnemonicWordCount == 24 {
 		entropySize = 32
 	}
-	deviceEntropy := make([]byte, entropySize)
-	getEntropy(deviceEntropy)
+	getEntropy(entropyAckDeviceBuf[:entropySize])
 
-	// Mix entropy: XOR host entropy with device entropy
-	mixedEntropy := make([]byte, entropySize)
+	// Mix entropy: XOR host entropy with device entropy (use fixed buffer)
 	for i := 0; i < entropySize; i++ {
 		if i < len(hostEntropy) {
-			mixedEntropy[i] = deviceEntropy[i] ^ hostEntropy[i]
+			entropyAckMixedBuf[i] = entropyAckDeviceBuf[i] ^ hostEntropy[i]
 		} else {
-			mixedEntropy[i] = deviceEntropy[i]
+			entropyAckMixedBuf[i] = entropyAckDeviceBuf[i]
 		}
 	}
 
-	// Generate mnemonic from mixed entropy
-	mnemonic := entropyToMnemonic(mixedEntropy)
-	pendingMnemonicLen = copy(pendingMnemonic[:], mnemonic)
-
-	// Store mnemonic in flash (but mark needs_backup = true)
-	storageSetMnemonic(mnemonic)
-	storageSetNeedsBackup(true)
+	// Generate mnemonic directly into storage buffer (avoids string conversion corruption)
+	storageInit()
+	mnemonicDest := storageGetMnemonicDest()
+	mnemonicLen := entropyToMnemonicBytes(entropyAckMixedBuf[:entropySize], mnemonicDest)
+	storageSetMnemonicBytes(mnemonicLen)
 
 	mnemonicState = MNEMONIC_STATE_IDLE
 
-	// Send success with mnemonic (for debug/testing - real implementation should show on screen)
+	// Send success
 	sendSuccess("Mnemonic generated")
 }
 
@@ -1402,33 +1810,91 @@ func handleSetMnemonic() {
 		return
 	}
 
-	// Get mnemonic from message
-	mnemonic := pbDecodeSetMnemonic(msgInBuffer[:msgInSize])
+	// Get mnemonic offset and length from message (avoid string allocation)
+	mnemonicOffset, mnemonicLen := pbDecodeSetMnemonicBytes(msgInBuffer[:msgInSize])
 
-	// Validate mnemonic
-	if !validateMnemonic(mnemonic) {
+	if mnemonicLen == 0 {
+		sendFailure(FailureType_DataError, "No mnemonic provided")
+		return
+	}
+
+	// Get the mnemonic byte slice directly from msgInBuffer
+	mnemonicBytes := msgInBuffer[mnemonicOffset : mnemonicOffset+mnemonicLen]
+
+	// Validate mnemonic using bytes-based validation (no string allocation)
+	if !validateMnemonicBytes(mnemonicBytes) {
 		sendFailure(FailureType_DataError, "Invalid mnemonic")
 		return
 	}
 
-	// Store mnemonic
-	storageSetMnemonic(mnemonic)
+	// Store mnemonic - use string conversion only here for storage
+	// (storage.go makes its own copy)
+	storageSetMnemonic(string(mnemonicBytes))
 	storageSetNeedsBackup(false) // Imported = already backed up
 
 	sendSuccess("Mnemonic set")
 }
 
-// handleGetEntropy handles the GetEntropy message
-func handleGetEntropy() {
-	// GetEntropy returns raw entropy from hardware RNG
-	// Size is specified in the message (default 32 bytes)
-	size := 32
+// Fixed buffer for GetEntropy response (max 1024 bytes)
+var getEntropyBuf [1024]byte
 
-	entropy := make([]byte, size)
-	getEntropy(entropy)
+// handleGetRawEntropy handles the GetRawEntropy/GetEntropy message
+// Returns raw entropy from hardware RNG
+func handleGetRawEntropy() {
+	// Decode size from message (default 32, max 1024)
+	size := pbDecodeGetEntropy(msgInBuffer[:msgInSize])
+	if size > 1024 {
+		size = 1024
+	}
+	if size <= 0 {
+		size = 32
+	}
 
-	var buf [64]byte
-	n := pbEncodeEntropy(buf[:], entropy)
+	// Get raw entropy from hardware RNG
+	getEntropy(getEntropyBuf[:size])
+
+	var buf [1040]byte // Max 1024 bytes + overhead
+	n := pbEncodeEntropy(buf[:], getEntropyBuf[:size])
+	msgWrite(MessageType_Entropy, buf[:n])
+}
+
+// Mixed entropy internal state (for GetMixedEntropy)
+var mixedEntropyState [32]byte
+var mixedEntropyInitialized bool
+
+// handleGetMixedEntropy handles the GetMixedEntropy message
+// Returns entropy mixed with internal state (salted random)
+func handleGetMixedEntropy() {
+	// Decode size from message (default 32, max 1024)
+	size := pbDecodeGetEntropy(msgInBuffer[:msgInSize])
+	if size > 1024 {
+		size = 1024
+	}
+	if size <= 0 {
+		size = 32
+	}
+
+	// Initialize mixed entropy state if needed
+	if !mixedEntropyInitialized {
+		getEntropy(mixedEntropyState[:])
+		mixedEntropyInitialized = true
+	}
+
+	// Get raw entropy from hardware RNG
+	var rawEntropy [1024]byte
+	getEntropy(rawEntropy[:size])
+
+	// Mix raw entropy with internal state using XOR and hash
+	for i := 0; i < size; i++ {
+		getEntropyBuf[i] = rawEntropy[i] ^ mixedEntropyState[i%32]
+	}
+
+	// Update internal state with hash of mixed entropy
+	newState := sha256Sum(getEntropyBuf[:size])
+	copy(mixedEntropyState[:], newState[:])
+
+	var buf [1040]byte
+	n := pbEncodeEntropy(buf[:], getEntropyBuf[:size])
 	msgWrite(MessageType_Entropy, buf[:n])
 }
 
@@ -1448,15 +1914,44 @@ func handleBackupDevice() {
 		return
 	}
 
-	// Start backup process - show words one at a time
+	// Get mnemonic bytes using helper function (avoids direct struct access issues)
+	mnemonicBytes, mnemonicLen := storageGetMnemonicBytes()
+	if mnemonicBytes == nil || mnemonicLen == 0 {
+		sendFailure(FailureType_NotInitialized, "No mnemonic stored")
+		return
+	}
+
+	// Split mnemonic into words and store in byte buffers
+	pendingMnemonicWordCount = 0
+	wordStart := 0
+	for i := 0; i <= mnemonicLen; i++ {
+		// Check for space or end of mnemonic
+		if i == mnemonicLen || mnemonicBytes[i] == ' ' {
+			wordLen := i - wordStart
+			if wordLen > 0 && pendingMnemonicWordCount < 24 {
+				// Copy word to buffer
+				if wordLen > 9 {
+					wordLen = 9
+				}
+				for j := 0; j < wordLen; j++ {
+					backupWordBufs[pendingMnemonicWordCount][j] = mnemonicBytes[wordStart+j]
+				}
+				backupWordLens[pendingMnemonicWordCount] = wordLen
+				pendingMnemonicWordCount++
+			}
+			wordStart = i + 1
+		}
+	}
+
+	// Start backup process - two passes through all words
 	mnemonicBackupIndex = 0
-	mnemonicState = MNEMONIC_STATE_BACKUP
+	mnemonicBackupPass = 0 // First pass: "Write down the seed"
+	mnemonicState = MNEMONIC_STATE_BACKUP_WAIT_ACK
 
-	// Get mnemonic from storage
-	mnemonic := storageGetMnemonic()
-	pendingMnemonicLen = copy(pendingMnemonic[:], mnemonic)
+	// Display first word
+	displayBackupWordBytes(mnemonicBackupIndex+1, backupWordBufs[mnemonicBackupIndex][:], backupWordLens[mnemonicBackupIndex], mnemonicBackupPass, pendingMnemonicWordCount)
 
-	// Send button request to start backup
+	// Send button request
 	sendButtonRequest(ButtonRequestType_ConfirmWord)
 }
 
@@ -1469,6 +1964,24 @@ func sendButtonRequest(code uint32) {
 
 // handleButtonAck handles the ButtonAck message
 func handleButtonAck() {
+	// Handle wipe confirmation
+	if btnState == BTN_STATE_WIPE_CONFIRM {
+		// Wait for physical button press
+		if !waitForButton(false) { // false = allow cancel with No button
+			btnState = BTN_STATE_IDLE
+			sendFailure(FailureType_ActionCancelled, "Cancelled")
+			layoutHome()
+			return
+		}
+
+		// User confirmed wipe
+		btnState = BTN_STATE_IDLE
+		storageWipe()
+		layoutHome()
+		sendSuccess("Device wiped")
+		return
+	}
+
 	// Check address confirmation state
 	if addrState == ADDR_STATE_WAIT_BUTTON {
 		// User confirmed - send all pending addresses
@@ -1476,25 +1989,46 @@ func handleButtonAck() {
 		return
 	}
 
-	if mnemonicState == MNEMONIC_STATE_BACKUP {
-		// Show next word
-		words := splitMnemonic(string(pendingMnemonic[:pendingMnemonicLen]))
-		if mnemonicBackupIndex < len(words) {
-			// Display word on OLED
-			displayBackupWord(mnemonicBackupIndex+1, words[mnemonicBackupIndex])
-			mnemonicBackupIndex++
+	// Handle backup state - got ButtonAck, now wait for physical button
+	if mnemonicState == MNEMONIC_STATE_BACKUP_WAIT_ACK {
+		mnemonicState = MNEMONIC_STATE_BACKUP_WAIT_BTN
 
-			if mnemonicBackupIndex < len(words) {
-				// More words to show
-				sendButtonRequest(ButtonRequestType_ConfirmWord)
+		// Wait for physical button press (blocking)
+		if !waitForButton(true) {
+			// Cancelled (shouldn't happen with confirmOnly=true)
+			mnemonicState = MNEMONIC_STATE_IDLE
+			sendFailure(FailureType_ActionCancelled, "Cancelled")
+			layoutHome()
+			return
+		}
+
+		// Button was pressed - advance to next word
+		mnemonicBackupIndex++
+
+		// Check if we need to move to pass 2 or finish
+		if mnemonicBackupIndex >= pendingMnemonicWordCount {
+			// Finished current pass
+			if mnemonicBackupPass == 0 {
+				// First pass done - start second pass (verify)
+				mnemonicBackupPass = 1
+				mnemonicBackupIndex = 0
 			} else {
-				// All words shown
+				// Both passes complete
 				storageSetNeedsBackup(false)
 				mnemonicState = MNEMONIC_STATE_IDLE
 				clearBackupDisplay()
-				sendSuccess("Backup complete")
+				layoutHome()
+				sendSuccess("Device backed up!")
+				return
 			}
 		}
+
+		// Display next word
+		displayBackupWordBytes(mnemonicBackupIndex+1, backupWordBufs[mnemonicBackupIndex][:], backupWordLens[mnemonicBackupIndex], mnemonicBackupPass, pendingMnemonicWordCount)
+
+		// Request next button press
+		mnemonicState = MNEMONIC_STATE_BACKUP_WAIT_ACK
+		sendButtonRequest(ButtonRequestType_ConfirmWord)
 		return
 	}
 
@@ -1502,23 +2036,66 @@ func handleButtonAck() {
 	sendFailure(FailureType_UnexpectedMessage, "Unexpected button ack")
 }
 
-// displayBackupWord shows a backup word on the OLED
+// displayBackupWord shows a backup word on the OLED (legacy - single pass)
 func displayBackupWord(index int, word string) {
-	// Clear display area
-	for y := 16; y < 64; y++ {
-		for x := 0; x < 128; x++ {
-			oledSetPixel(x, y, false)
-		}
+	displayBackupWordBytes(index, []byte(word), len(word), 0, 12)
+}
+
+// displayBackupWordBytes shows a backup word on the OLED with pass info
+// Uses byte slice to avoid TinyGo string issues
+// pass 0 = "Write down the seed", pass 1 = "Please check the seed"
+func displayBackupWordBytes(index int, wordBytes []byte, wordLen int, pass int, totalWords int) {
+	oledClear()
+
+	// Show action based on pass
+	if pass == 0 {
+		oledDrawString(4, 0, "Write down seed")
+	} else {
+		oledDrawString(4, 0, "Check the seed")
 	}
 
-	// Show word number
-	oledDrawString(4, 24, "Word")
-	oledDrawInt(36, 24, index)
-	oledDrawString(48, 24, "of")
-	oledDrawInt(68, 24, mnemonicWordCount)
+	// Show word position: "##th word is:"
+	x := 4
+	if index < 10 {
+		oledDrawChar(x, 16, ' ')
+		x += 6
+	} else {
+		x += oledDrawChar(x, 16, '0'+byte(index/10))
+	}
+	x += oledDrawChar(x, 16, '0'+byte(index%10))
 
-	// Show the word
-	oledDrawString(4, 40, word)
+	// Add ordinal suffix
+	if index == 1 {
+		oledDrawString(x, 16, "st word is:")
+	} else if index == 2 {
+		oledDrawString(x, 16, "nd word is:")
+	} else if index == 3 {
+		oledDrawString(x, 16, "rd word is:")
+	} else {
+		oledDrawString(x, 16, "th word is:")
+	}
+
+	// Show the word (centered on y=32) - draw byte by byte
+	wordWidth := wordLen * 6
+	startX := (128 - wordWidth) / 2
+	if startX < 0 {
+		startX = 0
+	}
+	for i := 0; i < wordLen; i++ {
+		startX += oledDrawChar(startX, 32, wordBytes[i])
+	}
+
+	// Show button hint based on position
+	isLast := index >= totalWords
+	if isLast {
+		if pass == 0 {
+			oledDrawString(88, 56, "Again>")
+		} else {
+			oledDrawString(80, 56, "Finish>")
+		}
+	} else {
+		oledDrawString(92, 56, "Next>")
+	}
 
 	oledRefresh()
 }
@@ -1541,8 +2118,14 @@ const (
 )
 
 var addrState = ADDR_STATE_IDLE
-var pendingAddresses [10]string // Max 10 addresses
+
+// pendingAddressesBytes stores addresses as byte arrays to avoid TinyGo string issues
+var pendingAddressesBytes [10][36]byte // Max 10 addresses, 35 chars each
+var pendingAddressLens [10]int
 var pendingAddressCount = 0
+
+// Compatibility wrapper - still used in some places
+var pendingAddresses [10]string // Max 10 addresses - deprecated
 
 // handleSkycoinAddress handles the SkycoinAddress message
 func handleSkycoinAddress() {
@@ -1555,9 +2138,16 @@ func handleSkycoinAddress() {
 	}
 
 	// Check PIN if required
-	if !requirePIN() {
-		return // Waiting for PIN
+	if !requirePINForOp(PENDING_OP_SKYCOIN_ADDRESS) {
+		return // Waiting for PIN - will resume after verification
 	}
+
+	// Continue with address generation
+	doSkycoinAddress()
+}
+
+// doSkycoinAddress performs the actual address generation (after PIN verification)
+func doSkycoinAddress() {
 
 	// Decode message fields
 	addressN, startIndex, confirmAddress := pbDecodeSkycoinAddress(msgInBuffer[:msgInSize])
@@ -1577,56 +2167,58 @@ func handleSkycoinAddress() {
 		return
 	}
 
-	// Debug: show mnemonic info using direct char output
-	oledClear()
-	// Show raw MnemonicLen from storage
-	x := 0
-	x += oledDrawChar(x, 0, 'L')
-	x += oledDrawChar(x, 0, 'e')
-	x += oledDrawChar(x, 0, 'n')
-	x += oledDrawChar(x, 0, ':')
-	mlen := int(storage.MnemonicLen)
-	if mlen == 0 {
-		x += oledDrawChar(x, 0, '0')
-	} else {
-		var digits [3]byte
-		dpos := 2
-		for mlen > 0 && dpos >= 0 {
-			digits[dpos] = '0' + byte(mlen%10)
-			mlen /= 10
-			dpos--
+	if DebugMode {
+		// Debug: show mnemonic info using direct char output
+		oledClear()
+		// Show raw MnemonicLen from storage
+		x := 0
+		x += oledDrawChar(x, 0, 'L')
+		x += oledDrawChar(x, 0, 'e')
+		x += oledDrawChar(x, 0, 'n')
+		x += oledDrawChar(x, 0, ':')
+		mlen := int(storage.MnemonicLen)
+		if mlen == 0 {
+			x += oledDrawChar(x, 0, '0')
+		} else {
+			var digits [3]byte
+			dpos := 2
+			for mlen > 0 && dpos >= 0 {
+				digits[dpos] = '0' + byte(mlen%10)
+				mlen /= 10
+				dpos--
+			}
+			for i := dpos + 1; i <= 2; i++ {
+				x += oledDrawChar(x, 0, digits[i])
+			}
 		}
-		for i := dpos + 1; i <= 2; i++ {
-			x += oledDrawChar(x, 0, digits[i])
+		// Show first 10 chars of mnemonic on second line
+		x = 0
+		for i := 0; i < 10 && i < len(mnemonic); i++ {
+			x += oledDrawChar(x, 10, mnemonic[i])
 		}
+		oledRefresh()
 	}
-	// Show first 10 chars of mnemonic on second line
-	x = 0
-	for i := 0; i < 10 && i < len(mnemonic); i++ {
-		x += oledDrawChar(x, 10, mnemonic[i])
-	}
-	oledRefresh()
 
-	// Generate all requested addresses
+	// Generate all requested addresses using bytes to avoid TinyGo string issues
 	pendingAddressCount = 0
 
 	for i := 0; i < addressN; i++ {
-		address := deriveAddressAtIndex(mnemonic, startIndex+i)
-		if address == "" {
-			// Debug: show which step failed
-			oledDrawString(0, 16, "Derive FAILED")
-			oledDrawString(0, 24, "idx:")
-			oledDrawString(32, 24, intToStr(startIndex+i))
-			oledDrawString(0, 32, "pk:")
-			oledDrawChar(24, 32, '0'+debugPubkeyState)
-			oledDrawString(32, 32, " ecdh:")
-			oledDrawChar(72, 32, '0'+debugEcdhState)
-			oledDrawString(0, 42, "decomp:")
-			oledDrawChar(56, 42, '0'+debugDecompressState)
-			oledRefresh()
-			// Include debug state in failure message using switch
-			// debugDecompressState: 0=not called, 1=len, 2=prefix, 3=isvalid fail, 4=ok, 5=sqrt fail, 6=sqrt4 fail
-			// Use constant strings to avoid encoding issues
+		addrBytes := deriveAddressAtIndexBytes(mnemonic, startIndex+i)
+		if len(addrBytes) == 0 {
+			if DebugMode {
+				// Debug: show which step failed
+				oledDrawString(0, 16, "Derive FAILED")
+				oledDrawString(0, 24, "idx:")
+				oledDrawString(32, 24, intToStr(startIndex+i))
+				oledDrawString(0, 32, "pk:")
+				oledDrawChar(24, 32, '0'+debugPubkeyState)
+				oledDrawString(32, 32, " ecdh:")
+				oledDrawChar(72, 32, '0'+debugEcdhState)
+				oledDrawString(0, 42, "decomp:")
+				oledDrawChar(56, 42, '0'+debugDecompressState)
+				oledRefresh()
+			}
+			// Send failure with debug info
 			if debugDecompressState == 1 {
 				sendFailure(FailureType_ProcessError, "dec len")
 			} else if debugDecompressState == 2 {
@@ -1646,17 +2238,25 @@ func handleSkycoinAddress() {
 			} else if debugEcdhState == 3 {
 				sendFailure(FailureType_ProcessError, "ecdh inf")
 			} else {
-				sendFailure(FailureType_ProcessError, "unknown")
+				sendFailure(FailureType_ProcessError, "Address failed")
 			}
 			return
 		}
-		pendingAddresses[i] = address
+		// Copy to pending byte buffer
+		addrLen := len(addrBytes)
+		if addrLen > 35 {
+			addrLen = 35
+		}
+		for j := 0; j < addrLen; j++ {
+			pendingAddressesBytes[i][j] = addrBytes[j]
+		}
+		pendingAddressLens[i] = addrLen
 		pendingAddressCount++
 	}
 
-	// Display first address on OLED
+	// Display first address on OLED using bytes
 	if pendingAddressCount > 0 {
-		displayAddress(pendingAddresses[0])
+		displayAddressBytes(pendingAddressesBytes[0][:], pendingAddressLens[0])
 	}
 
 	// If confirmAddress is set, send ButtonRequest and wait for ButtonAck
@@ -1672,42 +2272,48 @@ func handleSkycoinAddress() {
 
 // sendAllSkycoinAddresses sends all pending addresses
 func sendAllSkycoinAddresses() {
-	// Encode all addresses in response
+	// Encode all addresses in response using byte buffers
 	var buf [512]byte
 	n := 0
 	for i := 0; i < pendingAddressCount; i++ {
-		n += pbEncodeString(buf[n:], ResponseSkycoinAddress_addresses, pendingAddresses[i])
+		// Encode address bytes directly as protobuf string field
+		n += pbEncodeBytesAsString(buf[n:], ResponseSkycoinAddress_addresses, pendingAddressesBytes[i][:pendingAddressLens[i]])
 	}
 
 	msgWrite(MessageType_ResponseSkycoinAddress, buf[:n])
 	addrState = ADDR_STATE_IDLE
 }
 
+// intToStrBuf is a package-level buffer for intToStr
+var intToStrBuf [12]byte
+
 // intToStr converts int to string (simple implementation)
+// Uses package-level buffer to avoid TinyGo string allocation issues
 func intToStr(n int) string {
 	if n == 0 {
-		return "0"
+		intToStrBuf[0] = '0'
+		return string(intToStrBuf[:1])
 	}
-	var buf [10]byte
-	i := 9
+	i := 11
 	neg := n < 0
 	if neg {
 		n = -n
 	}
 	for n > 0 && i >= 0 {
-		buf[i] = '0' + byte(n%10)
+		intToStrBuf[i] = '0' + byte(n%10)
 		n /= 10
 		i--
 	}
 	if neg && i >= 0 {
-		buf[i] = '-'
+		intToStrBuf[i] = '-'
 		i--
 	}
-	return string(buf[i+1:])
+	return string(intToStrBuf[i+1 : 12])
 }
 
-// displayAddress shows an address on the OLED display
-func displayAddress(address string) {
+// displayAddressBytes shows an address on the OLED display using byte slice
+// This avoids all TinyGo string issues
+func displayAddressBytes(addr []byte, addrLen int) {
 	// Clear display area
 	for y := 16; y < 64; y++ {
 		for x := 0; x < 128; x++ {
@@ -1717,19 +2323,29 @@ func displayAddress(address string) {
 
 	oledDrawString(4, 24, "Address:")
 
-	// Show address in parts (it's too long for one line)
-	if len(address) > 16 {
-		oledDrawString(4, 36, address[:16])
-		if len(address) > 32 {
-			oledDrawString(4, 48, address[16:32])
-		} else {
-			oledDrawString(4, 48, address[16:])
+	// Draw address character by character on two lines
+	x := 4
+
+	// First line: chars 0-15
+	for i := 0; i < 16 && i < addrLen; i++ {
+		x += oledDrawChar(x, 36, addr[i])
+	}
+
+	// Second line: chars 16-31
+	if addrLen > 16 {
+		x = 4
+		for i := 16; i < 32 && i < addrLen; i++ {
+			x += oledDrawChar(x, 48, addr[i])
 		}
-	} else {
-		oledDrawString(4, 36, address)
 	}
 
 	oledRefresh()
+}
+
+// displayAddress shows an address on the OLED display (string version, may have issues)
+// Prefer displayAddressBytes for reliability
+func displayAddress(address string) {
+	displayAddressBytes([]byte(address), len(address))
 }
 
 // handleSkycoinSignMessage handles the SkycoinSignMessage message
@@ -1743,10 +2359,16 @@ func handleSkycoinSignMessage() {
 	}
 
 	// Check PIN if required
-	if !requirePIN() {
-		return // Waiting for PIN
+	if !requirePINForOp(PENDING_OP_SIGN_MESSAGE) {
+		return // Waiting for PIN - will resume after verification
 	}
 
+	// Continue with signing
+	doSkycoinSignMessage()
+}
+
+// doSkycoinSignMessage performs the actual message signing (after PIN verification)
+func doSkycoinSignMessage() {
 	// Decode the message
 	addrIndex, message := pbDecodeSkycoinSignMessage(msgInBuffer[:msgInSize])
 
@@ -1829,12 +2451,19 @@ func displaySignature(sigHex string) {
 
 	oledDrawString(4, 24, "Signed!")
 
-	// Show first part of signature
-	if len(sigHex) > 20 {
-		oledDrawString(4, 36, sigHex[:20])
+	// Show first part of signature - draw character by character
+	sigLen := len(sigHex)
+	x := 4
+	// First line: chars 0-19
+	for i := 0; i < 20 && i < sigLen; i++ {
+		x += oledDrawChar(x, 36, sigHex[i])
 	}
-	if len(sigHex) > 40 {
-		oledDrawString(4, 48, sigHex[20:40])
+	// Second line: chars 20-39
+	if sigLen > 20 {
+		x = 4
+		for i := 20; i < 40 && i < sigLen; i++ {
+			x += oledDrawChar(x, 48, sigHex[i])
+		}
 	}
 
 	oledRefresh()
@@ -1949,4 +2578,138 @@ func handleApplySettings() {
 	}
 
 	sendSuccess("Settings applied")
+}
+
+// handleLoadDevice handles the LoadDevice message
+// This allows importing a mnemonic with optional settings (for testing/recovery)
+func handleLoadDevice() {
+	storageInit()
+
+	// Check if device is already initialized
+	if storageIsInitialized() {
+		sendFailure(FailureType_UnexpectedMessage, "Already initialized")
+		return
+	}
+
+	// Decode the message
+	mnemonic, pin, passphraseProtection, language, label, skipChecksum := pbDecodeLoadDevice(msgInBuffer[:msgInSize])
+
+	// Validate mnemonic unless skip_checksum is set
+	if mnemonic == "" {
+		sendFailure(FailureType_DataError, "No mnemonic provided")
+		return
+	}
+
+	if !skipChecksum {
+		if !validateMnemonic(mnemonic) {
+			sendFailure(FailureType_DataError, "Invalid mnemonic checksum")
+			return
+		}
+	}
+
+	// Store mnemonic
+	storageSetMnemonic(mnemonic)
+	storageSetNeedsBackup(false) // Loaded device = already backed up
+
+	// Set PIN if provided
+	if pin != "" {
+		storageSetPIN(pin)
+	}
+
+	// Set passphrase protection
+	storageSetPassphraseProtection(passphraseProtection)
+
+	// Set language if provided
+	if language != "" {
+		storageSetLanguage(language)
+	}
+
+	// Set label if provided
+	if label != "" {
+		storageSetLabel(label)
+	}
+
+	// Update display
+	layoutHome()
+
+	sendSuccess("Device loaded")
+}
+
+// handleResetDevice handles the ResetDevice message (Trezor-compatible)
+// This generates a new mnemonic with specified settings
+func handleResetDevice() {
+	storageInit()
+
+	// Check if device is already initialized
+	if storageIsInitialized() {
+		sendFailure(FailureType_UnexpectedMessage, "Already initialized")
+		return
+	}
+
+	// Decode the message
+	strength, passphraseProtection, pinProtection, language, label, skipBackup := pbDecodeResetDevice(msgInBuffer[:msgInSize])
+
+	// Determine word count from strength
+	// 128 bits = 12 words, 256 bits = 24 words
+	wordCount := 24
+	entropySize := 32
+	if strength <= 128 {
+		wordCount = 12
+		entropySize = 16
+	}
+
+	// Generate entropy using hardware RNG
+	getEntropy(entropyBuffer[:entropySize])
+	entropy := entropyBuffer[:entropySize]
+
+	// Generate mnemonic directly into storage buffer (avoids string conversion corruption)
+	mnemonicDest := storageGetMnemonicDest()
+	mnemonicLen := entropyToMnemonicBytes(entropy, mnemonicDest)
+	storageSetMnemonicBytes(mnemonicLen)
+
+	// Set needs_backup based on skip_backup flag (override the default set by storageSetMnemonicBytes)
+	if skipBackup {
+		storageSetNeedsBackup(false)
+	}
+
+	// Set passphrase protection
+	storageSetPassphraseProtection(passphraseProtection)
+
+	// Set language if provided
+	if language != "" {
+		storageSetLanguage(language)
+	}
+
+	// Set label if provided
+	if label != "" {
+		storageSetLabel(label)
+	}
+
+	// If PIN protection requested, start PIN flow
+	// For simplicity, we'll just note it - full PIN flow would need state machine
+	_ = pinProtection
+
+	// Update display
+	layoutHome()
+
+	// Display word count info
+	oledClear()
+	oledDrawString(4, 0, "Device Reset")
+	oledDrawString(4, 16, "Words:")
+	oledDrawInt(52, 16, wordCount)
+	oledRefresh()
+	usbDelay(2000000)
+
+	// Show mnemonic start if not skipping backup
+	if !skipBackup {
+		oledClear()
+		oledDrawString(4, 0, "Backup needed")
+		oledDrawString(4, 16, "Use BackupDevice")
+		oledRefresh()
+		usbDelay(2000000)
+	}
+
+	layoutHome()
+
+	sendSuccess("Device reset")
 }

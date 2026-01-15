@@ -203,15 +203,38 @@ func storageInit() {
 	storageLoaded = true
 }
 
+// Firmware metadata header buffer (256 bytes at 0x08008000)
+// Must preserve: magic "SKY1", code length, signature indices, signatures
+var metadataHeaderBuf [256]byte
+
 // storageSave saves storage to flash
+// IMPORTANT: Must preserve the first 256 bytes (firmware metadata header)
+// which contains "SKY1" magic, code length, and signatures needed for boot
 func storageSave() {
 	storage.Magic = STORAGE_MAGIC
 	storage.Version = STORAGE_VERSION
 
+	// First, backup the metadata header (0x08008000 - 0x080080FF)
+	// This contains firmware magic "SKY1", code length, and signatures
+	for i := 0; i < 256; i += 4 {
+		val := flashRead32(uintptr(FLASH_META_START + i))
+		metadataHeaderBuf[i] = byte(val)
+		metadataHeaderBuf[i+1] = byte(val >> 8)
+		metadataHeaderBuf[i+2] = byte(val >> 16)
+		metadataHeaderBuf[i+3] = byte(val >> 24)
+	}
+
 	// Erase sector 2 (metadata area where storage lives)
 	flashEraseSector(2)
 
-	// Write storage structure to flash
+	// Restore the metadata header first
+	for i := 0; i < 256; i += 4 {
+		val := uint32(metadataHeaderBuf[i]) | uint32(metadataHeaderBuf[i+1])<<8 |
+			uint32(metadataHeaderBuf[i+2])<<16 | uint32(metadataHeaderBuf[i+3])<<24
+		flashWrite32(uintptr(FLASH_META_START+i), val)
+	}
+
+	// Write storage structure to flash (after the 256-byte header)
 	src := (*[unsafe.Sizeof(Storage{})]byte)(unsafe.Pointer(&storage))
 	size := int(unsafe.Sizeof(Storage{}))
 
@@ -322,6 +345,36 @@ func storageSetPIN(pin string) {
 	storageSave()
 }
 
+// storageSetPINBytes sets a new PIN from byte slice (avoids string conversion)
+func storageSetPINBytes(pin []byte, pinLen int) {
+	storage.HasPIN = pinLen > 0
+	if pinLen > 9 {
+		pinLen = 9
+	}
+	storage.PINLen = uint8(pinLen)
+	for i := 0; i < pinLen; i++ {
+		storage.PIN[i] = pin[i]
+	}
+	storageSave()
+}
+
+// storagePINCompareBytes compares a PIN with the stored PIN using byte slices
+func storagePINCompareBytes(pin []byte, pinLen int) bool {
+	storageInit()
+	if !storage.HasPIN {
+		return true // No PIN set means any PIN is valid
+	}
+	if pinLen != int(storage.PINLen) {
+		return false
+	}
+	for i := 0; i < pinLen; i++ {
+		if pin[i] != storage.PIN[i] {
+			return false
+		}
+	}
+	return true
+}
+
 // sessionIsPINcached returns true if PIN is cached for this session
 func sessionIsPINcached() bool {
 	return sessionPINcached
@@ -341,6 +394,22 @@ func storageGetMnemonic() string {
 	return string(storage.Mnemonic[:storage.MnemonicLen])
 }
 
+// storageHasMnemonic returns true if a mnemonic is stored
+func storageHasMnemonic() bool {
+	storageInit()
+	return storage.HasMnemonic
+}
+
+// storageGetMnemonicBytes returns pointer to mnemonic byte array and length
+// Use this to avoid string conversion issues in TinyGo bare-metal
+func storageGetMnemonicBytes() ([]byte, int) {
+	storageInit()
+	if !storage.HasMnemonic || storage.MnemonicLen == 0 {
+		return nil, 0
+	}
+	return storage.Mnemonic[:], int(storage.MnemonicLen)
+}
+
 // storageSetMnemonic stores a mnemonic
 func storageSetMnemonic(mnemonic string) {
 	storage.HasMnemonic = len(mnemonic) > 0
@@ -352,6 +421,27 @@ func storageSetMnemonic(mnemonic string) {
 	storage.Initialized = true
 	storage.NeedsBackup = true
 	storageSave()
+}
+
+// storageSetMnemonicBytes stores a mnemonic from bytes with given length
+// This avoids string conversion which causes corruption in TinyGo bare-metal
+func storageSetMnemonicBytes(length int) {
+	// The mnemonic was already written directly to storage.Mnemonic
+	// by entropyToMnemonicBytes - we just need to set the metadata
+	storage.HasMnemonic = length > 0
+	if length > 240 {
+		length = 240
+	}
+	storage.MnemonicLen = uint8(length)
+	storage.Initialized = true
+	storage.NeedsBackup = true
+	storageSave()
+}
+
+// storageGetMnemonicDest returns a pointer to the mnemonic storage buffer
+// for direct writing by entropyToMnemonicBytes
+func storageGetMnemonicDest() []byte {
+	return storage.Mnemonic[:]
 }
 
 // storageGetDeviceID returns a unique device ID

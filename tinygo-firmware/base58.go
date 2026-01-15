@@ -98,31 +98,42 @@ func base58EncodeBytes(data []byte) int {
 	return resultLen
 }
 
+// base58DecodeBuf is a fixed buffer for base58 decoding (avoid make/append)
+var base58DecodeBuf [64]byte
+var base58DecodeTmpBuf [64]byte
+
 // base58Decode decodes a base58 string to bytes
+// Uses fixed buffers to avoid TinyGo heap allocation issues
 func base58Decode(s string) []byte {
 	if len(s) == 0 {
 		return nil
 	}
 
-	// Count leading '1's
+	// Count leading '1's (zeros in the result)
 	leadingOnes := 0
-	for _, c := range s {
-		if c == '1' {
+	for i := 0; i < len(s); i++ {
+		if s[i] == '1' {
 			leadingOnes++
 		} else {
 			break
 		}
 	}
 
-	// Decode
-	result := make([]byte, 0)
-	for _, c := range s {
+	// Clear buffers
+	resultLen := 0
+	for i := 0; i < 64; i++ {
+		base58DecodeBuf[i] = 0
+		base58DecodeTmpBuf[i] = 0
+	}
+
+	// Decode - process each character
+	for si := 0; si < len(s); si++ {
+		c := s[si]
 		// Find character in alphabet
 		idx := -1
-		for i, ch := range base58Alphabet {
-			if byte(c) == base58Alphabet[i] {
+		for i := 0; i < 58; i++ {
+			if c == base58Alphabet[i] {
 				idx = i
-				_ = ch
 				break
 			}
 		}
@@ -132,20 +143,38 @@ func base58Decode(s string) []byte {
 
 		// Multiply result by 58 and add digit
 		carry := idx
-		for i := len(result) - 1; i >= 0; i-- {
-			carry += int(result[i]) * 58
-			result[i] = byte(carry & 0xFF)
+		for i := resultLen - 1; i >= 0; i-- {
+			carry += int(base58DecodeBuf[i]) * 58
+			base58DecodeBuf[i] = byte(carry & 0xFF)
 			carry >>= 8
 		}
-		for carry > 0 {
-			result = append([]byte{byte(carry & 0xFF)}, result...)
+		// Handle remaining carry - prepend bytes
+		for carry > 0 && resultLen < 63 {
+			// Shift result right and insert at beginning
+			for i := resultLen; i > 0; i-- {
+				base58DecodeBuf[i] = base58DecodeBuf[i-1]
+			}
+			base58DecodeBuf[0] = byte(carry & 0xFF)
+			resultLen++
 			carry >>= 8
 		}
 	}
 
-	// Add leading zero bytes
-	zeros := make([]byte, leadingOnes)
-	return append(zeros, result...)
+	// Prepend leading zero bytes
+	totalLen := leadingOnes + resultLen
+	if totalLen > 64 {
+		return nil
+	}
+
+	// Copy to temp buffer with leading zeros
+	for i := 0; i < leadingOnes; i++ {
+		base58DecodeTmpBuf[i] = 0
+	}
+	for i := 0; i < resultLen; i++ {
+		base58DecodeTmpBuf[leadingOnes+i] = base58DecodeBuf[i]
+	}
+
+	return base58DecodeTmpBuf[:totalLen]
 }
 
 // base58CheckBuffer is used for adding checksum without heap allocation

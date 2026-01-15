@@ -42,6 +42,13 @@ const (
 	MessageType_GenerateMnemonic             uint16 = 119
 	MessageType_TransactionSign              uint16 = 122
 	MessageType_ResponseTransactionSign      uint16 = 123
+	MessageType_GetMixedEntropy              uint16 = 124
+	MessageType_SignTx                       uint16 = 125
+	MessageType_TxRequest                    uint16 = 126
+	MessageType_TxAck                        uint16 = 127
+
+	// GetRawEntropy is same as GetEntropy (message type 9)
+	MessageType_GetRawEntropy uint16 = 9
 )
 
 // Message read state
