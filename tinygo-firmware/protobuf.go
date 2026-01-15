@@ -107,29 +107,21 @@ const (
 )
 
 // pbEncodeFeatures encodes a Features message
+// This must match the C firmware's response exactly for GUI compatibility
 func pbEncodeFeatures(buf []byte) int {
 	n := 0
 
 	// Initialize storage to get current state
 	storageInit()
 
-	// vendor (field 1)
-	n += pbEncodeString(buf[n:], Features_vendor, "SkycoinFoundation")
+	// Get device ID as bytes (avoid string conversion issues in TinyGo)
+	deviceIDBytes := storageGetDeviceIDBytes()
 
-	// major_version (field 2)
-	n += pbEncodeUint32(buf[n:], Features_major_version, 1)
+	// vendor (field 1) - must match C firmware exactly (with space!)
+	n += pbEncodeString(buf[n:], Features_vendor, "Skycoin Foundation")
 
-	// minor_version (field 3)
-	n += pbEncodeUint32(buf[n:], Features_minor_version, 0)
-
-	// patch_version (field 4)
-	n += pbEncodeUint32(buf[n:], Features_patch_version, 0)
-
-	// bootloader_mode (field 5)
-	n += pbEncodeBool(buf[n:], Features_bootloader_mode, false)
-
-	// device_id (field 6) - TEST: use fixed "AB" to verify encoding works
-	n += pbEncodeString(buf[n:], Features_device_id, "AB")
+	// device_id (field 6) - real device UUID as bytes
+	n += pbEncodeBytesAsString(buf[n:], Features_device_id, deviceIDBytes)
 
 	// pin_protection (field 7)
 	n += pbEncodeBool(buf[n:], Features_pin_protection, storageHasPIN())
@@ -137,22 +129,25 @@ func pbEncodeFeatures(buf []byte) int {
 	// passphrase_protection (field 8)
 	n += pbEncodeBool(buf[n:], Features_passphrase_protection, storage.PassphraseProtection)
 
-	// language (field 9) - use "en-US" as default
-	n += pbEncodeString(buf[n:], Features_language, "en-US")
-
-	// label (field 10)
+	// label (field 10) - use device_id if no label set (matches C firmware)
 	if storage.HasLabel {
 		n += pbEncodeString(buf[n:], Features_label, storageGetLabel())
+	} else {
+		n += pbEncodeBytesAsString(buf[n:], Features_label, deviceIDBytes)
 	}
 
 	// initialized (field 12)
 	n += pbEncodeBool(buf[n:], Features_initialized, storageIsInitialized())
 
+	// bootloader_hash (field 14) - required by GUI, send empty for now
+	// C firmware reads from memory_bootloader_hash()
+	n += pbEncodeBytes(buf[n:], Features_bootloader_hash, nil)
+
 	// pin_cached (field 16)
 	n += pbEncodeBool(buf[n:], Features_pin_cached, sessionIsPINcached())
 
-	// firmware_present (field 18)
-	n += pbEncodeBool(buf[n:], Features_firmware_present, true)
+	// passphrase_cached (field 17) - required by GUI
+	n += pbEncodeBool(buf[n:], Features_passphrase_cached, false)
 
 	// needs_backup (field 19)
 	n += pbEncodeBool(buf[n:], Features_needs_backup, storageNeedsBackup())
@@ -169,8 +164,8 @@ func pbEncodeFeatures(buf []byte) int {
 	// fw_patch (field 24)
 	n += pbEncodeUint32(buf[n:], Features_fw_patch, 0)
 
-	// firmware_features (field 29) - required by CLI
-	n += pbEncodeUint32(buf[n:], Features_firmware_features, 0)
+	// firmware_features (field 29) - matches C firmware RDP level (32 = 0x20)
+	n += pbEncodeUint32(buf[n:], Features_firmware_features, 32)
 
 	return n
 }

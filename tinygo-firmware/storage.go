@@ -444,11 +444,51 @@ func storageGetMnemonicDest() []byte {
 	return storage.Mnemonic[:]
 }
 
-// storageGetDeviceID returns a unique device ID
+// deviceIDBuf holds the cached device ID (24 hex chars)
+var deviceIDBuf [24]byte
+var deviceIDInit bool
+
+// storageGetDeviceIDBytes returns a unique device ID as a byte slice
+// The ID is read from ROM at 0x1FFF7A10, hashed with SHA256 (twice like C firmware),
+// and converted to 24-character hex string
+// NOTE: Returns byte slice, not string - avoid string() conversion in TinyGo bare-metal
+func storageGetDeviceIDBytes() []byte {
+	if !deviceIDInit {
+		// Read 12-byte STM32 unique ID from ROM
+		const STM32_UUID_ADDR = 0x1FFF7A10
+		uuid := (*[12]byte)(unsafe.Pointer(uintptr(STM32_UUID_ADDR)))
+
+		// Hash twice with SHA256 (matches C firmware serialno_from_uuid)
+		hash1 := sha256Sum(uuid[:])
+		hash2 := sha256Sum(hash1[:])
+
+		// Convert first 12 bytes to hex - use byte literals to avoid string
+		for i := 0; i < 12; i++ {
+			hi := hash2[i] >> 4
+			lo := hash2[i] & 0x0F
+			// Hex chars as bytes
+			if hi < 10 {
+				deviceIDBuf[i*2] = '0' + hi
+			} else {
+				deviceIDBuf[i*2] = 'A' + (hi - 10)
+			}
+			if lo < 10 {
+				deviceIDBuf[i*2+1] = '0' + lo
+			} else {
+				deviceIDBuf[i*2+1] = 'A' + (lo - 10)
+			}
+		}
+		deviceIDInit = true
+	}
+	return deviceIDBuf[:]
+}
+
+// storageGetDeviceID returns a unique device ID as a string
+// DEPRECATED: Use storageGetDeviceIDBytes instead for TinyGo bare-metal
 func storageGetDeviceID() string {
-	// TODO: Read STM32 unique ID from ROM at 0x1FFF7A10
-	// For now, return a static ID
-	return "SKYWLT-TGO1"
+	// This is only safe because the underlying bytes are valid ASCII hex chars
+	bytes := storageGetDeviceIDBytes()
+	return string(bytes)
 }
 
 // storageSetLanguage sets the device language

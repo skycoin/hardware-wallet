@@ -188,7 +188,7 @@ func handleTransactionSign() {
 
 	// Check if device is initialized
 	if !storageIsInitialized() {
-		sendFailure(FailureType_NotInitialized, "Not initialized")
+		sendFailure(FailureType_NotInitialized, "Mnemonic required")
 		return
 	}
 
