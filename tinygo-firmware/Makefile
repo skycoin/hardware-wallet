@@ -74,6 +74,8 @@ $(BINARY): $(SOURCES) $(TARGET) stm32f205-firmware.ld $(DEVICE_OBJ)
 	@echo "Firmware size:"
 	@ls -lh $(BINARY)
 	@echo ""
+	@echo "Copying to firmware..."
+	@cp $(BINARY) ../firmware/skywallet-firmware-tinygo.bin
 	@echo "Build complete: $(BINARY)"
 
 flash: $(BINARY)

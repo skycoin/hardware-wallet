@@ -118,6 +118,7 @@ skycoin-crypto-lib:
 
 firmware: tiny-firmware/skyfirmware.bin ## Build skycoin wallet firmware
 	cp tiny-firmware/skyfirmware.bin build/skyfirmware.bin
+	cp tiny-firmware/skyfirmware.bin firmware/skywallet-firmware-c.bin
 
 firmware-mem-protect: MEMORY_PROTECT=1
 firmware-mem-protect: firmware ## Build skycoin wallet firmware
