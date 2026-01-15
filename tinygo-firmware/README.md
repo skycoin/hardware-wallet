@@ -23,6 +23,9 @@ Install TinyGo 0.30.0 or later:
 wget https://github.com/tinygo-org/tinygo/releases/download/v0.30.0/tinygo_0.30.0_amd64.deb
 sudo dpkg -i tinygo_0.30.0_amd64.deb
 
+# on Arch Linux (btw)
+yay -S tinygo-bin
+
 # On macOS
 brew tap tinygo-org/tools
 brew install tinygo
@@ -35,6 +38,10 @@ The ARM toolchain is needed for linking:
 ```bash
 # On Linux (Ubuntu/Debian)
 sudo apt-get install gcc-arm-none-eabi
+
+# on Arch Linux (btw)
+sudo pacman -S tinygo-bin gcc-arm-none-eabi
+
 
 # On macOS
 brew tap ArmMbed/homebrew-formulae
@@ -107,7 +114,7 @@ st-flash write full-firmware.bin 0x08000000
 
 ## Communication
 
-Use the [hardware-wallet-go](https://github.com/SkycoinProject/hardware-wallet-go) library or CLI:
+Use the [hardware-wallet-go](https://github.com/skycoin/hardware-wallet-go) library or CLI:
 
 ```bash
 # Get device features
@@ -224,13 +231,3 @@ All memory is statically allocated using fixed-size buffers. Dynamic allocation 
 ## Firmware Size
 
 Current binary size: ~71KB (signed)
-
-## License
-
-This firmware is based on the original [trezor-mcu](https://github.com/trezor/trezor-mcu) under the GNU LGPL, modified for Skycoin.
-
-## Related Projects
-
-- [hardware-wallet](https://github.com/SkycoinProject/hardware-wallet) - C firmware and bootloader
-- [hardware-wallet-go](https://github.com/SkycoinProject/hardware-wallet-go) - Go client library
-- [hardware-wallet-daemon](https://github.com/SkycoinProject/hardware-wallet-daemon) - REST API daemon

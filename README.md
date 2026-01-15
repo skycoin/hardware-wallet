@@ -2,7 +2,7 @@
 
 # Skycoin hardware wallet
 
-[![Build Status](https://travis-ci.com/SkycoinProject/hardware-wallet.svg?branch=master)](https://travis-ci.com/SkycoinProject/hardware-wallet)
+[![Build Status](https://travis-ci.com/skycoin/hardware-wallet.svg?branch=master)](https://travis-ci.com/skycoin/hardware-wallet)
 
 ## Table of contents
 
@@ -36,11 +36,11 @@
 ## Overview
 
 This repo contains the firmware and bootloader for the Skywallet as well as tools to test and develop for the Skywallet.
-The firmware can be found in [/tiny-firmware](https://github.com/SkycoinProject/hardware-wallet/tree/master/tiny-firmware).
+The firmware can be found in [/tiny-firmware](https://github.com/skycoin/hardware-wallet/tree/master/tiny-firmware).
 The firmware has been modified from [Trezor](https://github.com/trezor/trezor-mcu).
 
-The [skycoin-api](https://github.com/SkycoinProject/hardware-wallet/tree/master/skycoin-api) folder contains the definition of the functions implementing the Skycoin features.
-The [Skywallet Go CLI](https://github.com/SkycoinProject/hardware-wallet-go/releases) defines Golang functions that communicate with the firmware/bootloader.
+The [skycoin-api](https://github.com/skycoin/hardware-wallet/tree/master/skycoin-api) folder contains the definition of the functions implementing the Skycoin features.
+The [Skywallet Go CLI](https://github.com/skycoin/hardware-wallet-go/releases) defines Golang functions that communicate with the firmware/bootloader.
 
 ## FAQ
 
@@ -48,7 +48,7 @@ The [Skywallet Go CLI](https://github.com/SkycoinProject/hardware-wallet-go/rele
 
 ## Install tools
 
-Get the development dependencies and tools from the [tiny-firware/README.md](https://github.com/SkycoinProject/hardware-wallet/blob/master/tiny-firmware/README.md) first, before continuing with the build instructions.
+Get the development dependencies and tools from the [tiny-firware/README.md](https://github.com/skycoin/hardware-wallet/blob/master/tiny-firmware/README.md) first, before continuing with the build instructions.
 
 ### Build Requirements (Modern Toolchains)
 
@@ -78,7 +78,7 @@ After cloning this repository, make sure the submodules are up-to-date by execut
 git submodule update --init --recursive
 ```
 
-Should you find any issues while running any of the commands that follow please consult [FAQ](FAQ.md) before [reporting a bug](ihttps://github.com/SkycoinProject/hardware-wallet/issues/new?assignees=&labels=bug&template=bug_report.md&title=).
+Should you find any issues while running any of the commands that follow please consult [FAQ](FAQ.md) before [reporting a bug](ihttps://github.com/skycoin/hardware-wallet/issues/new?assignees=&labels=bug&template=bug_report.md&title=).
 
 
 ### Build a bootloader
@@ -105,7 +105,7 @@ make firmware  # Your firmware is tiny-firmware/skyfirmware.bin
 
 ### Sign firmware
 
-Signs the firmware with the private key corresponding to the PubKeys that were registered in the bootloader during building. The PubKeys can be found in the project [Makefile](https://github.com/SkycoinProject/hardware-wallet/blob/develop/Makefile)
+Signs the firmware with the private key corresponding to the PubKeys that were registered in the bootloader during building. The PubKeys can be found in the project [Makefile](https://github.com/skycoin/hardware-wallet/blob/develop/Makefile)
 ```
 make sign # Your firmware is tiny-firmware/skyfirmware.bin
 ```
@@ -195,7 +195,7 @@ After having this tool you can run `make check-coverage`, if not errors found yo
 
 #### Skycoin firmware releases
 
-The Skywallet firmware is composed of two parts: the [bootloader](https://github.com/SkycoinProject/hardware-wallet/tree/master/tiny-firmware/bootloader) and the [firmware](https://github.com/SkycoinProject/hardware-wallet/tree/master/tiny-firmware/firmware).
+The Skywallet firmware is composed of two parts: the [bootloader](https://github.com/skycoin/hardware-wallet/tree/master/tiny-firmware/bootloader) and the [firmware](https://github.com/skycoin/hardware-wallet/tree/master/tiny-firmware/firmware).
 
 Upon startup, the bootloader checks the validity of the firmware installed on the device. It checks whether the signatures of the firmware correspon to the PubKeys registered in the bootlaoder. The firmware is expected to have a header with proper MAGIC number and three signature slots.
 
