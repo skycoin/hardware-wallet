@@ -2,8 +2,6 @@
 
 # Skycoin hardware wallet
 
-[![Build Status](https://travis-ci.com/skycoin/hardware-wallet.svg?branch=master)](https://travis-ci.com/skycoin/hardware-wallet)
-
 ## Table of contents
 
 <!-- MarkdownTOC levels="1,2,3,4,5" autolink="true" bracket="round" -->
@@ -40,7 +38,14 @@ The firmware can be found in [/tiny-firmware](https://github.com/skycoin/hardwar
 The firmware has been modified from [Trezor](https://github.com/trezor/trezor-mcu).
 
 The [skycoin-api](https://github.com/skycoin/hardware-wallet/tree/master/skycoin-api) folder contains the definition of the functions implementing the Skycoin features.
-The [Skywallet Go CLI](https://github.com/skycoin/hardware-wallet-go/releases) defines Golang functions that communicate with the firmware/bootloader.
+The `skyhw` CLI tool (integrated into the [skycoin repository](https://github.com/skycoin/skycoin)) provides commands to communicate with the firmware/bootloader.
+
+## Firmware Variants
+
+This repository contains two firmware implementations:
+
+- **[C Firmware](tiny-firmware/)** - The original firmware, forked from Trezor. Production-ready but has some limitations (max 8 transaction outputs, stack overflow at ~23 addresses).
+- **[TinyGo Firmware](tinygo-firmware/)** - A complete rewrite in Go using TinyGo. Aims to remove the C firmware limitations and provide a more maintainable codebase.
 
 ## FAQ
 

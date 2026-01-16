@@ -215,11 +215,27 @@ Then you can re-flash the firmware for instance with st-skycoin alias.
 
 ## 5. Communicate with the device
 
-### Use golang code examples
+### Use the skyhw CLI
 
-Check [here](https://github.com/skycoin/hardware-wallet-go/) for golang code example communicating with the device.
+The `skyhw` CLI tool is integrated into the [skycoin repository](https://github.com/skycoin/skycoin). Build it with:
 
-Feel free to hack [main.go](https://github.com/skycoin/hardware-wallet-go/blob/master/main.go) file.
+```bash
+cd /path/to/skycoin
+go build -o skyhw cmd/hardware-wallet/skycoin.go
+```
+
+Example commands:
+
+```bash
+# Get device features
+skyhw cli features
+
+# Generate addresses
+skyhw cli addressGen --addressN 5
+
+# Sign a message
+skyhw cli signMessage --message "test" --addressN 0
+```
 
 You can also try the trezorctl [python based command line](https://github.com/trezor/python-trezor).
 
@@ -229,7 +245,7 @@ The communication between PC and firmware is a master/slave model where the firm
 It reacts to messages but cannot initiate a communication.
 The messages are defined using google protobuf code generation tools. The same file messages.proto can be copy pasted elswhere to generate the same structures in other coding languages.
 
-The [repository](https://github.com/skycoin/hardware-wallet-go/) provides examples to communicate with the device using golang.
+The `skyhw` CLI tool in the [skycoin repository](https://github.com/skycoin/skycoin) provides commands to communicate with the device.
 
 The firmware has two components: the [bootloader](https://github.com/skycoin/hardware-wallet/tree/master/tiny-firmware/bootloader) and the [firmware](https://github.com/skycoin/hardware-wallet/tree/master/tiny-firmware/firmware).
 The bootloader main role is to check firmware's signature in order to warn user in case the detected firmware is not the official firmware distributed by skycoin.

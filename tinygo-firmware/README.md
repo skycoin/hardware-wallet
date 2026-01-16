@@ -114,7 +114,7 @@ st-flash write full-firmware.bin 0x08000000
 
 ## Communication
 
-Use the [hardware-wallet-go](https://github.com/skycoin/hardware-wallet-go) library or CLI:
+Use the `skyhw` CLI tool (integrated into the [skycoin repository](https://github.com/skycoin/skycoin)):
 
 ```bash
 # Get device features
