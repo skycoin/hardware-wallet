@@ -8,9 +8,9 @@ const base58Alphabet = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwx
 
 // Fixed buffers for base58 operations (avoids heap allocation)
 var (
-	base58Input  [64]byte  // Input buffer (max 64 bytes)
-	base58Output [64]byte  // Output buffer
-	base58Result [64]byte  // Final result
+	base58Input  [64]byte // Input buffer (max 64 bytes)
+	base58Output [64]byte // Output buffer
+	base58Result [64]byte // Final result
 )
 
 // base58EncodeLen holds the length of the last encoded result

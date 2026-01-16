@@ -522,9 +522,9 @@ func storageSetPassphraseProtection(enabled bool) {
 
 // PIN retry limiting constants
 const (
-	PIN_MAX_ATTEMPTS = 10         // Max attempts before device wipe
-	PIN_BASE_DELAY   = 500000     // Base delay in microseconds (0.5 second)
-	PIN_MAX_DELAY    = 60000000   // Max delay 60 seconds
+	PIN_MAX_ATTEMPTS = 10       // Max attempts before device wipe
+	PIN_BASE_DELAY   = 500000   // Base delay in microseconds (0.5 second)
+	PIN_MAX_DELAY    = 60000000 // Max delay 60 seconds
 )
 
 // storageGetPINFailures returns the current PIN failure count

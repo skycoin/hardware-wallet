@@ -1542,14 +1542,14 @@ func pbDecodeSkycoinCheckMessageSignature(data []byte) (string, string, string) 
 
 // ResetDevice field numbers
 const (
-	ResetDevice_display_random       = 1
-	ResetDevice_strength             = 2
+	ResetDevice_display_random        = 1
+	ResetDevice_strength              = 2
 	ResetDevice_passphrase_protection = 3
-	ResetDevice_pin_protection       = 4
-	ResetDevice_language             = 5
-	ResetDevice_label                = 6
-	ResetDevice_u2f_counter          = 7
-	ResetDevice_skip_backup          = 8
+	ResetDevice_pin_protection        = 4
+	ResetDevice_language              = 5
+	ResetDevice_label                 = 6
+	ResetDevice_u2f_counter           = 7
+	ResetDevice_skip_backup           = 8
 )
 
 // pbDecodeResetDevice decodes a ResetDevice message

@@ -30,7 +30,7 @@ var pendingOperation = PENDING_OP_NONE
 
 // Button state machine for pending confirmations
 const (
-	BTN_STATE_IDLE = iota
+	BTN_STATE_IDLE         = iota
 	BTN_STATE_WIPE_CONFIRM // Waiting for wipe confirmation
 )
 
@@ -40,20 +40,20 @@ var btnState = BTN_STATE_IDLE
 const (
 	MNEMONIC_STATE_IDLE = iota
 	MNEMONIC_STATE_WAIT_ENTROPY
-	MNEMONIC_STATE_BACKUP_WAIT_ACK   // Waiting for ButtonAck from host
-	MNEMONIC_STATE_BACKUP_WAIT_BTN   // Got ButtonAck, waiting for physical button
+	MNEMONIC_STATE_BACKUP_WAIT_ACK // Waiting for ButtonAck from host
+	MNEMONIC_STATE_BACKUP_WAIT_BTN // Got ButtonAck, waiting for physical button
 )
 
 var mnemonicState = MNEMONIC_STATE_IDLE
 var mnemonicWordCount = 12
 var mnemonicBackupIndex = 0
-var mnemonicBackupPass = 0            // 0 = "Write down", 1 = "Check"
-var pendingMnemonic [512]byte         // Buffer for generated mnemonic
+var mnemonicBackupPass = 0    // 0 = "Write down", 1 = "Check"
+var pendingMnemonic [512]byte // Buffer for generated mnemonic
 var pendingMnemonicLen = 0
 var pendingMnemonicWordCount = 0
 
 // Word storage using byte buffers (TinyGo string arrays don't work)
-var backupWordBufs [24][10]byte  // Max 24 words, max 9 chars + null
+var backupWordBufs [24][10]byte // Max 24 words, max 9 chars + null
 var backupWordLens [24]int
 
 // Fixed buffers for entropy mixing (avoid make() allocation)
@@ -291,7 +291,7 @@ var (
 	prefixADDRF   = []byte{'A', 'D', 'D', 'R', ':', 'F', 'A', 'I', 'L'}
 	prefixUNKNOWN = []byte{'U', 'N', 'K', 'N', 'O', 'W', 'N', ':'}
 	// Debug test pattern - "ABCD1234" in bytes
-	debugPattern  = []byte{'A', 'B', 'C', 'D', '1', '2', '3', '4'}
+	debugPattern = []byte{'A', 'B', 'C', 'D', '1', '2', '3', '4'}
 )
 
 // copyBytes copies a byte slice into buf, returns bytes written
@@ -378,14 +378,15 @@ var (
 
 // handleTestCommandBytes runs crypto test commands using byte slice input
 // Commands:
-//   SHA256 - SHA256("abc"), expect ba7816bf...
-//   RIPEMD - RIPEMD160("abc"), expect 8eb208f7...
-//   B58    - Base58Check([0x00,0x00...]), expect 1111...
-//   PUBKEY1 - pubkey from seckey=1, expect G point
-//   PUBKEY2 - pubkey from seckey=2
-//   SQR    - square 2, expect 4
-//   MUL    - multiply 3*5, expect 15
-//   ADDR   - address from test mnemonic
+//
+//	SHA256 - SHA256("abc"), expect ba7816bf...
+//	RIPEMD - RIPEMD160("abc"), expect 8eb208f7...
+//	B58    - Base58Check([0x00,0x00...]), expect 1111...
+//	PUBKEY1 - pubkey from seckey=1, expect G point
+//	PUBKEY2 - pubkey from seckey=2
+//	SQR    - square 2, expect 4
+//	MUL    - multiply 3*5, expect 15
+//	ADDR   - address from test mnemonic
 func handleTestCommandBytes(cmd []byte) {
 	n := 0 // position in testResultBuf
 

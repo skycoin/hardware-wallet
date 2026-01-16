@@ -421,7 +421,7 @@ func findWordIndex(word string) int {
 // mnemonicToSeed converts a mnemonic to a 512-bit seed using PBKDF2-HMAC-SHA512
 // This is the full BIP39 seed derivation
 // Fixed buffers for PBKDF2 (avoid make/append)
-var pbkdf2SaltBuf [128]byte   // "mnemonic" + passphrase + 4 byte block number
+var pbkdf2SaltBuf [128]byte     // "mnemonic" + passphrase + 4 byte block number
 var pbkdf2PasswordBuf [256]byte // mnemonic as bytes
 
 // passphrase is optional (typically empty string)
