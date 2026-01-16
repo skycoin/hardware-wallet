@@ -92,10 +92,11 @@ func handleWordAck() {
 	// Check if we have all words
 	if recoveryWordIndex >= recoveryWordCount {
 		// Build mnemonic string
-		mnemonic := buildMnemonicString()
+		// Build mnemonic in buffer and get length
+		mnemonicLen := buildMnemonicBytes()
 
-		// Validate mnemonic
-		if !validateMnemonic(mnemonic) {
+		// Validate mnemonic using bytes to avoid string() corruption
+		if !validateMnemonicBytes(recoveryMnemonicBuf[:mnemonicLen]) {
 			sendFailure(FailureType_DataError, "Invalid mnemonic checksum")
 			recoveryState = RECOVERY_IDLE
 			return
@@ -108,8 +109,8 @@ func handleWordAck() {
 			return
 		}
 
-		// Store mnemonic
-		storageSetMnemonic(mnemonic)
+		// Store mnemonic - copy bytes directly to avoid string() corruption
+		storageSetMnemonicFromBuffer(recoveryMnemonicBuf[:], mnemonicLen)
 		storageSetNeedsBackup(false) // Recovered = already backed up
 
 		recoveryState = RECOVERY_IDLE
@@ -135,9 +136,10 @@ func isValidWord(word string) bool {
 // recoveryMnemonicBuf is a fixed buffer for building recovery mnemonic
 var recoveryMnemonicBuf [256]byte
 
-// buildMnemonicString builds mnemonic from collected words
+// buildMnemonicBytes builds mnemonic from collected words into recoveryMnemonicBuf
+// Returns the length of the mnemonic
 // Uses fixed byte buffers to avoid TinyGo string allocation issues
-func buildMnemonicString() string {
+func buildMnemonicBytes() int {
 	pos := 0
 	for i := 0; i < recoveryWordCount; i++ {
 		if i > 0 && pos < 255 {
@@ -151,6 +153,13 @@ func buildMnemonicString() string {
 			pos++
 		}
 	}
+	return pos
+}
+
+// buildMnemonicString builds mnemonic from collected words
+// DEPRECATED: Use buildMnemonicBytes instead to avoid string() corruption
+func buildMnemonicString() string {
+	pos := buildMnemonicBytes()
 	return string(recoveryMnemonicBuf[:pos])
 }
 

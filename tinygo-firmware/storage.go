@@ -438,6 +438,23 @@ func storageSetMnemonicBytes(length int) {
 	storageSave()
 }
 
+// storageSetMnemonicFromBuffer copies mnemonic bytes from a buffer to storage
+// This avoids string() conversion which causes corruption in TinyGo bare-metal
+func storageSetMnemonicFromBuffer(data []byte, length int) {
+	storage.HasMnemonic = length > 0
+	if length > 240 {
+		length = 240
+	}
+	storage.MnemonicLen = uint8(length)
+	// Copy bytes directly without string conversion
+	for i := 0; i < length; i++ {
+		storage.Mnemonic[i] = data[i]
+	}
+	storage.Initialized = true
+	storage.NeedsBackup = true
+	storageSave()
+}
+
 // storageGetMnemonicDest returns a pointer to the mnemonic storage buffer
 // for direct writing by entropyToMnemonicBytes
 func storageGetMnemonicDest() []byte {
@@ -502,6 +519,35 @@ func storageSetLanguage(language string) {
 		storage.Language[langLen] = 0 // null terminate
 	}
 	storageSave()
+}
+
+// storageSetLanguageFromBuffer sets the device language from bytes
+// This avoids string() conversion which causes corruption in TinyGo bare-metal
+func storageSetLanguageFromBuffer(data []byte, length int) {
+	if length > 16 {
+		length = 16
+	}
+	for i := 0; i < length; i++ {
+		storage.Language[i] = data[i]
+	}
+	if length < 17 {
+		storage.Language[length] = 0 // null terminate
+	}
+	storageSave()
+}
+
+// storageSetLabelFromBuffer sets the device label from bytes
+// This avoids string() conversion which causes corruption in TinyGo bare-metal
+func storageSetLabelFromBuffer(data []byte, length int) {
+	storage.HasLabel = length > 0
+	if length > 32 {
+		length = 32
+	}
+	storage.LabelLen = uint8(length)
+	for i := 0; i < length; i++ {
+		storage.Label[i] = data[i]
+	}
+	// No need to save here - caller will save or we chain with other operations
 }
 
 // storageGetLanguage returns the device language

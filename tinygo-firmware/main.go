@@ -63,17 +63,19 @@ func layoutHome() {
 		// Initialized but not backed up - show "NEEDS BACKUP!"
 		oledDrawStringCenter(0, "NEEDS BACKUP!")
 	} else {
-		// Fully initialized - show device label or ID
-		label := storageGetLabel()
-		if label == "" {
-			label = storageGetDeviceID()
-		}
-		// Truncate long labels (max ~20 chars fit on screen)
-		if len(label) > 20 {
-			// Show first 17 chars + "..."
-			oledDrawStringCenterTrunc(0, label, 17)
-		} else {
-			oledDrawStringCenter(0, label)
+		// Fully initialized - show short device identifier "SKY-XXXX"
+		// This allows users to differentiate multiple devices at a glance
+		idBytes := storageGetDeviceIDBytes()
+		// Format: "SKY-" + first 4 hex chars of device ID = 8 chars total
+		// 8 chars * 6 pixels = 48 pixels, centered on 128 pixel screen
+		x := (128 - 48) / 2
+		x += oledDrawChar(x, 0, 'S')
+		x += oledDrawChar(x, 0, 'K')
+		x += oledDrawChar(x, 0, 'Y')
+		x += oledDrawChar(x, 0, '-')
+		// Show first 4 hex chars of device ID
+		for i := 0; i < 4 && i < len(idBytes); i++ {
+			x += oledDrawChar(x, 0, idBytes[i])
 		}
 	}
 

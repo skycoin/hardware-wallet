@@ -496,19 +496,35 @@ b := getResult()
 
 ## Common Pitfalls
 
-1. **Storing decoded strings** - Strings decoded from protobuf point into `msgInBuffer` which gets overwritten. Copy to fixed buffers.
+1. **Large local arrays cause stack overflow** - Local arrays larger than ~64-128 bytes overflow the limited stack in TinyGo bare-metal mode, causing silent memory corruption. Always use package-level (global) buffers for large arrays:
+   ```go
+   // BAD - 512 byte local array causes stack overflow
+   func badFunc() {
+       var buf [512]byte  // Stack overflow - data corruption!
+       // ... use buf ...
+   }
 
-2. **String literals are OK** - Compile-time string literals work fine:
+   // GOOD - package-level buffer
+   var globalBuf [512]byte  // Stored in BSS, not on stack
+
+   func goodFunc() {
+       // Use globalBuf[:]
+   }
+   ```
+
+2. **Storing decoded strings** - Strings decoded from protobuf point into `msgInBuffer` which gets overwritten. Copy to fixed buffers.
+
+3. **String literals are OK** - Compile-time string literals work fine:
    ```go
    oledDrawString(0, 0, "Hello")  // OK - literal
    ```
 
-3. **Package-level string vars** - Also OK:
+4. **Package-level string vars** - Also OK:
    ```go
    var deviceName = "Skywallet"  // OK - package-level
    ```
 
-4. **Stack strings** - May be corrupted after function returns:
+5. **Stack strings** - May be corrupted after function returns:
    ```go
    func bad() string {
        var buf [32]byte
@@ -517,7 +533,7 @@ b := getResult()
    }
    ```
 
-5. **Long operations** - Call `usbPoll()` periodically to maintain USB connection:
+6. **Long operations** - Call `usbPoll()` periodically to maintain USB connection:
    ```go
    for i := 0; i < longLoop; i++ {
        // ... work ...
@@ -527,7 +543,7 @@ b := getResult()
    }
    ```
 
-6. **Buffer reuse** - Functions using fixed buffers cannot be called recursively or with overlapping lifetimes:
+7. **Buffer reuse** - Functions using fixed buffers cannot be called recursively or with overlapping lifetimes:
    ```go
    // BAD - hexToBytes buffer gets overwritten
    hash1 := hexToBytes(hex1)

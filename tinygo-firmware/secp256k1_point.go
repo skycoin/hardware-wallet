@@ -19,6 +19,17 @@ type XYZ struct {
 var secp256k1G XY
 var secp256k1GInitialized bool
 
+// Package-level Field buffers for Double function
+// (Local Field variables cause stack overflow in TinyGo bare-metal)
+var dblX, dblY, dblZ Field         // Input copies
+var dblM, dblS, dblY2, dblY4 Field // Intermediate values
+var dblTmp Field
+
+// Package-level Field buffers for AddXY function
+var addZ12, addZ13 Field
+var addU1, addU2, addS1, addS2 Field
+var addH, addI, addJ, addT Field
+
 // initSecp256k1G initializes the generator point (call once before use)
 func initSecp256k1G() {
 	if secp256k1GInitialized {
@@ -97,52 +108,49 @@ func (xyz *XYZ) Double(r *XYZ) {
 		return
 	}
 
-	// Save inputs in case r aliases xyz
-	var X, Y, Z Field
-	X = xyz.X
-	Y = xyz.Y
-	Z = xyz.Z
-
-	var M, S, Y2, Y4, tmp Field
+	// Save inputs in case r aliases xyz (use package-level buffers to avoid stack overflow)
+	dblX = xyz.X
+	dblY = xyz.Y
+	dblZ = xyz.Z
 
 	// Y2 = Y^2
-	Y.Sqr(&Y2)
+	dblY.Sqr(&dblY2)
 
 	// S = 4*X*Y^2
-	Y2.Mul(&S, &X)
-	S.MulInt(4)
-	S.Normalize()
+	dblY2.Mul(&dblS, &dblX)
+	dblS.MulInt(4)
+	dblS.Normalize()
 
 	// M = 3*X^2
-	X.Sqr(&M)
-	M.MulInt(3)
-	M.Normalize()
+	dblX.Sqr(&dblM)
+	dblM.MulInt(3)
+	dblM.Normalize()
 
 	// X' = M^2 - 2*S
-	M.Sqr(&r.X)
-	S.Negate(&tmp, 1)
-	tmp.MulInt(2)
-	r.X.SetAdd(&tmp)
+	dblM.Sqr(&r.X)
+	dblS.Negate(&dblTmp, 1)
+	dblTmp.MulInt(2)
+	r.X.SetAdd(&dblTmp)
 	r.X.Normalize()
 
 	// Y4 = Y^4 (= Y2^2)
-	Y2.Sqr(&Y4)
+	dblY2.Sqr(&dblY4)
 
 	// Y' = M*(S - X') - 8*Y^4
-	// tmp = S - X'
-	r.X.Negate(&tmp, 1)
-	tmp.SetAdd(&S)
-	tmp.Normalize()
-	// r.Y = M * tmp
-	M.Mul(&r.Y, &tmp)
+	// dblTmp = S - X'
+	r.X.Negate(&dblTmp, 1)
+	dblTmp.SetAdd(&dblS)
+	dblTmp.Normalize()
+	// r.Y = M * dblTmp
+	dblM.Mul(&r.Y, &dblTmp)
 	// r.Y = r.Y - 8*Y^4
-	Y4.MulInt(8)
-	Y4.Negate(&tmp, 1)
-	r.Y.SetAdd(&tmp)
+	dblY4.MulInt(8)
+	dblY4.Negate(&dblTmp, 1)
+	r.Y.SetAdd(&dblTmp)
 	r.Y.Normalize()
 
 	// Z' = 2*Y*Z
-	Y.Mul(&r.Z, &Z)
+	dblY.Mul(&r.Z, &dblZ)
 	r.Z.MulInt(2)
 	r.Z.Normalize()
 
@@ -160,14 +168,14 @@ func (xyz *XYZ) AddXY(r *XYZ, xy *XY) {
 		return
 	}
 
-	var z12, u1, u2, s1, s2 Field
+	var z12, z13, u1, u2, s1, s2 Field
 
-	xyz.Z.Sqr(&z12)
-	u1 = xyz.X
-	z12.Mul(&u2, &xy.X)
-	xyz.Z.Mul(&s1, &z12)
-	s1.Mul(&s1, &xyz.Y)
-	z12.Mul(&s2, &xy.Y)
+	xyz.Z.Sqr(&z12)       // z12 = Z1^2
+	u1 = xyz.X            // u1 = X1
+	z12.Mul(&u2, &xy.X)   // u2 = X2 * Z1^2
+	xyz.Z.Mul(&z13, &z12) // z13 = Z1 * Z1^2 = Z1^3
+	z13.Mul(&s1, &xyz.Y)  // s1 = Y1 * Z1^3
+	z13.Mul(&s2, &xy.Y)   // s2 = Y2 * Z1^3 (was z12, that was the bug!)
 	u1.Normalize()
 	u2.Normalize()
 

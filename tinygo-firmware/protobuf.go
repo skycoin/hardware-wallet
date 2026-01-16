@@ -1773,6 +1773,123 @@ func pbDecodeLoadDevice(data []byte) (string, string, bool, string, string, bool
 	return mnemonic, pin, passphraseProtection, language, label, skipChecksum
 }
 
+// pbDecodeLoadDeviceBytes decodes a LoadDevice message returning offsets/lengths instead of strings
+// This avoids string() conversion which causes corruption in TinyGo bare-metal
+// Returns: mnemonicOffset, mnemonicLen, pinOffset, pinLen, passphraseProtection,
+//
+//	languageOffset, languageLen, labelOffset, labelLen, skipChecksum
+func pbDecodeLoadDeviceBytes(data []byte) (int, int, int, int, bool, int, int, int, int, bool) {
+	mnemonicOffset, mnemonicLen := 0, 0
+	pinOffset, pinLen := 0, 0
+	passphraseProtection := false
+	languageOffset, languageLen := 0, 0
+	labelOffset, labelLen := 0, 0
+	skipChecksum := false
+
+	i := 0
+	for i < len(data) {
+		if i >= len(data) {
+			break
+		}
+
+		tag := uint32(data[i])
+		i++
+		if tag&0x80 != 0 {
+			continue
+		}
+
+		fieldNum := tag >> 3
+		wireType := tag & 0x7
+
+		switch fieldNum {
+		case LoadDevice_mnemonic:
+			if wireType == PB_BYTES && i < len(data) {
+				length := int(data[i])
+				i++
+				if length&0x80 != 0 {
+					continue
+				}
+				if i+length <= len(data) {
+					mnemonicOffset = i
+					mnemonicLen = length
+					i += length
+				}
+			}
+		case LoadDevice_pin:
+			if wireType == PB_BYTES && i < len(data) {
+				length := int(data[i])
+				i++
+				if length&0x80 != 0 {
+					continue
+				}
+				if i+length <= len(data) {
+					pinOffset = i
+					pinLen = length
+					i += length
+				}
+			}
+		case LoadDevice_passphrase_protection:
+			if wireType == PB_VARINT && i < len(data) {
+				passphraseProtection = data[i] != 0
+				i++
+			}
+		case LoadDevice_language:
+			if wireType == PB_BYTES && i < len(data) {
+				length := int(data[i])
+				i++
+				if length&0x80 != 0 {
+					continue
+				}
+				if i+length <= len(data) {
+					languageOffset = i
+					languageLen = length
+					i += length
+				}
+			}
+		case LoadDevice_label:
+			if wireType == PB_BYTES && i < len(data) {
+				length := int(data[i])
+				i++
+				if length&0x80 != 0 {
+					continue
+				}
+				if i+length <= len(data) {
+					labelOffset = i
+					labelLen = length
+					i += length
+				}
+			}
+		case LoadDevice_skip_checksum:
+			if wireType == PB_VARINT && i < len(data) {
+				skipChecksum = data[i] != 0
+				i++
+			}
+		default:
+			// Skip other fields
+			switch wireType {
+			case PB_VARINT:
+				for i < len(data) && data[i]&0x80 != 0 {
+					i++
+				}
+				i++
+			case PB_BYTES:
+				if i < len(data) {
+					length := int(data[i])
+					i++
+					i += length
+				}
+			case PB_FIXED32:
+				i += 4
+			case PB_FIXED64:
+				i += 8
+			}
+		}
+	}
+
+	return mnemonicOffset, mnemonicLen, pinOffset, pinLen, passphraseProtection,
+		languageOffset, languageLen, labelOffset, labelLen, skipChecksum
+}
+
 // RecoveryDevice field numbers
 const (
 	RecoveryDevice_word_count            = 1

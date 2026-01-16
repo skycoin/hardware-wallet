@@ -347,3 +347,60 @@ func deriveSecretKeyAtIndex(mnemonic string, index int) []byte {
 	}
 	return seckey[:]
 }
+
+// deriveKeyPairAtIndexFromBytes derives the keypair at a specific index from a mnemonic byte slice
+// This version avoids string() conversion which causes corruption in TinyGo bare-metal
+func deriveKeyPairAtIndexFromBytes(mnemonic []byte, mnemonicLen int, index int) (seckey [32]byte, pubkey [33]byte, ok bool) {
+	// Use the mnemonic bytes directly as seed
+	seed := mnemonic[:mnemonicLen]
+
+	var nextSeed [32]byte
+	var sk [32]byte
+	var pk [33]byte
+
+	// First iteration uses mnemonic directly
+	if !deterministicKeyPairIterator(seed, nextSeed[:], sk[:], pk[:]) {
+		return seckey, pubkey, false
+	}
+
+	// If index 0, we're done
+	if index == 0 {
+		copy(seckey[:], sk[:])
+		copy(pubkey[:], pk[:])
+		return seckey, pubkey, true
+	}
+
+	// Iterate to get the key at the desired index
+	for i := 1; i <= index; i++ {
+		// Use nextSeed as input for next iteration (use fixed buffer)
+		copy(deriveSeedCopyBuf[:], nextSeed[:])
+
+		if !deterministicKeyPairIterator(deriveSeedCopyBuf[:], nextSeed[:], sk[:], pk[:]) {
+			return seckey, pubkey, false
+		}
+	}
+
+	copy(seckey[:], sk[:])
+	copy(pubkey[:], pk[:])
+	return seckey, pubkey, true
+}
+
+// deriveAddressAtIndexFromBytes derives the Skycoin address at a specific index from a mnemonic byte slice
+// Returns byte slice instead of string to avoid string() conversion issues on TinyGo bare-metal
+func deriveAddressAtIndexFromBytes(mnemonic []byte, mnemonicLen int, index int) []byte {
+	seckey, _, ok := deriveKeyPairAtIndexFromBytes(mnemonic, mnemonicLen, index)
+	if !ok {
+		return nil
+	}
+	return skycoinAddressFromSeckeyBytes(seckey[:])
+}
+
+// deriveSecretKeyAtIndexFromBytes derives just the secret key at a specific index from a mnemonic byte slice
+// This version avoids string() conversion which causes corruption in TinyGo bare-metal
+func deriveSecretKeyAtIndexFromBytes(mnemonic []byte, mnemonicLen int, index int) []byte {
+	seckey, _, ok := deriveKeyPairAtIndexFromBytes(mnemonic, mnemonicLen, index)
+	if !ok {
+		return nil
+	}
+	return seckey[:]
+}

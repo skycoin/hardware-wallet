@@ -1,3 +1,3 @@
-module github.com/0pcom/hardware-wallet/firmware
+module github.com/skycoin/hardware-wallet/firmware
 
 go 1.21

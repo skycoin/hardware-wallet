@@ -260,9 +260,9 @@ func doTransactionSign() {
 		}
 	}
 
-	// Get mnemonic
-	mnemonic := storageGetMnemonic()
-	if mnemonic == "" {
+	// Get mnemonic as bytes (avoid string() conversion corruption)
+	mnemonicBytes, mnemonicLen := storageGetMnemonicBytes()
+	if mnemonicBytes == nil || mnemonicLen == 0 {
 		sendFailure(FailureType_NotInitialized, "No mnemonic")
 		return
 	}
@@ -273,8 +273,8 @@ func doTransactionSign() {
 		// Get the digest to sign
 		digest := txMsgToSign(&tx, i)
 
-		// Derive key for this input's address index
-		seckey := deriveSecretKeyAtIndex(mnemonic, inputs[i].index)
+		// Derive key for this input's address index using bytes
+		seckey := deriveSecretKeyAtIndexFromBytes(mnemonicBytes, mnemonicLen, inputs[i].index)
 		if seckey == nil {
 			sendFailure(FailureType_ProcessError, "Key derivation failed")
 			return
@@ -324,11 +324,14 @@ func displayTxSigned(nbIn, nbOut int) {
 	oledRefresh()
 }
 
+// txSignResponseBuf is a global buffer for transaction sign response encoding
+// (local [1200]byte causes stack overflow in TinyGo bare-metal mode)
+var txSignResponseBuf [1200]byte
+
 // sendTransactionSignResponse sends ResponseTransactionSign message
 func sendTransactionSignResponse(signatures []string) {
-	// Encode response
+	// Encode response using global buffer to avoid stack overflow
 	// Buffer needs to hold: repeated string (130 chars each) + overhead
-	var buf [1200]byte // 8 * 130 + overhead
-	n := pbEncodeTransactionSignResponse(buf[:], signatures)
-	msgWrite(MessageType_ResponseTransactionSign, buf[:n])
+	n := pbEncodeTransactionSignResponse(txSignResponseBuf[:], signatures)
+	msgWrite(MessageType_ResponseTransactionSign, txSignResponseBuf[:n])
 }

@@ -216,24 +216,25 @@ func msgGetNextPacket() *[64]byte {
 	return (*[64]byte)(msgOutBuffer[offset : offset+64])
 }
 
+// msgResponseBuf is a global buffer for Success/Failure message encoding
+// (local [128]byte arrays are borderline for stack overflow in TinyGo bare-metal)
+var msgResponseBuf [128]byte
+
 // sendSuccess sends a Success message
 func sendSuccess(message string) {
-	var buf [128]byte
-	n := pbEncodeSuccess(buf[:], message)
-	msgWrite(MessageType_Success, buf[:n])
+	n := pbEncodeSuccess(msgResponseBuf[:], message)
+	msgWrite(MessageType_Success, msgResponseBuf[:n])
 }
 
 // sendSuccessBytes sends a Success message from a byte slice
 // This avoids string() conversion which doesn't work on TinyGo bare-metal
 func sendSuccessBytes(message []byte) {
-	var buf [128]byte
-	n := pbEncodeSuccessBytes(buf[:], message)
-	msgWrite(MessageType_Success, buf[:n])
+	n := pbEncodeSuccessBytes(msgResponseBuf[:], message)
+	msgWrite(MessageType_Success, msgResponseBuf[:n])
 }
 
 // sendFailure sends a Failure message
 func sendFailure(code uint32, message string) {
-	var buf [128]byte
-	n := pbEncodeFailure(buf[:], code, message)
-	msgWrite(MessageType_Failure, buf[:n])
+	n := pbEncodeFailure(msgResponseBuf[:], code, message)
+	msgWrite(MessageType_Failure, msgResponseBuf[:n])
 }

@@ -274,6 +274,10 @@ func handlePing() {
 // Response buffer for test commands - avoids string allocation
 var testResultBuf [128]byte
 
+// testMnemBuf is a global buffer for test mnemonic generation
+// (local [256]byte could cause stack overflow in TinyGo bare-metal mode)
+var testMnemBuf [256]byte
+
 // Byte slice literals for test command prefixes
 // Using byte slices instead of strings to avoid any string operations in TinyGo
 var (
@@ -300,6 +304,39 @@ func copyBytes(buf []byte, src []byte) int {
 		buf[i] = src[i]
 	}
 	return len(src)
+}
+
+// copyIntBytes writes decimal representation of an int to buf, returns bytes written
+func copyIntBytes(buf []byte, val int) int {
+	if val == 0 {
+		buf[0] = '0'
+		return 1
+	}
+	neg := val < 0
+	if neg {
+		val = -val
+	}
+	// Find number of digits
+	temp := val
+	digits := 0
+	for temp > 0 {
+		digits++
+		temp /= 10
+	}
+	// Write digits from right to left
+	n := digits
+	if neg {
+		n++
+	}
+	for i := n - 1; i >= 0; i-- {
+		if neg && i == 0 {
+			buf[i] = '-'
+		} else {
+			buf[i] = '0' + byte(val%10)
+			val /= 10
+		}
+	}
+	return n
 }
 
 // hexCharsBytes is used for hex encoding without string operations
@@ -361,6 +398,8 @@ var (
 	cmdECMULT  = []byte{'E', 'C', 'M', 'U', 'L', 'T'}
 	cmdGPOINT  = []byte{'G', 'P', 'O', 'I', 'N', 'T'}
 	cmdADDR    = []byte{'A', 'D', 'D', 'R'}
+	cmdADDRDBG = []byte{'A', 'D', 'D', 'R', 'D', 'B', 'G'}
+	cmdPBTEST  = []byte{'P', 'B', 'T', 'E', 'S', 'T'}
 	cmdDECOMP  = []byte{'D', 'E', 'C', 'O', 'M', 'P'}
 	cmdECDH    = []byte{'E', 'C', 'D', 'H'}
 	cmdSTEP1   = []byte{'S', 'T', 'E', 'P', '1'}
@@ -374,6 +413,12 @@ var (
 	cmdECM     = []byte{'E', 'C', 'M'}
 	cmdSETXYZ  = []byte{'S', 'E', 'T', 'X', 'Y', 'Z'}
 	cmdVMNEM   = []byte{'V', 'M', 'N', 'E', 'M'}
+	cmdSECPV   = []byte{'S', 'E', 'C', 'P', 'V'}      // secp256k1sum with "seed" test vector
+	cmdSECPD   = []byte{'S', 'E', 'C', 'P', 'D'}      // secp256k1sum debug - show intermediate values
+	cmdPKTEST  = []byte{'P', 'K', 'T', 'E', 'S', 'T'} // test pubkey from C test vector seckey
+	cmdPK3     = []byte{'P', 'K', '3'}                // test pubkey from seckey=3
+	cmdPK4     = []byte{'P', 'K', '4'}                // test pubkey from seckey=4 (only uses Double)
+	cmdDBL2    = []byte{'D', 'B', 'L', '2'}           // debug: Double(G) then Double(2G) step by step
 )
 
 // handleTestCommandBytes runs crypto test commands using byte slice input
@@ -1120,7 +1165,7 @@ func handleTestCommandBytes(cmd []byte) {
 		var testEntropy [16]byte
 		// All zeros should give: "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
 		// Use bytes-based approach to avoid string corruption
-		var testMnemBuf [256]byte
+		// Use global testMnemBuf to avoid stack overflow
 		mLen := entropyToMnemonicBytes(testEntropy[:], testMnemBuf[:])
 		testResultBuf[n] = 'L'
 		n++
@@ -1246,6 +1291,376 @@ func handleTestCommandBytes(cmd []byte) {
 			}
 			n += copyBytes(testResultBuf[n:], addrBytes[:maxLen])
 		}
+		sendSuccessBytes(testResultBuf[:n])
+		return
+	}
+
+	// CMP - compare string-based vs bytes-based address generation using same hardcoded mnemonic
+	if len(cmd) == 3 && cmd[0] == 'C' && cmd[1] == 'M' && cmd[2] == 'P' {
+		mnemonic := "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
+		mnemonicBytes := []byte(mnemonic)
+		mnemonicLen := len(mnemonic)
+
+		// Old string-based path
+		addr1 := deriveAddressAtIndexBytes(mnemonic, 0)
+
+		// New bytes-based path
+		addr2 := deriveAddressAtIndexFromBytes(mnemonicBytes, mnemonicLen, 0)
+
+		n += copyBytes(testResultBuf[n:], []byte{'C', 'M', 'P', ':'})
+
+		// Show string-based result (first 12 chars)
+		n += copyBytes(testResultBuf[n:], []byte{'S', '='})
+		showLen := 12
+		if len(addr1) < showLen {
+			showLen = len(addr1)
+		}
+		for i := 0; i < showLen; i++ {
+			testResultBuf[n] = addr1[i]
+			n++
+		}
+
+		n += copyBytes(testResultBuf[n:], []byte{','})
+
+		// Show bytes-based result (first 12 chars)
+		n += copyBytes(testResultBuf[n:], []byte{'B', '='})
+		showLen = 12
+		if len(addr2) < showLen {
+			showLen = len(addr2)
+		}
+		for i := 0; i < showLen; i++ {
+			testResultBuf[n] = addr2[i]
+			n++
+		}
+
+		sendSuccessBytes(testResultBuf[:n])
+		return
+	}
+
+	// STOR - compare stored mnemonic vs expected, and generate address from stored
+	if len(cmd) == 4 && cmd[0] == 'S' && cmd[1] == 'T' && cmd[2] == 'O' && cmd[3] == 'R' {
+		expected := "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
+		storageInit()
+		storedBytes, storedLen := storageGetMnemonicBytes()
+
+		n += copyBytes(testResultBuf[n:], []byte{'S', 'T', 'O', 'R', ':'})
+
+		// Show stored length vs expected length
+		n += copyBytes(testResultBuf[n:], []byte{'L', '='})
+		n += copyIntBytes(testResultBuf[n:], storedLen)
+		n += copyBytes(testResultBuf[n:], []byte{'/', '9', '3', ','})
+
+		// Compare first 20 bytes
+		match := true
+		if storedLen != len(expected) {
+			match = false
+		} else if storedBytes != nil {
+			for i := 0; i < 20 && i < storedLen; i++ {
+				if storedBytes[i] != expected[i] {
+					match = false
+					break
+				}
+			}
+		} else {
+			match = false
+		}
+		n += copyBytes(testResultBuf[n:], []byte{'M', '='})
+		if match {
+			testResultBuf[n] = 'Y'
+		} else {
+			testResultBuf[n] = 'N'
+		}
+		n++
+
+		// Generate address from stored mnemonic
+		n += copyBytes(testResultBuf[n:], []byte{','})
+		if storedBytes != nil && storedLen > 0 {
+			addr := deriveAddressAtIndexFromBytes(storedBytes, storedLen, 0)
+			n += copyBytes(testResultBuf[n:], []byte{'A', '='})
+			showLen := 12
+			if len(addr) < showLen {
+				showLen = len(addr)
+			}
+			for i := 0; i < showLen; i++ {
+				testResultBuf[n] = addr[i]
+				n++
+			}
+		} else {
+			n += copyBytes(testResultBuf[n:], []byte{'A', '=', 'N', 'O', 'N', 'E'})
+		}
+
+		sendSuccessBytes(testResultBuf[:n])
+		return
+	}
+
+	if bytesEqual(cmd, cmdADDRDBG) {
+		// Test address encoding with different buffer sizes
+		mnemonic := "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
+		addrBytes := deriveAddressAtIndexBytes(mnemonic, 0)
+
+		n += copyBytes(testResultBuf[n:], []byte{'A', 'D', 'D', 'R', 'D', 'B', 'G', ':'})
+
+		if len(addrBytes) == 0 {
+			n += copyBytes(testResultBuf[n:], []byte{'E', 'R', 'R', ':', 'N', 'O', 'A', 'D', 'D', 'R'})
+		} else {
+			// Copy address bytes to a LOCAL buffer first
+			var localAddr [64]byte
+			addrLen := len(addrBytes)
+			for i := 0; i < addrLen; i++ {
+				localAddr[i] = addrBytes[i]
+			}
+
+			// Test 1: [64]byte buffer with pbEncodeBytes
+			var buf64 [64]byte
+			len64 := pbEncodeBytes(buf64[:], 1, localAddr[:addrLen])
+			n += copyBytes(testResultBuf[n:], []byte{'6', '4', '='})
+			for i := 0; i < 4; i++ {
+				testResultBuf[n] = hexCharsBytes[buf64[i]>>4]
+				n++
+				testResultBuf[n] = hexCharsBytes[buf64[i]&0x0f]
+				n++
+			}
+			n += copyBytes(testResultBuf[n:], []byte{','})
+
+			// Test 2: [512]byte buffer with pbEncodeBytes (like sendAllSkycoinAddresses)
+			var buf512 [512]byte
+			len512 := pbEncodeBytes(buf512[:], 1, localAddr[:addrLen])
+			n += copyBytes(testResultBuf[n:], []byte{'5', '1', '2', '='})
+			for i := 0; i < 4; i++ {
+				testResultBuf[n] = hexCharsBytes[buf512[i]>>4]
+				n++
+				testResultBuf[n] = hexCharsBytes[buf512[i]&0x0f]
+				n++
+			}
+			n += copyBytes(testResultBuf[n:], []byte{','})
+
+			// Report lengths
+			n += copyBytes(testResultBuf[n:], []byte{'l', '='})
+			n += copyIntBytes(testResultBuf[n:], len64)
+			n += copyBytes(testResultBuf[n:], []byte{','})
+			n += copyIntBytes(testResultBuf[n:], len512)
+			_ = len64
+			_ = len512
+		}
+		sendSuccessBytes(testResultBuf[:n])
+		return
+	}
+
+	if bytesEqual(cmd, cmdPBTEST) {
+		// Test just pbEncodeVarint and pbEncodeTag directly
+		n += copyBytes(testResultBuf[n:], []byte{'P', 'B', 'T', 'E', 'S', 'T', ':'})
+
+		// Test 1: Write varint 10 to a buffer
+		var buf1 [16]byte
+		v1Len := pbEncodeVarint(buf1[:], 10)
+		n += copyBytes(testResultBuf[n:], []byte{'v', '1', '='})
+		n += copyIntBytes(testResultBuf[n:], int(buf1[0]))
+		n += copyBytes(testResultBuf[n:], []byte{'(', 'l'})
+		n += copyIntBytes(testResultBuf[n:], v1Len)
+		n += copyBytes(testResultBuf[n:], []byte{')', ','})
+
+		// Test 2: Write tag (field 1, wire 2) to a buffer
+		var buf2 [16]byte
+		t1Len := pbEncodeTag(buf2[:], 1, PB_BYTES)
+		n += copyBytes(testResultBuf[n:], []byte{'t', '1', '='})
+		n += copyIntBytes(testResultBuf[n:], int(buf2[0]))
+		n += copyBytes(testResultBuf[n:], []byte{'(', 'l'})
+		n += copyIntBytes(testResultBuf[n:], t1Len)
+		n += copyBytes(testResultBuf[n:], []byte{')', ','})
+
+		// Test 3: pbEncodeBytes with simple data
+		var buf3 [32]byte
+		testData := []byte{'A', 'B', 'C'}
+		e1Len := pbEncodeBytes(buf3[:], 1, testData)
+		n += copyBytes(testResultBuf[n:], []byte{'e', '1', '='})
+		for i := 0; i < 5 && i < e1Len; i++ {
+			testResultBuf[n] = hexCharsBytes[buf3[i]>>4]
+			n++
+			testResultBuf[n] = hexCharsBytes[buf3[i]&0x0f]
+			n++
+		}
+		n += copyBytes(testResultBuf[n:], []byte{'(', 'l'})
+		n += copyIntBytes(testResultBuf[n:], e1Len)
+		n += copyBytes(testResultBuf[n:], []byte{')'})
+
+		sendSuccessBytes(testResultBuf[:n])
+		return
+	}
+
+	if bytesEqual(cmd, cmdSECPV) {
+		// Test secp256k1Sum with "seed" - C test vector expects:
+		// c79454cf362b3f55e5effce09f664311650a44b9c189b3c8eed1ae9bd696cd9e
+		seed := []byte("seed")
+		result := secp256k1Sum(seed)
+		testResultBuf[n] = 'S'
+		n++
+		testResultBuf[n] = 'E'
+		n++
+		testResultBuf[n] = 'C'
+		n++
+		testResultBuf[n] = 'P'
+		n++
+		testResultBuf[n] = 'V'
+		n++
+		testResultBuf[n] = ':'
+		n++
+		if result == nil {
+			testResultBuf[n] = 'F'
+			n++
+			testResultBuf[n] = 'A'
+			n++
+			testResultBuf[n] = 'I'
+			n++
+			testResultBuf[n] = 'L'
+			n++
+		} else {
+			// Output full 32-byte hash for comparison
+			for i := 0; i < 32; i++ {
+				testResultBuf[n] = hexCharsBytes[result[i]>>4]
+				n++
+				testResultBuf[n] = hexCharsBytes[result[i]&0x0f]
+				n++
+			}
+		}
+		sendSuccessBytes(testResultBuf[:n])
+		return
+	}
+
+	if bytesEqual(cmd, cmdPK3) {
+		// Test pubkey from seckey=3
+		// expect 3G.x = f9308a019258c31049344f85f89d5229b531c845836f99b08601f113bce036f9
+		var seckey [32]byte
+		seckey[31] = 3
+		pubkey := pubkeyFromSeckey(seckey[:])
+
+		n += copyBytes(testResultBuf[n:], []byte{'P', 'K', '3', ':'})
+		n += copyHexBytes(testResultBuf[n:], pubkey[:17])
+		sendSuccessBytes(testResultBuf[:n])
+		return
+	}
+
+	if bytesEqual(cmd, cmdPK4) {
+		// Test pubkey from seckey=4 (only uses Double, no AddXY on non-infinity)
+		// 4G.x = e493dbf1c10d80f3581e4904930b1404cc6c13900ee0758474fa94abe8c4cd13
+		var seckey [32]byte
+		seckey[31] = 4
+		pubkey := pubkeyFromSeckey(seckey[:])
+
+		n += copyBytes(testResultBuf[n:], []byte{'P', 'K', '4', ':'})
+		n += copyHexBytes(testResultBuf[n:], pubkey[:17])
+		sendSuccessBytes(testResultBuf[:n])
+		return
+	}
+
+	if bytesEqual(cmd, cmdDBL2) {
+		// Debug: manually do G -> 2G -> 4G and show X coords
+		initSecp256k1G()
+		var p XYZ
+		p.SetXY(&secp256k1G) // p = G, Z=1
+
+		// Get G.x
+		var gx [32]byte
+		p.X.GetB32(gx[:])
+
+		// Double(G) = 2G
+		var p2 XYZ
+		p.Double(&p2)
+
+		// Get 2G affine
+		var xy2 XY
+		xy2.SetXYZ(&p2)
+		var x2 [32]byte
+		xy2.X.GetB32(x2[:])
+
+		// Double(2G) = 4G
+		var p4 XYZ
+		p2.Double(&p4)
+
+		// Get 4G affine
+		var xy4 XY
+		xy4.SetXYZ(&p4)
+		var x4 [32]byte
+		xy4.X.GetB32(x4[:])
+
+		// Output: G:xxxx,2G:xxxx,4G:xxxx
+		n += copyBytes(testResultBuf[n:], []byte{'G', ':'})
+		n += copyHexBytes(testResultBuf[n:], gx[:4])
+		n += copyBytes(testResultBuf[n:], []byte{','})
+		n += copyBytes(testResultBuf[n:], []byte{'2', 'G', ':'})
+		n += copyHexBytes(testResultBuf[n:], x2[:4])
+		n += copyBytes(testResultBuf[n:], []byte{','})
+		n += copyBytes(testResultBuf[n:], []byte{'4', 'G', ':'})
+		n += copyHexBytes(testResultBuf[n:], x4[:4])
+
+		sendSuccessBytes(testResultBuf[:n])
+		return
+	}
+
+	if bytesEqual(cmd, cmdPKTEST) {
+		// Test pubkey from C test vector seckey
+		// seckey = a7e130694166cdb95b1e1bbce3f21e4dbd63f46df42b48c5a1f8295033d57d04
+		// expect pubkey = 0244350faa76799fec03de2f324acd077fd1b686c3a89babc0ef47096ccc5a13fa
+		seckey := [32]byte{
+			0xa7, 0xe1, 0x30, 0x69, 0x41, 0x66, 0xcd, 0xb9,
+			0x5b, 0x1e, 0x1b, 0xbc, 0xe3, 0xf2, 0x1e, 0x4d,
+			0xbd, 0x63, 0xf4, 0x6d, 0xf4, 0x2b, 0x48, 0xc5,
+			0xa1, 0xf8, 0x29, 0x50, 0x33, 0xd5, 0x7d, 0x04,
+		}
+		pubkey := pubkeyFromSeckey(seckey[:])
+
+		n += copyBytes(testResultBuf[n:], []byte{'P', 'K', 'T', ':'})
+		n += copyHexBytes(testResultBuf[n:], pubkey[:17])
+		sendSuccessBytes(testResultBuf[:n])
+		return
+	}
+
+	if bytesEqual(cmd, cmdSECPD) {
+		// Debug secp256k1Sum with "seed" - show intermediate values
+		seed := []byte("seed")
+
+		// hash = SHA256(seed)
+		hash := sha256Sum(seed)
+
+		// Step 1: deterministic_key_pair_iterator_step(hash)
+		var seckey1 [32]byte
+		var pubkey1 [33]byte
+		deterministicKeyPairIteratorStep(hash[:], seckey1[:], pubkey1[:])
+
+		// hash2 = SHA256(hash)
+		hash2 := sha256Sum(hash[:])
+
+		// Step 2: deterministic_key_pair_iterator_step(hash2)
+		var seckey2 [32]byte
+		var pubkey2 [33]byte
+		deterministicKeyPairIteratorStep(hash2[:], seckey2[:], pubkey2[:])
+
+		// ECDH(pubkey2, seckey1)
+		ecdhKey := ecdh(pubkey2[:], seckey1[:])
+
+		// Output format: H1:xxxx,S1:xxxx,P1:xxxx,H2:xxxx,P2:xxxx,EC:xxxx
+		n += copyBytes(testResultBuf[n:], []byte{'H', '1', ':'})
+		n += copyHexBytes(testResultBuf[n:], hash[:8])
+		n += copyBytes(testResultBuf[n:], []byte{','})
+
+		n += copyBytes(testResultBuf[n:], []byte{'S', '1', ':'})
+		n += copyHexBytes(testResultBuf[n:], seckey1[:8])
+		n += copyBytes(testResultBuf[n:], []byte{','})
+
+		n += copyBytes(testResultBuf[n:], []byte{'P', '1', ':'})
+		n += copyHexBytes(testResultBuf[n:], pubkey1[:5])
+		n += copyBytes(testResultBuf[n:], []byte{','})
+
+		n += copyBytes(testResultBuf[n:], []byte{'P', '2', ':'})
+		n += copyHexBytes(testResultBuf[n:], pubkey2[:5])
+		n += copyBytes(testResultBuf[n:], []byte{','})
+
+		n += copyBytes(testResultBuf[n:], []byte{'E', 'C', ':'})
+		if ecdhKey != nil {
+			n += copyHexBytes(testResultBuf[n:], ecdhKey[:8])
+		} else {
+			n += copyBytes(testResultBuf[n:], []byte{'N', 'I', 'L'})
+		}
+
 		sendSuccessBytes(testResultBuf[:n])
 		return
 	}
@@ -1828,16 +2243,22 @@ func handleSetMnemonic() {
 		return
 	}
 
-	// Store mnemonic - use string conversion only here for storage
-	// (storage.go makes its own copy)
-	storageSetMnemonic(string(mnemonicBytes))
+	// Store mnemonic - copy bytes directly to avoid string() corruption
+	storageSetMnemonicFromBuffer(mnemonicBytes, mnemonicLen)
 	storageSetNeedsBackup(false) // Imported = already backed up
+
+	// Update display to show initialized state
+	layoutHome()
 
 	sendSuccess("Mnemonic set")
 }
 
 // Fixed buffer for GetEntropy response (max 1024 bytes)
 var getEntropyBuf [1024]byte
+
+// entropyResponseBuf is a global buffer for entropy response encoding
+// (local [1040]byte causes stack overflow in TinyGo bare-metal mode)
+var entropyResponseBuf [1040]byte
 
 // handleGetRawEntropy handles the GetRawEntropy/GetEntropy message
 // Returns raw entropy from hardware RNG
@@ -1854,14 +2275,17 @@ func handleGetRawEntropy() {
 	// Get raw entropy from hardware RNG
 	getEntropy(getEntropyBuf[:size])
 
-	var buf [1040]byte // Max 1024 bytes + overhead
-	n := pbEncodeEntropy(buf[:], getEntropyBuf[:size])
-	msgWrite(MessageType_Entropy, buf[:n])
+	n := pbEncodeEntropy(entropyResponseBuf[:], getEntropyBuf[:size])
+	msgWrite(MessageType_Entropy, entropyResponseBuf[:n])
 }
 
 // Mixed entropy internal state (for GetMixedEntropy)
 var mixedEntropyState [32]byte
 var mixedEntropyInitialized bool
+
+// rawEntropyBuf is a global buffer for raw entropy storage
+// (local [1024]byte causes stack overflow in TinyGo bare-metal mode)
+var rawEntropyBuf [1024]byte
 
 // handleGetMixedEntropy handles the GetMixedEntropy message
 // Returns entropy mixed with internal state (salted random)
@@ -1882,21 +2306,19 @@ func handleGetMixedEntropy() {
 	}
 
 	// Get raw entropy from hardware RNG
-	var rawEntropy [1024]byte
-	getEntropy(rawEntropy[:size])
+	getEntropy(rawEntropyBuf[:size])
 
 	// Mix raw entropy with internal state using XOR and hash
 	for i := 0; i < size; i++ {
-		getEntropyBuf[i] = rawEntropy[i] ^ mixedEntropyState[i%32]
+		getEntropyBuf[i] = rawEntropyBuf[i] ^ mixedEntropyState[i%32]
 	}
 
 	// Update internal state with hash of mixed entropy
 	newState := sha256Sum(getEntropyBuf[:size])
 	copy(mixedEntropyState[:], newState[:])
 
-	var buf [1040]byte
-	n := pbEncodeEntropy(buf[:], getEntropyBuf[:size])
-	msgWrite(MessageType_Entropy, buf[:n])
+	n := pbEncodeEntropy(entropyResponseBuf[:], getEntropyBuf[:size])
+	msgWrite(MessageType_Entropy, entropyResponseBuf[:n])
 }
 
 // handleBackupDevice handles the BackupDevice message
@@ -2161,9 +2583,9 @@ func doSkycoinAddress() {
 		addressN = 10
 	}
 
-	// Get mnemonic from storage
-	mnemonic := storageGetMnemonic()
-	if mnemonic == "" {
+	// Get mnemonic from storage as bytes (avoid string() conversion corruption)
+	mnemonicBytes, mnemonicLen := storageGetMnemonicBytes()
+	if mnemonicBytes == nil || mnemonicLen == 0 {
 		sendFailure(FailureType_NotInitialized, "No mnemonic")
 		return
 	}
@@ -2177,7 +2599,7 @@ func doSkycoinAddress() {
 		x += oledDrawChar(x, 0, 'e')
 		x += oledDrawChar(x, 0, 'n')
 		x += oledDrawChar(x, 0, ':')
-		mlen := int(storage.MnemonicLen)
+		mlen := mnemonicLen
 		if mlen == 0 {
 			x += oledDrawChar(x, 0, '0')
 		} else {
@@ -2194,8 +2616,8 @@ func doSkycoinAddress() {
 		}
 		// Show first 10 chars of mnemonic on second line
 		x = 0
-		for i := 0; i < 10 && i < len(mnemonic); i++ {
-			x += oledDrawChar(x, 10, mnemonic[i])
+		for i := 0; i < 10 && i < mnemonicLen; i++ {
+			x += oledDrawChar(x, 10, mnemonicBytes[i])
 		}
 		oledRefresh()
 	}
@@ -2204,7 +2626,7 @@ func doSkycoinAddress() {
 	pendingAddressCount = 0
 
 	for i := 0; i < addressN; i++ {
-		addrBytes := deriveAddressAtIndexBytes(mnemonic, startIndex+i)
+		addrBytes := deriveAddressAtIndexFromBytes(mnemonicBytes, mnemonicLen, startIndex+i)
 		if len(addrBytes) == 0 {
 			if DebugMode {
 				// Debug: show which step failed
@@ -2271,17 +2693,21 @@ func doSkycoinAddress() {
 	sendAllSkycoinAddresses()
 }
 
+// addressResponseBuf is a global buffer for address response encoding
+// (local [512]byte causes stack overflow in TinyGo bare-metal mode)
+var addressResponseBuf [512]byte
+
 // sendAllSkycoinAddresses sends all pending addresses
 func sendAllSkycoinAddresses() {
-	// Encode all addresses in response using byte buffers
-	var buf [512]byte
+	// Encode all addresses in response using global buffer
+	// Note: Using global buffer to avoid stack overflow with large local arrays
 	n := 0
 	for i := 0; i < pendingAddressCount; i++ {
 		// Encode address bytes directly as protobuf string field
-		n += pbEncodeBytesAsString(buf[n:], ResponseSkycoinAddress_addresses, pendingAddressesBytes[i][:pendingAddressLens[i]])
+		n += pbEncodeBytesAsString(addressResponseBuf[n:], ResponseSkycoinAddress_addresses, pendingAddressesBytes[i][:pendingAddressLens[i]])
 	}
 
-	msgWrite(MessageType_ResponseSkycoinAddress, buf[:n])
+	msgWrite(MessageType_ResponseSkycoinAddress, addressResponseBuf[:n])
 	addrState = ADDR_STATE_IDLE
 }
 
@@ -2373,15 +2799,15 @@ func doSkycoinSignMessage() {
 	// Decode the message
 	addrIndex, message := pbDecodeSkycoinSignMessage(msgInBuffer[:msgInSize])
 
-	// Get mnemonic from storage
-	mnemonic := storageGetMnemonic()
-	if mnemonic == "" {
+	// Get mnemonic from storage as bytes (avoid string() conversion corruption)
+	mnemonicBytes, mnemonicLen := storageGetMnemonicBytes()
+	if mnemonicBytes == nil || mnemonicLen == 0 {
 		sendFailure(FailureType_NotInitialized, "No mnemonic")
 		return
 	}
 
-	// Derive key at specified index
-	seckey := deriveSecretKeyAtIndex(mnemonic, addrIndex)
+	// Derive key at specified index using bytes
+	seckey := deriveSecretKeyAtIndexFromBytes(mnemonicBytes, mnemonicLen, addrIndex)
 	if seckey == nil {
 		sendFailure(FailureType_ProcessError, "Key derivation failed")
 		return
@@ -2592,42 +3018,48 @@ func handleLoadDevice() {
 		return
 	}
 
-	// Decode the message
-	mnemonic, pin, passphraseProtection, language, label, skipChecksum := pbDecodeLoadDevice(msgInBuffer[:msgInSize])
+	// Decode the message using bytes-based decoder to avoid string() corruption
+	mnemonicOffset, mnemonicLen, pinOffset, pinLen, passphraseProtection,
+		languageOffset, languageLen, labelOffset, labelLen, skipChecksum :=
+		pbDecodeLoadDeviceBytes(msgInBuffer[:msgInSize])
 
 	// Validate mnemonic unless skip_checksum is set
-	if mnemonic == "" {
+	if mnemonicLen == 0 {
 		sendFailure(FailureType_DataError, "No mnemonic provided")
 		return
 	}
 
+	// Get mnemonic bytes directly from msgInBuffer
+	mnemonicBytes := msgInBuffer[mnemonicOffset : mnemonicOffset+mnemonicLen]
+
 	if !skipChecksum {
-		if !validateMnemonic(mnemonic) {
+		if !validateMnemonicBytes(mnemonicBytes) {
 			sendFailure(FailureType_DataError, "Invalid mnemonic checksum")
 			return
 		}
 	}
 
-	// Store mnemonic
-	storageSetMnemonic(mnemonic)
+	// Store mnemonic - copy bytes directly to avoid string() corruption
+	storageSetMnemonicFromBuffer(mnemonicBytes, mnemonicLen)
 	storageSetNeedsBackup(false) // Loaded device = already backed up
 
-	// Set PIN if provided
-	if pin != "" {
-		storageSetPIN(pin)
+	// Set PIN if provided - copy bytes directly
+	if pinLen > 0 {
+		storageSetPINBytes(msgInBuffer[pinOffset:pinOffset+pinLen], pinLen)
 	}
 
 	// Set passphrase protection
 	storageSetPassphraseProtection(passphraseProtection)
 
-	// Set language if provided
-	if language != "" {
-		storageSetLanguage(language)
+	// Set language if provided - copy bytes directly
+	if languageLen > 0 {
+		storageSetLanguageFromBuffer(msgInBuffer[languageOffset:languageOffset+languageLen], languageLen)
 	}
 
-	// Set label if provided
-	if label != "" {
-		storageSetLabel(label)
+	// Set label if provided - copy bytes directly
+	if labelLen > 0 {
+		storageSetLabelFromBuffer(msgInBuffer[labelOffset:labelOffset+labelLen], labelLen)
+		storageSave() // Save after label since it doesn't auto-save
 	}
 
 	// Update display

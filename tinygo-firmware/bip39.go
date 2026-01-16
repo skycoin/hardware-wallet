@@ -677,37 +677,45 @@ func sha512Sum(data []byte) [64]byte {
 	return out
 }
 
+// Global buffers for HMAC-SHA512 to avoid stack overflow
+// (3 x 128 = 384 bytes is too large for stack in TinyGo bare-metal)
+var hmacKeyBuf [128]byte
+var hmacIpadBuf [128]byte
+var hmacOpadBuf [128]byte
+
 // hmacSha512 computes HMAC-SHA512
 func hmacSha512(key, message []byte) [64]byte {
 	const blockSize = 128
 
+	// Clear buffers first
+	for i := 0; i < 128; i++ {
+		hmacKeyBuf[i] = 0
+	}
+
 	// If key is longer than block size, hash it
-	var k [128]byte
 	if len(key) > blockSize {
 		hash := sha512Sum(key)
-		copy(k[:], hash[:])
+		copy(hmacKeyBuf[:], hash[:])
 	} else {
-		copy(k[:], key)
+		copy(hmacKeyBuf[:], key)
 	}
 
 	// Pad key to block size (already zero-padded)
 
 	// Inner padding
-	var ipad [128]byte
 	for i := 0; i < 128; i++ {
-		ipad[i] = k[i] ^ 0x36
+		hmacIpadBuf[i] = hmacKeyBuf[i] ^ 0x36
 	}
 
 	// Outer padding
-	var opad [128]byte
 	for i := 0; i < 128; i++ {
-		opad[i] = k[i] ^ 0x5c
+		hmacOpadBuf[i] = hmacKeyBuf[i] ^ 0x5c
 	}
 
 	// Inner hash: SHA512(ipad || message)
 	var innerState sha512State
 	sha512Init(&innerState)
-	sha512Update(&innerState, ipad[:])
+	sha512Update(&innerState, hmacIpadBuf[:])
 	sha512Update(&innerState, message)
 	var innerHash [64]byte
 	sha512Final(&innerState, innerHash[:])
@@ -715,7 +723,7 @@ func hmacSha512(key, message []byte) [64]byte {
 	// Outer hash: SHA512(opad || inner_hash)
 	var outerState sha512State
 	sha512Init(&outerState)
-	sha512Update(&outerState, opad[:])
+	sha512Update(&outerState, hmacOpadBuf[:])
 	sha512Update(&outerState, innerHash[:])
 	var result [64]byte
 	sha512Final(&outerState, result[:])
