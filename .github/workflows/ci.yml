@@ -1,0 +1,19 @@
+on: [pull_request]
+name: CI
+
+permissions:
+  contents: read
+
+jobs:
+  tinygo-firmware:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          cache: false
+
+      - name: Check TinyGo Firmware Formatting
+        run: make check-format-tinygo

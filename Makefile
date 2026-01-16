@@ -243,6 +243,21 @@ check-coverage: clean ## Generate test coverage reports HTML
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
+# TinyGo firmware targets
+format-tinygo: ## Format TinyGo firmware source code
+	gofmt -w -s ./tinygo-firmware/
+
+check-format-tinygo: ## Check TinyGo firmware source code formatting
+	@unformatted=$$(gofmt -l ./tinygo-firmware/); \
+	if [ -n "$$unformatted" ]; then \
+		echo "The following files are not formatted:"; \
+		echo "$$unformatted"; \
+		echo "Run 'make format-tinygo' to fix."; \
+		exit 1; \
+	fi
+
+lint-tinygo: check-format-tinygo ## Lint TinyGo firmware source code
+
 bootloader-clean:
 	$(MAKE) -C tiny-firmware/bootloader/ clean
 
