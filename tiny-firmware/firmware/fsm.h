@@ -24,6 +24,7 @@
 #include "messages.pb.h"
 #include "bitcoin_messages.pb.h"
 #include "tiny-firmware/firmware/error.h"
+#include "skycoin-crypto/tools/bip32.h"
 
 // message functions
 

@@ -23,6 +23,8 @@
 #include "tools/ripemd160.h"
 #include "tools/sha2.h"
 
+#define FROMHEX_MAXLEN 512
+
 extern void bn_print(const bignum256* a);
 
 bool verify_pub_key(const uint8_t* pub_key) {
@@ -45,6 +47,22 @@ void tohex(char* str, const uint8_t* buffer, int buffer_length)
     for (i = 0; i < buffer_length; ++i) {
         sprintf(&str[2 * i], "%02x", buffer[i]);
     }
+}
+
+const uint8_t* fromhex(const char* str)
+{
+    static uint8_t buf[FROMHEX_MAXLEN];
+    size_t len = strlen(str) / 2;
+    if (len > FROMHEX_MAXLEN) len = FROMHEX_MAXLEN;
+    for (size_t i = 0; i < len; i++) {
+        uint8_t c = 0;
+        if (str[i * 2] >= '0' && str[i * 2] <= '9') c += (str[i * 2] - '0') << 4;
+        if ((str[i * 2] & ~0x20) >= 'A' && (str[i * 2] & ~0x20) <= 'F') c += (10 + (str[i * 2] & ~0x20) - 'A') << 4;
+        if (str[i * 2 + 1] >= '0' && str[i * 2 + 1] <= '9') c += (str[i * 2 + 1] - '0');
+        if ((str[i * 2 + 1] & ~0x20) >= 'A' && (str[i * 2 + 1] & ~0x20) <= 'F') c += (10 + (str[i * 2 + 1] & ~0x20) - 'A');
+        buf[i] = c;
+    }
+    return buf;
 }
 
 void tobuff(const char* str, uint8_t* buf, size_t buffer_length)

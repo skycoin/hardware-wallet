@@ -27,10 +27,13 @@
 #include "skycoin-crypto/tools/base58.h"
 #include "skycoin-crypto/tools/bip32.h"
 #include "skycoin-crypto/tools/bip39.h"
+#include "skycoin-crypto/tools/bip44_coins.h"
 #include "skycoin-crypto/check_digest.h"
+#include "skycoin-crypto/tools/curves.h"
 #include "tiny-firmware/firmware/droplet.h"
 #include "tiny-firmware/firmware/entropy.h"
 #include "tiny-firmware/firmware/fsm.h"
+#include "tiny-firmware/firmware/hd_wallet.h"
 #include "tiny-firmware/firmware/fsm_impl.h"
 #include "tiny-firmware/firmware/gettext.h"
 #include "tiny-firmware/firmware/layout2.h"
@@ -51,25 +54,30 @@
 #include "fsm_bitcoin_impl.h"
 
 ErrCode_t msgBitcoinAddressImpl(BitcoinAddress *msg, ResponseSkycoinAddress *resp) {
-    uint8_t seckey[32] = {0};
-    uint8_t pubkey[33] = {0};
-    uint32_t start_index = !msg->has_start_index ? 0 : msg->start_index;
-    if (!protectPin(true)) {
-        return ErrPinRequired;
-    }
-    if (msg->address_n > 99) {
-        return ErrTooManyAddresses;
+
+  if (msg->address_n > 99) {
+      return ErrTooManyAddresses;
+  }
+
+  if (storage_hasMnemonic() == false) {
+      return ErrMnemonicRequired;
+  }
+
+  HDNode* node = fsm_getDerivedNode(SECP256K1_NAME, BIP44_BITCOIN);
+  HDNode addressNode;
+  size_t size_address = 36;
+
+  for(uint32_t i = msg->start_index; i < (msg->start_index + msg->address_n); i++){
+    memcpy(&addressNode, node, sizeof(HDNode));
+    hdnode_private_ckd(&addressNode, i);
+    hdnode_fill_public_key(&addressNode);
+
+    if(bitcoin_address_from_pubkey(addressNode.public_key, resp->addresses[resp->addresses_count], &size_address) != 1){
+      return ErrAddressGeneration;
     }
 
-    if (storage_hasMnemonic() == false) {
-        return ErrMnemonicRequired;
-    }
+    resp->addresses_count++;
+  }
 
-    if (fsm_getKeyPairAtIndex(msg->address_n, pubkey, seckey, resp, start_index, &bitcoin_address_from_pubkey) != ErrOk) {
-        return ErrAddressGeneration;
-    }
-    if (msg->address_n == 1 && msg->has_confirm_address && msg->confirm_address) {
-        return ErrUserConfirmation;
-    }
-    return ErrOk;
+  return ErrOk;
 }

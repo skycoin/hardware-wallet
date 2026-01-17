@@ -34,6 +34,8 @@
 typedef enum {
     HASHER_SHA2,
     HASHER_BLAKE,
+    HASHER_SHA2D,
+    HASHER_SHA2_RIPEMD,
 } HasherType;
 
 typedef struct {
