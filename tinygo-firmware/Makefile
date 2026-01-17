@@ -1,0 +1,128 @@
+BINARY = skyfirmware-tinygo.bin
+ELF = skyfirmware-tinygo.elf
+TARGET = ./stm32f205.json
+
+# All Go source files
+# Minimal test - self-contained main.go
+SOURCES = main.go
+# Full firmware sources:
+#SOURCES = _early_init.go main.go oled.go \
+#	usb_descriptors.go usb_device.go \
+#	messages.go protobuf.go dispatch.go \
+#	types.go handlers.go
+
+.PHONY: all build build-debug flash clean format lint check tidy daemon stop ping crypto features test
+
+all: build
+
+build: $(BINARY)
+
+# Debug build with debug screens enabled
+build-debug:
+	@echo "Building TinyGo firmware with DEBUG mode..."
+	tinygo build -o $(ELF) \
+		-target=$(TARGET) \
+		-opt=z \
+		-gc=leaking \
+		-scheduler=none \
+		-tags debug \
+		.
+	@echo "Converting to binary..."
+	arm-none-eabi-objcopy -O binary $(ELF) temp.bin
+	@echo "Padding to minimum 8KB (daemon buffer alignment)..."
+	@SIZE=$$(stat -c%s temp.bin); if [ $$SIZE -lt 8192 ]; then truncate -s 8192 temp.bin; fi
+	@echo "Signing firmware..."
+	../tiny-firmware/bootloader/firmware_sign.py -f temp.bin \
+		-pk 03d7fe879bea92c657797881cc2437fea86337ed4dce19859f43d023c1772c81dd \
+		02ce15278b4d1cf5c20a2a518b95438bc1d497b1d55bddf69dbb253b538c131625 \
+		02bebd3856b3fdadc54714220819946980d413edc8bc49f679b88fd2bf99ae0e15 \
+		02015aa7da6acb423266a50db8821b42493cd2d874911c309209a003a1051c5d74 \
+		03579beeeb075dcd20c63cbd3851ff0c81b1448c4f28597ce28924344a3f4bdbd4 -a > /dev/null 2>&1
+	@mv temp.bin $(BINARY)
+	@echo "Firmware size (DEBUG):"
+	@ls -lh $(BINARY)
+	@echo ""
+	@echo "Debug build complete: $(BINARY)"
+
+DEVICE_ASM = device_stm32f205.s
+DEVICE_OBJ = device_stm32f205.o
+
+$(DEVICE_OBJ): $(DEVICE_ASM)
+	@echo "Assembling device startup code..."
+	arm-none-eabi-as -mcpu=cortex-m3 -mthumb -o $(DEVICE_OBJ) $(DEVICE_ASM)
+
+$(BINARY): $(SOURCES) $(TARGET) stm32f205-firmware.ld $(DEVICE_OBJ)
+	@echo "Building TinyGo firmware with OLED support..."
+	tinygo build -o $(ELF) \
+		-target=$(TARGET) \
+		-opt=z \
+		-gc=leaking \
+		-scheduler=none \
+		.
+	@echo "Converting to binary..."
+	arm-none-eabi-objcopy -O binary $(ELF) temp.bin
+	@echo "Padding to minimum 8KB (daemon buffer alignment)..."
+	@SIZE=$$(stat -c%s temp.bin); if [ $$SIZE -lt 8192 ]; then truncate -s 8192 temp.bin; fi
+	@echo "Signing firmware..."
+	../tiny-firmware/bootloader/firmware_sign.py -f temp.bin \
+		-pk 03d7fe879bea92c657797881cc2437fea86337ed4dce19859f43d023c1772c81dd \
+		02ce15278b4d1cf5c20a2a518b95438bc1d497b1d55bddf69dbb253b538c131625 \
+		02bebd3856b3fdadc54714220819946980d413edc8bc49f679b88fd2bf99ae0e15 \
+		02015aa7da6acb423266a50db8821b42493cd2d874911c309209a003a1051c5d74 \
+		03579beeeb075dcd20c63cbd3851ff0c81b1448c4f28597ce28924344a3f4bdbd4 -a > /dev/null 2>&1
+	@mv temp.bin $(BINARY)
+	@echo "Firmware size:"
+	@ls -lh $(BINARY)
+	@echo ""
+	@echo "Copying to firmware..."
+	@cp $(BINARY) ../firmware/skywallet-firmware-tinygo.bin
+	@echo "Build complete: $(BINARY)"
+
+flash: $(BINARY)
+	@echo "Flash firmware using:"
+	@echo "  curl -X PUT http://127.0.0.1:9510/api/v1/firmware_update -F \"file=@$(BINARY)\""
+
+clean:
+	rm -f $(BINARY) $(ELF) $(DEVICE_OBJ)
+
+size: $(ELF)
+	arm-none-eabi-size $(ELF)
+
+# Linting and formatting
+tidy:
+	go mod tidy
+
+format: tidy
+	goimports -w -local github.com/0pcom/hardware-wallet .
+	gofmt -s -w .
+
+lint:
+	golangci-lint --version
+	golangci-lint run -c .golangci.yml .
+
+check: format lint
+	@echo "Format and lint checks complete"
+
+# Device testing targets (use test-flash.sh)
+daemon:
+	@./test-flash.sh daemon
+
+stop:
+	@./test-flash.sh stop
+
+flash: $(BINARY)
+	@./test-flash.sh flash
+
+features:
+	@./test-flash.sh features
+
+ping:
+	@./test-flash.sh ping "hello"
+
+crypto:
+	@./test-flash.sh crypto
+
+test: $(BINARY)
+	@./test-flash.sh flash
+	@sleep 2
+	@./test-flash.sh features

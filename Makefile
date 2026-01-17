@@ -98,7 +98,7 @@ ifeq ($(OS),Windows_NT)
 endif
 
 firmware-deps: build-deps ## Build firmware dependencies
-	$(MAKE) -C tiny-firmware/vendor/libopencm3/
+	$(MAKE) -C tiny-firmware/vendor/libopencm3/ SRCLIBDIR=$(CURDIR)/tiny-firmware/vendor/libopencm3/lib
 
 generate-bitmaps:
 	cd tiny-firmware/gen/bitmaps/ && python2 generate.py
@@ -118,6 +118,7 @@ skycoin-crypto-lib:
 
 firmware: tiny-firmware/skyfirmware.bin ## Build skycoin wallet firmware
 	cp tiny-firmware/skyfirmware.bin build/skyfirmware.bin
+	cp tiny-firmware/skyfirmware.bin firmware/skywallet-firmware-c.bin
 
 firmware-mem-protect: MEMORY_PROTECT=1
 firmware-mem-protect: firmware ## Build skycoin wallet firmware
@@ -241,6 +242,21 @@ check-coverage: clean ## Generate test coverage reports HTML
 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
+
+# TinyGo firmware targets
+format-tinygo: ## Format TinyGo firmware source code
+	gofmt -w -s ./tinygo-firmware/
+
+check-format-tinygo: ## Check TinyGo firmware source code formatting
+	@unformatted=$$(gofmt -l ./tinygo-firmware/); \
+	if [ -n "$$unformatted" ]; then \
+		echo "The following files are not formatted:"; \
+		echo "$$unformatted"; \
+		echo "Run 'make format-tinygo' to fix."; \
+		exit 1; \
+	fi
+
+lint-tinygo: check-format-tinygo ## Lint TinyGo firmware source code
 
 bootloader-clean:
 	$(MAKE) -C tiny-firmware/bootloader/ clean

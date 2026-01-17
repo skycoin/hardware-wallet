@@ -1,0 +1,82 @@
+version: "2"
+run:
+  concurrency: 4
+  issues-exit-code: 1
+  tests: true
+output:
+  formats:
+    text:
+      path: stdout
+      print-linter-name: true
+      print-issued-lines: true
+      colors: true
+linters:
+  default: none
+  enable:
+    - misspell
+    - nakedret
+    - revive
+  # Disabled for TinyGo compatibility (typecheck fails on runtime/volatile):
+  # - errcheck
+  # - gosec
+  # - ineffassign
+  # - staticcheck
+  # - unconvert
+  # - unparam
+  # - unused
+  settings:
+    dupl:
+      threshold: 100
+    errcheck:
+      check-type-assertions: false
+      check-blank: true
+    goconst:
+      min-len: 3
+      min-occurrences: 3
+    gocyclo:
+      min-complexity: 10
+    lll:
+      line-length: 120
+      tab-width: 1
+    misspell:
+      locale: US
+    nakedret:
+      max-func-lines: 30
+    prealloc:
+      simple: true
+      range-loops: true
+      for-loops: false
+    unparam:
+      check-exported: false
+    revive:
+      rules:
+        - name: package-comments
+          disabled: true
+  exclusions:
+    generated: lax
+    paths:
+      - full_firmware$
+    rules:
+      - linters:
+          - staticcheck
+        text: "ST1005:"
+      - linters:
+          - staticcheck
+        text: "QF1003:"
+      - linters:
+          - staticcheck
+        text: "QF1001:"
+      - linters:
+          - misspell
+        path: bip39_words.go
+      - linters:
+          - misspell
+        text: "[Cc]ancelled"
+issues:
+  new: false
+formatters:
+  enable:
+    - gofmt
+  settings:
+    gofmt:
+      simplify: true

@@ -1,0 +1,6 @@
+{
+    "inherits": ["cortex-m3"],
+    "build-tags": ["stm32f205", "stm32f4disco", "stm32f407", "stm32f4", "stm32"],
+    "linkerscript": "stm32f205-firmware.ld",
+    "default-stack-size": 8192
+}

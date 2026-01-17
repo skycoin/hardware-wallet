@@ -1,0 +1,620 @@
+package main
+
+import (
+	"runtime/volatile"
+	"unsafe"
+)
+
+// Flash memory layout for STM32F205RG
+const (
+	FLASH_ORIGIN        = 0x08000000
+	FLASH_META_START    = 0x08008000 // Metadata area (sector 2-3)
+	FLASH_STORAGE_START = 0x08008100 // Storage starts after 256-byte header
+	FLASH_STORAGE_LEN   = 0x7F00     // ~32KB - 256 bytes
+	FLASH_APP_START     = 0x08010000 // Application code (sector 4+)
+
+	// Flash control registers
+	FLASH_KEYR    = 0x40023C04
+	FLASH_SR      = 0x40023C0C
+	FLASH_CR      = 0x40023C10
+	FLASH_OPTKEYR = 0x40023C08
+
+	// Flash keys for unlocking
+	FLASH_KEY1 = 0x45670123
+	FLASH_KEY2 = 0xCDEF89AB
+
+	// Flash CR bits
+	FLASH_CR_PG    = 1 << 0  // Programming
+	FLASH_CR_SER   = 1 << 1  // Sector erase
+	FLASH_CR_MER   = 1 << 2  // Mass erase
+	FLASH_CR_SNB   = 3       // Sector number shift
+	FLASH_CR_PSIZE = 8       // Program size shift
+	FLASH_CR_STRT  = 1 << 16 // Start
+	FLASH_CR_LOCK  = 1 << 31 // Lock
+
+	// Flash SR bits
+	FLASH_SR_BSY = 1 << 16 // Busy
+	FLASH_SR_EOP = 1 << 0  // End of operation
+)
+
+// Storage magic value
+const STORAGE_MAGIC = 0x726F7473 // "stor" in little-endian
+
+// Storage version
+const STORAGE_VERSION = 1
+
+// StorageHDNode holds BIP32 HD node data
+type StorageHDNode struct {
+	Depth       uint32
+	Fingerprint uint32
+	ChildNum    uint32
+	ChainCode   [32]byte
+	PrivateKey  [32]byte
+	PublicKey   [33]byte
+	HasPrivate  bool
+	HasPublic   bool
+}
+
+// Storage holds all persistent wallet data
+type Storage struct {
+	Magic   uint32 // Must be STORAGE_MAGIC
+	Version uint32
+
+	// HD Node for BIP32
+	Node    StorageHDNode
+	HasNode bool
+
+	// Mnemonic seed phrase
+	Mnemonic    [241]byte
+	MnemonicLen uint8
+	HasMnemonic bool
+
+	// Security settings
+	PassphraseProtection bool
+	PinFailedAttempts    uint32
+	PIN                  [10]byte
+	PINLen               uint8
+	HasPIN               bool
+
+	// Device settings
+	Language [17]byte
+	HasLabel bool
+	Label    [33]byte
+	LabelLen uint8
+
+	// Flags
+	Imported         bool
+	NeedsBackup      bool
+	UnfinishedBackup bool
+	Initialized      bool
+
+	// U2F (if needed later)
+	U2FCounter uint32
+
+	// Auto-lock delay in milliseconds
+	AutoLockDelayMs uint32
+}
+
+// In-memory storage cache
+var storage Storage
+var storageLoaded bool
+
+// Session state
+var sessionPINcached bool
+var sessionPIN [10]byte
+
+// flashReg returns a volatile register at the given address
+func flashReg(addr uintptr) *volatile.Register32 {
+	return (*volatile.Register32)(unsafe.Pointer(addr))
+}
+
+// flashUnlock unlocks flash for writing
+func flashUnlock() {
+	// Check if already unlocked
+	if flashReg(FLASH_CR).Get()&FLASH_CR_LOCK == 0 {
+		return
+	}
+	// Write unlock sequence
+	flashReg(FLASH_KEYR).Set(FLASH_KEY1)
+	flashReg(FLASH_KEYR).Set(FLASH_KEY2)
+}
+
+// flashLock locks flash after writing
+func flashLock() {
+	flashReg(FLASH_CR).SetBits(FLASH_CR_LOCK)
+}
+
+// flashWaitBusy waits for flash operation to complete
+func flashWaitBusy() {
+	for flashReg(FLASH_SR).Get()&FLASH_SR_BSY != 0 {
+	}
+}
+
+// flashEraseSector erases a flash sector (2 or 3 for metadata)
+func flashEraseSector(sector uint8) {
+	flashUnlock()
+	flashWaitBusy()
+
+	// Set sector number and erase bit
+	cr := flashReg(FLASH_CR).Get()
+	cr &^= 0x78        // Clear sector bits
+	cr |= FLASH_CR_SER // Sector erase
+	cr |= uint32(sector) << FLASH_CR_SNB
+	cr |= 2 << FLASH_CR_PSIZE // 32-bit parallelism
+	flashReg(FLASH_CR).Set(cr)
+
+	// Start erase
+	flashReg(FLASH_CR).SetBits(FLASH_CR_STRT)
+	flashWaitBusy()
+
+	// Clear sector erase bit
+	flashReg(FLASH_CR).ClearBits(FLASH_CR_SER)
+	flashLock()
+}
+
+// flashWrite32 writes a 32-bit word to flash
+func flashWrite32(addr uintptr, val uint32) {
+	flashUnlock()
+	flashWaitBusy()
+
+	// Set programming mode
+	cr := flashReg(FLASH_CR).Get()
+	cr |= FLASH_CR_PG
+	cr |= 2 << FLASH_CR_PSIZE // 32-bit
+	flashReg(FLASH_CR).Set(cr)
+
+	// Write the data
+	*(*uint32)(unsafe.Pointer(addr)) = val
+	flashWaitBusy()
+
+	// Clear programming bit
+	flashReg(FLASH_CR).ClearBits(FLASH_CR_PG)
+	flashLock()
+}
+
+// flashRead32 reads a 32-bit word from flash
+func flashRead32(addr uintptr) uint32 {
+	return *(*uint32)(unsafe.Pointer(addr))
+}
+
+// storageInit initializes storage from flash
+func storageInit() {
+	if storageLoaded {
+		return
+	}
+
+	// Read magic to check if storage is valid
+	magic := flashRead32(FLASH_STORAGE_START)
+	if magic != STORAGE_MAGIC {
+		// Storage not initialized - use defaults
+		storage = Storage{
+			Magic:   STORAGE_MAGIC,
+			Version: STORAGE_VERSION,
+		}
+		copy(storage.Language[:], "en")
+		storageLoaded = true
+		return
+	}
+
+	// Read storage from flash
+	src := (*[unsafe.Sizeof(Storage{})]byte)(unsafe.Pointer(uintptr(FLASH_STORAGE_START)))
+	dst := (*[unsafe.Sizeof(Storage{})]byte)(unsafe.Pointer(&storage))
+	*dst = *src
+	storageLoaded = true
+}
+
+// Firmware metadata header buffer (256 bytes at 0x08008000)
+// Must preserve: magic "SKY1", code length, signature indices, signatures
+var metadataHeaderBuf [256]byte
+
+// storageSave saves storage to flash
+// IMPORTANT: Must preserve the first 256 bytes (firmware metadata header)
+// which contains "SKY1" magic, code length, and signatures needed for boot
+func storageSave() {
+	storage.Magic = STORAGE_MAGIC
+	storage.Version = STORAGE_VERSION
+
+	// First, backup the metadata header (0x08008000 - 0x080080FF)
+	// This contains firmware magic "SKY1", code length, and signatures
+	for i := 0; i < 256; i += 4 {
+		val := flashRead32(uintptr(FLASH_META_START + i))
+		metadataHeaderBuf[i] = byte(val)
+		metadataHeaderBuf[i+1] = byte(val >> 8)
+		metadataHeaderBuf[i+2] = byte(val >> 16)
+		metadataHeaderBuf[i+3] = byte(val >> 24)
+	}
+
+	// Erase sector 2 (metadata area where storage lives)
+	flashEraseSector(2)
+
+	// Restore the metadata header first
+	for i := 0; i < 256; i += 4 {
+		val := uint32(metadataHeaderBuf[i]) | uint32(metadataHeaderBuf[i+1])<<8 |
+			uint32(metadataHeaderBuf[i+2])<<16 | uint32(metadataHeaderBuf[i+3])<<24
+		flashWrite32(uintptr(FLASH_META_START+i), val)
+	}
+
+	// Write storage structure to flash (after the 256-byte header)
+	src := (*[unsafe.Sizeof(Storage{})]byte)(unsafe.Pointer(&storage))
+	size := int(unsafe.Sizeof(Storage{}))
+
+	for i := 0; i < size; i += 4 {
+		var val uint32
+		if i+3 < size {
+			val = uint32(src[i]) | uint32(src[i+1])<<8 | uint32(src[i+2])<<16 | uint32(src[i+3])<<24
+		} else {
+			// Handle remaining bytes
+			val = 0
+			for j := 0; j+i < size; j++ {
+				val |= uint32(src[i+j]) << (j * 8)
+			}
+		}
+		flashWrite32(uintptr(FLASH_STORAGE_START+i), val)
+	}
+}
+
+// storageWipe clears all storage data
+func storageWipe() {
+	storage = Storage{
+		Magic:   STORAGE_MAGIC,
+		Version: STORAGE_VERSION,
+	}
+	copy(storage.Language[:], "en")
+	sessionClear(true)
+	storageSave()
+}
+
+// sessionClear clears session data
+func sessionClear(clearPIN bool) {
+	if clearPIN {
+		sessionPINcached = false
+		for i := range sessionPIN {
+			sessionPIN[i] = 0
+		}
+	}
+}
+
+// storageIsInitialized returns true if wallet has been set up
+func storageIsInitialized() bool {
+	storageInit()
+	return storage.Initialized
+}
+
+// storageHasPIN returns true if PIN is set
+func storageHasPIN() bool {
+	storageInit()
+	return storage.HasPIN
+}
+
+// storageGetLabel returns the device label
+func storageGetLabel() string {
+	storageInit()
+	if !storage.HasLabel {
+		return ""
+	}
+	return string(storage.Label[:storage.LabelLen])
+}
+
+// storageSetLabel sets the device label
+func storageSetLabel(label string) {
+	storage.HasLabel = len(label) > 0
+	storage.LabelLen = uint8(len(label))
+	if storage.LabelLen > 32 {
+		storage.LabelLen = 32
+	}
+	copy(storage.Label[:], label)
+}
+
+// storageNeedsBackup returns true if mnemonic needs backup
+func storageNeedsBackup() bool {
+	storageInit()
+	return storage.NeedsBackup
+}
+
+// storageSetNeedsBackup sets the needs backup flag
+func storageSetNeedsBackup(needsBackup bool) {
+	storage.NeedsBackup = needsBackup
+	storageSave()
+}
+
+// storagePINCompare compares a PIN with the stored PIN
+func storagePINCompare(pin string) bool {
+	storageInit()
+	if !storage.HasPIN {
+		return true // No PIN set means any PIN is valid
+	}
+	if len(pin) != int(storage.PINLen) {
+		return false
+	}
+	for i := 0; i < int(storage.PINLen); i++ {
+		if pin[i] != storage.PIN[i] {
+			return false
+		}
+	}
+	return true
+}
+
+// storageSetPIN sets a new PIN
+func storageSetPIN(pin string) {
+	storage.HasPIN = len(pin) > 0
+	storage.PINLen = uint8(len(pin))
+	if storage.PINLen > 9 {
+		storage.PINLen = 9
+	}
+	copy(storage.PIN[:], pin)
+	storageSave()
+}
+
+// storageSetPINBytes sets a new PIN from byte slice (avoids string conversion)
+func storageSetPINBytes(pin []byte, pinLen int) {
+	storage.HasPIN = pinLen > 0
+	if pinLen > 9 {
+		pinLen = 9
+	}
+	storage.PINLen = uint8(pinLen)
+	for i := 0; i < pinLen; i++ {
+		storage.PIN[i] = pin[i]
+	}
+	storageSave()
+}
+
+// storagePINCompareBytes compares a PIN with the stored PIN using byte slices
+func storagePINCompareBytes(pin []byte, pinLen int) bool {
+	storageInit()
+	if !storage.HasPIN {
+		return true // No PIN set means any PIN is valid
+	}
+	if pinLen != int(storage.PINLen) {
+		return false
+	}
+	for i := 0; i < pinLen; i++ {
+		if pin[i] != storage.PIN[i] {
+			return false
+		}
+	}
+	return true
+}
+
+// sessionIsPINcached returns true if PIN is cached for this session
+func sessionIsPINcached() bool {
+	return sessionPINcached
+}
+
+// sessionCachePIN caches the PIN for this session
+func sessionCachePIN() {
+	sessionPINcached = true
+}
+
+// storageGetMnemonic returns the stored mnemonic
+func storageGetMnemonic() string {
+	storageInit()
+	if !storage.HasMnemonic {
+		return ""
+	}
+	return string(storage.Mnemonic[:storage.MnemonicLen])
+}
+
+// storageHasMnemonic returns true if a mnemonic is stored
+func storageHasMnemonic() bool {
+	storageInit()
+	return storage.HasMnemonic
+}
+
+// storageGetMnemonicBytes returns pointer to mnemonic byte array and length
+// Use this to avoid string conversion issues in TinyGo bare-metal
+func storageGetMnemonicBytes() ([]byte, int) {
+	storageInit()
+	if !storage.HasMnemonic || storage.MnemonicLen == 0 {
+		return nil, 0
+	}
+	return storage.Mnemonic[:], int(storage.MnemonicLen)
+}
+
+// storageSetMnemonic stores a mnemonic
+func storageSetMnemonic(mnemonic string) {
+	storage.HasMnemonic = len(mnemonic) > 0
+	storage.MnemonicLen = uint8(len(mnemonic))
+	if storage.MnemonicLen > 240 {
+		storage.MnemonicLen = 240
+	}
+	copy(storage.Mnemonic[:], mnemonic)
+	storage.Initialized = true
+	storage.NeedsBackup = true
+	storageSave()
+}
+
+// storageSetMnemonicBytes stores a mnemonic from bytes with given length
+// This avoids string conversion which causes corruption in TinyGo bare-metal
+func storageSetMnemonicBytes(length int) {
+	// The mnemonic was already written directly to storage.Mnemonic
+	// by entropyToMnemonicBytes - we just need to set the metadata
+	storage.HasMnemonic = length > 0
+	if length > 240 {
+		length = 240
+	}
+	storage.MnemonicLen = uint8(length)
+	storage.Initialized = true
+	storage.NeedsBackup = true
+	storageSave()
+}
+
+// storageSetMnemonicFromBuffer copies mnemonic bytes from a buffer to storage
+// This avoids string() conversion which causes corruption in TinyGo bare-metal
+func storageSetMnemonicFromBuffer(data []byte, length int) {
+	storage.HasMnemonic = length > 0
+	if length > 240 {
+		length = 240
+	}
+	storage.MnemonicLen = uint8(length)
+	// Copy bytes directly without string conversion
+	for i := 0; i < length; i++ {
+		storage.Mnemonic[i] = data[i]
+	}
+	storage.Initialized = true
+	storage.NeedsBackup = true
+	storageSave()
+}
+
+// storageGetMnemonicDest returns a pointer to the mnemonic storage buffer
+// for direct writing by entropyToMnemonicBytes
+func storageGetMnemonicDest() []byte {
+	return storage.Mnemonic[:]
+}
+
+// deviceIDBuf holds the cached device ID (24 hex chars)
+var deviceIDBuf [24]byte
+var deviceIDInit bool
+
+// storageGetDeviceIDBytes returns a unique device ID as a byte slice
+// The ID is read from ROM at 0x1FFF7A10, hashed with SHA256 (twice like C firmware),
+// and converted to 24-character hex string
+// NOTE: Returns byte slice, not string - avoid string() conversion in TinyGo bare-metal
+func storageGetDeviceIDBytes() []byte {
+	if !deviceIDInit {
+		// Read 12-byte STM32 unique ID from ROM
+		const STM32_UUID_ADDR = 0x1FFF7A10
+		uuid := (*[12]byte)(unsafe.Pointer(uintptr(STM32_UUID_ADDR)))
+
+		// Hash twice with SHA256 (matches C firmware serialno_from_uuid)
+		hash1 := sha256Sum(uuid[:])
+		hash2 := sha256Sum(hash1[:])
+
+		// Convert first 12 bytes to hex - use byte literals to avoid string
+		for i := 0; i < 12; i++ {
+			hi := hash2[i] >> 4
+			lo := hash2[i] & 0x0F
+			// Hex chars as bytes
+			if hi < 10 {
+				deviceIDBuf[i*2] = '0' + hi
+			} else {
+				deviceIDBuf[i*2] = 'A' + (hi - 10)
+			}
+			if lo < 10 {
+				deviceIDBuf[i*2+1] = '0' + lo
+			} else {
+				deviceIDBuf[i*2+1] = 'A' + (lo - 10)
+			}
+		}
+		deviceIDInit = true
+	}
+	return deviceIDBuf[:]
+}
+
+// storageGetDeviceID returns a unique device ID as a string
+// DEPRECATED: Use storageGetDeviceIDBytes instead for TinyGo bare-metal
+func storageGetDeviceID() string {
+	// This is only safe because the underlying bytes are valid ASCII hex chars
+	bytes := storageGetDeviceIDBytes()
+	return string(bytes)
+}
+
+// storageSetLanguage sets the device language
+func storageSetLanguage(language string) {
+	langLen := len(language)
+	if langLen > 16 {
+		langLen = 16
+	}
+	copy(storage.Language[:], language[:langLen])
+	if langLen < 17 {
+		storage.Language[langLen] = 0 // null terminate
+	}
+	storageSave()
+}
+
+// storageSetLanguageFromBuffer sets the device language from bytes
+// This avoids string() conversion which causes corruption in TinyGo bare-metal
+func storageSetLanguageFromBuffer(data []byte, length int) {
+	if length > 16 {
+		length = 16
+	}
+	for i := 0; i < length; i++ {
+		storage.Language[i] = data[i]
+	}
+	if length < 17 {
+		storage.Language[length] = 0 // null terminate
+	}
+	storageSave()
+}
+
+// storageSetLabelFromBuffer sets the device label from bytes
+// This avoids string() conversion which causes corruption in TinyGo bare-metal
+func storageSetLabelFromBuffer(data []byte, length int) {
+	storage.HasLabel = length > 0
+	if length > 32 {
+		length = 32
+	}
+	storage.LabelLen = uint8(length)
+	for i := 0; i < length; i++ {
+		storage.Label[i] = data[i]
+	}
+	// No need to save here - caller will save or we chain with other operations
+}
+
+// storageGetLanguage returns the device language
+func storageGetLanguage() string {
+	// Find null terminator or end of array
+	n := 0
+	for n < len(storage.Language) && storage.Language[n] != 0 {
+		n++
+	}
+	return string(storage.Language[:n])
+}
+
+// storageSetPassphraseProtection sets the passphrase protection flag
+func storageSetPassphraseProtection(enabled bool) {
+	storage.PassphraseProtection = enabled
+	storageSave()
+}
+
+// PIN retry limiting constants
+const (
+	PIN_MAX_ATTEMPTS = 10       // Max attempts before device wipe
+	PIN_BASE_DELAY   = 500000   // Base delay in microseconds (0.5 second)
+	PIN_MAX_DELAY    = 60000000 // Max delay 60 seconds
+)
+
+// storageGetPINFailures returns the current PIN failure count
+func storageGetPINFailures() uint32 {
+	storageInit()
+	return storage.PinFailedAttempts
+}
+
+// storageIncrementPINFailures increments the PIN failure counter and saves
+func storageIncrementPINFailures() uint32 {
+	storage.PinFailedAttempts++
+	storageSave()
+	return storage.PinFailedAttempts
+}
+
+// storageResetPINFailures resets the PIN failure counter
+func storageResetPINFailures() {
+	storage.PinFailedAttempts = 0
+	storageSave()
+}
+
+// storagePINLockedOut returns true if too many failures occurred (requires wipe)
+func storagePINLockedOut() bool {
+	storageInit()
+	return storage.PinFailedAttempts >= PIN_MAX_ATTEMPTS
+}
+
+// storagePINDelay returns the delay in microseconds before next PIN attempt
+// Uses exponential backoff: delay = base * 2^failures, capped at max
+func storagePINDelay() uint32 {
+	failures := storageGetPINFailures()
+	if failures == 0 {
+		return 0
+	}
+
+	// Exponential backoff: base * 2^(failures-1)
+	// Start delay after first failure
+	delay := uint32(PIN_BASE_DELAY)
+	for i := uint32(1); i < failures && delay < PIN_MAX_DELAY; i++ {
+		delay *= 2
+		if delay > PIN_MAX_DELAY {
+			delay = PIN_MAX_DELAY
+			break
+		}
+	}
+	return delay
+}

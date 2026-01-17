@@ -2,8 +2,6 @@
 
 # Skycoin hardware wallet
 
-[![Build Status](https://travis-ci.com/SkycoinProject/hardware-wallet.svg?branch=master)](https://travis-ci.com/SkycoinProject/hardware-wallet)
-
 ## Table of contents
 
 <!-- MarkdownTOC levels="1,2,3,4,5" autolink="true" bracket="round" -->
@@ -36,11 +34,18 @@
 ## Overview
 
 This repo contains the firmware and bootloader for the Skywallet as well as tools to test and develop for the Skywallet.
-The firmware can be found in [/tiny-firmware](https://github.com/SkycoinProject/hardware-wallet/tree/master/tiny-firmware).
+The firmware can be found in [/tiny-firmware](https://github.com/skycoin/hardware-wallet/tree/master/tiny-firmware).
 The firmware has been modified from [Trezor](https://github.com/trezor/trezor-mcu).
 
-The [skycoin-api](https://github.com/SkycoinProject/hardware-wallet/tree/master/skycoin-api) folder contains the definition of the functions implementing the Skycoin features.
-The [Skywallet Go CLI](https://github.com/SkycoinProject/hardware-wallet-go/releases) defines Golang functions that communicate with the firmware/bootloader.
+The [skycoin-api](https://github.com/skycoin/hardware-wallet/tree/master/skycoin-api) folder contains the definition of the functions implementing the Skycoin features.
+The `skyhw` CLI tool (integrated into the [skycoin repository](https://github.com/skycoin/skycoin)) provides commands to communicate with the firmware/bootloader.
+
+## Firmware Variants
+
+This repository contains two firmware implementations:
+
+- **[C Firmware](tiny-firmware/)** - The original firmware, forked from Trezor. Production-ready but has some limitations (max 8 transaction outputs, stack overflow at ~23 addresses).
+- **[TinyGo Firmware](tinygo-firmware/)** - A complete rewrite in Go using TinyGo. Aims to remove the C firmware limitations and provide a more maintainable codebase.
 
 ## FAQ
 
@@ -48,7 +53,27 @@ The [Skywallet Go CLI](https://github.com/SkycoinProject/hardware-wallet-go/rele
 
 ## Install tools
 
-Get the development dependencies and tools from the [tiny-firware/README.md](https://github.com/SkycoinProject/hardware-wallet/blob/master/tiny-firmware/README.md) first, before continuing with the build instructions.
+Get the development dependencies and tools from the [tiny-firware/README.md](https://github.com/skycoin/hardware-wallet/blob/master/tiny-firmware/README.md) first, before continuing with the build instructions.
+
+### Build Requirements (Modern Toolchains)
+
+This firmware has been updated to build with modern toolchains. The following versions are known to work:
+
+- **ARM GCC**: 14.2.0 (arm-none-eabi-gcc)
+- **Python**: 3.11+ (3.13 tested)
+- **Protobuf compiler**: System protoc (33.1 tested) - must be available at `/usr/bin/protoc`
+- **Make**: 4.4+
+
+**Important Notes:**
+
+1. The system protoc (`/usr/bin/protoc`) is used instead of the bundled old version (3.6.1) for compatibility with modern Python protobuf libraries.
+
+2. The `messages_map.h` file is now manually maintained because the Python generator (`messages_map.py`) produces empty output with modern protobuf versions due to extension compatibility issues. Do not regenerate this file.
+
+3. If you encounter build errors:
+   - Ensure `/usr/bin/protoc` exists and is version 19+ (check with `/usr/bin/protoc --version`)
+   - The build uses `PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python` for compatibility
+   - GCC 14+ requires `-Wno-array-parameter` flag (already configured)
 
 ## Build instructions:
 
@@ -58,7 +83,7 @@ After cloning this repository, make sure the submodules are up-to-date by execut
 git submodule update --init --recursive
 ```
 
-Should you find any issues while running any of the commands that follow please consult [FAQ](FAQ.md) before [reporting a bug](ihttps://github.com/SkycoinProject/hardware-wallet/issues/new?assignees=&labels=bug&template=bug_report.md&title=).
+Should you find any issues while running any of the commands that follow please consult [FAQ](FAQ.md) before [reporting a bug](ihttps://github.com/skycoin/hardware-wallet/issues/new?assignees=&labels=bug&template=bug_report.md&title=).
 
 
 ### Build a bootloader
@@ -85,7 +110,7 @@ make firmware  # Your firmware is tiny-firmware/skyfirmware.bin
 
 ### Sign firmware
 
-Signs the firmware with the private key corresponding to the PubKeys that were registered in the bootloader during building. The PubKeys can be found in the project [Makefile](https://github.com/SkycoinProject/hardware-wallet/blob/develop/Makefile)
+Signs the firmware with the private key corresponding to the PubKeys that were registered in the bootloader during building. The PubKeys can be found in the project [Makefile](https://github.com/skycoin/hardware-wallet/blob/develop/Makefile)
 ```
 make sign # Your firmware is tiny-firmware/skyfirmware.bin
 ```
@@ -175,7 +200,7 @@ After having this tool you can run `make check-coverage`, if not errors found yo
 
 #### Skycoin firmware releases
 
-The Skywallet firmware is composed of two parts: the [bootloader](https://github.com/SkycoinProject/hardware-wallet/tree/master/tiny-firmware/bootloader) and the [firmware](https://github.com/SkycoinProject/hardware-wallet/tree/master/tiny-firmware/firmware).
+The Skywallet firmware is composed of two parts: the [bootloader](https://github.com/skycoin/hardware-wallet/tree/master/tiny-firmware/bootloader) and the [firmware](https://github.com/skycoin/hardware-wallet/tree/master/tiny-firmware/firmware).
 
 Upon startup, the bootloader checks the validity of the firmware installed on the device. It checks whether the signatures of the firmware correspon to the PubKeys registered in the bootlaoder. The firmware is expected to have a header with proper MAGIC number and three signature slots.
 
