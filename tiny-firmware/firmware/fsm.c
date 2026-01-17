@@ -46,6 +46,7 @@
 #include "tiny-firmware/firmware/droplet.h"
 #include "tiny-firmware/firmware/skyparams.h"
 #include "tiny-firmware/firmware/entropy.h"
+#include "fsm_bitcoin_impl.h"
 
 extern uint8_t msg_resp[MSG_OUT_SIZE] __attribute__((aligned));
 
@@ -649,7 +650,7 @@ void fsm_msgBitcoinTxAck(BitcoinTxAck *msg) {
             msg_write(MessageType_MessageType_TxRequest, resp);
             break;
         case ErrInvalidArg:
-            fsm_sendFailure(FailureType_Failure_DataError, _("Invalid data on TxAck message."), &msgType);
+            fsm_sendFailure(FailureType_Failure_DataError, _("Invalid data on BitcoinTxAck message."), &msgType);
             break;
         case ErrActionCancelled:
             fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL, &msgType);

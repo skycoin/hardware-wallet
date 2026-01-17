@@ -36,7 +36,7 @@
 #include "ripemd160.h"
 #include "secp256k1.h"
 #include "sha2.h"
-// #include "rfc6979.h"
+#include "rfc6979.h"
 #include "memzero.h"
 
 // Set cp2 = cp1
@@ -734,6 +734,92 @@ int ecdsa_sign_digest(const ecdsa_curve* curve, const uint8_t* priv_key, const u
     // Too many retries without a valid signature
     // -> fail with an error
     memzero(&k, sizeof(k));
+    return -1;
+}
+
+int ecdsa_sign_deterministic_digest(const ecdsa_curve *curve, const uint8_t *priv_key,
+                      const uint8_t *digest, uint8_t *sig, uint8_t *pby,
+                      int (*is_canonical)(uint8_t by, uint8_t sig[64])){
+
+    int i;
+    curve_point R;
+    bignum256 k, z, randk;
+    bignum256 *s = &R.y;
+    uint8_t by;  // signature recovery byte
+
+    rfc6979_state rng;
+    init_rfc6979(priv_key, digest, &rng);
+
+    bn_read_be(digest, &z);
+
+    for (i = 0; i < 10000; i++) {
+
+      generate_k_rfc6979(&k, &rng);
+      // if k is too big or too small, we don't like it
+      if (bn_is_zero(&k) || !bn_is_less(&k, &curve->order)) {
+        continue;
+      }
+
+      // compute k*G
+      scalar_multiply(curve, &k, &R);
+      by = R.y.val[0] & 1;
+      // r = (rx mod n)
+      if (!bn_is_less(&R.x, &curve->order)) {
+        bn_subtract(&R.x, &curve->order, &R.x);
+        by |= 2;
+      }
+      // if r is zero, we retry
+      if (bn_is_zero(&R.x)) {
+        continue;
+      }
+
+      // randomize operations to counter side-channel attacks
+      generate_k_random(&randk, &curve->order);
+      bn_multiply(&randk, &k, &curve->order);  // k*rand
+      bn_inverse(&k, &curve->order);           // (k*rand)^-1
+      bn_read_be(priv_key, s);                 // priv
+      bn_multiply(&R.x, s, &curve->order);     // R.x*priv
+      bn_add(s, &z);                           // R.x*priv + z
+      bn_multiply(&k, s, &curve->order);       // (k*rand)^-1 (R.x*priv + z)
+      bn_multiply(&randk, s, &curve->order);   // k^-1 (R.x*priv + z)
+      bn_mod(s, &curve->order);
+      // if s is zero, we retry
+      if (bn_is_zero(s)) {
+        continue;
+      }
+
+      // if S > order/2 => S = -S
+      if (bn_is_less(&curve->order_half, s)) {
+        bn_subtract(&curve->order, s, s);
+        by ^= 1;
+      }
+      // we are done, R.x and s is the result signature
+      bn_write_be(&R.x, sig);
+      bn_write_be(s, sig + 32);
+
+      // check if the signature is acceptable or retry
+      if (is_canonical && !is_canonical(by, sig)) {
+        continue;
+      }
+
+      if (pby) {
+        *pby = by;
+      }
+
+      memzero(&k, sizeof(k));
+      memzero(&randk, sizeof(randk));
+
+      memzero(&rng, sizeof(rng));
+
+      return 0;
+    }
+
+    // Too many retries without a valid signature
+    // -> fail with an error
+    memzero(&k, sizeof(k));
+    memzero(&randk, sizeof(randk));
+    memzero(&rng, sizeof(rng));
+
     return -1;
 }
 

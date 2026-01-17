@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 Saleem Rashid
+ * Copyright (c) 2019 Andrew R. Kozlik
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the "Software"),
@@ -20,38 +20,24 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef __HASHER_H__
-#define __HASHER_H__
+#ifndef __HMAC_DRBG_H__
+#define __HMAC_DRBG_H__
 
-#include <stddef.h>
+#include "sha2.h"
 #include <stdint.h>
 
-#include "blake256.h"
-#include "sha2.h"
+// HMAC based Deterministic Random Bit Generator with SHA-256
 
-#define HASHER_DIGEST_LENGTH 32
+typedef struct _HMAC_DRBG_CTX {
+  uint32_t odig[SHA256_DIGEST_LENGTH / sizeof(uint32_t)];
+  uint32_t idig[SHA256_DIGEST_LENGTH / sizeof(uint32_t)];
+  uint32_t v[SHA256_BLOCK_LENGTH / sizeof(uint32_t)];
+} HMAC_DRBG_CTX;
 
-typedef enum {
-    HASHER_SHA2,
-    HASHER_SHA2D,
-    HASHER_BLAKE,
-} HasherType;
-
-typedef struct {
-    HasherType type;
-
-    union {
-        SHA256_CTX sha2;
-        BLAKE256_CTX blake;
-    } ctx;
-} Hasher;
-
-void hasher_Init(Hasher* hasher, HasherType type);
-void hasher_Reset(Hasher* hasher);
-void hasher_Update(Hasher* hasher, const uint8_t* data, size_t length);
-void hasher_Final(Hasher* hasher, uint8_t hash[HASHER_DIGEST_LENGTH]);
-void hasher_Double(Hasher* hasher, uint8_t hash[HASHER_DIGEST_LENGTH]);
-
-void hasher_Raw(HasherType type, const uint8_t* data, size_t length, uint8_t hash[HASHER_DIGEST_LENGTH]);
+void hmac_drbg_init(HMAC_DRBG_CTX *ctx, const uint8_t *buf, size_t len,
+                    const uint8_t *nonce, size_t nonce_len);
+void hmac_drbg_reseed(HMAC_DRBG_CTX *ctx, const uint8_t *buf, size_t len,
+                      const uint8_t *addin, size_t addin_len);
+void hmac_drbg_generate(HMAC_DRBG_CTX *ctx, uint8_t *buf, size_t len);
 
 #endif

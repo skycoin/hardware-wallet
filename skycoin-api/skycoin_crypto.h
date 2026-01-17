@@ -13,9 +13,12 @@
 #define SKYCOIN_CRYPTO_H
 
 #include "tools/sha2.h"
+#include "tools/hasher.h"
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
+
+#define FROMHEX_MAXLEN 512
 
 typedef struct TransactionOutput {
     uint64_t coin;
@@ -39,6 +42,9 @@ typedef enum {
     InnerHashInputs,
     InnerHashOutputs,
     Signature,
+    BTC_Inputs,
+    BTC_Outputs,
+    BTC_Signature
 } TxSignState;
 
 typedef struct _TxSignContext {
@@ -56,6 +62,7 @@ typedef struct _TxSignContext {
     uint8_t innerHash[32];
     uint64_t requestIndex;
     SHA256_CTX sha256_ctx;
+    Hasher hasher;
 } TxSignContext;
 
 void transaction_initZeroTransaction(Transaction* self);
@@ -74,6 +81,7 @@ void skycoin_pubkey_from_seckey(const uint8_t* seckey, uint8_t* pubkey);
 int skycoin_address_from_pubkey(const uint8_t* pubkey, char* address, size_t* size_address);
 int skycoin_ecdsa_sign_digest(const uint8_t* priv_key, const uint8_t* digest, uint8_t* sig);
 void tohex(char* str, const uint8_t* buffer, int buffer_length);
+const uint8_t* fromhex(const char* str);
 void tobuff(const char* str, uint8_t* buf, size_t buffer_length);
 void writebuf_fromhexstr(const char* str, uint8_t* buf);
 
